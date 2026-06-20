@@ -7,6 +7,8 @@ import QueryProvider from "@/providers/query-provider";
 import AuthProvider from "@/providers/auth-provider";
 import { Toaster } from "sonner";
 
+import AppShell from "@/shared/components/layout/AppShell";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -15,27 +17,23 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-                                       children,
-                                   }: {
+    children,
+}: {
     children: React.ReactNode;
 }) {
     return (
         <html lang="en">
-        <body className={inter.className}>
+            <body className={inter.className}>
+                <QueryProvider>
+                    <AuthProvider>
+                        {/* GLOBAL TOAST SYSTEM */}
+                        <Toaster position="top-right" richColors />
 
-        <QueryProvider>
-            <AuthProvider>
-
-                {/* GLOBAL TOAST SYSTEM */}
-                <Toaster position="top-right" richColors />
-
-                {/* APP RENDER */}
-                {children}
-
-            </AuthProvider>
-        </QueryProvider>
-
-        </body>
+                        {/* APP SHELL – provides Sidebar, Topbar and main content area */}
+                        <AppShell>{children}</AppShell>
+                    </AuthProvider>
+                </QueryProvider>
+            </body>
         </html>
     );
 }

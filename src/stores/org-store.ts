@@ -3,24 +3,18 @@ import { create } from "zustand";
 /**
  * org-store.ts
  *
- * Single source of truth for "which tenant/org is currently active."
- * tenantId === Clerk orgId (see architecture decision log).
- *
- * This store is populated by AuthProvider once Clerk has resolved the
- * session and active organization. No component should read tenant
- * context from anywhere else (not from Clerk hooks directly, not from
- * props) — always read from here, so there is exactly one place that
- * defines "current tenant."
+ * Single source of truth for the currently active tenant/organization.
+ * The store is populated by AuthProvider once Clerk resolves the session.
  */
 
 interface OrgState {
-    /** Clerk organization ID. Null until Clerk has loaded AND resolved an active org. */
+    /** Clerk organization ID. Null until resolved. */
     tenantId: string | null;
-    /** Display name of the active org, for UI use (headers, switchers, etc). */
+    /** Display name of the active org. */
     tenantName: string | null;
-    /** True once Clerk has finished loading auth + org state, regardless of outcome. */
+    /** True once Clerk has finished loading auth + org state. */
     isResolved: boolean;
-    /** True if the signed-in user has no active organization (needs onboarding). */
+    /** True if the signed‑in user has no active organization (needs onboarding). */
     needsOrgSelection: boolean;
 
     setTenant: (tenantId: string, tenantName: string | null) => void;
@@ -43,8 +37,7 @@ export const useOrgStore = create<OrgState>((set) => ({
     setTenant: (tenantId, tenantName) =>
         set({ tenantId, tenantName, needsOrgSelection: false }),
 
-    clearTenant: () =>
-        set({ tenantId: null, tenantName: null }),
+    clearTenant: () => set({ tenantId: null, tenantName: null }),
 
     setResolved: (resolved) => set({ isResolved: resolved }),
 
@@ -56,8 +49,6 @@ export const useOrgStore = create<OrgState>((set) => ({
 
 /**
  * Convenience selector for the common "do we have a usable tenant yet" check.
- * Use this to gate tenant-scoped queries:
- *   enabled: useHasResolvedTenant()
  */
 export const useHasResolvedTenant = () =>
     useOrgStore((s) => s.isResolved && !!s.tenantId);
