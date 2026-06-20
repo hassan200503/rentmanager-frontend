@@ -36,7 +36,7 @@ export function PropertyFilters({
 
     const handleStatusChange = (value: PropertyStatus | null) => {
         setStatus(value);
-        onChange({ status: value });
+        onChange({ status: value ?? undefined });
     };
 
     return (
