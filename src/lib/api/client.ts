@@ -5,14 +5,52 @@ import { appConfig } from "@/lib/config/app-config";
 
 const TIMEOUT_MS = 15000;
 
-/**
- * SaaS-grade fetch with timeout + safe parsing
- * Aligns with Spring Boot JWT + multi-tenant SaaS backend
- */
+// Simple in‑memory rate limiter (per client IP)
+// In production replace with Redis or a dedicated service
+const requestCounts: Record<string, { count: number; reset: number }> = {};
+
+function getClientKey(): string {
+    // In a real environment use request IP or user ID
+    return typeof window !== "undefined" ? "browser" : "server";
+}
+
+function checkRateLimit(): void {
+    const key = getClientKey();
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute window
+    const limit = 60; // 60 requests per minute
+
+    if (!requestCounts[key]) {
+        requestCounts[key] = { count: 1, reset: now + windowMs };
+        return;
+    }
+
+    const record = requestCounts[key];
+
+    if (now > record.reset) {
+        record.count = 1;
+        record.reset = now + windowMs;
+        return;
+    }
+
+    if (record.count >= limit) {
+        throw new ApiError({
+            message: "Rate limit exceeded",
+            status: 429,
+            code: "RATE_LIMIT_EXCEEDED",
+            details: { limit, windowMs },
+        });
+    }
+
+    record.count += 1;
+}
+
 async function request<T>(
     endpoint: string,
     options?: RequestInit & { token?: string; tenantId?: string }
 ): Promise<T> {
+    checkRateLimit();
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -53,9 +91,6 @@ async function request<T>(
         });
     }
 
-    /**
-     * AUTH LAYER (Spring Security alignment)
-     */
     if (res.status === 401) {
         throw new ApiError({
             message: "Unauthorized",
@@ -74,9 +109,6 @@ async function request<T>(
         });
     }
 
-    /**
-     * BUSINESS LAYER (ApiResponse contract)
-     */
     if (!res.ok || !data?.success) {
         throw new ApiError({
             message: data?.message || "Request failed",

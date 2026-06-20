@@ -18,6 +18,13 @@ export function buildHeaders(token?: string, tenantId?: string) {
     };
 
     /**
+     * Security headers
+     */
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["X-XSS-Protection"] = "1; mode=block";
+
+    /**
      * Authentication (Spring Security)
      */
     if (token) {

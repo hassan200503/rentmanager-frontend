@@ -64,9 +64,12 @@ export const propertyApi = {
     list: async (params?: PropertyListParams): Promise<PropertyPageResponse> => {
         const { token, tenantId } = await getAuthContext();
 
+        // Ensure tenant isolation
+        const tenantFilter = tenantId ? `&tenantId=${encodeURIComponent(tenantId)}` : "";
+
         if (params?.status) {
             const properties = await apiClient.get<PropertyResponse[]>(
-                propertyEndpoints.byStatus(params.status),
+                `${propertyEndpoints.byStatus(params.status)}${tenantFilter}`,
                 token,
                 tenantId
             );
@@ -76,8 +79,8 @@ export const propertyApi = {
 
         const query = buildPageQuery(params);
         const endpoint = params?.search
-            ? `${propertyEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}`
-            : `${propertyEndpoints.base}?${query}`;
+            ? `${propertyEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}${tenantFilter}`
+            : `${propertyEndpoints.base}?${query}${tenantFilter}`;
 
         return apiClient.get<PropertyPageResponse>(endpoint, token, tenantId);
     },
@@ -85,7 +88,7 @@ export const propertyApi = {
         const { token, tenantId } = await getAuthContext();
 
         return apiClient.get<PropertyResponse>(
-            propertyEndpoints.byId(id),
+            `${propertyEndpoints.byId(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
             token,
             tenantId
         );
@@ -104,7 +107,7 @@ export const propertyApi = {
         const { token, tenantId } = await getAuthContext();
 
         return apiClient.put<PropertyResponse>(
-            propertyEndpoints.byId(id),
+            `${propertyEndpoints.byId(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
             payload,
             token,
             tenantId
@@ -114,7 +117,7 @@ export const propertyApi = {
         const { token, tenantId } = await getAuthContext();
 
         return apiClient.post<PropertyResponse>(
-            propertyEndpoints.activate(id),
+            `${propertyEndpoints.activate(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
             undefined,
             token,
             tenantId
@@ -124,7 +127,7 @@ export const propertyApi = {
         const { token, tenantId } = await getAuthContext();
 
         return apiClient.post<PropertyResponse>(
-            propertyEndpoints.archive(id),
+            `${propertyEndpoints.archive(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
             undefined,
             token,
             tenantId

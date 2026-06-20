@@ -58,6 +58,8 @@ export function getErrorMessage(code?: string): string {
             return "The requested resource was not found.";
         case "TENANT_MISMATCH":
             return "Tenant mismatch detected. Please switch accounts.";
+        case "RATE_LIMIT_EXCEEDED":
+            return "You are making requests too quickly. Please wait a moment.";
         default:
             return "Something went wrong. Please try again later.";
     }
