@@ -1,15 +1,18 @@
+"use client";
+
 import { useState } from "react";
 import { usePropertyFilters } from "../hooks/use-property-filters";
 import { PropertyStatus } from "../../types/property";
 
-export default function PropertyFilters() {
+export function PropertyFilters() {
     const { filters, updateFilter } = usePropertyFilters();
-    const [search, setSearch] = useState(filters.search || "");
-    const [status, setStatus] = useState<PropertyStatus | null>(filters.status);
+    const [search, setSearch] = useState(filters.search ?? "");
+    const [status, setStatus] = useState<PropertyStatus | null>(filters.status ?? null);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value);
-        updateFilter({ search: e.target.value });
+        const value = e.target.value;
+        setSearch(value);
+        updateFilter({ search: value });
     };
 
     const handleStatusChange = (value: PropertyStatus | null) => {
@@ -31,13 +34,17 @@ export default function PropertyFilters() {
             <div className="flex-1">
                 <label className="block text-sm font-medium mb-2">Status</label>
                 <select
-                    value={status}
-                    onChange={(e) => handleStatusChange(e.target.value as PropertyStatus)}
+                    value={status ?? ""}
+                    onChange={(e) =>
+                        handleStatusChange(
+                            e.target.value === "" ? null : (e.target.value as PropertyStatus)
+                        )
+                    }
                     className="w-full p-2 border rounded-md"
                 >
-                    <option value={null} className="px-4 py-2">All</option>
-                    <option value="AVAILABLE" className="px-4 py-2">Available</option>
-                    <option value="FULLY_OCCUPIED" className="px-4 py-2">Fully Occupied</option>
+                    <option value="">All</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="FULLY_OCCUPIED">Fully Occupied</option>
                 </select>
             </div>
         </div>
