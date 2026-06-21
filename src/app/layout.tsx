@@ -8,6 +8,7 @@ import AuthProvider from "@/providers/auth-provider";
 import { Toaster } from "sonner";
 
 import AppShell from "@/shared/components/layout/AppShell";
+import Header from "path/to/components/header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -24,6 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="bg-gray-50 text-gray-900 antialiased">
+        {/* Global navigation bar – PayPal‑inspired header */}
+        <Header />
+
         <QueryProvider>
           <AuthProvider>
             {/* Global toast notifications */}

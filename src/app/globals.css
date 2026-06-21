@@ -6,10 +6,10 @@
    PayPal‑inspired Design Tokens
    ------------------------------------------------- */
 :root {
-  /* Primary brand colour */
-  --color-primary: #003087;          /* PayPal dark blue */
+  /* Primary brand colour – PayPal blue */
+  --color-primary: #003087;          /* Dark blue */
   --color-primary-hover: #002060;
-  --color-primary-light: #e5f0ff;
+  --color-primary-light: #e5f0ff;   /* Light blue background */
 
   /* Neutral palette */
   --color-white: #ffffff;
@@ -47,7 +47,8 @@
 /* -------------------------------------------------
    Base Styles
    ------------------------------------------------- */
-html, body {
+html,
+body {
   font-family: var(--font-sans);
   background: var(--color-white);
   color: var(--color-gray-900);
@@ -85,11 +86,23 @@ html, body {
    Component Specific Overrides
    ------------------------------------------------- */
 .header {
-  @apply bg-white border-b border-gray-200;
+  @apply bg-white border-b border-gray-200 shadow-sm;
 }
 .nav-link {
   @apply text-gray-600 hover:text-primary transition-colors;
 }
 .nav-link.active {
   @apply text-primary font-semibold;
+}
+
+/* -------------------------------------------------
+   Responsive Helpers
+   ------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
