@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SaaS standard UI components */
+.button-primary {
+  background: #4f46e5;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.button-primary:hover {
+  background: #4338ca;
+}
+
+.header {
+  @apply bg-primary-600 text-white font-bold;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+.form-control {
+  @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary;
+}
