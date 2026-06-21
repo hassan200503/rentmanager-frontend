@@ -2,127 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ================================
-   SaaS DESIGN TOKENS
-================================ */
-
+/* -------------------------------------------------
+   PayPal‑inspired Design Tokens
+   ------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #111827;
+  /* Primary brand colour */
+  --color-primary: #003087;          /* PayPal dark blue */
+  --color-primary-hover: #002060;
+  --color-primary-light: #e5f0ff;
 
-  --card: #f9fafb;
-  --card-border: #e5e7eb;
+  /* Neutral palette */
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
 
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  /* Accent colours */
+  --color-success: #009cde;   /* PayPal green */
+  --color-danger: #c00;
+  --color-warning: #ffb900;
+  --color-info: #0070ba;
 
-  --muted: #6b7280;
-  --danger: #dc2626;
-  --success: #16a34a;
-  --info: #2563eb;
-  --warning: #ca8a04;
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.15);
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* ================================
-   BASE STYLES
-================================ */
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+/* -------------------------------------------------
+   Base Styles
+   ------------------------------------------------- */
+html, body {
+  font-family: var(--font-sans);
+  background: var(--color-white);
+  color: var(--color-gray-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ================================
-   SaaS UTILITY HELPERS
-================================ */
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
+/* -------------------------------------------------
+   Utility Classes (Tailwind extensions)
+   ------------------------------------------------- */
 .btn-primary {
-  background: var(--primary);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: background 0.2s ease;
+  @apply bg-primary text-white font-medium py-2 px-4 rounded-md transition-colors;
+  background-color: var(--color-primary);
 }
-
 .btn-primary:hover {
-  background: var(--primary-hover);
+  background-color: var(--color-primary-hover);
 }
-
 .btn-secondary {
-  background: transparent;
-  color: var(--primary);
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  border: 1px solid var(--primary);
-  transition: all 0.2s ease;
+  @apply border border-primary text-primary font-medium py-2 px-4 rounded-md transition-colors;
 }
-
 .btn-secondary:hover {
-  background: var(--primary);
-  color: white;
+  @apply bg-primary text-white;
 }
-
-.btn-danger {
-  background: var(--danger);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.btn-danger:hover {
-  background: #b91c1c;
-}
-
 .input-field {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  @apply w-full border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-light transition;
+}
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+}
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium;
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-}
-
+/* -------------------------------------------------
+   Component Specific Overrides
+   ------------------------------------------------- */
 .header {
-  background: var(--card);
-  border-bottom: 1px solid var(--card-border);
-  padding: 16px 24px;
+  @apply bg-white border-b border-gray-200;
 }
-
-.header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--foreground);
-}
-
 .nav-link {
-  color: var(--muted);
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: color 0.2s ease;
+  @apply text-gray-600 hover:text-primary transition-colors;
 }
-
-.nav-link:hover,
 .nav-link.active {
-  color: var(--primary);
-  background: rgba(79, 70, 229, 0.1);
+  @apply text-primary font-semibold;
 }

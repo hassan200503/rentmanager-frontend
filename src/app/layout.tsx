@@ -9,31 +9,31 @@ import { Toaster } from "sonner";
 
 import AppShell from "@/shared/components/layout/AppShell";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-    title: "RentManager SaaS",
-    description: "Multi-tenant property management system",
+  title: "RentManager SaaS",
+  description: "Multi-tenant property management system",
 };
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-            <body className={inter.className}>
-                <QueryProvider>
-                    <AuthProvider>
-                        {/* GLOBAL TOAST SYSTEM */}
-                        <Toaster position="top-right" richColors />
+  return (
+    <html lang="en" className={inter.variable}>
+      <body className="bg-gray-50 text-gray-900 antialiased">
+        <QueryProvider>
+          <AuthProvider>
+            {/* Global toast notifications */}
+            <Toaster position="top-right" richColors />
 
-                        {/* APP SHELL – provides Sidebar, Topbar and main content area */}
-                        <AppShell>{children}</AppShell>
-                    </AuthProvider>
-                </QueryProvider>
-            </body>
-        </html>
-    );
+            {/* Application shell – sidebar, topbar, main content */}
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
+        </QueryProvider>
+      </body>
+    </html>
+  );
 }

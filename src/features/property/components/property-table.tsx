@@ -12,46 +12,58 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
 
   if (isLoading) {
     return (
-      <div className="p-4 text-sm text-white">Loading properties...</div>
+      <div className="p-4 text-sm text-gray-600">Loading properties...</div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 text-sm text-red-400">
+      <div className="p-4 text-sm text-danger">
         Failed to load properties.
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-auto">
-      <table className="w-full text-white border-collapse">
-        <thead>
-          <tr className="bg-card">
-            <th className="p-3 text-left">Name</th>
-            <th className="p-3 text-left">Type</th>
-            <th className="p-3 text-left">Status</th>
-            <th className="p-3 text-left">Occupancy</th>
+    <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+      <table className="min-w-full bg-white">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="p-3 text-left text-sm font-medium text-gray-700">
+              Name
+            </th>
+            <th className="p-3 text-left text-sm font-medium text-gray-700">
+              Type
+            </th>
+            <th className="p-3 text-left text-sm font-medium text-gray-700">
+              Status
+            </th>
+            <th className="p-3 text-left text-sm font-medium text-gray-700">
+              Occupancy
+            </th>
           </tr>
         </thead>
 
         <tbody>
           {data?.content?.map((p: PropertyResponse) => (
-            <tr key={p.propertyId} className="border-b border-card-border">
-              <td className="p-3">{p.name}</td>
-              <td className="p-3">{p.propertyType}</td>
+            <tr
+              key={p.propertyId}
+              className="border-b border-gray-200 hover:bg-gray-50 transition"
+            >
+              <td className="p-3 text-sm text-gray-800">{p.name}</td>
+              <td className="p-3 text-sm text-gray-800">{p.propertyType}</td>
               <td className="p-3">
                 <PropertyStatusBadge status={p.status} />
               </td>
-              <td className="p-3">{p.occupancyStatus}</td>
+              <td className="p-3 text-sm text-gray-800">{p.occupancyStatus}</td>
             </tr>
           ))}
+
           {data?.empty && (
             <tr>
               <td
-                className="py-4 text-sm text-gray-500 text-center"
                 colSpan={4}
+                className="py-4 text-center text-sm text-gray-500"
               >
                 No properties found.
               </td>
