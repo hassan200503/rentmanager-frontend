@@ -17,7 +17,7 @@
 
 /* Base Typography */
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   color: var(--foreground);
   background: var(--background);
 }
@@ -31,11 +31,9 @@ body {
   font-weight: 500;
   transition: background 0.2s ease;
 }
-
 .btn-primary:hover {
   background: var(--primary-hover);
 }
-
 .btn-secondary {
   background: transparent;
   color: var(--primary);
@@ -45,12 +43,10 @@ body {
   border: 1px solid var(--primary);
   transition: all 0.2s ease;
 }
-
 .btn-secondary:hover {
   background: var(--primary);
   color: white;
 }
-
 .btn-danger {
   background: var(--danger);
   color: white;
@@ -59,7 +55,6 @@ body {
   font-weight: 500;
   transition: background 0.2s ease;
 }
-
 .btn-danger:hover {
   background: #f87171;
 }
@@ -81,7 +76,6 @@ body {
   font-size: 14px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
@@ -94,7 +88,6 @@ body {
   border-bottom: 1px solid var(--card-border);
   padding: 16px 24px;
 }
-
 .header h1 {
   font-size: 24px;
   font-weight: 600;
@@ -108,7 +101,6 @@ body {
   border-radius: 6px;
   transition: color 0.2s ease;
 }
-
 .nav-link:hover,
 .nav-link.active {
   color: var(--primary);
