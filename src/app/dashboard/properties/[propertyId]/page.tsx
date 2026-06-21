@@ -28,7 +28,7 @@ export default function PropertyDetailPage() {
   const isArchived = property.status === "ARCHIVED";
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -53,14 +53,14 @@ export default function PropertyDetailPage() {
 
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card">
+        <div className="card bg-white p-4 rounded shadow">
           <h3 className="font-medium mb-2 text-gray-800">Description</h3>
           <p className="text-sm text-gray-600">
             {property.description || "No description"}
           </p>
         </div>
 
-        <div className="card">
+        <div className="card bg-white p-4 rounded shadow">
           <h3 className="font-medium mb-2 text-gray-800">Occupancy</h3>
           <p className="text-sm text-gray-600">{property.occupancyStatus}</p>
         </div>

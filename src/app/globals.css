@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* -------------------------------------------------
+   Simple utility classes that were added after the
+   PayPal‑inspired redesign – they are now part of the
+   baseline UI.
+   ------------------------------------------------- */
+
+/* Button styles – replace the earlier custom “btn-primary”
+   and “btn-danger” utilities that caused Tailwind errors. */
+.btn-primary {
+  @apply bg-blue-600 text-white font-medium py-2 px-4 rounded hover:bg-blue-700;
+}
+.btn-danger {
+  @apply bg-red-600 text-white font-medium py-2 px-4 rounded hover:bg-red-700;
+}
+
+/* Card component – used in property detail page */
+.card {
+  @apply bg-white rounded-lg shadow p-4;
+}
+
+/* Text colour used in a few places (original PayPal blue) */
+.text-primary {
+  @apply text-blue-600;
+}

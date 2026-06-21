@@ -6,7 +6,15 @@ module.exports = {
     "./src/**/*.css",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // PayPal‑inspired primary palette – used by the original design.
+        primary: "#0070ba",
+        "primary-light": "#e6f2ff",
+        secondary: "#003087",
+        danger: "#d9534f",
+      },
+    },
   },
   plugins: [],
 };

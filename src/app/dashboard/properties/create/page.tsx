@@ -15,7 +15,7 @@ export default function CreatePropertyPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6 bg-gray-50">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">
           Create Property

@@ -6,37 +6,37 @@ import { appConfig } from "@/lib/config/app-config";
  * Adds observability + tenant isolation for SaaS scaling
  */
 export function buildHeaders(token?: string, tenantId?: string) {
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-
-        /**
-         * Observability headers (safe for SaaS scaling)
-         */
-        "X-App-Name": appConfig.appName,
-        "X-App-Env": appConfig.environment,
-        "X-App-Version": appConfig.version ?? "1.0.0",
-    };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
 
     /**
-     * Security headers
+     * Observability headers (safe for SaaS scaling)
      */
-    headers["X-Content-Type-Options"] = "nosniff";
-    headers["X-Frame-Options"] = "DENY";
-    headers["X-XSS-Protection"] = "1; mode=block";
+    "X-App-Name": appConfig.appName,
+    "X-App-Env": appConfig.environment,
+    "X-App-Version": appConfig.version ?? "1.0.0",
+  };
 
-    /**
-     * Authentication (Spring Security)
-     */
-    if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-    }
+  /**
+   * Security headers
+   */
+  headers["X-Content-Type-Options"] = "nosniff";
+  headers["X-Frame-Options"] = "DENY";
+  headers["X-XSS-Protection"] = "1; mode=block";
 
-    /**
-     * Multi-tenant isolation
-     */
-    if (tenantId) {
-        headers["X-Tenant-Id"] = tenantId;
-    }
+  /**
+   * Authentication (Spring Security)
+   */
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-    return headers;
+  /**
+   * Multi-tenant isolation
+   */
+  if (tenantId) {
+    headers["X-Tenant-Id"] = tenantId;
+  }
+
+  return headers;
 }
