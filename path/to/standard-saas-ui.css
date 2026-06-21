@@ -4,15 +4,15 @@
 
 /* SaaS Design System */
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --background: #ffffff;
-  --foreground: #111827;
-  --card: #f9fafb;
-  --card-border: #e5e7eb;
-  --muted: #6b7280;
-  --danger: #dc2626;
-  --success: #16a34a;
+  --primary: #3b82f6; /* blue */
+  --primary-hover: #2563eb;
+  --background: #0f172a;
+  --foreground: #ffffff;
+  --card: #1e3a8a;
+  --card-border: #334155;
+  --muted: #94a3b8;
+  --danger: #f87171;
+  --success: #86efac;
 }
 
 /* Base Typography */
@@ -61,7 +61,7 @@ body {
 }
 
 .btn-danger:hover {
-  background: #b91c1c;
+  background: #f87171;
 }
 
 /* SaaS Cards */
@@ -85,7 +85,7 @@ body {
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 /* SaaS Headers */
@@ -112,5 +112,5 @@ body {
 .nav-link:hover,
 .nav-link.active {
   color: var(--primary);
-  background: rgba(79, 70, 229, 0.1);
+  background: rgba(59, 130, 246, 0.1);
 }

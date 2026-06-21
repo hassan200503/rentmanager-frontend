@@ -11,12 +11,12 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
     const { data, isLoading, error } = usePropertiesQuery(params);
 
     if (isLoading) {
-        return <div className="rounded border p-4 text-sm">Loading properties...</div>;
+        return <div className="p-4 text-sm text-white">Loading properties...</div>;
     }
 
     if (error) {
         return (
-            <div className="rounded border border-red-200 p-4 text-sm text-red-700">
+            <div className="p-4 text-sm text-red-400">
                 Failed to load properties.
             </div>
         );
@@ -24,7 +24,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
 
     return (
         <div className="w-full overflow-auto">
-            <table className="w-full">
+            <table className="w-full text-white">
                 <thead>
                 <tr>
                     <th>Name</th>

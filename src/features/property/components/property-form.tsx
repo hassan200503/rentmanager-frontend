@@ -60,24 +60,24 @@ export const PropertyForm = ({
     });
 
     return (
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4 bg-gray-800 p-4 rounded">
             <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Name</span>
+                    <span className="text-sm font-medium text-white">Name</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         placeholder="Green Villa"
                         {...register("name")}
                     />
                     {errors.name && (
-                        <span className="text-xs text-red-600">{errors.name.message}</span>
+                        <span className="text-xs text-red-400">{errors.name.message}</span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Type</span>
+                    <span className="text-sm font-medium text-white">Type</span>
                     <select
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("propertyType")}
                     >
                         {Object.values(PropertyType).map((type) => (
@@ -90,9 +90,9 @@ export const PropertyForm = ({
             </div>
 
             <label className="block space-y-1">
-                <span className="text-sm font-medium">Description</span>
+                <span className="text-sm font-medium text-white">Description</span>
                 <textarea
-                    className="min-h-24 w-full rounded border px-3 py-2"
+                    className="min-h-24 w-full rounded border px-3 py-2 bg-gray-700 text-white"
                     placeholder="Short property description"
                     {...register("description")}
                 />
@@ -100,55 +100,55 @@ export const PropertyForm = ({
 
             <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Street Address</span>
+                    <span className="text-sm font-medium text-white">Street Address</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("address.streetAddress")}
                     />
                     {errors.address?.streetAddress && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.address.streetAddress.message}
                         </span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">City</span>
+                    <span className="text-sm font-medium text-white">City</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("address.city")}
                     />
                     {errors.address?.city && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.address.city.message}
                         </span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">State</span>
+                    <span className="text-sm font-medium text-white">State</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("address.state")}
                     />
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Postal Code</span>
+                    <span className="text-sm font-medium text-white">Postal Code</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("address.postalCode")}
                     />
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Country</span>
+                    <span className="text-sm font-medium text-white">Country</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         {...register("address.country")}
                     />
                     {errors.address?.country && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.address.country.message}
                         </span>
                     )}
@@ -157,30 +157,30 @@ export const PropertyForm = ({
 
             <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Latitude</span>
+                    <span className="text-sm font-medium text-white">Latitude</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         type="number"
                         step="0.0000001"
                         {...register("geoLocation.latitude", { valueAsNumber: true })}
                     />
                     {errors.geoLocation?.latitude && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.geoLocation.latitude.message}
                         </span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Longitude</span>
+                    <span className="text-sm font-medium text-white">Longitude</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         type="number"
                         step="0.0000001"
                         {...register("geoLocation.longitude", { valueAsNumber: true })}
                     />
                     {errors.geoLocation?.longitude && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.geoLocation.longitude.message}
                         </span>
                     )}
@@ -189,44 +189,44 @@ export const PropertyForm = ({
 
             <div className="grid gap-3 md:grid-cols-3">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Total Area</span>
+                    <span className="text-sm font-medium text-white">Total Area</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         type="number"
                         step="0.01"
                         {...register("dimensions.totalArea", { valueAsNumber: true })}
                     />
                     {errors.dimensions?.totalArea && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.dimensions.totalArea.message}
                         </span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Occupied Area</span>
+                    <span className="text-sm font-medium text-white">Occupied Area</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         type="number"
                         step="0.01"
                         {...register("dimensions.occupiedArea", { valueAsNumber: true })}
                     />
                     {errors.dimensions?.occupiedArea && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.dimensions.occupiedArea.message}
                         </span>
                     )}
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium">Unit Count</span>
+                    <span className="text-sm font-medium text-white">Unit Count</span>
                     <input
-                        className="w-full rounded border px-3 py-2"
+                        className="w-full rounded border px-3 py-2 bg-gray-700 text-white"
                         type="number"
                         {...register("dimensions.unitCount", { valueAsNumber: true })}
                     />
                     {errors.dimensions?.unitCount && (
-                        <span className="text-xs text-red-600">
+                        <span className="text-xs text-red-400">
                             {errors.dimensions.unitCount.message}
                         </span>
                     )}
@@ -236,7 +236,7 @@ export const PropertyForm = ({
             <button
                 type="submit"
                 disabled={loading}
-                className="rounded bg-black px-4 py-2 text-white disabled:opacity-60"
+                className="rounded bg-primary px-4 py-2 text-white disabled:opacity-60"
             >
                 {loading ? "Saving..." : submitLabel}
             </button>
