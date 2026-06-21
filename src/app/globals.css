@@ -1,35 +1,24 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  // Scan all files that may contain Tailwind classes
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./src/app/**/*.{js,ts,jsx,tsx}",
-    "./src/**/*.css",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        // Design‑system colours – mapped to the CSS variables defined in globals.css
-        primary: "var(--color-primary)",
-        "primary-hover": "var(--color-primary-hover)",
-        "primary-light": "var(--color-primary-light)",
-        success: "var(--color-success)",
-        danger: "var(--color-danger)",
-        warning: "var(--color-warning)",
-        info: "var(--color-info)",
-        // Keep the default gray palette (Tailwind already provides it)
-      },
-      // Optional: expose the same values for border and ring utilities
-      borderColor: (theme) => ({
-        primary: theme("colors.primary"),
-        "primary-hover": theme("colors.primary-hover"),
-        "primary-light": theme("colors.primary-light"),
-      }),
-      ringColor: (theme) => ({
-        primary: theme("colors.primary"),
-        "primary-light": theme("colors.primary-light"),
-      }),
-    },
-  },
-  plugins: [],
-};
+/* Global CSS – defines CSS variables used by the design system.
+   These variables are referenced in the Tailwind configuration
+   (tailwind.config.js) to expose the same colours as utility classes. */
+
+:root {
+  /* Primary colour palette */
+  --color-primary: #1d4ed8;          /* blue-700 */
+  --color-primary-hover: #1e40af;    /* blue-800 */
+  --color-primary-light: #93c5fd;    /* blue-300 */
+
+  /* Status colours */
+  --color-success: #10b981;          /* green-600 */
+  --color-danger: #ef4444;           /* red-500 */
+  --color-warning: #f59e0b;          /* amber-500 */
+  --color-info: #3b82f6;             /* blue-500 */
+
+  /* Optional: other design‑system variables can be added here */
+}
+
+/* Example usage of the variables in plain CSS (optional) */
+body {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
