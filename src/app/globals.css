@@ -1,24 +1,3 @@
-/* Global CSS – defines CSS variables used by the design system.
-   These variables are referenced in the Tailwind configuration
-   (tailwind.config.js) to expose the same colours as utility classes. */
-
-:root {
-  /* Primary colour palette */
-  --color-primary: #1d4ed8;          /* blue-700 */
-  --color-primary-hover: #1e40af;    /* blue-800 */
-  --color-primary-light: #93c5fd;    /* blue-300 */
-
-  /* Status colours */
-  --color-success: #10b981;          /* green-600 */
-  --color-danger: #ef4444;           /* red-500 */
-  --color-warning: #f59e0b;          /* amber-500 */
-  --color-info: #3b82f6;             /* blue-500 */
-
-  /* Optional: other design‑system variables can be added here */
-}
-
-/* Example usage of the variables in plain CSS (optional) */
-body {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
