@@ -34,6 +34,8 @@ export const propertySchema = z.object({
         path: ["occupiedArea"],
         message: "Occupied area cannot exceed total area",
     }),
+
+    imageUrl: z.string().url().optional().optional(),
 });
 
 export type PropertyFormValues = z.infer<typeof propertySchema>;

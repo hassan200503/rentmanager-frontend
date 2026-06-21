@@ -7,11 +7,13 @@ export interface CreatePropertyRequest {
     geoLocation: GeoLocation;
     dimensions: PropertyDimensions;
     description?: string;
+    imageUrl?: string;
 }
 
 export interface UpdatePropertyRequest {
     name?: string;
     description?: string;
+    imageUrl?: string;
 }
 
 export interface PropertyListParams {
