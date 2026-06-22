@@ -1,6 +1,63 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* PayPal-inspired primary palette */
+  --color-primary: #0070ba;
+  --color-primary-dark: #005a99;
+  --color-primary-light: #e6f2ff;
+  
+  /* Secondary palette */
+  --color-secondary: #003087;
+  --color-secondary-dark: #002266;
+  
+  /* Status colors */
+  --color-success: #28a745;
+  --color-success-dark: #218838;
+  --color-warning: #ffc107;
+  --color-warning-dark: #e0a800;
+  --color-danger: #dc3545;
+  --color-danger-dark: #c82333;
+  
+  /* Neutral colors */
+  --color-background: #f8f9fa;
+
+  /* Extended spacing system */
+  --spacing-1.5: 0.375rem;
+  --spacing-3.5: 0.875rem;
+  --spacing-4.5: 1.125rem;
+  --spacing-5.5: 1.375rem;
+  --spacing-6.5: 1.625rem;
+  --spacing-7.5: 1.875rem;
+  --spacing-8.5: 2.125rem;
+  --spacing-9.5: 2.375rem;
+  --spacing-10.5: 2.625rem;
+  --spacing-11: 2.75rem;
+  --spacing-11.5: 2.875rem;
+  --spacing-12.5: 3.125rem;
+  --spacing-13: 3.25rem;
+  --spacing-13.5: 3.375rem;
+  --spacing-14: 3.5rem;
+  --spacing-14.5: 3.625rem;
+  --spacing-15: 3.75rem;
+  --spacing-16.5: 4.125rem;
+  --spacing-17: 4.25rem;
+  --spacing-17.5: 4.375rem;
+  --spacing-18: 4.5rem;
+  --spacing-18.5: 4.625rem;
+  --spacing-19: 4.75rem;
+  --spacing-20.5: 5.125rem;
+
+  /* Consistent rounded corners */
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  /* Subtle elevation shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
 
 /* -------------------------------------------------
    Design System Foundation
@@ -8,59 +65,57 @@
    ------------------------------------------------- */
 
 /* Button styles - standardized variants */
-.btn-primary {
-  @apply bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-dark transition-colors;
-}
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-primary-dark transition-colors;
+  }
 
-.btn-secondary {
-  @apply bg-secondary text-white font-medium py-2 px-4 rounded-md hover:bg-secondary-dark transition-colors;
-}
+  .btn-secondary {
+    @apply bg-secondary text-white font-medium py-2 px-4 rounded-md hover:bg-secondary-dark transition-colors;
+  }
 
-.btn-outline {
-  @apply border border-primary text-primary font-medium py-2 px-4 rounded-md hover:bg-primary-light transition-colors;
-}
+  .btn-outline {
+    @apply border border-primary text-primary font-medium py-2 px-4 rounded-md hover:bg-primary-light transition-colors;
+  }
 
-.btn-danger {
-  @apply bg-danger text-white font-medium py-2 px-4 rounded-md hover:bg-danger-dark transition-colors;
-}
+  .btn-danger {
+    @apply bg-danger text-white font-medium py-2 px-4 rounded-md hover:bg-danger-dark transition-colors;
+  }
 
-.btn-success {
-  @apply bg-success text-white font-medium py-2 px-4 rounded-md hover:bg-success-dark transition-colors;
-}
+  .btn-success {
+    @apply bg-success text-white font-medium py-2 px-4 rounded-md hover:bg-success-dark transition-colors;
+  }
 
-/* Card component - elevated with subtle shadows */
-.card {
-  @apply bg-white rounded-lg shadow-md p-6;
-}
+  /* Card component - elevated with subtle shadows */
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
 
-.card-sm {
-  @apply bg-white rounded-lg shadow-sm p-4;
-}
+  .card-sm {
+    @apply bg-white rounded-lg shadow-sm p-4;
+  }
 
-/* Form input styles - rounded and consistent */
-.form-input {
-  @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary-light focus:outline-none;
-}
+  /* Form input styles - rounded and consistent */
+  .form-input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary-light focus:outline-none;
+  }
 
-.form-label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
-}
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
 
-/* Text color utilities */
-.text-primary {
-  @apply text-primary;
-}
+  /* Page layout utilities */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 py-6;
+  }
 
-.text-success {
-  @apply text-success;
-}
+  .page-title {
+    @apply text-3xl font-bold text-gray-900 mb-6;
+  }
 
-.text-warning {
-  @apply text-warning;
-}
-
-.text-danger {
-  @apply text-danger;
+  .section-header {
+    @apply text-xl font-semibold text-gray-800 mb-4;
+  }
 }
 
 /* Spacing utilities - consistent 8px system */
@@ -74,17 +129,4 @@
 
 .space-y-6 > * + * {
   margin-top: 1.5rem;
-}
-
-/* Page layout utilities */
-.page-container {
-  @apply max-w-7xl mx-auto px-4 py-6;
-}
-
-.page-title {
-  @apply text-3xl font-bold text-gray-900 mb-6;
-}
-
-.section-header {
-  @apply text-xl font-semibold text-gray-800 mb-4;
 }
