@@ -10,7 +10,11 @@ import { Toaster } from "sonner";
 import AppShell from "@/shared/components/layout/AppShell";
 import Header from "path/to/components/header";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ 
+  subsets: ["latin"], 
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"]
+});
 
 export const metadata: Metadata = {
   title: "RentManager SaaS",
@@ -24,8 +28,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-gray-50 text-gray-900 antialiased">
-        {/* Global navigation bar – PayPal‑inspired header */}
+      <body className="bg-background text-gray-900 antialiased font-sans">
+        {/* Global navigation bar – PayPal-inspired header */}
         <Header />
 
         <QueryProvider>
