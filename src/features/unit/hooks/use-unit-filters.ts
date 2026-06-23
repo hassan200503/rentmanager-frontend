@@ -10,7 +10,7 @@ export interface UnitFilterState {
     maxRent: number | "";
 }
 
-const defaultFilters: UnitFilterState = {
+export const DEFAULT_UNIT_FILTERS: UnitFilterState = {
     search: "",
     status: "",
     minRent: "",
@@ -18,14 +18,14 @@ const defaultFilters: UnitFilterState = {
 };
 
 export const useUnitFilters = () => {
-    const [filters, setFilters] = useState<UnitFilterState>(defaultFilters);
+    const [filters, setFilters] = useState<UnitFilterState>(DEFAULT_UNIT_FILTERS);
 
     const updateFilter = (patch: Partial<UnitFilterState>) => {
         setFilters((prev) => ({ ...prev, ...patch }));
     };
 
     const resetFilters = () => {
-        setFilters(defaultFilters);
+        setFilters(DEFAULT_UNIT_FILTERS);
     };
 
     return { filters, updateFilter, resetFilters };

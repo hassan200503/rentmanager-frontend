@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useUnit } from "@/features/unit/hooks/use-unit";
 import { useUpdateUnit } from "@/features/unit/hooks/use-update-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
+import { CreateUnitRequest } from "@/features/unit/types/unit-request";
 import Loading from "@/app/loading";
 
 export default function EditUnitPage() {
@@ -13,7 +14,7 @@ export default function EditUnitPage() {
   const unitId = params.unitId as string;
 
   const {
-    unit,
+    data: unit,
     isLoading: loadingUnit,
     error: errorUnit,
   } = useUnit(unitId);
@@ -27,10 +28,10 @@ export default function EditUnitPage() {
   if (errorUnit) {
     // Simple error display; Next.js will handle full error boundaries elsewhere
     return (
-      <div className="p-6 bg-white rounded shadow">
-        <h2 className="text-xl font-semibold mb-4">Error</h2>
-        <p className="text-red-600">{errorUnit.message}</p>
-      </div>
+        <div className="p-6 bg-white rounded shadow">
+          <h2 className="text-xl font-semibold mb-4">Error</h2>
+          <p className="text-red-600">{errorUnit.message}</p>
+        </div>
     );
   }
   if (!unit) {
@@ -38,22 +39,23 @@ export default function EditUnitPage() {
     return null;
   }
 
-  const handleSubmit = async (data: any) => {
-    await updateUnit({ id: unitId, payload: data });
+  const handleSubmit = async (data: CreateUnitRequest) => {
+    await updateUnit(unitId, data);
     router.push(
-      `/dashboard/properties/${propertyId}/units/${unitId}`
+        `/dashboard/properties/${propertyId}/units/${unitId}`
     );
   };
 
   return (
-    <div className="p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-semibold mb-4">Edit Unit</h1>
-      <UnitForm
-        defaultValues={unit}
-        onSubmit={handleSubmit}
-        loading={loadingUpdate}
-        submitLabel="Update Unit"
-      />
-    </div>
+      <div className="p-6 bg-white rounded shadow">
+        <h1 className="text-2xl font-semibold mb-4">Edit Unit</h1>
+        <UnitForm
+            propertyId={propertyId}
+            defaultValues={unit}
+            onSubmit={handleSubmit}
+            loading={loadingUpdate}
+            submitLabel="Update Unit"
+        />
+      </div>
   );
 }

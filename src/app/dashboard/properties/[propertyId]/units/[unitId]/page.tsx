@@ -11,8 +11,7 @@ export default function UnitDetailsPage() {
   const propertyId = params.propertyId as string;
   const unitId = params.unitId as string;
 
-  const { unit, isLoading, error } = useUnit(unitId);
-
+  const { data: unit, isLoading, error } = useUnit(unitId);
   if (isLoading) return <Loading />;
   if (error) {
     // Simple error display; Next.js will handle full error boundaries elsewhere
