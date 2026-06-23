@@ -8,10 +8,9 @@ import AuthProvider from "@/providers/auth-provider";
 import { Toaster } from "sonner";
 
 import AppShell from "@/shared/components/layout/AppShell";
-import Header from "path/to/components/header";
 
-const inter = Inter({ 
-  subsets: ["latin"], 
+const inter = Inter({
+  subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"]
 });
@@ -22,26 +21,23 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: {
+                                     children,
+                                   }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+      <html lang="en" className={inter.variable}>
       <body className="bg-background text-gray-900 antialiased font-sans">
-        {/* Global navigation bar – PayPal-inspired header */}
-        <Header />
+      <QueryProvider>
+        <AuthProvider>
+          {/* Global toast notifications */}
+          <Toaster position="top-right" richColors />
 
-        <QueryProvider>
-          <AuthProvider>
-            {/* Global toast notifications */}
-            <Toaster position="top-right" richColors />
-
-            {/* Application shell – sidebar, topbar, main content */}
-            <AppShell>{children}</AppShell>
-          </AuthProvider>
-        </QueryProvider>
+          {/* Application shell – sidebar, topbar, main content */}
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
+      </QueryProvider>
       </body>
-    </html>
+      </html>
   );
 }

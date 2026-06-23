@@ -125,12 +125,19 @@ export const apiClient = {
     get: <T>(url: string, token?: string, tenantId?: string) =>
         request<T>(url, { token, tenantId }),
 
-    post: <T>(url: string, body?: unknown, token?: string, tenantId?: string) =>
+    post: <T>(
+        url: string,
+        body?: unknown,
+        token?: string,
+        tenantId?: string,
+        config?: RequestInit
+    ) =>
         request<T>(url, {
             method: "POST",
-            body: JSON.stringify(body),
+            body: body instanceof FormData ? body : JSON.stringify(body),
             token,
             tenantId,
+            ...config,
         }),
 
     put: <T>(url: string, body?: unknown, token?: string, tenantId?: string) =>
