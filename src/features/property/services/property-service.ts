@@ -1,4 +1,4 @@
-import { propertyApi } from "../api/property-api";
+import { propertyApi } } from "../api/property-api";
 import {
     CreatePropertyRequest,
     PropertyListParams,
