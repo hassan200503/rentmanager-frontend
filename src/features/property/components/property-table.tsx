@@ -39,7 +39,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
               Status
             </th>
             <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Occupancy
+              Actions
             </th>
           </tr>
         </thead>
@@ -55,7 +55,14 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
               <td className="p-3">
                 <PropertyStatusBadge status={p.status} />
               </td>
-              <td className="p-3 text-sm text-gray-800">{p.occupancyStatus}</td>
+              <td className="p-3 text-right">
+                <button
+                  onClick={() => router.push(`/dashboard/properties/${p.propertyId}/edit`)}
+                  className="btn-primary text-sm px-3 py-2 rounded"
+                >
+                  Edit
+                </button>
+              </td>
             </tr>
           ))}
 

@@ -388,9 +388,6 @@ export default function PropertyEditor() {
             Upload New Image
           </button>
           
-          {imagePreview &&nbsp;>Upload New Image
-          </button>
-          
           {imagePreview && (
             <div className="mt-2">
               <img 
