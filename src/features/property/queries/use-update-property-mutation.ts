@@ -18,7 +18,7 @@ export const useUpdatePropertyMutation = () => {
             propertyApi.update(id, payload),
         onSuccess: (_, vars) => {
             qc.invalidateQueries({ queryKey: propertyKeys.detail(vars.id) });
-            qc.invalidateQueries({ queryKey: propertyKeys.all);
+            qc.invalidateQueries({ queryKey: propertyKeys.all });
         },
     });
 };
