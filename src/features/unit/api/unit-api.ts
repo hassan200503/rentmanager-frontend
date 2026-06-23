@@ -60,22 +60,13 @@ const toPage = (
     };
 };
 
-const withTenant = (tenantId?: string) =>
-    tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : "";
-
-const appendTenant = (url: string, tenantId?: string) =>
-    tenantId ? `${url}?tenantId=${encodeURIComponent(tenantId)}` : url;
-
 export const unitApi = {
     list: async (params: UnitListParams): Promise<UnitPageResponse> => {
         const { token, tenantId } = await getAuthContext();
-        const tenantFilter = tenantId
-            ? `&tenantId=${encodeURIComponent(tenantId)}`
-            : "";
 
         if (params.status) {
             const units = await apiClient.get<UnitResponse[]>(
-                `${unitEndpoints.byStatus(params.propertyId, params.status)}${tenantFilter}`,
+                unitEndpoints.byStatus(params.propertyId, params.status),
                 token,
                 tenantId
             );
@@ -85,8 +76,8 @@ export const unitApi = {
         const query = buildPageQuery(params);
 
         const endpoint = params.search
-            ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&propertyId=${encodeURIComponent(params.propertyId)}&${query}${tenantFilter}`
-            : `${unitEndpoints.byProperty(params.propertyId)}?${query}${tenantFilter}`;
+            ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&propertyId=${encodeURIComponent(params.propertyId)}&${query}`
+            : `${unitEndpoints.byProperty(params.propertyId)}?${query}`;
 
         return apiClient.get<UnitPageResponse>(endpoint, token, tenantId);
     },
@@ -94,7 +85,7 @@ export const unitApi = {
     get: async (id: string): Promise<UnitResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<UnitResponse>(
-            appendTenant(unitEndpoints.byId(id), tenantId),
+            unitEndpoints.byId(id),
             token,
             tenantId
         );
@@ -116,7 +107,7 @@ export const unitApi = {
     ): Promise<UnitResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.put<UnitResponse>(
-            appendTenant(unitEndpoints.byId(id), tenantId),
+            unitEndpoints.byId(id),
             payload,
             token,
             tenantId
@@ -133,7 +124,7 @@ export const unitApi = {
         formData.append("image", file);
 
         return apiClient.post<{ url: string }>(
-            appendTenant(unitEndpoints.uploadImage(id), tenantId),
+            unitEndpoints.uploadImage(id),
             formData,
             token,
             tenantId,
