@@ -113,7 +113,7 @@ export default function PropertyEditor() {
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev],
+          ...(prev[parent as keyof typeof prev] as Record<string, string>),
           [child]: value
         }
       }));
@@ -131,7 +131,10 @@ export default function PropertyEditor() {
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const result = reader.result;
+        if (typeof result === 'string') {
+          setImagePreview(result);
+        }
       };
       reader.readAsDataURL(file);
     }
