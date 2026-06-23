@@ -1,5 +1,5 @@
-import { Property } from './src/features/property/types/property';
-import { propertyService } from './src/features/property/services/property-service';
+import { Property } from '@/features/property/types/property';
+import { propertyService } from '@/features/property/services/property-service';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -110,13 +110,19 @@ export default function PropertyEditor() {
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...(prev[parent as keyof typeof prev] as Record<string, string>),
-          [child]: value
+      setFormData(prev => {
+        const parentValue = prev[parent as keyof typeof prev];
+        if (typeof parentValue === 'object' && parentValue !== null) {
+          return {
+            ...prev,
+            [parent]: {
+              ...parentValue,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
