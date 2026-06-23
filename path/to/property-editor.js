@@ -188,10 +188,18 @@ export default function PropertyEditor() {
   const handleCancel = () => {
     if (hasUnsavedChanges) {
       if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
-        router.push(`/dashboard/properties/${propertyId}`);
+        if (propertyId) {
+          router.push(`/dashboard/properties/${propertyId}`);
+        } else {
+          router.push('/dashboard/properties');
+        }
       }
     } else {
-      router.push(`/dashboard/properties/${propertyId}`);
+      if (propertyId) {
+        router.push(`/dashboard/properties/${propertyId}`);
+      } else {
+        router.push('/dashboard/properties');
+      }
     }
   };
 
@@ -378,6 +386,9 @@ export default function PropertyEditor() {
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
           >
             Upload New Image
+          </button>
+          
+          {imagePreview &&nbsp;>Upload New Image
           </button>
           
           {imagePreview && (
