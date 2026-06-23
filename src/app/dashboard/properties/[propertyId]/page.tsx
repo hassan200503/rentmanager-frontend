@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { useProperty } from "@/features/property/hooks/use-property";
@@ -22,6 +22,34 @@ export default function PropertyDetailPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  // -----------------------------------------------------------------
+  // Guard to prevent the update handler from running twice (e.g. React
+  // Strict Mode double‑mount). The ref persists across renders but does
+  // not trigger re‑renders.
+  // -----------------------------------------------------------------
+  const updateInProgressRef = useRef(false);
+
+  const handleUpdate = async () => {
+    if (updateInProgressRef.current) {
+      // Already processing an update – ignore subsequent calls
+      return;
+    }
+    updateInProgressRef.current = true;
+
+    try {
+      await updateProperty(property.propertyId, {
+        name: name || property.name,
+        description: description || property.description,
+      });
+    } catch (err) {
+      console.error("Failed to update property:", err);
+    } finally {
+      // Reset the guard so the user can try again if needed
+      updateInProgressRef.current = false;
+    }
+  };
+  // -----------------------------------------------------------------
+
   if (isLoading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -31,17 +59,6 @@ export default function PropertyDetailPage() {
   }
 
   const isArchived = property.status === "ARCHIVED";
-
-  const handleUpdate = async () => {
-    try {
-      await updateProperty(property.propertyId, {
-        name: name || property.name,
-        description: description || property.description,
-      });
-    } catch (err) {
-      console.error("Failed to update property:", err);
-    }
-  };
 
   return (
     <div className="space-y-6 p-6 bg-gray-50">

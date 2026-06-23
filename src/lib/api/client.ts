@@ -14,11 +14,17 @@ function getClientKey(): string {
     return typeof window !== "undefined" ? "browser" : "server";
 }
 
-function checkRateLimit(): void {
-    const key = getClientKey();
+/**
+ * Rate‑limit is now scoped per HTTP method to avoid GET requests
+ * (which are frequent on page load) counting against the PUT/PATCH
+ * limit used for updates.
+ */
+function checkRateLimit(method: string = "GET"): void {
+    const baseKey = getClientKey();
+    const key = `${baseKey}:${method.toUpperCase()}`; // e.g. "browser:PUT"
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute window
-    const limit = 60; // 60 requests per minute
+    const limit = 60; // 60 requests per minute per method
 
     if (!requestCounts[key]) {
         requestCounts[key] = { count: 1, reset: now + windowMs };
@@ -38,7 +44,7 @@ function checkRateLimit(): void {
             message: "Rate limit exceeded",
             status: 429,
             code: "RATE_LIMIT_EXCEEDED",
-            details: { limit, windowMs },
+            details: { limit, windowMs, method },
         });
     }
 
@@ -49,7 +55,9 @@ async function request<T>(
     endpoint: string,
     options?: RequestInit & { token?: string; tenantId?: string }
 ): Promise<T> {
-    checkRateLimit();
+    // Pass the HTTP method (default GET) to the limiter
+    const method = (options?.method ?? "GET") as string;
+    checkRateLimit(method);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);

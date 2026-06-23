@@ -12,6 +12,8 @@ export const useUpdatePropertyMutation = () => {
     const qc = useQueryClient();
 
     return useMutation({
+        // Disable automatic retry – a duplicate request was causing the rate‑limit error
+        retry: false,
         mutationFn: ({ id, payload }: UpdatePropertyVariables) =>
             propertyApi.update(id, payload),
         onSuccess: (_, vars) => {
