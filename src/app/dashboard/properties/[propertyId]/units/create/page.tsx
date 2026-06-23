@@ -4,7 +4,6 @@ import { useRouter, useParams } from "next/navigation";
 import { useCreateUnit } from "@/features/unit/hooks/use-create-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import Loading from "@/app/loading";
-import { ErrorBoundary } from "@/app/error";
 
 export default function CreateUnitPage() {
   const router = useRouter();
@@ -23,7 +22,13 @@ export default function CreateUnitPage() {
   };
 
   if (error) {
-    return <ErrorBoundary error={error} />;
+    // Simple error display; Next.js will handle full error boundaries elsewhere
+    return (
+      <div className="p-6 bg-white rounded shadow">
+        <h2 className="text-xl font-semibold mb-4">Error</h2>
+        <p className="text-red-600">{error.message}</p>
+      </div>
+    );
   }
 
   if (isLoading) {

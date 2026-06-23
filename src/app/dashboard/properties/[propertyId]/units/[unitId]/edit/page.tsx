@@ -5,7 +5,6 @@ import { useUnit } from "@/features/unit/hooks/use-unit";
 import { useUpdateUnit } from "@/features/unit/hooks/use-update-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import Loading from "@/app/loading";
-import { ErrorBoundary } from "@/app/error";
 
 export default function EditUnitPage() {
   const router = useRouter();
@@ -25,7 +24,15 @@ export default function EditUnitPage() {
   } = useUpdateUnit();
 
   if (loadingUnit) return <Loading />;
-  if (errorUnit) return <ErrorBoundary error={errorUnit} />;
+  if (errorUnit) {
+    // Simple error display; Next.js will handle full error boundaries elsewhere
+    return (
+      <div className="p-6 bg-white rounded shadow">
+        <h2 className="text-xl font-semibold mb-4">Error</h2>
+        <p className="text-red-600">{errorUnit.message}</p>
+      </div>
+    );
+  }
   if (!unit) {
     router.replace(`/dashboard/properties/${propertyId}/units`);
     return null;
