@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation";
+"use client";
+
 import { useRouter, useParams } from "next/navigation";
 import { useCreateUnit } from "@/features/unit/hooks/use-create-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
-import { Loading } from "@/app/loading";
+import Loading from "@/app/loading";
 import { ErrorBoundary } from "@/app/error";
 
 export default function CreateUnitPage() {
@@ -15,12 +16,18 @@ export default function CreateUnitPage() {
   const handleSubmit = async (data: any) => {
     const result = await createUnit({ propertyId, ...data });
     if (result?.unitId) {
-      router.push(`/dashboard/properties/${propertyId}/units/${result.unitId}`);
+      router.push(
+        `/dashboard/properties/${propertyId}/units/${result.unitId}`
+      );
     }
   };
 
   if (error) {
     return <ErrorBoundary error={error} />;
+  }
+
+  if (isLoading) {
+    return <Loading />;
   }
 
   return (

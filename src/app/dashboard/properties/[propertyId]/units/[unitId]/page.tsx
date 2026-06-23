@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation";
+"use client";
+
 import { useRouter, useParams } from "next/navigation";
 import { useUnit } from "@/features/unit/hooks/use-unit";
 import { UnitDetails } from "@/features/unit/components/unit-details";
-import { Loading } from "@/app/loading";
+import Loading from "@/app/loading";
 import { ErrorBoundary } from "@/app/error";
 
 export default function UnitDetailsPage() {
@@ -15,7 +16,11 @@ export default function UnitDetailsPage() {
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorBoundary error={error} />;
-  if (!unit) return redirect(`/dashboard/properties/${propertyId}/units`);
+  if (!unit) {
+    // navigate back to the units list for the property
+    router.replace(`/dashboard/properties/${propertyId}/units`);
+    return null;
+  }
 
   return (
     <div className="p-6 bg-white rounded shadow">
