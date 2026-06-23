@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { usePropertiesQuery } from "../queries/use-properties-query";
 import { PropertyStatusBadge } from "./property-status-badge";
 import { PropertyFilterState } from "../hooks/use-property-filters";
@@ -9,6 +10,7 @@ type PropertyTableProps = {
 
 export const PropertyTable = ({ params }: PropertyTableProps) => {
   const { data, isLoading, error } = usePropertiesQuery(params);
+  const router = useRouter();
 
   if (isLoading) {
     return (
@@ -20,7 +22,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
     return (
       <div className="p-4 text-sm text-danger">
         Failed to load properties.
-      </div>
+      }
     );
   }
 
