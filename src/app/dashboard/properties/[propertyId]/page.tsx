@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { useProperty } from "@/features/property/hooks/use-property";
@@ -14,8 +15,11 @@ export default function PropertyDetailPage() {
 
   const { data: property, isLoading } = useProperty(propertyId);
 
-  const { updateProperty } = useUpdateProperty();
+  const { updateProperty, isLoading: isUpdating } = useUpdateProperty();
   const { archiveProperty } = useArchiveProperty();
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   if (isLoading) {
     return <div className="p-6">Loading...</div>;
@@ -27,75 +31,106 @@ export default function PropertyDetailPage() {
 
   const isArchived = property.status === "ARCHIVED";
 
+  const handleUpdate = async () => {
+    try {
+      await updateProperty(property.propertyId, {
+        name: name || property.name,
+        description: description || property.description,
+      });
+    } catch (err) {
+      console.error("Failed to update property:", err);
+    }
+  };
+
   return (
-    <div className="space-y-6 p-6 bg-gray-50">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {property.name}
-          </h1>
-          <div className="flex gap-2 mt-2">
-            <PropertyStatusBadge status={property.status} />
-            <span className="text-sm text-gray-500">
+      <div className="space-y-6 p-6 bg-gray-50">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {property.name}
+            </h1>
+            <div className="flex gap-2 mt-2">
+              <PropertyStatusBadge status={property.status} />
+              <span className="text-sm text-gray-500">
               {property.propertyType}
             </span>
+            </div>
+          </div>
+
+          <button
+              onClick={() => router.push("/dashboard/properties")}
+              className="text-sm text-primary underline"
+          >
+            Back
+          </button>
+        </div>
+
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card bg-white p-4 rounded shadow">
+            <h3 className="font-medium mb-2 text-gray-800">Description</h3>
+            {!isArchived ? (
+                <textarea
+                    defaultValue={property.description || ""}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+                    rows={3}
+                    placeholder="No description"
+                />
+            ) : (
+                <p className="text-sm text-gray-600">
+                  {property.description || "No description"}
+                </p>
+            )}
+          </div>
+
+          <div className="card bg-white p-4 rounded shadow">
+            <h3 className="font-medium mb-2 text-gray-800">Occupancy</h3>
+            <p className="text-sm text-gray-600">{property.occupancyStatus}</p>
           </div>
         </div>
 
-        <button
-          onClick={() => router.push("/dashboard/properties")}
-          className="text-sm text-primary underline"
-        >
-          Back
-        </button>
-      </div>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card bg-white p-4 rounded shadow">
-          <h3 className="font-medium mb-2 text-gray-800">Description</h3>
-          <p className="text-sm text-gray-600">
-            {property.description || "No description"}
-          </p>
-        </div>
-
-        <div className="card bg-white p-4 rounded shadow">
-          <h3 className="font-medium mb-2 text-gray-800">Occupancy</h3>
-          <p className="text-sm text-gray-600">{property.occupancyStatus}</p>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3">
+        {/* Name field (editable) */}
         {!isArchived && (
-          <>
-            <button
-              onClick={() =>
-                updateProperty(property.propertyId, {
-                  name: property.name,
-                })
-              }
-              className="btn-primary"
-            >
-              Update
-            </button>
-
-            <button
-              onClick={() => archiveProperty(property.propertyId)}
-              className="btn-danger"
-            >
-              Archive
-            </button>
-          </>
+            <div className="card bg-white p-4 rounded shadow max-w-md">
+              <h3 className="font-medium mb-2 text-gray-800">Name</h3>
+              <input
+                  type="text"
+                  defaultValue={property.name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+              />
+            </div>
         )}
 
-        {isArchived && (
-          <div className="text-sm text-gray-500">
-            This property is archived (read‑only)
-          </div>
-        )}
+        {/* Actions */}
+        <div className="flex gap-3">
+          {!isArchived && (
+              <>
+                <button
+                    onClick={handleUpdate}
+                    disabled={isUpdating}
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUpdating ? "Updating..." : "Update"}
+                </button>
+
+                <button
+                    onClick={() => archiveProperty(property.propertyId)}
+                    className="btn-danger"
+                >
+                  Archive
+                </button>
+              </>
+          )}
+
+          {isArchived && (
+              <div className="text-sm text-gray-500">
+                This property is archived (read‑only)
+              </div>
+          )}
+        </div>
       </div>
-    </div>
   );
 }

@@ -59,7 +59,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
                 </td>
                 <td className="p-3 text-right">
                   <button
-                      onClick={() => router.push(`/dashboard/properties/${p.propertyId}/edit`)}
+                      onClick={() => router.push(`/dashboard/properties/${p.propertyId}`)}
                       className="btn-primary text-sm px-3 py-2 rounded"
                   >
                     Edit
