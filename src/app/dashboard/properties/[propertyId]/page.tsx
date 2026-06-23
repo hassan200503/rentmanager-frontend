@@ -30,6 +30,12 @@ export default function PropertyDetailPage() {
   const updateInProgressRef = useRef(false);
 
   const handleUpdate = async () => {
+    // ---- added guard for TypeScript ----
+    if (!property) {
+      return;
+    }
+    // ------------------------------------
+
     if (updateInProgressRef.current) {
       // Already processing an update – ignore subsequent calls
       return;
