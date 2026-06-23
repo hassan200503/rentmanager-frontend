@@ -4,6 +4,21 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
+type FormData = {
+  name: string;
+  description: string;
+  imageUrl: string;
+  propertyType: string;
+  address: {
+    streetAddress: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
+  status: string;
+};
+
 export default function PropertyEditor() {
   const router = useRouter();
   const params = useParams();
@@ -20,7 +35,7 @@ export default function PropertyEditor() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
     imageUrl: '',
@@ -111,11 +126,12 @@ export default function PropertyEditor() {
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => {
-        const parentValue = prev[parent as keyof typeof prev];
+        const parentKey = parent as keyof FormData;
+        const parentValue = prev[parentKey];
         if (typeof parentValue === 'object' && parentValue !== null) {
           return {
             ...prev,
-            [parent]: {
+            [parentKey]: {
               ...parentValue,
               [child]: value
             }
@@ -124,7 +140,8 @@ export default function PropertyEditor() {
         return prev;
       });
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      const fieldKey = name as keyof FormData;
+      setFormData(prev => ({ ...prev, [fieldKey]: value }));
     }
   };
 
