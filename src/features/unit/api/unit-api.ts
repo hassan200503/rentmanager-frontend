@@ -1,3 +1,4 @@
+import { v5 as uuidv5 } from "uuid";
 import { unitEndpoints } from "./unit-endpoints";
 import {
     CreateUnitRequest,
@@ -19,13 +20,20 @@ type ClerkWindow = Window & {
     };
 };
 
+const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+
 const getAuthContext = async () => {
     if (typeof window === "undefined") {
         return {};
     }
 
-    const tenantId =
+    const rawTenantId =
         useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+
+    const tenantId = rawTenantId
+        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
+        : undefined;
+
     const token =
         (await (window as ClerkWindow).Clerk?.session?.getToken?.({
             template: BACKEND_JWT_TEMPLATE,
