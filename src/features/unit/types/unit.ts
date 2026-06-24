@@ -1,32 +1,30 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export enum UnitStatus {
+    INACTIVE = "INACTIVE",
+    ACTIVE = "ACTIVE",
+    ARCHIVED = "ARCHIVED",
+}
+
+export enum UnitOccupancyStatus {
     VACANT = "VACANT",
     OCCUPIED = "OCCUPIED",
     RESERVED = "RESERVED",
-    MAINTENANCE = "MAINTENANCE",
 }
 
 // ─── Domain Model ─────────────────────────────────────────────────────────────
 
 export interface Unit {
-    unitId: string;
+    id: string;
     propertyId: string;
     tenantId: string;
 
     unitNumber: string;
-    status: UnitStatus;
-
-    monthlyRent: number;
-    depositAmount: number;
-
-    bedrooms: number;
-    bathrooms: number;
-    squareFootage?: number;
-
+    floor?: number;
     description?: string;
-    imageUrl?: string;
 
-    createdAt: string;
-    updatedAt: string;
+    rentAmount: number;
+
+    status: string;
+    occupancyStatus: string;
 }

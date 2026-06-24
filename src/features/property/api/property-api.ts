@@ -1,3 +1,4 @@
+import { v5 as uuidv5 } from "uuid";
 import { propertyEndpoints } from "./property-endpoints";
 import {
     CreatePropertyRequest,
@@ -18,12 +19,19 @@ type ClerkWindow = Window & {
     };
 };
 
+const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+
 const getAuthContext = async () => {
     if (typeof window === "undefined") {
         return {};
     }
 
-    const tenantId = useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+    const rawTenantId = useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+
+    const tenantId = rawTenantId
+        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
+        : undefined;
+
     const token =
         (await (window as ClerkWindow).Clerk?.session?.getToken?.({
             template: BACKEND_JWT_TEMPLATE,
@@ -34,10 +42,8 @@ const getAuthContext = async () => {
 
 const buildPageQuery = (params?: PropertyListParams) => {
     const query = new URLSearchParams();
-
     query.set("page", String(params?.page ?? 0));
     query.set("size", String(params?.size ?? 10));
-
     return query.toString();
 };
 
@@ -64,38 +70,34 @@ export const propertyApi = {
     list: async (params?: PropertyListParams): Promise<PropertyPageResponse> => {
         const { token, tenantId } = await getAuthContext();
 
-        // Ensure tenant isolation
-        const tenantFilter = tenantId ? `&tenantId=${encodeURIComponent(tenantId)}` : "";
-
         if (params?.status) {
             const properties = await apiClient.get<PropertyResponse[]>(
-                `${propertyEndpoints.byStatus(params.status)}${tenantFilter}`,
+                propertyEndpoints.byStatus(params.status),
                 token,
                 tenantId
             );
-
             return toPage(properties, params);
         }
 
         const query = buildPageQuery(params);
         const endpoint = params?.search
-            ? `${propertyEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}${tenantFilter}`
-            : `${propertyEndpoints.base}?${query}${tenantFilter}`;
+            ? `${propertyEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}`
+            : `${propertyEndpoints.base}?${query}`;
 
         return apiClient.get<PropertyPageResponse>(endpoint, token, tenantId);
     },
+
     get: async (id: string): Promise<PropertyResponse> => {
         const { token, tenantId } = await getAuthContext();
-
         return apiClient.get<PropertyResponse>(
-            `${propertyEndpoints.byId(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
+            propertyEndpoints.byId(id),
             token,
             tenantId
         );
     },
+
     create: async (payload: CreatePropertyRequest) => {
         const { token, tenantId } = await getAuthContext();
-
         return apiClient.post<PropertyResponse>(
             propertyEndpoints.base,
             payload,
@@ -103,52 +105,47 @@ export const propertyApi = {
             tenantId
         );
     },
+
     update: async (id: string, payload: UpdatePropertyRequest) => {
         const { token, tenantId } = await getAuthContext();
-
         return apiClient.put<PropertyResponse>(
-            `${propertyEndpoints.byId(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
+            propertyEndpoints.byId(id),
             payload,
             token,
             tenantId
         );
     },
+
     activate: async (id: string) => {
         const { token, tenantId } = await getAuthContext();
-
         return apiClient.post<PropertyResponse>(
-            `${propertyEndpoints.activate(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
+            propertyEndpoints.activate(id),
             undefined,
             token,
             tenantId
         );
     },
+
     archive: async (id: string) => {
         const { token, tenantId } = await getAuthContext();
-
         return apiClient.post<PropertyResponse>(
-            `${propertyEndpoints.archive(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
+            propertyEndpoints.archive(id),
             undefined,
             token,
             tenantId
         );
     },
+
     uploadImage: async (id: string, file: File): Promise<{ url: string }> => {
         const { token, tenantId } = await getAuthContext();
-
         const formData = new FormData();
         formData.append("image", file);
-
         return apiClient.post<{ url: string }>(
-            `${propertyEndpoints.uploadImage(id)}${tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ""}`,
+            propertyEndpoints.uploadImage(id),
             formData,
             token,
             tenantId,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            }
+            { headers: { "Content-Type": "multipart/form-data" } }
         );
     },
 };

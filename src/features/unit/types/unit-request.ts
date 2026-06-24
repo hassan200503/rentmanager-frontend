@@ -1,38 +1,26 @@
-import { Unit, UnitStatus } from "./unit";
+import { Unit } from "./unit";
 
 // ─── Requests ─────────────────────────────────────────────────────────────────
 
 export interface CreateUnitRequest {
     propertyId: string;
     unitNumber: string;
-    status: UnitStatus;
-    monthlyRent: number;
-    depositAmount: number;
-    bedrooms: number;
-    bathrooms: number;
-    squareFootage?: number;
+    label?: string;
+    rentAmount: number;
     description?: string;
-    imageUrl?: string;
 }
 
 export interface UpdateUnitRequest {
     unitNumber?: string;
-    status?: UnitStatus;
-    monthlyRent?: number;
-    depositAmount?: number;
-    bedrooms?: number;
-    bathrooms?: number;
-    squareFootage?: number;
+    label?: string;
+    rentAmount?: number;
     description?: string;
-    imageUrl?: string;
 }
 
 export interface UnitListParams {
     propertyId: string;
     search?: string;
-    status?: UnitStatus | "";
-    minRent?: number | "";
-    maxRent?: number | "";
+    status?: string;
     page?: number;
     size?: number;
 }

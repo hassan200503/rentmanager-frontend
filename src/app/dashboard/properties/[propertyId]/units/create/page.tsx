@@ -7,44 +7,43 @@ import { CreateUnitRequest } from "@/features/unit/types/unit-request";
 import Loading from "@/app/loading";
 
 export default function CreateUnitPage() {
-  const router = useRouter();
-  const params = useParams();
-  const propertyId = params.propertyId as string;
+    const router = useRouter();
+    const params = useParams();
+    const propertyId = params.propertyId as string;
 
-  const { createUnit, isLoading, error } = useCreateUnit();
+    const { createUnit, isLoading, error } = useCreateUnit();
 
-  const handleSubmit = async (data: CreateUnitRequest) => {
-    const result = await createUnit(data);
-    if (result?.unitId) {
-      router.push(
-          `/dashboard/properties/${propertyId}/units/${result.unitId}`
-      );
+    const handleSubmit = async (data: CreateUnitRequest) => {
+        const result = await createUnit(data);
+        if (result?.id) {
+            router.push(
+                `/dashboard/properties/${propertyId}/units/${result.id}`
+            );
+        }
+    };
+
+    if (error) {
+        return (
+            <div className="p-6 bg-white rounded shadow">
+                <h2 className="text-xl font-semibold mb-4">Error</h2>
+                <p className="text-red-600">{error.message}</p>
+            </div>
+        );
     }
-  };
 
-  if (error) {
-    // Simple error display; Next.js will handle full error boundaries elsewhere
+    if (isLoading) {
+        return <Loading />;
+    }
+
     return (
         <div className="p-6 bg-white rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Error</h2>
-          <p className="text-red-600">{error.message}</p>
+            <h1 className="text-2xl font-semibold mb-4">Add New Unit</h1>
+            <UnitForm
+                propertyId={propertyId}
+                onSubmit={handleSubmit}
+                loading={isLoading}
+                submitLabel="Create Unit"
+            />
         </div>
     );
-  }
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  return (
-      <div className="p-6 bg-white rounded shadow">
-        <h1 className="text-2xl font-semibold mb-4">Add New Unit</h1>
-        <UnitForm
-            propertyId={propertyId}
-            onSubmit={handleSubmit}
-            loading={isLoading}
-            submitLabel="Create Unit"
-        />
-      </div>
-  );
 }

@@ -49,16 +49,13 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
               Status
             </th>
             <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Monthly Rent
+              Rent Amount
             </th>
             <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Beds
+              Floor
             </th>
             <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Baths
-            </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Sq Ft
+              Occupancy
             </th>
             <th className="p-3 text-left text-sm font-medium text-gray-700">
               Actions
@@ -69,7 +66,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
           <tbody>
           {data?.content?.map((u: UnitResponse) => (
               <tr
-                  key={u.unitId}
+                  key={u.id}
                   className="border-b border-gray-200 hover:bg-gray-50 transition"
               >
                 <td className="p-3 text-sm font-medium text-gray-800">
@@ -79,19 +76,20 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                   <UnitStatusBadge status={u.status} />
                 </td>
                 <td className="p-3 text-sm text-gray-800">
-                  {formatCurrency(u.monthlyRent)}
+                  {formatCurrency(u.rentAmount)}
                 </td>
-                <td className="p-3 text-sm text-gray-800">{u.bedrooms}</td>
-                <td className="p-3 text-sm text-gray-800">{u.bathrooms}</td>
                 <td className="p-3 text-sm text-gray-800">
-                  {u.squareFootage ? `${u.squareFootage} ft²` : "—"}
+                  {u.floor ?? "—"}
+                </td>
+                <td className="p-3 text-sm text-gray-800">
+                  {u.occupancyStatus}
                 </td>
                 <td className="p-3 text-right">
                   <div className="flex gap-2 justify-end">
                     <button
                         onClick={() =>
                             router.push(
-                                `/dashboard/properties/${propertyId}/units/${u.unitId}`
+                                `/dashboard/properties/${propertyId}/units/${u.id}`
                             )
                         }
                         className="btn-primary text-sm px-3 py-2 rounded"
@@ -101,7 +99,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                     <button
                         onClick={() =>
                             router.push(
-                                `/dashboard/properties/${propertyId}/units/${u.unitId}/edit`
+                                `/dashboard/properties/${propertyId}/units/${u.id}/edit`
                             )
                         }
                         className="btn-secondary text-sm px-3 py-2 rounded"
@@ -116,7 +114,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
           {data?.empty && (
               <tr>
                 <td
-                    colSpan={7}
+                    colSpan={6}
                     className="py-12 text-center text-sm text-gray-500"
                 >
                   <div className="space-y-2">

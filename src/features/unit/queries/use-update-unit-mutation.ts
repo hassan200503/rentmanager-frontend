@@ -12,7 +12,7 @@ export const useUpdateUnitMutation = () => {
             unitApi.update(id, payload),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: unitKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: unitKeys.detail(data.unitId) });
+            queryClient.invalidateQueries({ queryKey: unitKeys.detail(data.id) });
             toast.success("Unit updated successfully");
         },
         onError: () => {
