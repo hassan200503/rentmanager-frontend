@@ -1,12 +1,12 @@
 export const publicEndpoints = {
-    properties: "/api/v1/public/properties",
+    properties: "/public/properties",
     propertyById: (id: string) =>
-        `/api/v1/public/properties/${id}`,
+        `/public/properties/${id}`,
 
-    units: "/api/v1/public/units",
+    units: "/public/units",
     unitById: (id: string) =>
-        `/api/v1/public/units/${id}`,
+        `/public/units/${id}`,
 
     unitsByProperty: (propertyId: string) =>
-        `/api/v1/public/units/property/${propertyId}`,
+        `/public/units/property/${propertyId}`,
 };

@@ -30,21 +30,24 @@ export const publicUnitApi = {
         );
     },
 
-    get: async (
-        unitId: string
-    ): Promise<PublicUnitResponse> => {
-        return apiClient.get<PublicUnitResponse>(
-            publicEndpoints.unitById(unitId)
-        );
-    },
-
     getByProperty: async (
         propertyId: string,
         page = 0,
         size = 20
     ): Promise<PublicUnitPageResponse> => {
+        const query = new URLSearchParams({
+            page: String(page),
+            size: String(size),
+        });
+
         return apiClient.get<PublicUnitPageResponse>(
-            `${publicEndpoints.unitsByProperty(propertyId)}?page=${page}&size=${size}`
+            `${publicEndpoints.unitsByProperty(propertyId)}?${query}`
+        );
+    },
+
+    get: async (unitId: string): Promise<PublicUnitResponse> => {
+        return apiClient.get<PublicUnitResponse>(
+            publicEndpoints.unitById(unitId)
         );
     },
 };

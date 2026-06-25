@@ -1,15 +1,10 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import { publicPropertyApi } from "../api/public-property-api";
-import { publicPropertyKeys } from "./public-property-keys";
 
-export const usePublicPropertyQuery = (
-    id: string
-) => {
+export const usePublicPropertyQuery = (propertyId: string) => {
     return useQuery({
-        queryKey: publicPropertyKeys.detail(id),
-        queryFn: () => publicPropertyApi.get(id),
-        enabled: !!id,
+        queryKey: ["public-property", propertyId],
+        queryFn: () => publicPropertyApi.get(propertyId),
+        enabled: !!propertyId,
     });
 };

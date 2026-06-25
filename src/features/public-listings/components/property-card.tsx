@@ -12,7 +12,7 @@ export function PropertyCard({
                              }: PropertyCardProps) {
     return (
         <Link
-            href={`/properties/${property.propertyId}`}
+            href={`/listings/${property.propertyId}`}
             className="block border rounded-lg p-4 hover:shadow-md transition"
         >
             <h3 className="text-lg font-semibold">

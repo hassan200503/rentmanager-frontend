@@ -1,12 +1,22 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
+import { Space_Grotesk, Inter } from "next/font/google";
 
 import QueryProvider from "@/providers/query-provider";
 import AuthProvider from "@/providers/auth-provider";
 import { Toaster } from "sonner";
 
-import AppShell from "@/shared/components/layout/AppShell";
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    variable: "--font-display",
+    weight: ["500", "600", "700"],
+});
+
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-body",
+});
 
 export const metadata: Metadata = {
     title: "RentManager SaaS",
@@ -19,12 +29,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
         <body className="bg-background text-gray-900 antialiased font-sans">
         <QueryProvider>
             <AuthProvider>
                 <Toaster position="top-right" richColors />
-                <AppShell>{children}</AppShell>
+                {children}
             </AuthProvider>
         </QueryProvider>
         </body>

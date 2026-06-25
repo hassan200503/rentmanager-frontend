@@ -15,8 +15,7 @@ export function UnitGrid({
             {units.map((unit) => (
                 <UnitCard
                     key={unit.id}
-                    unit={unit}
-                />
+                    unit={unit} propertyId={""}                />
             ))}
         </div>
     );

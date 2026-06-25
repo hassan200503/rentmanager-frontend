@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api/client";
 import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
 import { getTenantIdFromSession } from "@/shared/tenant/get-tenant-id";
 import { useOrgStore } from "@/stores/org-store";
+import {UnitSummaryResponse} from "@/features/unit/types/unit-summary";
 
 type ClerkWindow = Window & {
     Clerk?: {
@@ -139,4 +140,15 @@ export const unitApi = {
             { headers: { "Content-Type": "multipart/form-data" } }
         );
     },
+
+
+    getSummary: async (): Promise<UnitSummaryResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<UnitSummaryResponse>(
+            unitEndpoints.summary,
+            token,
+            tenantId
+        );
+    },
+
 };

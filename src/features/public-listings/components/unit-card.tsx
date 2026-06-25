@@ -4,36 +4,31 @@ import Link from "next/link";
 import { PublicUnitResponse } from "../types/public-unit";
 
 interface UnitCardProps {
+    propertyId: string;
     unit: PublicUnitResponse;
 }
 
-export function UnitCard({
-                             unit,
-                         }: UnitCardProps) {
+export function UnitCard({ propertyId, unit }: UnitCardProps) {
     return (
         <Link
-            href={`/units/${unit.id}`}
+            href={`/listings/${propertyId}/${unit.id}`}
             className="block border rounded-lg p-4 hover:shadow-md transition"
         >
             <div className="flex items-center justify-between">
-                <h3 className="font-semibold">
-                    {unit.unitNumber}
-                </h3>
-
-                <span className="text-sm">
-                    {unit.occupancyStatus}
+                <h4 className="font-semibold">Unit {unit.unitNumber}</h4>
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                    Vacant
                 </span>
             </div>
 
-            {unit.description && (
-                <p className="mt-2 text-sm">
-                    {unit.description}
-                </p>
-            )}
-
-            <p className="mt-3 font-medium">
-                {unit.rentAmount}
+            <p className="mt-2 text-lg font-semibold">
+                KES {unit.rentAmount.toLocaleString()}
+                <span className="text-sm font-normal text-gray-500"> / month</span>
             </p>
+
+            {unit.description && (
+                <p className="mt-1 text-sm text-gray-600">{unit.description}</p>
+            )}
         </Link>
     );
 }
