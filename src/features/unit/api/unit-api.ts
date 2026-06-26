@@ -130,17 +130,15 @@ export const unitApi = {
         const { token, tenantId } = await getAuthContext();
 
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("file", file);
 
         return apiClient.post<{ url: string }>(
-            unitEndpoints.uploadImage(id),
+            unitEndpoints.uploadMedia(id),
             formData,
             token,
-            tenantId,
-            { headers: { "Content-Type": "multipart/form-data" } }
+            tenantId
         );
     },
-
 
     getSummary: async (): Promise<UnitSummaryResponse> => {
         const { token, tenantId } = await getAuthContext();
@@ -150,5 +148,4 @@ export const unitApi = {
             tenantId
         );
     },
-
 };

@@ -67,10 +67,20 @@ async function request<T>(
     try {
         res = await fetch(`${appConfig.api.baseUrl}${endpoint}`, {
             ...options,
-            headers: {
-                ...buildHeaders(options?.token, options?.tenantId),
-                ...(options?.headers || {}),
-            },
+            headers: (() => {
+                const merged: Record<string, string> = {
+                    ...buildHeaders(options?.token, options?.tenantId),
+                    ...(options?.headers as Record<string, string> || {}),
+                };
+
+                // Let the browser set its own Content-Type (with boundary)
+                // for multipart/form-data uploads.
+                if (options?.body instanceof FormData) {
+                    delete merged["Content-Type"];
+                }
+
+                return merged;
+            })(),
             signal: controller.signal,
         });
     } catch (err: unknown) {
@@ -148,9 +158,29 @@ export const apiClient = {
             ...config,
         }),
 
-    put: <T>(url: string, body?: unknown, token?: string, tenantId?: string) =>
+    put: <T>(
+        url: string,
+        body?: unknown,
+        token?: string,
+        tenantId?: string,
+        config?: RequestInit
+    ) =>
         request<T>(url, {
             method: "PUT",
+            body: body instanceof FormData ? body : JSON.stringify(body),
+            token,
+            tenantId,
+            ...config,
+        }),
+
+    patch: <T>(
+        url: string,
+        body?: unknown,
+        token?: string,
+        tenantId?: string
+    ) =>
+        request<T>(url, {
+            method: "PATCH",
             body: JSON.stringify(body),
             token,
             tenantId,

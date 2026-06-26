@@ -4,8 +4,8 @@ import { CreateUnitRequest } from "../types/unit-request";
 export const useCreateUnit = () => {
     const mutation = useCreateUnitMutation();
 
-    const createUnit = async (payload: CreateUnitRequest) => {
-        return mutation.mutateAsync(payload);
+    const createUnit = async (payload: CreateUnitRequest, imageFile?: File) => {
+        return mutation.mutateAsync({ payload, imageFile });
     };
 
     return {

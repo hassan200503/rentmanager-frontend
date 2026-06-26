@@ -33,7 +33,6 @@ const defaultValues: PropertyFormValues = {
     occupiedArea: 0,
     unitCount: 0,
   },
-  imageUrl: "",
 };
 
 export const PropertyForm = ({
@@ -50,6 +49,7 @@ export const PropertyForm = ({
     formState: { errors },
   } = useForm<PropertyFormValues>({ defaultValues });
 
+  // eslint-disable-next-line react-hooks/refs
   const submit = handleSubmit(async (values) => {
     const parsed = propertySchema.safeParse(values);
 
@@ -254,9 +254,6 @@ export const PropertyForm = ({
               Upload Image
             </button>
           </div>
-          {errors.imageUrl && (
-              <span className="text-xs text-danger">{errors.imageUrl.message}</span>
-          )}
         </div>
 
         {/* Submit */}

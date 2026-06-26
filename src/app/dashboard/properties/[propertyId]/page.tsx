@@ -10,6 +10,7 @@ import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
 
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
+import {PropertyMediaManager} from "@/features/property/components/upload-gallery";
 
 export default function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -79,6 +80,14 @@ export default function PropertyDetailPage() {
             Back
           </button>
         </div>
+
+
+
+        {/* Photos */}
+        <section className="card bg-white p-4 rounded shadow">
+          <h3 className="font-medium mb-3 text-gray-800">Photos</h3>
+          <PropertyMediaManager propertyId={property.propertyId} />
+        </section>
 
         {/* Unit Summary Cards */}
         <div className="grid grid-cols-2 gap-4">

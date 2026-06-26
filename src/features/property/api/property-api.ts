@@ -136,16 +136,5 @@ export const propertyApi = {
         );
     },
 
-    uploadImage: async (id: string, file: File): Promise<{ url: string }> => {
-        const { token, tenantId } = await getAuthContext();
-        const formData = new FormData();
-        formData.append("image", file);
-        return apiClient.post<{ url: string }>(
-            propertyEndpoints.uploadImage(id),
-            formData,
-            token,
-            tenantId,
-            { headers: { "Content-Type": "multipart/form-data" } }
-        );
-    },
+
 };

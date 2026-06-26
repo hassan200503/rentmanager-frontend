@@ -1,6 +1,7 @@
 "use client";
 
 import { Unit, UnitStatus } from "../types/unit";
+import {UnitMediaManager} from "@/features/unit/components/unit-media-manager";
 
 type UnitDetailsProps = {
     unit: Unit;
@@ -36,6 +37,16 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
                         {unit.status.charAt(0) + unit.status.slice(1).toLowerCase()}
                     </span>
                 </div>
+            </div>
+
+
+
+            {/* Photos */}
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                    Photos
+                </h2>
+                <UnitMediaManager unitId={unit.id} />
             </div>
 
             {/* Pricing */}
