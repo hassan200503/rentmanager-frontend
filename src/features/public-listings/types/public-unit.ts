@@ -5,6 +5,7 @@ export interface PublicUnitResponse {
     description: string;
     rentAmount: number;
     occupancyStatus: string;
+    images: string[];
 }
 
 export interface PublicUnitPageResponse {

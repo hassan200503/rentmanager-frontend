@@ -10,9 +10,11 @@ export const useUpdateUnitMutation = () => {
     return useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: UpdateUnitRequest }) =>
             unitApi.update(id, payload),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: unitKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: unitKeys.detail(data.id) });
+        onSuccess: async (data) => {
+            await Promise.all([
+                queryClient.refetchQueries({ queryKey: unitKeys.detail(data.id) }),
+                queryClient.invalidateQueries({ queryKey: unitKeys.lists() }),
+            ]);
             toast.success("Unit updated successfully");
         },
         onError: () => {

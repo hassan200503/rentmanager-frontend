@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUnit } from "@/features/unit/hooks/use-unit";
 import { useUpdateUnit } from "@/features/unit/hooks/use-update-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest, UpdateUnitRequest } from "@/features/unit/types/unit-request";
+import { unitKeys } from "@/features/unit/queries/unit-keys";
 import Loading from "@/app/loading";
 
 export default function EditUnitPage() {
@@ -12,6 +15,7 @@ export default function EditUnitPage() {
     const params = useParams();
     const propertyId = params.propertyId as string;
     const unitId = params.unitId as string;
+    const queryClient = useQueryClient();
 
     const {
         data: unit,
@@ -24,6 +28,12 @@ export default function EditUnitPage() {
         error: errorUpdate,
     } = useUpdateUnit();
 
+    useEffect(() => {
+        if (!loadingUnit && !errorUnit && !unit) {
+            router.replace(`/dashboard/properties/${propertyId}/units`);
+        }
+    }, [loadingUnit, errorUnit, unit, router, propertyId]);
+
     if (loadingUnit) return <Loading />;
     if (errorUnit) {
         return (
@@ -33,14 +43,12 @@ export default function EditUnitPage() {
             </div>
         );
     }
-    if (!unit) {
-        router.replace(`/dashboard/properties/${propertyId}/units`);
-        return null;
-    }
+    if (!unit) return null;
 
     const handleSubmit = async (data: CreateUnitRequest) => {
         const { unitNumber, ...updatePayload } = data;
         await updateUnit(unitId, updatePayload as UpdateUnitRequest);
+        await queryClient.refetchQueries({ queryKey: unitKeys.detail(unitId) });
         router.push(`/dashboard/properties/${propertyId}/units/${unitId}`);
     };
 

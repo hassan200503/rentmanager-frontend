@@ -5,6 +5,8 @@ export interface PublicPropertyResponse {
     address: unknown | null;
     geoLocation: unknown | null;
     description: string;
+
+    images: string[];
 }
 
 export interface PublicPropertyPageResponse {

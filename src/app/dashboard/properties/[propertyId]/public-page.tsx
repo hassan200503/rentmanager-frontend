@@ -76,8 +76,7 @@ export default function PublicPropertyPage() {
                     />
                 ) : (
                     <UnitGrid
-                        units={units?.content ?? []}
-                    />
+                        units={units?.content ?? []} propertyId={""}                    />
                 )}
             </section>
         </div>

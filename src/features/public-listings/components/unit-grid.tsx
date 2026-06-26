@@ -5,17 +5,18 @@ import { UnitCard } from "./unit-card";
 
 interface UnitGridProps {
     units: PublicUnitResponse[];
+    propertyId: string;
 }
 
-export function UnitGrid({
-                             units,
-                         }: UnitGridProps) {
+export function UnitGrid({ units, propertyId }: UnitGridProps) {
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {units.map((unit) => (
                 <UnitCard
                     key={unit.id}
-                    unit={unit} propertyId={""}                />
+                    unit={unit}
+                    propertyId={propertyId}
+                />
             ))}
         </div>
     );
