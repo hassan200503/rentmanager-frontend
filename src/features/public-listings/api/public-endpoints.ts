@@ -9,4 +9,8 @@ export const publicEndpoints = {
 
     unitsByProperty: (propertyId: string) =>
         `/public/units/property/${propertyId}`,
+
+
+    longestVacantUnit: "/public/units/featured/longest-vacant", // ADDED
+
 };

@@ -6,6 +6,10 @@ export interface PublicUnitResponse {
     rentAmount: number;
     occupancyStatus: string;
     images: string[];
+
+    propertyName?: string;   // ADDED
+    propertyArea?: string;   // ADDED
+    vacatedAt?: string;      // ADDED
 }
 
 export interface PublicUnitPageResponse {

@@ -67,8 +67,9 @@ const toPage = (
 };
 
 export const propertyApi = {
-    list: async (params?: PropertyListParams): Promise<PropertyPageResponse> => {
-        const { token, tenantId } = await getAuthContext();
+    list: async (params?: PropertyListParams, preloadedToken?: string): Promise<PropertyPageResponse> => {
+        const { token: contextToken, tenantId } = await getAuthContext();
+        const token = preloadedToken ?? contextToken;
 
         if (params?.status) {
             const properties = await apiClient.get<PropertyResponse[]>(
@@ -135,6 +136,4 @@ export const propertyApi = {
             tenantId
         );
     },
-
-
 };

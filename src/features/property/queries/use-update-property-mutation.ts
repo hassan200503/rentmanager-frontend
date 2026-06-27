@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { propertyApi } from "../api/property-api";
 import { propertyKeys } from "./property-keys";
 import { UpdatePropertyRequest } from "../types/property-request";
+import { toast } from "sonner";
 
 type UpdatePropertyVariables = {
     id: string;
@@ -12,13 +13,16 @@ export const useUpdatePropertyMutation = () => {
     const qc = useQueryClient();
 
     return useMutation({
-        // Disable automatic retry – a duplicate request was causing the rate‑limit error
         retry: false,
         mutationFn: ({ id, payload }: UpdatePropertyVariables) =>
             propertyApi.update(id, payload),
         onSuccess: (_, vars) => {
             qc.invalidateQueries({ queryKey: propertyKeys.detail(vars.id) });
             qc.invalidateQueries({ queryKey: propertyKeys.all });
+            toast.success("Property updated successfully");
+        },
+        onError: () => {
+            toast.error("Failed to update property. Please try again.");
         },
     });
 };

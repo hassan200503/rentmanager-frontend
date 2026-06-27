@@ -1,6 +1,19 @@
 import Link from "next/link";
 
-export default function HomePage() {
+import {publicUnitApi} from "@/features/public-listings/api/public-unit-api";
+
+export const dynamic = "force-dynamic";
+
+function daysVacant(vacatedAt?: string): number | null {
+  if (!vacatedAt) return null;
+  const diff = Date.now() - new Date(vacatedAt).getTime();
+  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+}
+
+export default async function HomePage() {
+  const featuredUnit = await publicUnitApi.getLongestVacant();
+  const vacantDays = daysVacant(featuredUnit?.vacatedAt);
+
   return (
       <main className="min-h-screen bg-[#F7F7F4] text-[#14213D]">
         {/* ============ HEADER ============ */}
@@ -71,29 +84,52 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Signature element: a live unit card preview, not a stock photo */}
+          {/* Signature element: a live unit card preview, sourced from the real backend */}
           <div className="relative">
             <div className="rounded-2xl border border-[#14213D]/10 bg-white shadow-[0_20px_50px_-20px_rgba(20,33,61,0.25)] p-5 space-y-4 max-w-sm mx-auto">
               <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-[#5B6472]">
-                Kilimani, Nairobi
+                {featuredUnit?.propertyArea ?? "Across Kenya"}
               </span>
                 <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#1F8A55]/10 text-[#1F8A55]">
-                Vacant now
+                {vacantDays !== null ? `Vacant ${vacantDays}d` : "Vacant now"}
               </span>
               </div>
-              <div className="h-36 rounded-lg bg-gradient-to-br from-[#14213D]/10 to-[#E8A33D]/20" />
+
+              {featuredUnit?.images?.[0] ? (
+                  <img
+                      src={featuredUnit.images[0]}
+                      alt={`${featuredUnit.propertyName ?? "Unit"} ${featuredUnit.unitNumber}`}
+                      className="h-36 w-full object-cover rounded-lg"
+                  />
+              ) : (
+                  <div className="h-36 rounded-lg bg-gradient-to-br from-[#14213D]/10 to-[#E8A33D]/20" />
+              )}
+
               <div>
                 <p className="font-[var(--font-display)] text-xl font-semibold">
-                  KES 32,000 <span className="text-sm font-normal text-[#5B6472]">/ month</span>
+                  KES {featuredUnit ? featuredUnit.rentAmount.toLocaleString() : "—"}{" "}
+                  <span className="text-sm font-normal text-[#5B6472]">/ month</span>
                 </p>
                 <p className="text-sm text-[#5B6472] mt-1">
-                  2 Bedroom · Greenfield Apartments, Unit 4B
+                  {featuredUnit
+                      ? `${featuredUnit.propertyName ?? "Unit"}, Unit ${featuredUnit.unitNumber}`
+                      : "No vacant units listed yet"}
                 </p>
               </div>
-              <div className="text-sm font-semibold text-[#C1502E] flex items-center gap-1">
+
+
+
+              <Link
+                  href={featuredUnit ? `/listings/${featuredUnit.propertyId}` : "/listings"}
+                  className="text-sm font-semibold text-[#C1502E] flex items-center gap-1"
+              >
                 Reserve with KES 5,000 deposit →
-              </div>
+              </Link>
+
+
+
+
             </div>
 
             {/* secondary floating card for depth */}

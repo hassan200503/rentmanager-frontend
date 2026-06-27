@@ -50,4 +50,14 @@ export const publicUnitApi = {
             publicEndpoints.unitById(unitId)
         );
     },
+
+    getLongestVacant: async (): Promise<PublicUnitResponse | null> => {
+        try {
+            return await apiClient.get<PublicUnitResponse>(
+                publicEndpoints.longestVacantUnit
+            );
+        } catch {
+            return null;
+        }
+    },
 };
