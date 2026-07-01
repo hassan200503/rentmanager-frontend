@@ -30,13 +30,17 @@ export default function ReservationWaitingPage() {
     const searchParams = useSearchParams();
     const paymentIntentId = searchParams.get("paymentIntentId");
 
-    const [status, setStatus] = useState<PaymentIntentStatus | "TIMEOUT" | "ERROR">("PENDING");
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [status, setStatus] = useState<PaymentIntentStatus | "TIMEOUT" | "ERROR">(
+        () => (paymentIntentId ? "PENDING" : "ERROR")
+    );
+    const [errorMessage, setErrorMessage] = useState<string | null>(() =>
+        paymentIntentId ? null : "Missing payment reference. Please start your reservation again."
+    );
     const [elapsedMs, setElapsedMs] = useState(0);
 
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const startedAtRef = useRef<number>(Date.now());
+    const startedAtRef = useRef<number>(0);
 
     const clearTimers = useCallback(() => {
         if (pollRef.current) clearInterval(pollRef.current);
@@ -44,14 +48,6 @@ export default function ReservationWaitingPage() {
         pollRef.current = null;
         tickRef.current = null;
     }, []);
-
-    // Missing id — nothing to poll
-    useEffect(() => {
-        if (!paymentIntentId) {
-            setStatus("ERROR");
-            setErrorMessage("Missing payment reference. Please start your reservation again.");
-        }
-    }, [paymentIntentId]);
 
     // Polling
     useEffect(() => {
@@ -80,7 +76,7 @@ export default function ReservationWaitingPage() {
 
                 if (newStatus === "PAID") {
                     clearTimers();
-                    router.push(`/reserve/confirmed?reservationId=${reservationId}`);
+                    router.push(`/reserve/confirmation?reservationId=${reservationId}`);
                     return;
                 }
 
