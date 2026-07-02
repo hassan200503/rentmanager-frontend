@@ -22,7 +22,7 @@ interface ApiResponse<T> {
 
 // --- Config ---
 const POLL_INTERVAL_MS = 3000;
-const TIMEOUT_MS = 90_000; // STK prompts expire ~60-90s on the customer's phone
+const TIMEOUT_MS = 180_000; // increased from 90s to 3 minutes to allow more time for STK approval / testing delays
 
 // --- Component ---
 export default function ReservationWaitingPage() {
@@ -53,8 +53,13 @@ export default function ReservationWaitingPage() {
     useEffect(() => {
         if (!paymentIntentId) return;
 
-        let cancelled = false;
+        const cancelledRef = { current: false };
         startedAtRef.current = Date.now();
+
+        const stop = () => {
+            cancelledRef.current = true;
+            clearTimers();
+        };
 
         const poll = async () => {
             try {
@@ -65,7 +70,7 @@ export default function ReservationWaitingPage() {
                     throw new Error("Unable to check payment status.");
                 }
                 const json: ApiResponse<PaymentStatusResponse> = await res.json();
-                if (cancelled) return;
+                if (cancelledRef.current) return;
 
                 if (!json.success || !json.data) {
                     throw new Error(json.message || "Unable to check payment status.");
@@ -75,19 +80,19 @@ export default function ReservationWaitingPage() {
                 setStatus(newStatus);
 
                 if (newStatus === "PAID") {
-                    clearTimers();
+                    stop();
                     router.push(`/reserve/confirmation?reservationId=${reservationId}`);
                     return;
                 }
 
                 if (newStatus === "FAILED" || newStatus === "EXPIRED") {
-                    clearTimers();
+                    stop();
                     return;
                 }
                 // PENDING -> keep polling
             } catch (err: unknown) {
-                if (cancelled) return;
-                clearTimers();
+                if (cancelledRef.current) return;
+                stop();
                 setStatus("ERROR");
                 setErrorMessage(err instanceof Error ? err.message : "Unexpected error.");
             }
@@ -98,17 +103,17 @@ export default function ReservationWaitingPage() {
         pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
 
         tickRef.current = setInterval(() => {
+            if (cancelledRef.current) return;
             const elapsed = Date.now() - startedAtRef.current;
             setElapsedMs(elapsed);
             if (elapsed >= TIMEOUT_MS) {
-                clearTimers();
+                stop();
                 setStatus((prev) => (prev === "PENDING" ? "TIMEOUT" : prev));
             }
         }, 1000);
 
         return () => {
-            cancelled = true;
-            clearTimers();
+            stop();
         };
     }, [paymentIntentId, router, clearTimers]);
 
