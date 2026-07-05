@@ -3,6 +3,7 @@ import { propertyApi } from "../api/property-api";
 import { propertyKeys } from "./property-keys";
 import { UpdatePropertyRequest } from "../types/property-request";
 import { toast } from "sonner";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 type UpdatePropertyVariables = {
     id: string;
@@ -21,8 +22,10 @@ export const useUpdatePropertyMutation = () => {
             qc.invalidateQueries({ queryKey: propertyKeys.all });
             toast.success("Property updated successfully");
         },
-        onError: () => {
-            toast.error("Failed to update property. Please try again.");
+        onError: (error) => {
+            toast.error(
+                getProcessErrorMessage(error, "Failed to update property. Please try again.")
+            );
         },
     });
 };

@@ -1,6 +1,8 @@
 export enum PropertyStatus {
     DRAFT = "DRAFT",
     ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+    UNDER_MAINTENANCE = "UNDER_MAINTENANCE",
     ARCHIVED = "ARCHIVED",
 }
 

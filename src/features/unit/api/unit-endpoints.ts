@@ -6,8 +6,11 @@ export const unitEndpoints = {
     search: `${base}/search`,
     byId: (id: string) => `${base}/${id}`,
     byProperty: (propertyId: string) => `${base}/property/${propertyId}`,
-    byStatus: (propertyId: string, status: string) =>
-        `${base}/property/${propertyId}/status/${status}`,
+    byStatus: (status: string) => `${base}/status/${status}`,
+    activate: (id: string) => `${base}/${id}/activate`,
+    archive: (id: string) => `${base}/${id}/archive`,
+    markOccupied: (id: string) => `${base}/${id}/occupied`,
+    markVacant: (id: string) => `${base}/${id}/vacant`,
     uploadImage: (id: string) => `${base}/${id}/image`,
     uploadMedia: (id: string) => `${base}/${id}/media`,
 };

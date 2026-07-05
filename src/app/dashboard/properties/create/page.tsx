@@ -5,6 +5,8 @@ import { PropertyForm } from "@/features/property/components/property-form";
 import { useCreateProperty } from "@/features/property/hooks/use-create-property";
 import { CreatePropertyRequest } from "@/features/property/types/property-request";
 import { propertyMediaApi } from "@/features/property/api/property-media-api";
+import { toast } from "sonner";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 export default function CreatePropertyPage() {
   const router = useRouter();
@@ -14,7 +16,14 @@ export default function CreatePropertyPage() {
     const result = await createProperty(data);
 
     if (imageFile && result.propertyId) {
-      await propertyMediaApi.upload(result.propertyId, imageFile, true);
+      try {
+        await propertyMediaApi.upload(result.propertyId, imageFile, true);
+        toast.success("Property photo uploaded successfully");
+      } catch (error) {
+        toast.error(
+          getProcessErrorMessage(error, "Property was created, but photo upload failed.")
+        );
+      }
     }
 
     router.push(`/dashboard/properties/${result.propertyId}`);

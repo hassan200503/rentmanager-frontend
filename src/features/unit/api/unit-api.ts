@@ -75,7 +75,7 @@ export const unitApi = {
 
         if (params.status) {
             const units = await apiClient.get<UnitResponse[]>(
-                unitEndpoints.byStatus(params.propertyId, params.status),
+                unitEndpoints.byStatus(params.status),
                 token,
                 tenantId
             );
@@ -118,6 +118,46 @@ export const unitApi = {
         return apiClient.put<UnitResponse>(
             unitEndpoints.byId(id),
             payload,
+            token,
+            tenantId
+        );
+    },
+
+    activate: async (id: string): Promise<string> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.patch<string>(
+            unitEndpoints.activate(id),
+            undefined,
+            token,
+            tenantId
+        );
+    },
+
+    archive: async (id: string): Promise<string> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.patch<string>(
+            unitEndpoints.archive(id),
+            undefined,
+            token,
+            tenantId
+        );
+    },
+
+    markOccupied: async (id: string): Promise<string> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.patch<string>(
+            unitEndpoints.markOccupied(id),
+            undefined,
+            token,
+            tenantId
+        );
+    },
+
+    markVacant: async (id: string): Promise<string> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.patch<string>(
+            unitEndpoints.markVacant(id),
+            undefined,
             token,
             tenantId
         );

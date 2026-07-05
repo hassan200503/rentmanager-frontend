@@ -3,11 +3,13 @@
 export enum UnitStatus {
     INACTIVE = "INACTIVE",
     ACTIVE = "ACTIVE",
+    MAINTENANCE = "MAINTENANCE",
     ARCHIVED = "ARCHIVED",
 }
 
 export enum UnitOccupancyStatus {
     VACANT = "VACANT",
+    PENDING_PAYMENT = "PENDING_PAYMENT",
     OCCUPIED = "OCCUPIED",
     RESERVED = "RESERVED",
 }

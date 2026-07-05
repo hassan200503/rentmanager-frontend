@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { unitApi } from "../api/unit-api";
 import { unitKeys } from "./unit-keys";
 import { UpdateUnitRequest } from "../types/unit-request";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 export const useUpdateUnitMutation = () => {
     const queryClient = useQueryClient();
@@ -17,8 +18,10 @@ export const useUpdateUnitMutation = () => {
             ]);
             toast.success("Unit updated successfully");
         },
-        onError: () => {
-            toast.error("Failed to update unit. Please try again.");
+        onError: (error) => {
+            toast.error(
+                getProcessErrorMessage(error, "Failed to update unit. Please try again.")
+            );
         },
     });
 };

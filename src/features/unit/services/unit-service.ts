@@ -22,6 +22,22 @@ export const unitService = {
         return unitApi.update(id, payload);
     },
 
+    async activate(id: string) {
+        return unitApi.activate(id);
+    },
+
+    async archive(id: string) {
+        return unitApi.archive(id);
+    },
+
+    async markOccupied(id: string) {
+        return unitApi.markOccupied(id);
+    },
+
+    async markVacant(id: string) {
+        return unitApi.markVacant(id);
+    },
+
     async uploadImage(id: string, file: File) {
         return unitApi.uploadImage(id, file);
     },

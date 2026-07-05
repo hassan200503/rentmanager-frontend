@@ -64,3 +64,14 @@ export function getErrorMessage(code?: string): string {
       return "Something went wrong. Please try again later.";
   }
 }
+
+export function getProcessErrorMessage(err: unknown, fallback: string): string {
+  const error = handleApiError(err);
+  const friendly = getErrorMessage(error.code);
+
+  if (friendly !== "Something went wrong. Please try again later.") {
+    return friendly;
+  }
+
+  return error.message || fallback;
+}

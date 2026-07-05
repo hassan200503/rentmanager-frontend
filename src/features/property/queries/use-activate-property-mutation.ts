@@ -4,21 +4,20 @@ import { propertyApi } from "../api/property-api";
 import { propertyKeys } from "./property-keys";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
-export const useArchivePropertyMutation = () => {
+export const useActivatePropertyMutation = () => {
     const qc = useQueryClient();
 
     return useMutation({
-        mutationFn: propertyApi.archive,
+        mutationFn: propertyApi.activate,
         onSuccess: (_data, id) => {
             qc.invalidateQueries({ queryKey: propertyKeys.detail(id) });
             qc.invalidateQueries({ queryKey: propertyKeys.all });
             qc.invalidateQueries({ queryKey: ["public-properties"] });
-            qc.invalidateQueries({ queryKey: ["public-units"] });
-            toast.success("Property deactivated and removed from public listings");
+            toast.success("Property activated and eligible for public listings");
         },
         onError: (error) => {
             toast.error(
-                getProcessErrorMessage(error, "Failed to deactivate property. Please try again.")
+                getProcessErrorMessage(error, "Failed to activate property. Please try again.")
             );
         },
     });
