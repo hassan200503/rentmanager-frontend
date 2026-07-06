@@ -1,7 +1,8 @@
 "use client";
 
 import { Unit, UnitStatus } from "../types/unit";
-import {UnitMediaManager} from "@/features/unit/components/unit-media-manager";
+import { UnitMediaManager } from "@/features/unit/components/unit-media-manager";
+import { useUnitLifecycle } from "@/features/unit/hooks/use-unit-lifecycle";
 
 type UnitDetailsProps = {
     unit: Unit;
@@ -14,6 +15,12 @@ const statusClasses: Record<string, string> = {
 };
 
 export function UnitDetails({ unit }: UnitDetailsProps) {
+    const { activateUnit, deactivateUnit, isActivating, isDeactivating } =
+        useUnitLifecycle();
+
+    const canActivate = unit.status === UnitStatus.INACTIVE;
+    const canDeactivate = unit.status === UnitStatus.ACTIVE;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -28,18 +35,44 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
                         </p>
                     </div>
 
-                    <span
-                        className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${
-                            statusClasses[unit.status] ??
-                            "bg-gray-100 text-gray-700 border border-gray-200"
-                        }`}
-                    >
-                        {unit.status.charAt(0) + unit.status.slice(1).toLowerCase()}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span
+                            className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${
+                                statusClasses[unit.status] ??
+                                "bg-gray-100 text-gray-700 border border-gray-200"
+                            }`}
+                        >
+                            {unit.status.charAt(0) + unit.status.slice(1).toLowerCase()}
+                        </span>
+
+                        {canActivate && (
+                            <button
+                                onClick={() => activateUnit(unit.id)}
+                                disabled={isActivating}
+                                className="btn-success text-sm px-3 py-2 rounded disabled:opacity-50"
+                            >
+                                {isActivating ? "Activating..." : "Activate"}
+                            </button>
+                        )}
+
+                        {canDeactivate && (
+                            <button
+                                onClick={() => deactivateUnit(unit.id)}
+                                disabled={isDeactivating}
+                                className="btn-danger text-sm px-3 py-2 rounded disabled:opacity-50"
+                            >
+                                {isDeactivating ? "Deactivating..." : "Deactivate"}
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {unit.status === UnitStatus.INACTIVE && (
+                    <p className="mt-3 text-xs text-amber-600">
+                        This unit is not visible in public listings until activated.
+                    </p>
+                )}
             </div>
-
-
 
             {/* Photos */}
             <div className="rounded-xl border border-gray-200 bg-white p-6">

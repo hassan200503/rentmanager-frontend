@@ -30,6 +30,13 @@ export default function Sidebar() {
                 >
                     Leases
                 </Link>
+
+                <Link
+                    className="block px-3 py-2 rounded-md text-gray-600 hover:text-primary hover:bg-primary-light transition"
+                    href="/dashboard/team"
+                >
+                    Team
+                </Link>
             </nav>
         </aside>
     );

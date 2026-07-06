@@ -5,6 +5,8 @@ import { useUnitsQuery } from "../queries/use-units-query";
 import { UnitStatusBadge } from "./unit-status-badge";
 import { DEFAULT_UNIT_FILTERS, UnitFilterState } from "../hooks/use-unit-filters";
 import { UnitResponse } from "../types/unit-request";
+import { useUnitLifecycle } from "../hooks/use-unit-lifecycle";
+import { UnitStatus } from "../types/unit";
 
 type UnitTableProps = {
   propertyId: string;
@@ -22,6 +24,8 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
   const filters: UnitFilterState = { ...DEFAULT_UNIT_FILTERS, ...params };
   const { data, isLoading, error } = useUnitsQuery({ propertyId, ...filters });
   const router = useRouter();
+  const { activateUnit, deactivateUnit, isActivating, isDeactivating } =
+      useUnitLifecycle();
 
   if (isLoading) {
     return (
@@ -64,52 +68,75 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
           </thead>
 
           <tbody>
-          {data?.content?.map((u: UnitResponse) => (
-              <tr
-                  key={u.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-              >
-                <td className="p-3 text-sm font-medium text-gray-800">
-                  {u.unitNumber}
-                </td>
-                <td className="p-3">
-                  <UnitStatusBadge status={u.status} />
-                </td>
-                <td className="p-3 text-sm text-gray-800">
-                  {formatCurrency(u.rentAmount)}
-                </td>
-                <td className="p-3 text-sm text-gray-800">
-                  {u.floor ?? "—"}
-                </td>
-                <td className="p-3 text-sm text-gray-800">
-                  {u.occupancyStatus}
-                </td>
-                <td className="p-3 text-right">
-                  <div className="flex gap-2 justify-end">
-                    <button
-                        onClick={() =>
-                            router.push(
-                                `/dashboard/properties/${propertyId}/units/${u.id}`
-                            )
-                        }
-                        className="btn-primary text-sm px-3 py-2 rounded"
-                    >
-                      View
-                    </button>
-                    <button
-                        onClick={() =>
-                            router.push(
-                                `/dashboard/properties/${propertyId}/units/${u.id}/edit`
-                            )
-                        }
-                        className="btn-secondary text-sm px-3 py-2 rounded"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </td>
-              </tr>
-          ))}
+          {data?.content?.map((u: UnitResponse) => {
+            const canActivate = u.status === UnitStatus.INACTIVE;
+            const canDeactivate = u.status === UnitStatus.ACTIVE;
+
+            return (
+                <tr
+                    key={u.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                >
+                  <td className="p-3 text-sm font-medium text-gray-800">
+                    {u.unitNumber}
+                  </td>
+                  <td className="p-3">
+                    <UnitStatusBadge status={u.status} />
+                  </td>
+                  <td className="p-3 text-sm text-gray-800">
+                    {formatCurrency(u.rentAmount)}
+                  </td>
+                  <td className="p-3 text-sm text-gray-800">
+                    {u.floor ?? "—"}
+                  </td>
+                  <td className="p-3 text-sm text-gray-800">
+                    {u.occupancyStatus}
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="flex gap-2 justify-end flex-wrap">
+                      {canActivate && (
+                          <button
+                              onClick={() => activateUnit(u.id)}
+                              disabled={isActivating}
+                              className="btn-success text-sm px-3 py-2 rounded disabled:opacity-50"
+                          >
+                            {isActivating ? "Activating..." : "Activate"}
+                          </button>
+                      )}
+                      {canDeactivate && (
+                          <button
+                              onClick={() => deactivateUnit(u.id)}
+                              disabled={isDeactivating}
+                              className="btn-danger text-sm px-3 py-2 rounded disabled:opacity-50"
+                          >
+                            {isDeactivating ? "Deactivating..." : "Deactivate"}
+                          </button>
+                      )}
+                      <button
+                          onClick={() =>
+                              router.push(
+                                  `/dashboard/properties/${propertyId}/units/${u.id}`
+                              )
+                          }
+                          className="btn-primary text-sm px-3 py-2 rounded"
+                      >
+                        View
+                      </button>
+                      <button
+                          onClick={() =>
+                              router.push(
+                                  `/dashboard/properties/${propertyId}/units/${u.id}/edit`
+                              )
+                          }
+                          className="btn-secondary text-sm px-3 py-2 rounded"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+            );
+          })}
 
           {data?.empty && (
               <tr>

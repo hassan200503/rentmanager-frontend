@@ -70,16 +70,46 @@ const toPage = (
 };
 
 export const unitApi = {
+
+
+
+
     list: async (params: UnitListParams): Promise<UnitPageResponse> => {
         const { token, tenantId } = await getAuthContext();
 
-        if (params.status) {
+        // NOTE (frontend-only fix, no backend business logic changed):
+        // GET /units/status/{status} is tenant-scoped only on the backend —
+        // it has no propertyId parameter. Calling it directly while viewing
+        // a single property's unit table would leak units from every other
+        // property the landlord owns into this table. When both propertyId
+        // and status are present, we fetch the property-scoped page instead
+        // and filter by status client-side. Trade-off: totalElements reflects
+        // the filtered subset of the fetched page, not a true global count
+        // for that status — acceptable given typical per-property unit counts.
+        if (params.status && !params.propertyId) {
             const units = await apiClient.get<UnitResponse[]>(
                 unitEndpoints.byStatus(params.status),
                 token,
                 tenantId
             );
             return toPage(units, params);
+        }
+
+        if (params.status && params.propertyId) {
+            const query = buildPageQuery({ ...params, size: params.size ?? 100 });
+            const endpoint = params.search
+                ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&propertyId=${encodeURIComponent(params.propertyId)}&${query}`
+                : `${unitEndpoints.byProperty(params.propertyId)}?${query}`;
+
+            const page = await apiClient.get<UnitPageResponse>(endpoint, token, tenantId);
+            const filtered = page.content.filter((u) => u.status === params.status);
+
+            return {
+                ...page,
+                content: filtered,
+                totalElements: filtered.length,
+                empty: filtered.length === 0,
+            };
         }
 
         const query = buildPageQuery(params);
@@ -90,6 +120,10 @@ export const unitApi = {
 
         return apiClient.get<UnitPageResponse>(endpoint, token, tenantId);
     },
+
+
+
+
 
     get: async (id: string): Promise<UnitResponse> => {
         const { token, tenantId } = await getAuthContext();

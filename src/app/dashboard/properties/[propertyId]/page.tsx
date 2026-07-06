@@ -5,12 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 
 import { useProperty } from "@/features/property/hooks/use-property";
 import { useUpdateProperty } from "@/features/property/hooks/use-update-property";
+import { useActivateProperty } from "@/features/property/hooks/use-activate-property";
 import { useArchiveProperty } from "@/features/property/hooks/use-archive-property";
 import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
 
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
-import {PropertyMediaManager} from "@/features/property/components/upload-gallery";
+import { PropertyMediaManager } from "@/features/property/components/upload-gallery";
+import { PropertyStatus } from "@/features/property/types/property";
 
 export default function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -20,7 +22,8 @@ export default function PropertyDetailPage() {
   const { data: unitsData } = useUnitsQuery({ propertyId, page: 0, size: 100 });
 
   const { updateProperty, isLoading: isUpdating } = useUpdateProperty();
-  const { archiveProperty } = useArchiveProperty();
+  const { activateProperty, isLoading: isActivating } = useActivateProperty();
+  const { archiveProperty, isLoading: isArchiving } = useArchiveProperty();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -52,7 +55,11 @@ export default function PropertyDetailPage() {
     return <div className="p-6">Property not found</div>;
   }
 
-  const isArchived = property.status === "ARCHIVED";
+  const isArchived = property.status === PropertyStatus.ARCHIVED;
+  const isActive = property.status === PropertyStatus.ACTIVE;
+  const canActivate =
+      property.status === PropertyStatus.DRAFT ||
+      property.status === PropertyStatus.INACTIVE;
 
   const totalUnits = unitsData?.totalElements ?? 0;
   const vacantUnits = unitsData?.content?.filter(
@@ -67,9 +74,14 @@ export default function PropertyDetailPage() {
             <h1 className="text-2xl font-semibold text-gray-900">
               {property.name}
             </h1>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 items-center">
               <PropertyStatusBadge status={property.status} />
               <span className="text-sm text-gray-500">{property.propertyType}</span>
+              {!isActive && !isArchived && (
+                  <span className="text-xs text-amber-600">
+                    Not visible in public listings until activated
+                  </span>
+              )}
             </div>
           </div>
 
@@ -80,8 +92,6 @@ export default function PropertyDetailPage() {
             Back
           </button>
         </div>
-
-
 
         {/* Photos */}
         <section className="card bg-white p-4 rounded shadow">
@@ -168,12 +178,25 @@ export default function PropertyDetailPage() {
                   {isUpdating ? "Updating..." : "Update"}
                 </button>
 
-                <button
-                    onClick={() => archiveProperty(property.propertyId)}
-                    className="btn-danger"
-                >
-                  Archive
-                </button>
+                {canActivate && (
+                    <button
+                        onClick={() => activateProperty(property.propertyId)}
+                        disabled={isActivating}
+                        className="btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isActivating ? "Activating..." : "Activate"}
+                    </button>
+                )}
+
+                {isActive && (
+                    <button
+                        onClick={() => archiveProperty(property.propertyId)}
+                        disabled={isArchiving}
+                        className="btn-danger disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isArchiving ? "Deactivating..." : "Deactivate"}
+                    </button>
+                )}
               </>
           )}
 
