@@ -15,3 +15,28 @@ export interface TenantResponse {
 export interface SuspendTenantRequest {
     reason: string;
 }
+
+
+export enum TenantType {
+    TRIAL = "TRIAL",
+    STANDARD = "STANDARD",
+    PREMIUM = "PREMIUM",
+    ENTERPRISE = "ENTERPRISE",
+}
+
+// Mirrors OnboardingTenantRequest per the onboarding flow spec (§2).
+// Do NOT add clerkOrgId, tenantCode, or slug fields — server-derived/generated.
+export interface OnboardingTenantRequest {
+    name: string;
+    email: string;
+    phoneNumber: string;
+    address?: string;
+    tenantType: TenantType;
+}
+
+export interface OnboardingTenantResponse {
+    tenantId: string;
+    name: string;
+    slug: string;
+    status: string;
+}

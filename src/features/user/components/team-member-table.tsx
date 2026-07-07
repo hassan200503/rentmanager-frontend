@@ -45,9 +45,22 @@ export function TeamMemberTable() {
                         </td>
                         <td className="p-3 text-sm text-gray-800">{u.email}</td>
                         <td className="p-3">
-                            <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${roleBadgeClass[u.role]}`}>
-                                {roleLabel[u.role]}
-                            </span>
+                            {u.role ? (
+                                <span
+                                    className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${roleBadgeClass[u.role]}`}
+                                >
+                                    {roleLabel[u.role]}
+                                </span>
+                            ) : (
+                                // Defensive only — should be unreachable: GET /users is
+                                // scoped to TenantContext.getTenantId() server-side
+                                // (UserQueryServiceImpl.getByTenant -> findByTenantId),
+                                // and a null-tenantId (pending onboarding) user can never
+                                // satisfy that query. Kept as a visible fallback rather
+                                // than a silent `!` assertion in case that invariant
+                                // ever changes.
+                                <span className="text-xs text-gray-400">—</span>
+                            )}
                         </td>
                         <td className="p-3 text-sm">
                             <span className={u.active ? "text-green-600" : "text-gray-400"}>

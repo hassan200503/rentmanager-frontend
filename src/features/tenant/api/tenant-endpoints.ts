@@ -7,4 +7,10 @@ export const tenantEndpoints = {
     darajaCredentials: (id: string) => `${base}/${id}/daraja-credentials`,
     suspend: (id: string) => `${base}/${id}/suspend`,
     activate: (id: string) => `${base}/${id}/activate`,
+    // Deliberately NOT nested under `base` — this is POST /api/v1/onboarding/tenant,
+    // a separate top-level resource, not /tenants/onboard. ASSUMPTION: appConfig.api.baseUrl
+    // already ends in /api/v1 (inferred from `base` above being the bare "/tenants" — same
+    // pattern userEndpoints.me presumably follows for /api/v1/users/me). Not verified against
+    // app-config.ts directly — confirm if this 404s.
+    onboard: "/onboarding/tenant",
 };

@@ -11,6 +11,15 @@ const isPublicRoute = createRouteMatcher([
     "/reserve(.*)",
 ]);
 
+// Pages a signed-in, tenant-less (pending onboarding/verification) user
+// is still allowed to reach. Add more here as you build them.
+const isAllowedWhilePending = createRouteMatcher([
+    "/onboarding",
+    "/pending-review",
+    "/account(.*)",
+    "/support",
+]);
+
 export default clerkMiddleware(async (auth, req) => {
     if (isPublicRoute(req)) return NextResponse.next();
 
@@ -21,8 +30,20 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     const tenantId = sessionClaims?.tenant_id;
+
+    // NOTE: once the real KYC review step exists, this should also check
+    // something like sessionClaims?.tenant_status === "active", not just
+    // tenantId presence — for now, form submission = active immediately.
     if (!tenantId) {
-        return NextResponse.redirect(new URL("/tenant-required", req.url));
+        if (isAllowedWhilePending(req)) {
+            return NextResponse.next();
+        }
+        return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+
+    // Tenant is set — this user is done onboarding, so keep them out of it.
+    if (req.nextUrl.pathname.startsWith("/onboarding")) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     if (

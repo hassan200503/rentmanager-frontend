@@ -22,17 +22,19 @@ type ClerkWindow = Window & {
 
 const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
+const getTenantId = (): string | undefined => {
+    const rawTenantId =
+        useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+
+    return rawTenantId ? uuidv5(rawTenantId, TENANT_NAMESPACE) : undefined;
+};
+
 const getAuthContext = async () => {
     if (typeof window === "undefined") {
         return {};
     }
 
-    const rawTenantId =
-        useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
-
-    const tenantId = rawTenantId
-        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
-        : undefined;
+    const tenantId = getTenantId();
 
     const token =
         (await (window as ClerkWindow).Clerk?.session?.getToken?.({
@@ -60,8 +62,8 @@ export const userApi = {
         );
     },
 
-    getCurrentUser: async (): Promise<UserResponse> => {
-        const { token, tenantId } = await getAuthContext();
+    getCurrentUser: async (token?: string): Promise<UserResponse> => {
+        const tenantId = getTenantId();
         return apiClient.get<UserResponse>(userEndpoints.me, token, tenantId);
     },
 
