@@ -102,9 +102,14 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                     {darajaStatus.isLoading ? (
                         <p className="text-sm text-gray-500">Checking status…</p>
                     ) : isDarajaConnected ? (
-                        <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-success-dark">
-                            Connected
-                        </span>
+                        <a href="/daraja/config" className="inline-flex items-center gap-2 group">
+                            <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-success-dark">
+                                Connected
+                            </span>
+                            <span className="text-xs text-gray-500 group-hover:underline">
+                                Manage
+                            </span>
+                        </a>
                     ) : (
                         <div className="space-y-3">
                             <p className="text-sm text-gray-500">Not connected yet.</p>

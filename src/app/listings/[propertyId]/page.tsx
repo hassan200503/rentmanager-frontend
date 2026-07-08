@@ -72,7 +72,12 @@ export default function PropertyDetailPage() {
                 <section>
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Vacant units</h2>
 
-                    {unitsError || units?.empty ? (
+                    {unitsError ? (
+                        <EmptyState
+                            title="Couldn't load units"
+                            description="Something went wrong fetching vacancies for this property. Try refreshing the page."
+                        />
+                    ) : units?.empty ? (
                         <EmptyState
                             title="No vacant units"
                             description="Check back soon — this property has no vacancies right now."

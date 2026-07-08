@@ -7,6 +7,25 @@ import { LoadingState } from "@/features/public-listings/components/loading-stat
 import { EmptyState } from "@/features/public-listings/components/empty-state";
 import { Home } from "lucide-react";
 
+// FIXED (2026-07-08): previously the badge always rendered the literal
+// string "Vacant", regardless of unit.occupancyStatus. Today every unit
+// reaching this page is guaranteed VACANT server-side (public listing
+// endpoints filter on UnitOccupancyStatus.VACANT), so this was never
+// visibly wrong — but it was silently ignoring the actual field, which
+// would mislead a viewer the moment that contract ever changes. This
+// reads the real value instead, with a neutral fallback for any value
+// this component doesn't have specific styling for.
+const occupancyBadge = (occupancyStatus: string): { label: string; className: string } => {
+    switch (occupancyStatus) {
+        case "VACANT":
+            return { label: "Vacant", className: "bg-green-50 text-green-600 border-green-100" };
+        default:
+            // Unexpected value for a public listing page — show the raw
+            // status rather than silently mislabeling it as "Vacant".
+            return { label: occupancyStatus, className: "bg-gray-50 text-gray-600 border-gray-100" };
+    }
+};
+
 export default function UnitDetailPage() {
     const params = useParams<{ propertyId: string; unitId: string }>();
 
@@ -33,6 +52,8 @@ export default function UnitDetailPage() {
         alert("Reservation flow coming soon.");
     };
 
+    const badge = occupancyBadge(unit.occupancyStatus);
+
     return (
         <div className="min-h-screen bg-gray-50">
 
@@ -46,8 +67,8 @@ export default function UnitDetailPage() {
                         <h1 className="text-3xl font-bold text-gray-900">
                             Unit {unit.unitNumber}
                         </h1>
-                        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">
-                            Vacant
+                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${badge.className}`}>
+                            {badge.label}
                         </span>
                     </div>
                 </div>

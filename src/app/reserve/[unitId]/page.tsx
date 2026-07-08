@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
+import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
 
 // --- Types ---
 interface UnitDetails {
@@ -31,14 +33,6 @@ interface FormErrors {
 
 interface InitiateReservationResponse {
     paymentIntentId: string;
-}
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T | null;
-    errorCode: string | null;
-    timestamp: number;
 }
 
 interface UnitSummaryResponse {
@@ -94,17 +88,18 @@ export default function ReservationPage() {
 
         let cancelled = false;
 
-        fetch(`/api/v1/public/units/${unitId}/summary`)
-            .then((res) => {
-                if (!res.ok) throw new Error("Unit not found.");
-                return res.json();
-            })
-            .then((json: ApiResponse<UnitSummaryResponse>) => {
+        // FIXED (2026-07-08): previously a bare fetch('/api/v1/public/units/...')
+        // — a relative path bypassing apiClient/appConfig.api.baseUrl, the
+        // pattern every other public request in this app uses. That meant
+        // this call hit the Next.js app's own origin instead of the actual
+        // backend host, and would 404 in any deployment where they differ.
+        // apiClient.get() also already unwraps the ApiResponse envelope, so
+        // the manual success/data parsing that used to live here is gone.
+        apiClient
+            .get<UnitSummaryResponse>(publicEndpoints.unitReservationSummary(unitId))
+            .then((data) => {
                 if (cancelled) return;
-                if (!json.success || !json.data) {
-                    throw new Error(json.message || "Unit not found.");
-                }
-                const { unitNumber, propertyName, monthlyRent, depositAmount } = json.data;
+                const { unitNumber, propertyName, monthlyRent, depositAmount } = data;
                 setUnit({ unitNumber, propertyName, monthlyRent, depositAmount });
                 setUnitLoading(false);
             })
@@ -151,26 +146,22 @@ export default function ReservationPage() {
         setSubmitting(true);
         setSubmitError(null);
         try {
-            const res = await fetch("/api/v1/public/reservations/initiate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            // FIXED (2026-07-08): previously a bare fetch('/api/v1/public/reservations/initiate')
+            // with manual JSON.stringify + manual ApiResponse envelope parsing.
+            // apiClient.post() handles both the correct base URL and the
+            // envelope unwrapping already, matching every other write call
+            // in this codebase.
+            const data = await apiClient.post<InitiateReservationResponse>(
+                publicEndpoints.initiateReservation,
+                {
                     unitId,
                     ...form,
                     phone: normalizePhone(form.phone),
                     mpesaPhone: normalizePhone(form.mpesaPhone),
-                }),
-            });
+                }
+            );
 
-            const json: ApiResponse<InitiateReservationResponse> = await res
-                .json()
-                .catch(() => null);
-
-            if (!res.ok || !json || !json.success || !json.data) {
-                throw new Error(json?.message ?? "Something went wrong. Please try again.");
-            }
-
-            const { paymentIntentId } = json.data;
+            const { paymentIntentId } = data;
             if (!paymentIntentId) {
                 throw new Error("Unexpected response from server.");
             }

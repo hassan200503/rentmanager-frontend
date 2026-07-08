@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { apiClient } from "@/lib/api/client";
+import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
 
 // --- Types ---
 type PaymentIntentStatus = "PENDING" | "PAID" | "FAILED" | "EXPIRED";
@@ -10,14 +12,6 @@ interface PaymentStatusResponse {
     paymentIntentId: string;
     status: PaymentIntentStatus;
     reservationId: string | null;
-}
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T | null;
-    errorCode: string | null;
-    timestamp: number;
 }
 
 // --- Config ---
@@ -63,20 +57,21 @@ export default function ReservationWaitingPage() {
 
         const poll = async () => {
             try {
-                const res = await fetch(
-                    `/api/v1/public/reservations/payment-status?id=${paymentIntentId}`
+                // FIXED (2026-07-08): previously a bare
+                // fetch('/api/v1/public/reservations/payment-status?id=...')
+                // — a relative path bypassing apiClient/appConfig.api.baseUrl.
+                // Same class of bug as ReservationPage's unit-summary fetch:
+                // this would hit the Next.js app's own origin instead of the
+                // backend, causing every poll to fail immediately even for a
+                // real, successfully-paying user. apiClient.get() also
+                // already unwraps the ApiResponse envelope.
+                const data = await apiClient.get<PaymentStatusResponse>(
+                    publicEndpoints.reservationPaymentStatus(paymentIntentId)
                 );
-                if (!res.ok) {
-                    throw new Error("Unable to check payment status.");
-                }
-                const json: ApiResponse<PaymentStatusResponse> = await res.json();
+
                 if (cancelledRef.current) return;
 
-                if (!json.success || !json.data) {
-                    throw new Error(json.message || "Unable to check payment status.");
-                }
-
-                const { status: newStatus, reservationId } = json.data;
+                const { status: newStatus, reservationId } = data;
                 setStatus(newStatus);
 
                 if (newStatus === "PAID") {
