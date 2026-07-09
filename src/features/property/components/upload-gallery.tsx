@@ -13,11 +13,6 @@ import {
 export function PropertyMediaManager({ propertyId }: { propertyId: string }) {
     const { data: media, isLoading } = usePropertyMedia(propertyId);
     const upload = useUploadPropertyMedia(propertyId);
-
-//debug
-    console.log("media data:", JSON.stringify(media)); // 👈 add here
-
-
     const remove = useDeletePropertyMedia(propertyId);
     const setPrimary = useSetPrimaryPropertyMedia(propertyId);
     const [isPrimary, setIsPrimary] = useState(false);
@@ -45,38 +40,44 @@ export function PropertyMediaManager({ propertyId }: { propertyId: string }) {
                     type="button"
                     onClick={() => inputRef.current?.click()}
                     disabled={upload.isPending}
-                    className="rounded-md bg-primary px-4 py-2 text-sm text-white disabled:opacity-50"
+                    className="btn-primary text-sm disabled:opacity-50"
                 >
-                    {upload.isPending ? "Uploading..." : "Upload Photos"}
+                    {upload.isPending ? "Uploading…" : "Upload photos"}
                 </button>
 
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-ink-muted">
                     <input
                         type="checkbox"
                         checked={isPrimary}
                         onChange={(e) => setIsPrimary(e.target.checked)}
+                        className="rounded border-ink/20 text-primary focus:ring-primary-light"
                     />
                     Set as primary
                 </label>
             </div>
 
             {upload.isError && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-danger">
                     {(upload.error as Error)?.message ?? "Upload failed"}
                 </p>
             )}
 
             {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading media...</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="skeleton aspect-square rounded-lg" />
+                    ))}
+                </div>
+            ) : media?.length === 0 ? (
+                <div className="text-center py-8 border border-dashed border-ink/15 rounded-lg">
+                    <p className="text-sm text-ink-muted">No photos yet.</p>
+                </div>
             ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {media?.map((item) => (
-
                         <div
-                            key={item.fileUrl}
-
-
-                            className="group relative aspect-square overflow-hidden rounded-md border"
+                            key={item.id}
+                            className="group relative aspect-square overflow-hidden rounded-lg border border-ink/[0.08]"
                         >
                             <img
                                 src={item.fileUrl}
@@ -84,33 +85,24 @@ export function PropertyMediaManager({ propertyId }: { propertyId: string }) {
                                 className="h-full w-full object-cover"
                             />
                             {item.primaryMedia && (
-                                <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+                                <span className="absolute left-1.5 top-1.5 pill-success text-[10px] px-2 py-0.5">
                                     Primary
                                 </span>
                             )}
-                            <div className="absolute inset-0 flex items-end justify-between gap-1 bg-black/0 p-1 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                            <div className="absolute inset-0 flex items-end justify-between gap-1 bg-black/0 p-1.5 opacity-0 transition-opacity duration-150 group-hover:bg-black/30 group-hover:opacity-100">
                                 {!item.primaryMedia && (
-
                                     <button
                                         type="button"
-                                        onClick={() => {
-
-                                            setPrimary.mutate(item.id);
-                                        }}
-                                        className="rounded bg-white/90 px-1.5 py-0.5 text-[10px]"
+                                        onClick={() => setPrimary.mutate(item.id)}
+                                        className="rounded-md bg-white/95 px-2 py-1 text-[10px] font-medium text-ink hover:bg-white transition-colors"
                                     >
                                         Make primary
                                     </button>
-
-
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => {
-
-                                        remove.mutate(item.id);
-                                    }}
-                                    className="rounded bg-red-500/90 px-1.5 py-0.5 text-[10px] text-white"
+                                    onClick={() => remove.mutate(item.id)}
+                                    className="rounded-md bg-danger/95 px-2 py-1 text-[10px] font-medium text-white hover:bg-danger transition-colors"
                                 >
                                     Delete
                                 </button>

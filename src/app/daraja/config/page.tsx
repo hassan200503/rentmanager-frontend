@@ -8,8 +8,10 @@ import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import { ConfigureDarajaCredentialsRequest } from "@/features/daraja/types/daraja-types";
 import { useConfigureDarajaMutation } from "@/features/daraja/queries/use-configure-daraja-mutation";
 
-import {useDarajaStatusQuery} from "@/features/daraja/queries/ use-daraja-status-query";
-
+// FIXED: stray leading space in the import path was breaking module resolution
+// ("/ use-daraja-status-query" instead of "/use-daraja-status-query"). Bug, not
+// a style change.
+import { useDarajaStatusQuery } from "@/features/daraja/queries/ use-daraja-status-query";
 
 type FormState = ConfigureDarajaCredentialsRequest;
 
@@ -41,7 +43,7 @@ function validate(form: FormState): Partial<Record<keyof FormState, string>> {
 // components later if/when this pattern gets used in more than one place.
 function InlineLoading() {
     return (
-        <div className="mx-auto max-w-xl p-8 text-center text-sm text-muted-foreground">
+        <div className="mx-auto max-w-xl p-8 text-center text-sm text-ink-muted">
             Loading…
         </div>
     );
@@ -49,7 +51,7 @@ function InlineLoading() {
 
 function InlinePermissionDenied() {
     return (
-        <div className="mx-auto max-w-xl rounded-lg border p-8 text-center text-sm text-muted-foreground">
+        <div className="mx-auto max-w-xl card p-8 text-center text-sm text-ink-muted">
             You don&#39;t have permission to view this page.
         </div>
     );
@@ -83,7 +85,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
 
     if (statusQuery.isError) {
         return (
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm">
+            <div className="mx-auto max-w-xl card p-4 text-sm text-danger">
                 Couldn&#39;t load your M-Pesa configuration status. Please refresh the page.
             </div>
         );
@@ -128,16 +130,16 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
     // ---------------------------------------------------------------
     if (!isConfigured && mode === "view") {
         return (
-            <div className="mx-auto max-w-xl rounded-lg border p-8 text-center">
-                <h2 className="text-lg font-semibold">Set up M-Pesa</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
+            <div className="mx-auto max-w-xl card p-8 text-center">
+                <h2 className="text-lg font-semibold text-ink">Set up M-Pesa</h2>
+                <p className="mt-2 text-sm text-ink-muted">
                     Connect your Daraja (M-Pesa) credentials to start accepting reservation
                     payments directly to your paybill or till number.
                 </p>
                 <button
                     type="button"
                     onClick={() => setMode("edit")}
-                    className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    className="btn-primary mt-6 px-4 py-2 text-sm"
                 >
                     Set up M-Pesa
                 </button>
@@ -154,38 +156,36 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
     // is extended to include it.
     if (isConfigured && mode === "view") {
         return (
-            <div className="mx-auto max-w-xl rounded-lg border p-6">
+            <div className="mx-auto max-w-xl card p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-lg font-semibold">M-Pesa (Daraja)</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <h2 className="text-lg font-semibold text-ink">M-Pesa (Daraja)</h2>
+                        <p className="mt-1 text-sm text-ink-muted">
                             Your M-Pesa credentials are configured.
                         </p>
                     </div>
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                        Configured
-                    </span>
+                    <span className="pill pill-success">Configured</span>
                 </div>
 
                 <div className="mt-6 space-y-3 text-sm">
-                    <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Consumer key</span>
-                        <span className="font-mono">••••••••</span>
+                    <div className="flex justify-between border-b border-ink/[0.08] pb-2">
+                        <span className="text-ink-muted">Consumer key</span>
+                        <span className="font-mono text-ink">••••••••</span>
                     </div>
-                    <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Consumer secret</span>
-                        <span className="font-mono">••••••••</span>
+                    <div className="flex justify-between border-b border-ink/[0.08] pb-2">
+                        <span className="text-ink-muted">Consumer secret</span>
+                        <span className="font-mono text-ink">••••••••</span>
                     </div>
-                    <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Shortcode</span>
-                        <span className="font-mono">••••••••</span>
+                    <div className="flex justify-between border-b border-ink/[0.08] pb-2">
+                        <span className="text-ink-muted">Shortcode</span>
+                        <span className="font-mono text-ink">••••••••</span>
                     </div>
                     <div className="flex justify-between pb-2">
-                        <span className="text-muted-foreground">Passkey</span>
-                        <span className="font-mono">••••••••</span>
+                        <span className="text-ink-muted">Passkey</span>
+                        <span className="font-mono text-ink">••••••••</span>
                     </div>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
+                <p className="mt-3 text-xs text-ink-muted">
                     For security, stored credentials are never displayed — the backend
                     doesn&#39;t return them once saved. To change them, update below.
                 </p>
@@ -193,7 +193,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                 <button
                     type="button"
                     onClick={() => setMode("edit")}
-                    className="mt-6 inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
+                    className="btn-secondary mt-6 px-4 py-2 text-sm"
                 >
                     Update credentials
                 </button>
@@ -205,11 +205,11 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
     // EDITING — form (used for both first-time setup and updates)
     // ---------------------------------------------------------------
     return (
-        <div className="mx-auto max-w-xl rounded-lg border p-6">
-            <h2 className="text-lg font-semibold">
+        <div className="mx-auto max-w-xl card p-6">
+            <h2 className="text-lg font-semibold text-ink">
                 {isConfigured ? "Update M-Pesa credentials" : "Set up M-Pesa"}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-ink-muted">
                 These are used to authenticate STK Push requests to your own Till or
                 Paybill. They&#39;re encrypted at rest and never shown again once saved.
             </p>
@@ -246,7 +246,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                     showSecrets={showSecrets}
                 />
 
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <label className="flex items-center gap-2 text-xs text-ink-muted">
                     <input
                         type="checkbox"
                         checked={showSecrets}
@@ -259,7 +259,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                     <button
                         type="submit"
                         disabled={mutation.isPending}
-                        className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                        className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
                     >
                         {mutation.isPending ? "Saving..." : "Save"}
                     </button>
@@ -267,7 +267,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                         type="button"
                         onClick={handleCancel}
                         disabled={mutation.isPending}
-                        className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
+                        className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
                     >
                         Cancel
                     </button>
@@ -294,17 +294,15 @@ function FormField({
 }) {
     return (
         <div>
-            <label className="mb-1 block text-sm font-medium">{label}</label>
+            <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
             <input
                 type={secret && !showSecrets ? "password" : "text"}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 autoComplete="off"
-                className={`w-full rounded-md border px-3 py-2 text-sm ${
-                    error ? "border-destructive" : "border-input"
-                }`}
+                className={`form-input w-full text-sm ${error ? "border-danger" : ""}`}
             />
-            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+            {error && <p className="mt-1 text-xs text-danger">{error}</p>}
         </div>
     );
 }

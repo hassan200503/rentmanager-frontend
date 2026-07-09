@@ -1,12 +1,14 @@
+// app/listings/[propertyId]/page.tsx
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
 import { usePropertyUnitsQuery } from "@/features/public-listings/queries/use-property-units-query";
 import { UnitCard } from "@/features/public-listings/components/unit-card";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
-import { Home } from "lucide-react";
 
 export default function PropertyDetailPage() {
     const params = useParams<{ propertyId: string }>();
@@ -24,53 +26,78 @@ export default function PropertyDetailPage() {
 
     if (propertyError || !property) {
         return (
-            <EmptyState
-                title="Property not found"
-                description="This listing may have been removed."
-            />
+            <div className="min-h-screen bg-canvas flex items-center justify-center">
+                <EmptyState
+                    title="Property not found"
+                    description="This listing may have been removed."
+                />
+            </div>
         );
     }
 
+    const [heroImage, ...restImages] = property.images ?? [];
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-canvas">
 
             {/* Header */}
-            <div className="bg-white border-b">
-                <div className="container mx-auto px-4 py-10">
-                    <span className="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 mb-3">
+            <div className="bg-white border-b border-ink/[0.08]">
+                <div className="container mx-auto px-6 py-10 max-w-5xl">
+                    <nav className="flex items-center gap-1.5 text-xs text-ink-muted mb-6">
+                        <Link href="/listings" className="hover:text-ink transition-colors">
+                            Listings
+                        </Link>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                        <span className="text-ink font-medium">{property.name}</span>
+                    </nav>
+
+                    <span className="pill pill-neutral mb-4">
                         {property.propertyType}
                     </span>
-                    <h1 className="text-3xl font-bold text-gray-900">{property.name}</h1>
+                    <h1 className="text-3xl md:text-4xl font-semibold text-ink tracking-tight">
+                        {property.name}
+                    </h1>
                     {property.description && (
-                        <p className="mt-3 max-w-2xl text-gray-500 text-sm leading-relaxed">
+                        <p className="mt-3 max-w-2xl text-ink-muted text-sm leading-relaxed">
                             {property.description}
                         </p>
                     )}
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-10 space-y-10">
+            <div className="container mx-auto px-6 py-12 max-w-5xl space-y-12">
 
-                {/* Image gallery */}
-                {property.images && property.images.length > 0 && (
+                {heroImage && (
                     <section>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Photos</h2>
-                        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
-                            {property.images.map((url, index) => (
+                        <div className="grid gap-3 grid-cols-4 grid-rows-2 h-[420px]">
+                            <img
+                                src={heroImage}
+                                alt={`${property.name} main photo`}
+                                className="col-span-4 row-span-2 md:col-span-2 md:row-span-2 w-full h-full object-cover rounded-2xl shadow-sm"
+                            />
+                            {restImages.slice(0, 4).map((url, index) => (
                                 <img
                                     key={index}
                                     src={url}
-                                    alt={`${property.name} image ${index + 1}`}
-                                    className="w-full h-56 object-cover rounded-xl shadow-sm"
+                                    alt={`${property.name} photo ${index + 2}`}
+                                    className="hidden md:block w-full h-full object-cover rounded-2xl shadow-sm"
                                 />
                             ))}
                         </div>
                     </section>
                 )}
 
-                {/* Vacant units */}
                 <section>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Vacant units</h2>
+                    <div className="flex items-baseline justify-between border-b border-ink/[0.08] pb-4 mb-6">
+                        <h2 className="text-xl font-semibold text-ink">
+                            Vacant units
+                        </h2>
+                        {units && !units.empty && (
+                            <span className="text-sm text-ink-muted">
+                                {units.content.length} available
+                            </span>
+                        )}
+                    </div>
 
                     {unitsError ? (
                         <EmptyState
@@ -83,7 +110,7 @@ export default function PropertyDetailPage() {
                             description="Check back soon — this property has no vacancies right now."
                         />
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                             {units?.content.map((unit) => (
                                 <UnitCard
                                     key={unit.id}

@@ -5,7 +5,7 @@ import {
   PropertyFormValues,
   propertySchema,
 } from "../validations/property-schema";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 type PropertyFormProps = {
   onSubmit: (data: CreatePropertyRequest, imageFile?: File) => Promise<void> | void;
@@ -41,6 +41,9 @@ export const PropertyForm = ({
                                submitLabel = "Save",
                              }: PropertyFormProps) => {
   const imageFileRef = useRef<File | undefined>(undefined);
+  // Added for parity with UnitForm's "filename feedback on image selection" fix —
+  // upload previously gave no visual confirmation that a file was selected.
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   const {
     register,
@@ -70,6 +73,7 @@ export const PropertyForm = ({
     const file = e.target.files?.[0];
     if (!file) return;
     imageFileRef.current = file;
+    setSelectedFileName(file.name);
   };
 
   return (
@@ -77,9 +81,9 @@ export const PropertyForm = ({
         {/* Basic info */}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Name</span>
+            <span className="form-label">Name</span>
             <input
-                className="input-field"
+                className="form-input"
                 placeholder="Green Villa"
                 {...register("name")}
             />
@@ -89,8 +93,8 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Type</span>
-            <select className="input-field" {...register("propertyType")}>
+            <span className="form-label">Type</span>
+            <select className="form-input" {...register("propertyType")}>
               {Object.values(PropertyType).map((type) => (
                   <option key={type} value={type}>
                     {type}
@@ -102,9 +106,9 @@ export const PropertyForm = ({
 
         {/* Description */}
         <label className="block space-y-1">
-          <span className="text-sm font-medium text-gray-700">Description</span>
+          <span className="form-label">Description</span>
           <textarea
-              className="input-field min-h-[100px]"
+              className="form-input min-h-[100px]"
               placeholder="Short property description"
               {...register("description")}
           />
@@ -113,8 +117,8 @@ export const PropertyForm = ({
         {/* Address */}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Street Address</span>
-            <input className="input-field" {...register("address.streetAddress")} />
+            <span className="form-label">Street Address</span>
+            <input className="form-input" {...register("address.streetAddress")} />
             {errors.address?.streetAddress && (
                 <span className="text-xs text-danger">
               {errors.address.streetAddress.message}
@@ -123,8 +127,8 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">City</span>
-            <input className="input-field" {...register("address.city")} />
+            <span className="form-label">City</span>
+            <input className="form-input" {...register("address.city")} />
             {errors.address?.city && (
                 <span className="text-xs text-danger">
               {errors.address.city.message}
@@ -133,18 +137,30 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">State</span>
-            <input className="input-field" {...register("address.state")} />
+            <span className="form-label">State</span>
+            <input className="form-input" {...register("address.state")} />
+            {/* Was previously missing while every other address field rendered its error —
+                added for consistency; harmless if the schema never populates this path. */}
+            {errors.address?.state && (
+                <span className="text-xs text-danger">
+              {errors.address.state.message}
+            </span>
+            )}
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Postal Code</span>
-            <input className="input-field" {...register("address.postalCode")} />
+            <span className="form-label">Postal Code</span>
+            <input className="form-input" {...register("address.postalCode")} />
+            {errors.address?.postalCode && (
+                <span className="text-xs text-danger">
+              {errors.address.postalCode.message}
+            </span>
+            )}
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Country</span>
-            <input className="input-field" {...register("address.country")} />
+            <span className="form-label">Country</span>
+            <input className="form-input" {...register("address.country")} />
             {errors.address?.country && (
                 <span className="text-xs text-danger">
               {errors.address.country.message}
@@ -156,9 +172,9 @@ export const PropertyForm = ({
         {/* GeoLocation */}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Latitude</span>
+            <span className="form-label">Latitude</span>
             <input
-                className="input-field"
+                className="form-input font-data"
                 type="number"
                 step="0.0000001"
                 {...register("geoLocation.latitude", { valueAsNumber: true })}
@@ -171,9 +187,9 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Longitude</span>
+            <span className="form-label">Longitude</span>
             <input
-                className="input-field"
+                className="form-input font-data"
                 type="number"
                 step="0.0000001"
                 {...register("geoLocation.longitude", { valueAsNumber: true })}
@@ -189,9 +205,9 @@ export const PropertyForm = ({
         {/* Dimensions */}
         <div className="grid gap-4 md:grid-cols-3">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Total Area</span>
+            <span className="form-label">Total Area</span>
             <input
-                className="input-field"
+                className="form-input font-data"
                 type="number"
                 step="0.01"
                 {...register("dimensions.totalArea", { valueAsNumber: true })}
@@ -204,9 +220,9 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Occupied Area</span>
+            <span className="form-label">Occupied Area</span>
             <input
-                className="input-field"
+                className="form-input font-data"
                 type="number"
                 step="0.01"
                 {...register("dimensions.occupiedArea", { valueAsNumber: true })}
@@ -219,9 +235,9 @@ export const PropertyForm = ({
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-gray-700">Unit Count</span>
+            <span className="form-label">Unit Count</span>
             <input
-                className="input-field"
+                className="form-input font-data"
                 type="number"
                 {...register("dimensions.unitCount", { valueAsNumber: true })}
             />
@@ -235,7 +251,7 @@ export const PropertyForm = ({
 
         {/* Image Upload */}
         <div className="space-y-2">
-          <span className="text-sm font-medium text-gray-700">Property Image</span>
+          <span className="form-label">Property Image</span>
           <div className="flex items-center gap-3">
             <input
                 type="file"
@@ -253,6 +269,11 @@ export const PropertyForm = ({
             >
               Upload Image
             </button>
+            {selectedFileName && (
+                <span className="text-sm text-ink-muted truncate max-w-[200px]">
+              {selectedFileName}
+            </span>
+            )}
           </div>
         </div>
 

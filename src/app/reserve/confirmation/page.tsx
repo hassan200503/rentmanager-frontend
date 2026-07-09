@@ -1,3 +1,4 @@
+// app/reserve/confirmation/page.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -9,13 +10,13 @@ export default function ReservationConfirmedPage() {
     return (
         <main className="min-h-screen bg-gray-50 py-12 px-4 flex items-center">
             <div className="mx-auto max-w-md w-full">
-                <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="card p-8 text-center">
                     <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
                         <span className="text-3xl text-emerald-600">✓</span>
                     </div>
 
-                    <h1 className="text-xl font-bold text-gray-900">Deposit received</h1>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <h1 className="text-xl font-bold text-ink">Deposit received</h1>
+                    <p className="mt-2 text-sm text-ink-muted">
                         Your M-Pesa payment was successful and your unit is now reserved.
                     </p>
 
@@ -29,12 +30,12 @@ export default function ReservationConfirmedPage() {
                     </div>
 
                     {reservationId && (
-                        <p className="mt-6 text-xs text-gray-400">
+                        <p className="mt-6 text-xs text-ink-muted">
                             Reservation reference: {reservationId}
                         </p>
                     )}
 
-                    <p className="mt-4 text-xs text-gray-400">
+                    <p className="mt-4 text-xs text-ink-muted">
                         Didn&apos;t get an SMS? It can take a minute to arrive. If it still
                         doesn&apos;t show up, contact your landlord for help.
                     </p>

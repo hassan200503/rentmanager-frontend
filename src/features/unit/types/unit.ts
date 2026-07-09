@@ -27,6 +27,11 @@ export interface Unit {
 
     rentAmount: number;
 
-    status: string;
+    // FIXED: was `status: string` — UnitStatusBadge and UnitTable both compare
+    // this against UnitStatus enum members (canActivate/canDeactivate checks,
+    // statusConfig lookup), so the loose string type was masking a real mismatch
+    // at the UnitStatusBadge prop boundary. Tightened to match how the value is
+    // actually used everywhere downstream.
+    status: UnitStatus;
     occupancyStatus: string;
 }

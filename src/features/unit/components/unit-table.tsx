@@ -29,7 +29,12 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
 
   if (isLoading) {
     return (
-        <div className="p-4 text-sm text-gray-600">Loading units...</div>
+        <div className="overflow-hidden rounded-2xl border border-ink/[0.08]">
+          <div className="skeleton h-10 w-full rounded-none" />
+          {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton h-14 w-full rounded-none border-t border-ink/[0.06]" />
+          ))}
+        </div>
     );
   }
 
@@ -42,26 +47,26 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
   }
 
   return (
-      <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto rounded-2xl border border-ink/[0.08]">
+        <table className="min-w-full bg-surface">
+          <thead className="bg-ink/[0.02]">
           <tr>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wide">
               Unit
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wide">
               Status
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
-              Rent Amount
+            <th className="p-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wide">
+              Rent amount
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wide">
               Floor
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wide">
               Occupancy
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-right text-xs font-medium text-ink-muted uppercase tracking-wide">
               Actions
             </th>
           </tr>
@@ -75,21 +80,21 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
             return (
                 <tr
                     key={u.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                    className="border-t border-ink/[0.06] hover:bg-ink/[0.02] transition-colors"
                 >
-                  <td className="p-3 text-sm font-medium text-gray-800">
+                  <td className="p-3 text-sm font-medium text-ink">
                     {u.unitNumber}
                   </td>
                   <td className="p-3">
                     <UnitStatusBadge status={u.status} />
                   </td>
-                  <td className="p-3 text-sm text-gray-800">
+                  <td className="p-3 font-data text-sm text-ink">
                     {formatCurrency(u.rentAmount)}
                   </td>
-                  <td className="p-3 text-sm text-gray-800">
+                  <td className="p-3 text-sm text-ink-muted">
                     {u.floor ?? "—"}
                   </td>
-                  <td className="p-3 text-sm text-gray-800">
+                  <td className="p-3 text-sm text-ink-muted">
                     {u.occupancyStatus}
                   </td>
                   <td className="p-3 text-right">
@@ -98,18 +103,18 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                           <button
                               onClick={() => activateUnit(u.id)}
                               disabled={isActivating}
-                              className="btn-success text-sm px-3 py-2 rounded disabled:opacity-50"
+                              className="btn-success text-xs px-3 py-1.5 disabled:opacity-50"
                           >
-                            {isActivating ? "Activating..." : "Activate"}
+                            {isActivating ? "Activating…" : "Activate"}
                           </button>
                       )}
                       {canDeactivate && (
                           <button
                               onClick={() => deactivateUnit(u.id)}
                               disabled={isDeactivating}
-                              className="btn-danger text-sm px-3 py-2 rounded disabled:opacity-50"
+                              className="btn-danger text-xs px-3 py-1.5 disabled:opacity-50"
                           >
-                            {isDeactivating ? "Deactivating..." : "Deactivate"}
+                            {isDeactivating ? "Deactivating…" : "Deactivate"}
                           </button>
                       )}
                       <button
@@ -118,7 +123,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                                   `/dashboard/properties/${propertyId}/units/${u.id}`
                               )
                           }
-                          className="btn-primary text-sm px-3 py-2 rounded"
+                          className="btn-primary text-xs px-3 py-1.5"
                       >
                         View
                       </button>
@@ -128,7 +133,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                                   `/dashboard/properties/${propertyId}/units/${u.id}/edit`
                               )
                           }
-                          className="btn-secondary text-sm px-3 py-2 rounded"
+                          className="btn-secondary text-xs px-3 py-1.5"
                       >
                         Edit
                       </button>
@@ -140,13 +145,10 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
 
           {data?.empty && (
               <tr>
-                <td
-                    colSpan={6}
-                    className="py-12 text-center text-sm text-gray-500"
-                >
-                  <div className="space-y-2">
-                    <p className="font-medium text-gray-600">No units found</p>
-                    <p className="text-gray-400">
+                <td colSpan={6} className="py-12 text-center">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-ink">No units found</p>
+                    <p className="text-sm text-ink-muted">
                       Add your first unit to get started.
                     </p>
                   </div>

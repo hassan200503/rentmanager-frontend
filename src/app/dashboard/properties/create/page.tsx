@@ -21,7 +21,7 @@ export default function CreatePropertyPage() {
         toast.success("Property photo uploaded successfully");
       } catch (error) {
         toast.error(
-          getProcessErrorMessage(error, "Property was created, but photo upload failed.")
+            getProcessErrorMessage(error, "Property was created, but photo upload failed.")
         );
       }
     }
@@ -30,17 +30,25 @@ export default function CreatePropertyPage() {
   };
 
   return (
-      <div className="max-w-3xl mx-auto p-6 bg-gray-50">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Create Property
-          </h1>
-          <p className="text-sm text-gray-500">
-            Add a new property to your portfolio
-          </p>
+      <div className="page-container max-w-3xl">
+        <button
+            onClick={() => router.push("/dashboard/properties")}
+            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-4"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Back to properties
+        </button>
+
+        <div className="mb-6 animate-fade-in-up">
+          <h1 className="page-title mb-1">Create property</h1>
+          <p className="page-subtitle mb-0">Add a new property to your portfolio</p>
         </div>
 
-        <PropertyForm onSubmit={handleSubmit} loading={isLoading} />
+        <div className="card animate-fade-in-up">
+          <PropertyForm onSubmit={handleSubmit} loading={isLoading} />
+        </div>
       </div>
   );
 }

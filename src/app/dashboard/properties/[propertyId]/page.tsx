@@ -36,6 +36,10 @@ export default function PropertyDetailPage() {
     updateInProgressRef.current = true;
 
     try {
+      // TODO: name/description fall back to the original value whenever the
+      // local state is an empty string, which makes it impossible to
+      // intentionally clear either field. Confirm whether empty name/description
+      // should be allowed before changing this — depends on backend validation.
       await updateProperty(property.propertyId, {
         name: name || property.name,
         description: description || property.description,
@@ -48,11 +52,26 @@ export default function PropertyDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+        <div className="page-container">
+          <div className="skeleton h-8 w-64 mb-2" />
+          <div className="skeleton h-4 w-48 mb-6" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="card-sm skeleton h-20" />
+            <div className="card-sm skeleton h-20" />
+          </div>
+        </div>
+    );
   }
 
   if (!property) {
-    return <div className="p-6">Property not found</div>;
+    return (
+        <div className="page-container">
+          <div className="card text-center max-w-md mx-auto mt-12">
+            <p className="text-sm text-ink-muted">Property not found.</p>
+          </div>
+        </div>
+    );
   }
 
   const isArchived = property.status === PropertyStatus.ARCHIVED;
@@ -67,99 +86,102 @@ export default function PropertyDetailPage() {
   ).length ?? 0;
 
   return (
-      <div className="space-y-6 p-6 bg-gray-50">
+      <div className="page-container space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start animate-fade-in-up">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              {property.name}
-            </h1>
-            <div className="flex gap-2 mt-2 items-center">
+            <button
+                onClick={() => router.push("/dashboard/properties")}
+                className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Back to properties
+            </button>
+            <h1 className="page-title mb-1">{property.name}</h1>
+            <div className="flex gap-2 items-center">
               <PropertyStatusBadge status={property.status} />
-              <span className="text-sm text-gray-500">{property.propertyType}</span>
+              <span className="text-sm text-ink-muted">{property.propertyType}</span>
               {!isActive && !isArchived && (
-                  <span className="text-xs text-amber-600">
-                    Not visible in public listings until activated
+                  <span className="pill-warning">
+                    Not visible in listings until activated
                   </span>
               )}
             </div>
           </div>
-
-          <button
-              onClick={() => router.push("/dashboard/properties")}
-              className="text-sm text-primary underline"
-          >
-            Back
-          </button>
         </div>
 
         {/* Photos */}
-        <section className="card bg-white p-4 rounded shadow">
-          <h3 className="font-medium mb-3 text-gray-800">Photos</h3>
+        <section className="card animate-fade-in-up">
+          <h3 className="section-header">Photos</h3>
           <PropertyMediaManager propertyId={property.propertyId} />
         </section>
 
         {/* Unit Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded shadow p-4">
-            <p className="text-sm text-gray-500">Total Units</p>
-            <p className="text-2xl font-semibold text-gray-900">{totalUnits}</p>
+          <div className="card-sm animate-fade-in-up">
+            <p className="text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wide">Total units</p>
+            <p className="font-data text-2xl font-semibold text-ink">{totalUnits}</p>
           </div>
-          <div className="bg-white rounded shadow p-4">
-            <p className="text-sm text-gray-500">Vacant Units</p>
-            <p className="text-2xl font-semibold text-green-600">{vacantUnits}</p>
+          <div className="card-sm animate-fade-in-up">
+            <p className="text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wide">Vacant units</p>
+            <p className="font-data text-2xl font-semibold text-primary">{vacantUnits}</p>
           </div>
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card bg-white p-4 rounded shadow">
-            <h3 className="font-medium mb-2 text-gray-800">Description</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card animate-fade-in-up">
+            <h3 className="section-header">Description</h3>
             {!isArchived ? (
                 <textarea
                     defaultValue={property.description || ""}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+                    className="form-input"
                     rows={3}
                     placeholder="No description"
                 />
             ) : (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-ink-muted">
                   {property.description || "No description"}
                 </p>
             )}
           </div>
 
-          <div className="card bg-white p-4 rounded shadow">
-            <h3 className="font-medium mb-2 text-gray-800">Occupancy</h3>
-            <p className="text-sm text-gray-600">{property.occupancyStatus}</p>
+          <div className="card animate-fade-in-up">
+            <h3 className="section-header">Occupancy</h3>
+            <p className="text-sm text-ink-muted">{property.occupancyStatus}</p>
           </div>
         </div>
 
         {/* Name field (editable) */}
         {!isArchived && (
-            <div className="card bg-white p-4 rounded shadow max-w-md">
-              <h3 className="font-medium mb-2 text-gray-800">Name</h3>
+            <div className="card max-w-md animate-fade-in-up">
+              <h3 className="section-header">Name</h3>
               <input
                   type="text"
                   defaultValue={property.name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full text-sm text-gray-700 border border-gray-300 rounded p-2"
+                  className="form-input"
               />
             </div>
         )}
 
         {/* Units Section */}
-        <section className="space-y-4">
+        <section className="space-y-4 animate-fade-in-up">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900">Units</h2>
+            <h2 className="section-header mb-0">Units</h2>
             <button
                 onClick={() =>
                     router.push(`/dashboard/properties/${propertyId}/units/create`)
                 }
-                className="btn-primary"
+                className="btn-primary inline-flex items-center gap-2"
             >
-              Add Unit
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add unit
             </button>
           </div>
 
@@ -167,7 +189,7 @@ export default function PropertyDetailPage() {
         </section>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 animate-fade-in-up">
           {!isArchived && (
               <>
                 <button
@@ -175,7 +197,7 @@ export default function PropertyDetailPage() {
                     disabled={isUpdating}
                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isUpdating ? "Updating..." : "Update"}
+                  {isUpdating ? "Updating…" : "Update"}
                 </button>
 
                 {canActivate && (
@@ -184,7 +206,7 @@ export default function PropertyDetailPage() {
                         disabled={isActivating}
                         className="btn-success disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isActivating ? "Activating..." : "Activate"}
+                      {isActivating ? "Activating…" : "Activate"}
                     </button>
                 )}
 
@@ -194,15 +216,15 @@ export default function PropertyDetailPage() {
                         disabled={isArchiving}
                         className="btn-danger disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isArchiving ? "Deactivating..." : "Deactivate"}
+                      {isArchiving ? "Deactivating…" : "Deactivate"}
                     </button>
                 )}
               </>
           )}
 
           {isArchived && (
-              <div className="text-sm text-gray-500">
-                This property is archived (read‑only)
+              <div className="pill-neutral">
+                This property is archived (read-only)
               </div>
           )}
         </div>

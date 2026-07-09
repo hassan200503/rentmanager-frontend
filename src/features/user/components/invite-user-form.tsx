@@ -77,7 +77,7 @@ export function InviteUserForm() {
                     className="form-input"
                     placeholder="e.g. 07XXXXXXXX"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-ink-muted">
                     Temporary login credentials will be sent to this number via SMS.
                 </p>
             </div>
@@ -93,7 +93,7 @@ export function InviteUserForm() {
                     <option value={UserRole.STAFF}>Staff</option>
                     {isOwner && <option value={UserRole.MANAGER}>Manager</option>}
                 </select>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-ink-muted">
                     {isOwner
                         ? "Managers can invite staff. Staff cannot invite anyone."
                         : "As a manager, you can invite staff-level users only."}

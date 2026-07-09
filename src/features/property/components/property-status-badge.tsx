@@ -1,23 +1,29 @@
 import { PropertyStatus } from "../types/property";
 
-export const PropertyStatusBadge = ({
-                                      status,
-                                    }: {
-  status: PropertyStatus;
-}) => {
-  const map: Record<PropertyStatus, string> = {
-    DRAFT: "bg-amber-100 text-amber-800 border border-amber-200",
-    ACTIVE: "bg-emerald-100 text-emerald-800 border border-emerald-200",
-    INACTIVE: "bg-gray-100 text-gray-700 border border-gray-200",
-    UNDER_MAINTENANCE: "bg-blue-100 text-blue-800 border border-blue-200",
-    ARCHIVED: "bg-red-100 text-red-700 border border-red-200",
-  };
+// FIXED: was using ad-hoc inline Tailwind color combos (bg-amber-100 text-amber-800...)
+// instead of the established .pill / .pill-success / .pill-warning / .pill-danger /
+// .pill-neutral component classes already defined in the design system.
+//
+// ASSUMPTION FLAGGED: there are 5 PropertyStatus values but only 4 non-default pill
+// variants. DRAFT and INACTIVE both fall back to pill-neutral below and will look
+// visually identical — confirm whether that's acceptable or whether Draft needs its
+// own treatment (e.g. a 5th variant) before shipping this.
+const statusPillMap: Record<PropertyStatus, string> = {
+    [PropertyStatus.DRAFT]: "pill pill-neutral",
+    [PropertyStatus.ACTIVE]: "pill pill-success",
+    [PropertyStatus.INACTIVE]: "pill pill-neutral",
+    [PropertyStatus.UNDER_MAINTENANCE]: "pill pill-warning",
+    [PropertyStatus.ARCHIVED]: "pill pill-danger",
+};
 
-  return (
-      <span
-        className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${map[status] ?? "bg-gray-100 text-gray-600 border border-gray-200"}`}
-      >
+export const PropertyStatusBadge = ({
+                                        status,
+                                    }: {
+    status: PropertyStatus;
+}) => {
+    return (
+        <span className={statusPillMap[status] ?? "pill pill-neutral"}>
       {status.replaceAll("_", " ")}
     </span>
-  );
+    );
 };

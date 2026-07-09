@@ -14,6 +14,16 @@ export default function ClerkAuthProvider({ children }: { children: ReactNode })
         <ClerkProvider
             publishableKey={appConfig.auth.clerkPublishableKey}
             appearance={{
+                // CORRECTED: colorText / colorTextSecondary do not exist on Variables
+                // (confirmed against node_modules/@clerk/react/dist/types-CLmOfOIQ.d.mts).
+                // The real property for secondary/muted text is colorMutedForeground.
+                variables: {
+                    colorPrimary: "#14213D",
+                    colorBackground: "#FFFFFF",
+                    colorMutedForeground: "#5B6472",
+                    colorDanger: "#C1502E",
+                    borderRadius: "0.75rem",
+                },
                 elements: {
                     logoImage: {
                         backgroundImage: "url('/logo.svg')",

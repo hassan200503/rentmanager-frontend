@@ -19,11 +19,11 @@ interface UnitCardProps {
 const occupancyBadge = (occupancyStatus: string): { label: string; className: string } => {
     switch (occupancyStatus) {
         case "VACANT":
-            return { label: "Vacant", className: "bg-green-100 text-green-700" };
+            return { label: "Vacant", className: "pill-success" };
         default:
             // Unexpected value for a public listing card — show the raw
             // status rather than silently mislabeling it as "Vacant".
-            return { label: occupancyStatus, className: "bg-gray-100 text-gray-600" };
+            return { label: occupancyStatus, className: "pill-neutral" };
     }
 };
 
@@ -31,7 +31,7 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
     const badge = occupancyBadge(unit.occupancyStatus);
 
     return (
-        <div className="block border rounded-lg overflow-hidden hover:shadow-md transition bg-white">
+        <div className="card-interactive p-0 overflow-hidden">
             <Link href={`/listings/${propertyId}/${unit.id}`}>
                 {unit.images?.[0] ? (
                     <img
@@ -40,26 +40,26 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
                         className="w-full h-40 object-cover"
                     />
                 ) : (
-                    <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                    <div className="w-full h-40 bg-ink/[0.04] flex items-center justify-center text-ink-muted text-sm">
                         No image
                     </div>
                 )}
 
                 <div className="p-4">
                     <div className="flex items-center justify-between">
-                        <h4 className="font-semibold">Unit {unit.unitNumber}</h4>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badge.className}`}>
+                        <h4 className="font-semibold text-ink">Unit {unit.unitNumber}</h4>
+                        <span className={badge.className}>
                             {badge.label}
                         </span>
                     </div>
 
-                    <p className="mt-2 text-lg font-semibold">
+                    <p className="mt-2 font-data text-lg font-semibold text-ink">
                         KES {unit.rentAmount.toLocaleString()}
-                        <span className="text-sm font-normal text-gray-500"> / month</span>
+                        <span className="text-sm font-normal text-ink-muted"> / month</span>
                     </p>
 
                     {unit.description && (
-                        <p className="mt-1 text-sm text-gray-600">{unit.description}</p>
+                        <p className="mt-1 text-sm text-ink-muted line-clamp-2">{unit.description}</p>
                     )}
                 </div>
             </Link>
@@ -68,7 +68,7 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
             <div className="px-4 pb-4">
                 <Link
                     href={`/reserve/${unit.id}`}
-                    className="block w-full text-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                    className="btn-primary block w-full text-center"
                 >
                     Reserve this unit
                 </Link>

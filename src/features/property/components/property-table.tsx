@@ -20,8 +20,10 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
   const { archiveProperty, isLoading: isArchiving } = useArchiveProperty();
 
   if (isLoading) {
+    // TODO: replace with row-shaped .skeleton shimmer once MetricCard's skeleton
+    // variant markup is available to reference — not guessing at that structure here.
     return (
-        <div className="p-4 text-sm text-gray-600">Loading properties...</div>
+        <div className="p-4 text-sm text-ink-muted">Loading properties...</div>
     );
   }
 
@@ -35,19 +37,19 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
 
   return (
       <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-50">
+        <table className="min-w-full bg-surface">
+          <thead className="bg-canvas">
           <tr>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-sm font-medium text-ink-muted">
               Name
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-sm font-medium text-ink-muted">
               Type
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-sm font-medium text-ink-muted">
               Status
             </th>
-            <th className="p-3 text-left text-sm font-medium text-gray-700">
+            <th className="p-3 text-left text-sm font-medium text-ink-muted">
               Actions
             </th>
           </tr>
@@ -63,10 +65,10 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
             return (
                 <tr
                     key={p.propertyId}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                    className="border-b border-gray-200 hover:bg-canvas transition"
                 >
-                  <td className="p-3 text-sm text-gray-800">{p.name}</td>
-                  <td className="p-3 text-sm text-gray-800">{p.propertyType}</td>
+                  <td className="p-3 text-sm text-ink">{p.name}</td>
+                  <td className="p-3 text-sm text-ink">{p.propertyType}</td>
                   <td className="p-3">
                     <PropertyStatusBadge status={p.status} />
                   </td>
@@ -76,7 +78,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
                           <button
                               onClick={() => activateProperty(p.propertyId)}
                               disabled={isActivating}
-                              className="btn-success text-sm px-3 py-2 rounded disabled:opacity-50"
+                              className="btn-success disabled:opacity-50"
                           >
                             {isActivating ? "Activating..." : "Activate"}
                           </button>
@@ -85,14 +87,14 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
                           <button
                               onClick={() => archiveProperty(p.propertyId)}
                               disabled={isArchiving}
-                              className="btn-danger text-sm px-3 py-2 rounded disabled:opacity-50"
+                              className="btn-danger disabled:opacity-50"
                           >
                             {isArchiving ? "Deactivating..." : "Deactivate"}
                           </button>
                       )}
                       <button
                           onClick={() => router.push(`/dashboard/properties/${p.propertyId}`)}
-                          className="btn-primary text-sm px-3 py-2 rounded"
+                          className="btn-primary"
                       >
                         Edit
                       </button>
@@ -106,7 +108,7 @@ export const PropertyTable = ({ params }: PropertyTableProps) => {
               <tr>
                 <td
                     colSpan={4}
-                    className="py-4 text-center text-sm text-gray-500"
+                    className="py-4 text-center text-sm text-ink-muted"
                 >
                   No properties found.
                 </td>

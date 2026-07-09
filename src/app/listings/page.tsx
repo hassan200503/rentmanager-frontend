@@ -1,3 +1,4 @@
+// app/listings/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -22,29 +23,32 @@ export default function ListingsPage() {
 
     if (isError) {
         return (
-            <EmptyState
-                title="Failed to load properties"
-                description="Please try again later."
-            />
+            <div className="min-h-screen bg-canvas flex items-center justify-center">
+                <EmptyState
+                    title="Failed to load properties"
+                    description="Please try again later."
+                />
+            </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-canvas">
             {/* Hero banner */}
-            <div className="bg-white border-b">
-                <div className="container mx-auto px-4 py-12">
-                    <p className="text-sm font-medium text-blue-600 uppercase tracking-widest mb-2">
+            <div className="bg-white border-b border-ink/[0.08]">
+                <div className="container mx-auto px-6 py-16 max-w-5xl">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
                         Rental Listings
                     </p>
-                    <h1 className="text-4xl font-bold text-gray-900">
+                    <h1 className="text-4xl md:text-5xl font-semibold text-ink leading-[1.1] tracking-tight">
                         Available Properties
                     </h1>
-                    <p className="mt-2 text-gray-500 max-w-xl">
-                        Browse available rental properties and find your next home.
+                    <p className="mt-3 text-ink-muted max-w-xl leading-relaxed">
+                        Browse verified rental properties across Kenya and find your next home —
+                        with real vacancies, not stale listings.
                     </p>
 
-                    <div className="mt-6 max-w-xl">
+                    <div className="mt-8 max-w-xl">
                         <ListingSearch
                             value={keyword}
                             onChange={setKeyword}
@@ -55,7 +59,7 @@ export default function ListingsPage() {
             </div>
 
             {/* Content */}
-            <div className="container mx-auto px-4 py-10 space-y-8">
+            <div className="container mx-auto px-6 py-12 max-w-5xl space-y-8">
                 {data?.empty ? (
                     <EmptyState
                         title="No properties found"
@@ -63,19 +67,24 @@ export default function ListingsPage() {
                     />
                 ) : (
                     <>
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-500">
-                                {data?.totalElements ?? 0} properties found
+                        <div className="flex items-center justify-between border-b border-ink/[0.08] pb-4">
+                            <p className="text-sm font-medium text-ink-muted">
+                                <span className="text-ink font-semibold">
+                                    {data?.totalElements ?? 0}
+                                </span>{" "}
+                                properties found
                             </p>
                         </div>
 
                         <PropertyGrid properties={data?.content ?? []} />
 
-                        <ListingPagination
-                            page={data?.number ?? 0}
-                            totalPages={data?.totalPages ?? 0}
-                            onPageChange={setPage}
-                        />
+                        <div className="pt-4">
+                            <ListingPagination
+                                page={data?.number ?? 0}
+                                totalPages={data?.totalPages ?? 0}
+                                onPageChange={setPage}
+                            />
+                        </div>
                     </>
                 )}
             </div>

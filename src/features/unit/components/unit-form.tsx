@@ -1,7 +1,7 @@
 "use client";
 
 import { Path, useForm } from "react-hook-form";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { CreateUnitRequest } from "../types/unit-request";
 import { UnitFormValues, unitSchema } from "../validations/unit-schema";
 
@@ -31,6 +31,7 @@ export const UnitForm = ({
                              submitLabel = "Save",
                          }: UnitFormProps) => {
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
     const {
         register,
@@ -69,9 +70,9 @@ export const UnitForm = ({
             {/* Basic info */}
             <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">Unit Number</span>
+                    <span className="form-label">Unit number</span>
                     <input
-                        className="input-field"
+                        className="form-input"
                         placeholder="A-101"
                         {...register("unitNumber")}
                     />
@@ -83,9 +84,9 @@ export const UnitForm = ({
                 </label>
 
                 <label className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">Label</span>
+                    <span className="form-label">Label</span>
                     <input
-                        className="input-field"
+                        className="form-input"
                         placeholder="Optional label"
                         {...register("label")}
                     />
@@ -98,11 +99,9 @@ export const UnitForm = ({
             {/* Pricing */}
             <div className="grid gap-4 md:grid-cols-1">
                 <label className="space-y-1">
-                    <span className="text-sm font-medium text-gray-700">
-                        Rent Amount (KES)
-                    </span>
+                    <span className="form-label">Rent amount (KES)</span>
                     <input
-                        className="input-field"
+                        className="form-input font-data"
                         type="number"
                         step="1"
                         placeholder="25000"
@@ -118,9 +117,9 @@ export const UnitForm = ({
 
             {/* Description */}
             <label className="block space-y-1">
-                <span className="text-sm font-medium text-gray-700">Description</span>
+                <span className="form-label">Description</span>
                 <textarea
-                    className="input-field min-h-[100px]"
+                    className="form-input min-h-[100px]"
                     placeholder="Short unit description"
                     {...register("description")}
                 />
@@ -128,7 +127,7 @@ export const UnitForm = ({
 
             {/* Image Upload */}
             <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">Unit Image</span>
+                <span className="form-label">Unit image</span>
                 <div className="flex items-center gap-3">
                     <input
                         ref={imageInputRef}
@@ -136,14 +135,20 @@ export const UnitForm = ({
                         accept="image/*"
                         className="hidden"
                         id="unit-image-upload"
+                        onChange={(e) => setSelectedFileName(e.target.files?.[0]?.name ?? null)}
                     />
                     <button
                         type="button"
                         className="btn-secondary"
                         onClick={() => imageInputRef.current?.click()}
                     >
-                        Upload Image
+                        Upload image
                     </button>
+                    {selectedFileName && (
+                        <span className="text-sm text-ink-muted truncate max-w-[200px]">
+                            {selectedFileName}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -151,7 +156,7 @@ export const UnitForm = ({
             <button
                 type="submit"
                 disabled={loading}
-                className={`btn-primary w-full ${loading ? "opacity-60" : ""}`}
+                className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
             >
                 {loading ? "Saving…" : submitLabel}
             </button>

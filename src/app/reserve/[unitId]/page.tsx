@@ -1,3 +1,4 @@
+// app/reserve/[unitId]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -49,8 +50,6 @@ const formatKES = (amount: number) =>
 
 const validatePhone = (phone: string) => /^(?:\+?254|0)[71]\d{8}$/.test(phone.trim());
 
-// Normalizes any accepted format (0712345678, 254712345678, +254712345678)
-// into the +254XXXXXXXXX format the backend expects.
 const normalizePhone = (phone: string) => {
     const trimmed = phone.trim();
     if (trimmed.startsWith("+254")) return trimmed;
@@ -66,7 +65,7 @@ export default function ReservationPage() {
     const router = useRouter();
 
     const [unit, setUnit] = useState<UnitDetails | null>(null);
-    const [unitLoading, setUnitLoading] = useState(true); // true by default — no setState in effect
+    const [unitLoading, setUnitLoading] = useState(true);
     const [unitError, setUnitError] = useState<string | null>(null);
 
     const [form, setForm] = useState<FormData>({
@@ -82,19 +81,11 @@ export default function ReservationPage() {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    // Fetch unit details
     useEffect(() => {
         if (!unitId) return;
 
         let cancelled = false;
 
-        // FIXED (2026-07-08): previously a bare fetch('/api/v1/public/units/...')
-        // — a relative path bypassing apiClient/appConfig.api.baseUrl, the
-        // pattern every other public request in this app uses. That meant
-        // this call hit the Next.js app's own origin instead of the actual
-        // backend host, and would 404 in any deployment where they differ.
-        // apiClient.get() also already unwraps the ApiResponse envelope, so
-        // the manual success/data parsing that used to live here is gone.
         apiClient
             .get<UnitSummaryResponse>(publicEndpoints.unitReservationSummary(unitId))
             .then((data) => {
@@ -114,7 +105,6 @@ export default function ReservationPage() {
         };
     }, [unitId]);
 
-    // Keep mpesaPhone in sync with phone by default
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setForm((prev) => {
@@ -146,11 +136,6 @@ export default function ReservationPage() {
         setSubmitting(true);
         setSubmitError(null);
         try {
-            // FIXED (2026-07-08): previously a bare fetch('/api/v1/public/reservations/initiate')
-            // with manual JSON.stringify + manual ApiResponse envelope parsing.
-            // apiClient.post() handles both the correct base URL and the
-            // envelope unwrapping already, matching every other write call
-            // in this codebase.
             const data = await apiClient.post<InitiateReservationResponse>(
                 publicEndpoints.initiateReservation,
                 {
@@ -176,37 +161,41 @@ export default function ReservationPage() {
     // --- Render: unit header states ---
     const renderUnitHeader = () => {
         if (unitLoading) {
+            // Swapped manual animate-pulse gray blocks for the established .skeleton
+            // component class (same one used in UnitTable's loading state).
             return (
-                <div className="animate-pulse space-y-2 mb-8">
-                    <div className="h-4 bg-gray-200 rounded w-1/3" />
-                    <div className="h-6 bg-gray-200 rounded w-1/2" />
-                    <div className="h-4 bg-gray-200 rounded w-1/4" />
+                <div className="mb-8 space-y-2">
+                    <div className="skeleton h-4 w-1/3" />
+                    <div className="skeleton h-6 w-1/2" />
+                    <div className="skeleton h-4 w-1/4" />
                 </div>
             );
         }
         if (unitError || !unit) {
             return (
-                <div className="mb-8 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <div className="mb-8 card p-4 text-sm text-danger">
                     {unitError ?? "Unable to load unit details."}
                 </div>
             );
         }
         return (
-            <div className="mb-8 rounded-xl border border-gray-200 bg-gray-50 p-5">
-                <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-1">
+            <div className="mb-8 card p-5">
+                <p className="text-xs font-medium uppercase tracking-widest text-ink-muted mb-1">
                     You are reserving
                 </p>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-ink">
                     Unit {unit.unitNumber} — {unit.propertyName}
                 </h2>
-                <div className="mt-3 flex flex-wrap gap-6 text-sm text-gray-600">
+                <div className="mt-3 flex flex-wrap gap-6 text-sm text-ink-muted">
                     <span>
-                        <span className="font-medium text-gray-800">Monthly rent:</span>{" "}
-                        {formatKES(unit.monthlyRent)}
+                        <span className="font-medium text-ink">Monthly rent:</span>{" "}
+                        <span className="font-data">{formatKES(unit.monthlyRent)}</span>
                     </span>
                     <span>
-                        <span className="font-medium text-gray-800">Deposit due now:</span>{" "}
-                        <span className="text-emerald-700 font-semibold">{formatKES(unit.depositAmount)}</span>
+                        <span className="font-medium text-ink">Deposit due now:</span>{" "}
+                        {/* NOT mapped to --color-brass — flagged in chat, not a confirmed
+                            token yet. Kept semantically neutral (ink) + font-data for now. */}
+                        <span className="font-data font-semibold text-ink">{formatKES(unit.depositAmount)}</span>
                     </span>
                 </div>
             </div>
@@ -222,10 +211,10 @@ export default function ReservationPage() {
         hint?: string
     ) => (
         <div>
-            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={id} className="block text-sm font-medium text-ink mb-1">
                 {label}
             </label>
-            {hint && <p className="text-xs text-gray-400 mb-1">{hint}</p>}
+            {hint && <p className="text-xs text-ink-muted mb-1">{hint}</p>}
             <input
                 id={id}
                 name={id}
@@ -234,12 +223,10 @@ export default function ReservationPage() {
                 onChange={handleChange}
                 placeholder={placeholder}
                 min={id === "moveInDate" ? new Date().toISOString().split("T")[0] : undefined}
-                className={`w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition
-                    focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
-                    ${errors[id] ? "border-red-400 bg-red-50" : "border-gray-300 bg-white"}`}
+                className={`form-input w-full text-sm ${errors[id] ? "border-danger" : ""}`}
             />
             {errors[id] && (
-                <p className="mt-1 text-xs text-red-600">{errors[id]}</p>
+                <p className="mt-1 text-xs text-danger">{errors[id]}</p>
             )}
         </div>
     );
@@ -247,22 +234,18 @@ export default function ReservationPage() {
     return (
         <main className="min-h-screen bg-gray-50 py-12 px-4">
             <div className="mx-auto max-w-lg">
-                {/* Page title */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Reserve your unit</h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <h1 className="text-2xl font-bold text-ink">Reserve your unit</h1>
+                    <p className="mt-1 text-sm text-ink-muted">
                         Fill in your details and pay the deposit via M-Pesa to secure the unit.
                     </p>
                 </div>
 
-                {/* Unit summary */}
                 {renderUnitHeader()}
 
-                {/* Form card */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
-
+                <div className="card p-6 space-y-5">
                     <fieldset className="space-y-5">
-                        <legend className="text-xs font-semibold uppercase tracking-widest text-gray-400 pb-1 border-b border-gray-100 w-full">
+                        <legend className="text-xs font-semibold uppercase tracking-widest text-ink-muted pb-1 border-b border-ink/[0.08] w-full">
                             Personal details
                         </legend>
                         {field("fullName", "Full name", "text", "Jane Wanjiku")}
@@ -272,7 +255,7 @@ export default function ReservationPage() {
                     </fieldset>
 
                     <fieldset className="space-y-5">
-                        <legend className="text-xs font-semibold uppercase tracking-widest text-gray-400 pb-1 border-b border-gray-100 w-full">
+                        <legend className="text-xs font-semibold uppercase tracking-widest text-ink-muted pb-1 border-b border-ink/[0.08] w-full">
                             Move-in & payment
                         </legend>
                         {field("moveInDate", "Move-in date", "date", "")}
@@ -285,25 +268,21 @@ export default function ReservationPage() {
                         )}
                     </fieldset>
 
-                    {/* Submit error */}
                     {submitError && (
-                        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div className="card p-3 text-sm text-danger">
                             {submitError}
                         </div>
                     )}
 
-                    {/* Submit */}
                     <button
                         onClick={handleSubmit}
                         disabled={submitting || unitLoading || !!unitError}
-                        className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white
-                            hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed
-                            transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                        className="btn-primary w-full py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {submitting ? "Sending STK Push…" : "Pay deposit & reserve unit"}
                     </button>
 
-                    <p className="text-center text-xs text-gray-400">
+                    <p className="text-center text-xs text-ink-muted">
                         By continuing you agree to our terms. Your deposit is protected and will be refunded if the unit is not available.
                     </p>
                 </div>

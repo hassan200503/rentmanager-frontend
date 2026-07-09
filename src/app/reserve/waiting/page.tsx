@@ -1,3 +1,4 @@
+// app/reserve/waiting/page.tsx
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -16,7 +17,7 @@ interface PaymentStatusResponse {
 
 // --- Config ---
 const POLL_INTERVAL_MS = 3000;
-const TIMEOUT_MS = 180_000; // increased from 90s to 3 minutes to allow more time for STK approval / testing delays
+const TIMEOUT_MS = 180_000;
 
 // --- Component ---
 export default function ReservationWaitingPage() {
@@ -43,7 +44,6 @@ export default function ReservationWaitingPage() {
         tickRef.current = null;
     }, []);
 
-    // Polling
     useEffect(() => {
         if (!paymentIntentId) return;
 
@@ -57,14 +57,6 @@ export default function ReservationWaitingPage() {
 
         const poll = async () => {
             try {
-                // FIXED (2026-07-08): previously a bare
-                // fetch('/api/v1/public/reservations/payment-status?id=...')
-                // — a relative path bypassing apiClient/appConfig.api.baseUrl.
-                // Same class of bug as ReservationPage's unit-summary fetch:
-                // this would hit the Next.js app's own origin instead of the
-                // backend, causing every poll to fail immediately even for a
-                // real, successfully-paying user. apiClient.get() also
-                // already unwraps the ApiResponse envelope.
                 const data = await apiClient.get<PaymentStatusResponse>(
                     publicEndpoints.reservationPaymentStatus(paymentIntentId)
                 );
@@ -84,7 +76,6 @@ export default function ReservationWaitingPage() {
                     stop();
                     return;
                 }
-                // PENDING -> keep polling
             } catch (err: unknown) {
                 if (cancelledRef.current) return;
                 stop();
@@ -93,7 +84,6 @@ export default function ReservationWaitingPage() {
             }
         };
 
-        // fire immediately, then on an interval
         poll();
         pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
 
@@ -123,13 +113,15 @@ export default function ReservationWaitingPage() {
         if (status === "PENDING") {
             return (
                 <>
+                    {/* Spinner colors left as decorative brand accent — not part of the
+                        pill/btn semantic system, and "waiting" isn't a success state anyway. */}
                     <div className="mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-600" />
-                    <h1 className="text-xl font-bold text-gray-900">Check your phone</h1>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <h1 className="text-xl font-bold text-ink">Check your phone</h1>
+                    <p className="mt-2 text-sm text-ink-muted">
                         We&apos;ve sent an M-Pesa prompt to your phone. Enter your PIN to complete
                         the deposit payment and secure your unit.
                     </p>
-                    <p className="mt-6 text-xs text-gray-400">
+                    <p className="mt-6 text-xs text-ink-muted">
                         Waiting for confirmation… ({secondsLeft}s remaining)
                     </p>
                 </>
@@ -140,19 +132,14 @@ export default function ReservationWaitingPage() {
             return (
                 <>
                     <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-                        <span className="text-2xl text-red-500">✕</span>
+                        <span className="text-2xl text-danger">✕</span>
                     </div>
-                    <h1 className="text-xl font-bold text-gray-900">Payment failed</h1>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <h1 className="text-xl font-bold text-ink">Payment failed</h1>
+                    <p className="mt-2 text-sm text-ink-muted">
                         The M-Pesa payment was not completed. This can happen if you entered the
                         wrong PIN or cancelled the prompt. No deposit was deducted.
                     </p>
-                    <button
-                        onClick={handleRetry}
-                        className="mt-6 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white
-                            hover:bg-emerald-700 active:bg-emerald-800 transition focus:outline-none
-                            focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                    >
+                    <button onClick={handleRetry} className="btn-primary mt-6 w-full py-3 text-sm">
                         Try again
                     </button>
                 </>
@@ -165,17 +152,12 @@ export default function ReservationWaitingPage() {
                     <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
                         <span className="text-2xl text-amber-500">⏱</span>
                     </div>
-                    <h1 className="text-xl font-bold text-gray-900">Prompt expired</h1>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <h1 className="text-xl font-bold text-ink">Prompt expired</h1>
+                    <p className="mt-2 text-sm text-ink-muted">
                         We didn&apos;t receive a response in time. No deposit was deducted from
                         your M-Pesa account. You can request a new payment prompt below.
                     </p>
-                    <button
-                        onClick={handleRetry}
-                        className="mt-6 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white
-                            hover:bg-emerald-700 active:bg-emerald-800 transition focus:outline-none
-                            focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                    >
+                    <button onClick={handleRetry} className="btn-primary mt-6 w-full py-3 text-sm">
                         Send a new prompt
                     </button>
                 </>
@@ -186,18 +168,13 @@ export default function ReservationWaitingPage() {
         return (
             <>
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-                    <span className="text-2xl text-red-500">!</span>
+                    <span className="text-2xl text-danger">!</span>
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">Something went wrong</h1>
-                <p className="mt-2 text-sm text-gray-500">
+                <h1 className="text-xl font-bold text-ink">Something went wrong</h1>
+                <p className="mt-2 text-sm text-ink-muted">
                     {errorMessage ?? "We couldn't check your payment status. Please try again."}
                 </p>
-                <button
-                    onClick={handleRetry}
-                    className="mt-6 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white
-                        hover:bg-emerald-700 active:bg-emerald-800 transition focus:outline-none
-                        focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                >
+                <button onClick={handleRetry} className="btn-primary mt-6 w-full py-3 text-sm">
                     Go back
                 </button>
             </>
@@ -207,7 +184,7 @@ export default function ReservationWaitingPage() {
     return (
         <main className="min-h-screen bg-gray-50 py-12 px-4 flex items-center">
             <div className="mx-auto max-w-md w-full">
-                <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="card p-8 text-center">
                     {renderContent()}
                 </div>
             </div>
