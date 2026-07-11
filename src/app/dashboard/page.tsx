@@ -154,7 +154,11 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
             {/* Phase-readiness slots — placeholders only, no data yet */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <PhasePlaceholderCard title="Rent ledger" note="Phase 1 — collection status, overdue balances" />
+                <PhasePlaceholderCard
+                    title="Rent ledger"
+                    note="Collection status, overdue balances"
+                    href="/dashboard/rent-ledger"
+                />
                 <PhasePlaceholderCard title="Upcoming disbursements" note="Phase 5 — pending payouts to your M-Pesa" />
                 <PhasePlaceholderCard title="Verification status" note="Phase 7 — KYC and identity checks" />
             </div>
@@ -162,14 +166,22 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
     );
 }
 
-function PhasePlaceholderCard({ title, note }: { title: string; note: string }) {
-    return (
+function PhasePlaceholderCard({ title, note, href }: { title: string; note: string; href?: string }) {
+    const content = (
         <div className="card-sm border-dashed border-ink/15 bg-ink/[0.015]">
             <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-medium text-ink">{title}</h3>
-                <span className="pill-neutral text-[10px]">Coming soon</span>
+                <span className="pill-neutral text-[10px]">{href ? "View" : "Coming soon"}</span>
             </div>
             <p className="text-xs text-ink-muted">{note}</p>
         </div>
+    );
+
+    return href ? (
+        <a href={href} className="block hover:opacity-80 transition-opacity">
+            {content}
+        </a>
+    ) : (
+        content
     );
 }
