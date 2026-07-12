@@ -89,6 +89,19 @@ function RentLedgerOverviewContent() {
                     </div>
 
                     <div className="card animate-fade-in-up">
+                        <h2 className="section-header">Due</h2>
+                        {dueEntries.length === 0 ? (
+                            <p className="text-sm text-ink-muted">Nothing due right now.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {dueEntries.map((entry) => (
+                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="card animate-fade-in-up">
                         <h2 className="section-header">Needs attention</h2>
                         {needsAttention.length === 0 ? (
                             <p className="text-sm text-ink-muted">Nothing pending review.</p>

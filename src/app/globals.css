@@ -23,6 +23,9 @@
   --color-warning-dark: #96721F;
   --color-danger: #C0392B;
   --color-danger-dark: #96291D;
+  --color-info: #3B6E91;
+  --color-info-dark: #294B64;
+  --color-info-light: #E8F1F5;
 
   --color-background: #F7F8F6;
 
@@ -138,6 +141,16 @@ body {
 
   .pill-neutral {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-ink/[0.06] text-ink-muted;
+  }
+
+  /* Added this session: OVERPAID needed a color distinct from PAID (success/
+     green — "settled") and PARTIALLY_PAID (warning/brass — "needs tenant
+     action"). OVERPAID is a landlord-side action item (apply credit or
+     refund), a genuinely different kind of state, not a shade of an
+     existing one — hence a new token (--color-info) rather than reusing
+     success or warning with a different mix. */
+  .pill-info {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-info-light text-info-dark;
   }
 
   .status-dot {
