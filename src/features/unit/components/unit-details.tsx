@@ -3,16 +3,54 @@
 import { Unit, UnitStatus } from "../types/unit";
 import { UnitMediaManager } from "@/features/unit/components/unit-media-manager";
 import { useUnitLifecycle } from "@/features/unit/hooks/use-unit-lifecycle";
+import {
+    Images,
+    Wallet,
+    Settings2,
+    FileText,
+    EyeOff,
+    CheckCircle2,
+    PauseCircle,
+} from "lucide-react";
 
 type UnitDetailsProps = {
     unit: Unit;
 };
 
-const statusClasses: Record<string, string> = {
-    [UnitStatus.INACTIVE]: "bg-gray-100 text-gray-700 border border-gray-200",
-    [UnitStatus.ACTIVE]: "bg-green-100 text-green-700 border border-green-200",
-    [UnitStatus.ARCHIVED]: "bg-red-100 text-red-700 border border-red-200",
+// Cosmetic only -- turns "UNDER_MAINTENANCE" into "Under Maintenance" for
+// display. Does not touch the raw unit.status / occupancyStatus values.
+const formatEnumLabel = (value: string) =>
+    value
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
+const statusPillClasses: Record<string, string> = {
+    [UnitStatus.INACTIVE]: "pill-neutral",
+    [UnitStatus.ACTIVE]: "pill-success",
+    [UnitStatus.ARCHIVED]: "pill-danger",
 };
+
+function SectionCard({
+                         icon: Icon,
+                         title,
+                         children,
+                     }: {
+    icon: typeof Images;
+    title: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="card">
+            <h2 className="section-header inline-flex items-center gap-1.5">
+                <Icon className="h-4 w-4 text-ink-muted" strokeWidth={2} />
+                {title}
+            </h2>
+            {children}
+        </div>
+    );
+}
 
 export function UnitDetails({ unit }: UnitDetailsProps) {
     const { activateUnit, deactivateUnit, isActivating, isDeactivating } =
@@ -24,34 +62,34 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
+            <div className="card">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-gray-900">
+                        <h1 className="page-title mb-1">
                             Unit {unit.unitNumber}
                         </h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Property Unit Details
+                        <p className="text-sm text-ink-muted">
+                            Property unit details
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <span
-                            className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${
-                                statusClasses[unit.status] ??
-                                "bg-gray-100 text-gray-700 border border-gray-200"
-                            }`}
+                            className={
+                                statusPillClasses[unit.status] ?? "pill-neutral"
+                            }
                         >
-                            {unit.status.charAt(0) + unit.status.slice(1).toLowerCase()}
+                            {formatEnumLabel(unit.status)}
                         </span>
 
                         {canActivate && (
                             <button
                                 onClick={() => activateUnit(unit.id)}
                                 disabled={isActivating}
-                                className="btn-success text-sm px-3 py-2 rounded disabled:opacity-50"
+                                className="btn-success inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isActivating ? "Activating..." : "Activate"}
+                                <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
+                                {isActivating ? "Activating…" : "Activate"}
                             </button>
                         )}
 
@@ -59,74 +97,64 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
                             <button
                                 onClick={() => deactivateUnit(unit.id)}
                                 disabled={isDeactivating}
-                                className="btn-danger text-sm px-3 py-2 rounded disabled:opacity-50"
+                                className="btn-danger inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isDeactivating ? "Deactivating..." : "Deactivate"}
+                                <PauseCircle className="h-4 w-4" strokeWidth={2} />
+                                {isDeactivating ? "Deactivating…" : "Deactivate"}
                             </button>
                         )}
                     </div>
                 </div>
 
                 {unit.status === UnitStatus.INACTIVE && (
-                    <p className="mt-3 text-xs text-amber-600">
-                        This unit is not visible in public listings until activated.
+                    <p className="pill-warning inline-flex items-center gap-1 mt-3">
+                        <EyeOff className="h-3 w-3" strokeWidth={2} />
+                        Not visible in public listings until activated
                     </p>
                 )}
             </div>
 
             {/* Photos */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                    Photos
-                </h2>
+            <SectionCard icon={Images} title="Photos">
                 <UnitMediaManager unitId={unit.id} />
-            </div>
+            </SectionCard>
 
             {/* Pricing */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                    Pricing
-                </h2>
-                <div className="grid gap-6 md:grid-cols-1">
-                    <div>
-                        <p className="text-sm text-gray-500">Rent Amount</p>
-                        <p className="mt-1 text-xl font-semibold text-gray-900">
-                            KES {unit.rentAmount != null ? unit.rentAmount.toLocaleString() : "—"}
-                        </p>
-                    </div>
+            <SectionCard icon={Wallet} title="Pricing">
+                <div>
+                    <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Rent amount</p>
+                    <p className="mt-1.5 font-data text-xl font-semibold text-ink">
+                        {unit.rentAmount != null
+                            ? new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(unit.rentAmount)
+                            : "—"}
+                    </p>
                 </div>
-            </div>
+            </SectionCard>
 
             {/* Configuration */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                    Configuration
-                </h2>
+            <SectionCard icon={Settings2} title="Configuration">
                 <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                        <p className="text-sm text-gray-500">Floor</p>
-                        <p className="mt-1 text-lg font-medium text-gray-900">
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Floor</p>
+                        <p className="mt-1.5 text-sm font-medium text-ink">
                             {unit.floor ?? "—"}
                         </p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Occupancy Status</p>
-                        <p className="mt-1 text-lg font-medium text-gray-900">
-                            {unit.occupancyStatus}
-                        </p>
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Occupancy status</p>
+                        <span className="mt-1.5 inline-flex pill-neutral">
+                            {formatEnumLabel(unit.occupancyStatus)}
+                        </span>
                     </div>
                 </div>
-            </div>
+            </SectionCard>
 
             {/* Description */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                    Description
-                </h2>
-                <p className="whitespace-pre-wrap text-gray-700">
+            <SectionCard icon={FileText} title="Description">
+                <p className="whitespace-pre-wrap text-sm text-ink">
                     {unit.description?.trim() || "No description provided."}
                 </p>
-            </div>
+            </SectionCard>
         </div>
     );
 }

@@ -11,18 +11,25 @@ import {
     Wallet,
     ShieldCheck,
     CalendarDays,
+    CalendarClock,
     History,
     FileQuestion,
+    Copy,
+    Check,
+    Loader2,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { useLease } from "@/features/lease/hooks/use-lease";
 import { useLeaseAction } from "@/features/lease/hooks/use-lease-action";
 import { LeaseStatusBadge } from "@/features/lease/components/lease-status-badge";
 import { LeaseActionType, TerminationType } from "@/features/lease/types/lease-request";
+import { daysUntil, isExpiringSoon } from "@/features/lease/utils/lease-date-utils";
 import {RentLedgerList} from "@/features/rentledger/components/rent-ledger-list";
 
+// Matches the 0-decimal formatting used on the leases list page — was
+// showing 2 decimals here, inconsistent with the rest of the app.
 const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(amount);
+    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
 
 const formatDate = (isoDate: string) =>
     new Date(isoDate).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -39,6 +46,16 @@ const formatDateTime = (isoDateTime: string) =>
         minute: "2-digit",
     });
 
+// Turns SNAKE_CASE / CONSTANT_CASE backend enum values into readable text
+// (e.g. "RESIDENTIAL_FIXED_TERM" -> "Residential Fixed Term") without
+// needing a label map for every enum the DTO might ever send.
+const formatEnumLabel = (value: string) =>
+    value
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
 // Human-readable labels for TerminationType, matching the <select> options
 // already used in the Actions section below -- single source of truth
 // would be better long-term, but keeping this local to avoid touching
@@ -51,7 +68,16 @@ const TERMINATION_TYPE_LABELS: Record<TerminationType, string> = {
     MUTUAL_AGREEMENT: "Mutual Agreement",
 };
 
-
+// Actions that end or reject a lease outright, as opposed to advancing it
+// forward (approve, activate, renew). Used to order buttons so the
+// irreversible ones aren't the first thing a hand lands on, and to decide
+// which actions get a confirmation step before firing.
+// UPDATED this session: EXPIRE added. It's a manual override of what's
+// normally a scheduler-driven transition (LeaseActionScheduler), so it
+// gets the same "cannot be undone" confirm step as TERMINATE/REJECT/CANCEL
+// rather than firing on a single click like the other forward-progress
+// actions (APPROVE, ACTIVATE, RENEW).
+const DESTRUCTIVE_ACTIONS: LeaseActionType[] = ["TERMINATE", "REJECT", "CANCEL", "EXPIRE"];
 
 // ASSUMPTION FLAGGED: available actions per current status, inferred from
 // Lease.java's own guard clauses (approve() requires DRAFT, activate()
@@ -108,6 +134,10 @@ export default function LeaseDetailPage() {
     // and why" at a glance; the full history is one click away for
     // whoever actually needs to reconstruct it (support, disputes, etc.)
     const [showHistory, setShowHistory] = useState(false);
+    // Tracks which specific action is in flight, so only that button shows
+    // a spinner instead of every button just going inert together.
+    const [submittingAction, setSubmittingAction] = useState<LeaseActionType | null>(null);
+    const [copied, setCopied] = useState(false);
 
     if (isLoading) {
         return (
@@ -150,13 +180,43 @@ export default function LeaseDetailPage() {
         );
     }
 
+    // Lets an active/renewed lease ending soon surface a warning on the End
+    // date stat card, mirroring the "needs attention" logic used on the
+    // leases list page rather than inventing a separate threshold here.
+    // MOVED above availableActions this session: EXPIRE visibility now
+    // depends on daysLeft (see below), so it needs to be computed first.
+    const expiringSoon = isExpiringSoon(lease.status, lease.endDate, 30);
+    const daysLeft = daysUntil(lease.endDate);
+
     // RBAC-aware UI: executeAction on the backend is OWNER+MANAGER only
     // (confirmed via LeaseControllerRbacTest, Addendum 3 Section 1.6).
     // STAFF can view the lease (getById is OWNER+MANAGER+STAFF) but has
     // no action buttons rendered — chosen over "disabled + tooltip" per
     // the DECISION NEEDED flagged when this was implemented.
     const canManageLease = isOwner || isManager;
-    const availableActions = canManageLease ? (ACTIONS_BY_STATUS[lease.status] ?? []) : [];
+    const statusActions = ACTIONS_BY_STATUS[lease.status] ?? [];
+    // UPDATED this session: EXPIRE is a scheduler-owned, date-driven
+    // transition (LeaseActionScheduler walks ACTIVE -> EXPIRED once
+    // endDate passes) — it's filtered out of the manual action list here
+    // until the lease is actually due, so it can't be used to end an
+    // active tenancy early. Once due, it's still available as a manual
+    // override in case the scheduler hasn't run yet, gated behind the
+    // same confirm step as the other DESTRUCTIVE_ACTIONS.
+    const visibleStatusActions = statusActions.filter(
+        (a) => a.action !== "EXPIRE" || daysLeft <= 0
+    );
+    const availableActions = canManageLease ? visibleStatusActions : [];
+    // STAFF viewing a lease that DOES have actions pending for owners/
+    // managers — surface a short note so it's clear the empty Actions
+    // card isn't a bug, it's a permissions boundary.
+    const showStaffReadOnlyNotice = !canManageLease && visibleStatusActions.length > 0;
+
+    // Non-destructive actions (approve, activate, renew...) render first;
+    // ending/rejecting the lease renders last so it isn't the first thing
+    // a hand lands on in the button row.
+    const orderedActions = [...availableActions].sort(
+        (a, b) => Number(DESTRUCTIVE_ACTIONS.includes(a.action)) - Number(DESTRUCTIVE_ACTIONS.includes(b.action))
+    );
 
     // NEW this session: lifecycle timeline entries -- only rendered if the
     // corresponding timestamp is actually set. Order reflects a lease's
@@ -217,8 +277,20 @@ export default function LeaseDetailPage() {
 
 
 
-    const handleAction = async (actionType: LeaseActionType, needsReason?: boolean, needsTermination?: boolean) => {
+    const handleAction = async (actionType: LeaseActionType, needsReason?: boolean, needsTermination?: boolean, label?: string) => {
         if (!user?.userId) return;
+        // Guard clause backing up the disabled state on the button itself —
+        // keeps this safe to call even if that ever gets out of sync.
+        if (needsReason && !reason.trim()) return;
+
+        if (DESTRUCTIVE_ACTIONS.includes(actionType)) {
+            const confirmed = window.confirm(
+                `${label ?? "This action"} cannot be undone. Are you sure you want to continue?`
+            );
+            if (!confirmed) return;
+        }
+
+        setSubmittingAction(actionType);
         try {
             await performAction(leaseId, {
                 performedBy: user.userId,
@@ -230,6 +302,18 @@ export default function LeaseDetailPage() {
             setReason("");
         } catch {
             // error surfaced via toast in useLeaseActionMutation
+        } finally {
+            setSubmittingAction(null);
+        }
+    };
+
+    const handleCopyLeaseNumber = async () => {
+        try {
+            await navigator.clipboard.writeText(lease.leaseNumber);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {
+            // clipboard API unavailable (e.g. insecure context) -- not worth surfacing an error for
         }
     };
 
@@ -247,10 +331,20 @@ export default function LeaseDetailPage() {
                     <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                     Back to leases
                 </button>
-                <h1 className="page-title mb-1">{lease.leaseNumber}</h1>
+                <div className="flex items-center gap-1.5">
+                    <h1 className="page-title mb-1">{lease.leaseNumber}</h1>
+                    <button
+                        onClick={handleCopyLeaseNumber}
+                        className="mb-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:text-ink hover:bg-ink/[0.05] transition-colors"
+                        aria-label="Copy lease number"
+                        title="Copy lease number"
+                    >
+                        {copied ? <Check className="h-3.5 w-3.5 text-primary-dark" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5" strokeWidth={2} />}
+                    </button>
+                </div>
                 <div className="flex gap-2 items-center">
                     <LeaseStatusBadge status={lease.status} />
-                    <span className="text-sm text-ink-muted">{lease.leaseType}</span>
+                    <span className="text-sm text-ink-muted">{formatEnumLabel(lease.leaseType)}</span>
                 </div>
             </div>
 
@@ -303,10 +397,19 @@ export default function LeaseDetailPage() {
                 </div>
                 <div className="card-sm animate-fade-in-up">
                     <div className="flex items-center gap-1.5 mb-1.5">
-                        <CalendarDays className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
-                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">End</p>
+                        {expiringSoon ? (
+                            <CalendarClock className="h-3.5 w-3.5 text-warning-dark" strokeWidth={2} />
+                        ) : (
+                            <CalendarDays className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+                        )}
+                        <p className={`text-xs font-medium uppercase tracking-wide ${expiringSoon ? "text-warning-dark" : "text-ink-muted"}`}>End</p>
                     </div>
                     <p className="font-data text-sm text-ink">{formatDate(lease.endDate)}</p>
+                    {expiringSoon && (
+                        <p className="text-[11px] font-medium text-warning-dark mt-1">
+                            {daysLeft <= 0 ? "Expires today" : daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -348,15 +451,28 @@ export default function LeaseDetailPage() {
 
                     {availableActions.some((a) => a.needsReason) && (
                         <div>
-                            <label className="form-label">Reason (required for Reject/Terminate)</label>
-                            <input className="form-input" value={reason} onChange={(e) => setReason(e.target.value)} />
+                            <label htmlFor="lease-action-reason" className="form-label">
+                                Reason (required for Reject/Terminate/Cancel)
+                            </label>
+                            <textarea
+                                id="lease-action-reason"
+                                className="form-input"
+                                rows={2}
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                            />
                         </div>
                     )}
 
                     {availableActions.some((a) => a.needsTermination) && (
                         <div>
-                            <label className="form-label">Termination Type</label>
-                            <select className="form-input max-w-xs" value={terminationType} onChange={(e) => setTerminationType(e.target.value as TerminationType)}>
+                            <label htmlFor="lease-termination-type" className="form-label">Termination Type</label>
+                            <select
+                                id="lease-termination-type"
+                                className="form-input max-w-xs"
+                                value={terminationType}
+                                onChange={(e) => setTerminationType(e.target.value as TerminationType)}
+                            >
                                 <option value="TENANT_REQUEST">Tenant Request</option>
                                 <option value="LANDLORD_REQUEST">Landlord Request</option>
                                 <option value="BREACH_OF_CONTRACT">Breach of Contract</option>
@@ -367,17 +483,33 @@ export default function LeaseDetailPage() {
                     )}
 
                     <div className="flex gap-3 flex-wrap">
-                        {availableActions.map((a) => (
-                            <button
-                                key={a.action}
-                                onClick={() => handleAction(a.action, a.needsReason, a.needsTermination)}
-                                disabled={isActing}
-                                className={a.action === "TERMINATE" || a.action === "REJECT" ? "btn-danger disabled:opacity-50" : "btn-primary disabled:opacity-50"}
-                            >
-                                {a.label}
-                            </button>
-                        ))}
+                        {orderedActions.map((a) => {
+                            const isSubmittingThis = submittingAction === a.action;
+                            const isDisabled = isActing || (a.needsReason && !reason.trim());
+                            return (
+                                <button
+                                    key={a.action}
+                                    onClick={() => handleAction(a.action, a.needsReason, a.needsTermination, a.label)}
+                                    disabled={isDisabled}
+                                    className={`inline-flex items-center gap-1.5 ${
+                                        a.action === "TERMINATE" || a.action === "REJECT" ? "btn-danger" : "btn-primary"
+                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    {isSubmittingThis && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />}
+                                    {a.label}
+                                </button>
+                            );
+                        })}
                     </div>
+                </div>
+            )}
+
+            {showStaffReadOnlyNotice && (
+                <div className="card-sm animate-fade-in-up flex gap-3 items-start">
+                    <Info className="h-4 w-4 text-ink-muted shrink-0 mt-0.5" strokeWidth={2} />
+                    <p className="text-xs text-ink-muted">
+                        This lease has actions available to owners and managers. You have view-only access.
+                    </p>
                 </div>
             )}
 

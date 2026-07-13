@@ -90,5 +90,15 @@ export function usePropertyDashboardMetrics(tenantId: string | undefined) {
         archived: archivedQuery.data?.totalElements ?? 0,
     };
 
-    return { metrics, isLoading, isError };
+    const refetch = () => {
+        return Promise.all([
+            totalQuery.refetch(),
+            activeQuery.refetch(),
+            maintenanceQuery.refetch(),
+            draftQuery.refetch(),
+            archivedQuery.refetch(),
+        ]);
+    };
+
+    return { metrics, isLoading, isError, refetch };
 }

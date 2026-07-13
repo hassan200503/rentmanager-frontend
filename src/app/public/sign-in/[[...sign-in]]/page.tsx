@@ -19,7 +19,7 @@ export default function SignInPage() {
                 <SignIn
                     routing="path"
                     path="/public/sign-in"
-                    forceRedirectUrl="/dashboard/properties"
+                    forceRedirectUrl="/dashboard"
                 />
             </div>
         </div>

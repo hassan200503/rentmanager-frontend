@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useRef } from "react";
+import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useCreateUnit } from "@/features/unit/hooks/use-create-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest } from "@/features/unit/types/unit-request";
@@ -34,15 +35,19 @@ export default function CreateUnitPage() {
                 onClick={() => router.push(`/dashboard/properties/${propertyId}`)}
                 className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-4"
             >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                 Back to property
             </button>
 
-            <div className="mb-6 animate-fade-in-up">
-                <h1 className="page-title mb-1">Add new unit</h1>
-                <p className="page-subtitle mb-0">Add a unit to this property</p>
+            <div className="mb-6 flex items-start gap-3 animate-fade-in-up">
+                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
+                    <DoorOpen className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                </div>
+                <div>
+                    <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Units</p>
+                    <h1 className="page-title mb-1">Add new unit</h1>
+                    <p className="page-subtitle mb-0">Add a unit to this property</p>
+                </div>
             </div>
 
             <div className="card animate-fade-in-up">

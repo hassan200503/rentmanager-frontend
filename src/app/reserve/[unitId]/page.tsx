@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
 
@@ -43,6 +44,23 @@ interface UnitSummaryResponse {
     monthlyRent: number;
     depositAmount: number;
 }
+
+// Fixed order used to walk to the first invalid field after a failed submit.
+const FIELD_ORDER: (keyof FormData)[] = [
+    "fullName",
+    "phone",
+    "email",
+    "nationalId",
+    "moveInDate",
+    "mpesaPhone",
+];
+
+const AUTOCOMPLETE: Partial<Record<keyof FormData, string>> = {
+    fullName: "name",
+    phone: "tel",
+    email: "email",
+    mpesaPhone: "tel",
+};
 
 // --- Helpers ---
 const formatKES = (amount: number) =>
@@ -128,11 +146,29 @@ export default function ReservationPage() {
             errs.moveInDate = "Move-in date must be today or later.";
         if (!validatePhone(form.mpesaPhone)) errs.mpesaPhone = "Enter the M-Pesa number that will pay the deposit, e.g. 0712345678.";
         setErrors(errs);
+
+        if (Object.keys(errs).length > 0) {
+            // Send focus to the first invalid field instead of leaving the
+            // person to hunt for it — important on a 6-field form, especially
+            // on mobile where an error banner further down may be offscreen.
+            const firstInvalid = FIELD_ORDER.find((key) => errs[key]);
+            if (firstInvalid) {
+                requestAnimationFrame(() => {
+                    const el = document.getElementById(firstInvalid);
+                    el?.focus();
+                    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                });
+            }
+        }
+
         return Object.keys(errs).length === 0;
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (submitting) return;
         if (!validate()) return;
+
         setSubmitting(true);
         setSubmitError(null);
         try {
@@ -161,8 +197,6 @@ export default function ReservationPage() {
     // --- Render: unit header states ---
     const renderUnitHeader = () => {
         if (unitLoading) {
-            // Swapped manual animate-pulse gray blocks for the established .skeleton
-            // component class (same one used in UnitTable's loading state).
             return (
                 <div className="mb-8 space-y-2">
                     <div className="skeleton h-4 w-1/3" />
@@ -183,21 +217,28 @@ export default function ReservationPage() {
                 <p className="text-xs font-medium uppercase tracking-widest text-ink-muted mb-1">
                     You are reserving
                 </p>
-                <h2 className="text-xl font-semibold text-ink">
+                <h2 className="text-xl font-semibold text-ink mb-4">
                     Unit {unit.unitNumber} — {unit.propertyName}
                 </h2>
-                <div className="mt-3 flex flex-wrap gap-6 text-sm text-ink-muted">
-                    <span>
-                        <span className="font-medium text-ink">Monthly rent:</span>{" "}
-                        <span className="font-data">{formatKES(unit.monthlyRent)}</span>
-                    </span>
-                    <span>
-                        <span className="font-medium text-ink">Deposit due now:</span>{" "}
-                        {/* NOT mapped to --color-brass — flagged in chat, not a confirmed
-                            token yet. Kept semantically neutral (ink) + font-data for now. */}
-                        <span className="font-data font-semibold text-ink">{formatKES(unit.depositAmount)}</span>
-                    </span>
+
+                {/* The deposit is the amount actually charged right now via STK
+                    Push, so it leads — the monthly rent below is reference info,
+                    not what's being paid today. Uses only established tokens
+                    (primary-light/primary-dark); brass intentionally not used
+                    per earlier note, not yet a confirmed token for this. */}
+                <div className="rounded-xl bg-primary-light px-4 py-3 mb-3">
+                    <p className="text-xs font-medium text-primary-dark uppercase tracking-wide mb-1">
+                        Deposit due now
+                    </p>
+                    <p className="font-data text-2xl font-semibold text-primary-dark">
+                        {formatKES(unit.depositAmount)}
+                    </p>
                 </div>
+
+                <p className="text-sm text-ink-muted">
+                    <span className="font-medium text-ink">Monthly rent:</span>{" "}
+                    <span className="font-data">{formatKES(unit.monthlyRent)}</span>
+                </p>
             </div>
         );
     };
@@ -223,19 +264,25 @@ export default function ReservationPage() {
                 onChange={handleChange}
                 placeholder={placeholder}
                 min={id === "moveInDate" ? new Date().toISOString().split("T")[0] : undefined}
+                autoComplete={AUTOCOMPLETE[id] ?? "off"}
+                inputMode={id === "nationalId" ? "numeric" : undefined}
+                aria-invalid={!!errors[id]}
+                aria-describedby={errors[id] ? `${id}-error` : undefined}
                 className={`form-input w-full text-sm ${errors[id] ? "border-danger" : ""}`}
             />
             {errors[id] && (
-                <p className="mt-1 text-xs text-danger">{errors[id]}</p>
+                <p id={`${id}-error`} className="mt-1 text-xs text-danger">
+                    {errors[id]}
+                </p>
             )}
         </div>
     );
 
     return (
-        <main className="min-h-screen bg-gray-50 py-12 px-4">
+        <main className="min-h-screen bg-canvas py-12 px-4">
             <div className="mx-auto max-w-lg">
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-ink">Reserve your unit</h1>
+                    <h1 className="font-display text-2xl font-bold text-ink">Reserve your unit</h1>
                     <p className="mt-1 text-sm text-ink-muted">
                         Fill in your details and pay the deposit via M-Pesa to secure the unit.
                     </p>
@@ -243,8 +290,8 @@ export default function ReservationPage() {
 
                 {renderUnitHeader()}
 
-                <div className="card p-6 space-y-5">
-                    <fieldset className="space-y-5">
+                <form onSubmit={handleSubmit} noValidate className="card p-6 space-y-5">
+                    <fieldset disabled={submitting} className="space-y-5">
                         <legend className="text-xs font-semibold uppercase tracking-widest text-ink-muted pb-1 border-b border-ink/[0.08] w-full">
                             Personal details
                         </legend>
@@ -254,7 +301,7 @@ export default function ReservationPage() {
                         {field("nationalId", "National ID number", "text", "12345678")}
                     </fieldset>
 
-                    <fieldset className="space-y-5">
+                    <fieldset disabled={submitting} className="space-y-5">
                         <legend className="text-xs font-semibold uppercase tracking-widest text-ink-muted pb-1 border-b border-ink/[0.08] w-full">
                             Move-in & payment
                         </legend>
@@ -269,13 +316,18 @@ export default function ReservationPage() {
                     </fieldset>
 
                     {submitError && (
-                        <div className="card p-3 text-sm text-danger">
+                        <div className="card p-3 text-sm text-danger" role="alert">
                             {submitError}
                         </div>
                     )}
 
+                    <div className="flex items-center gap-2 text-xs text-ink-muted">
+                        <ShieldCheck className="w-4 h-4 text-success flex-shrink-0" />
+                        <span>Payments are processed securely via M-Pesa STK Push.</span>
+                    </div>
+
                     <button
-                        onClick={handleSubmit}
+                        type="submit"
                         disabled={submitting || unitLoading || !!unitError}
                         className="btn-primary w-full py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -285,7 +337,7 @@ export default function ReservationPage() {
                     <p className="text-center text-xs text-ink-muted">
                         By continuing you agree to our terms. Your deposit is protected and will be refunded if the unit is not available.
                     </p>
-                </div>
+                </form>
             </div>
         </main>
     );

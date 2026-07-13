@@ -1,9 +1,10 @@
 // app/listings/[propertyId]/[unitId]/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight, Home, ShieldCheck } from "lucide-react";
+import { ChevronRight, ChevronLeft, X, ImageOff, ShieldCheck } from "lucide-react";
 import { usePublicUnitQuery } from "@/features/public-listings/queries/use-public-unit-query";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
@@ -24,16 +25,38 @@ export default function UnitDetailPage() {
     const { data: unit, isLoading: unitLoading, isError: unitError } =
         usePublicUnitQuery(params.unitId);
 
-    const { data: property, isLoading: propertyLoading } =
-        usePublicPropertyQuery(params.propertyId);
+    // Property is only needed for the breadcrumb label, which already has a
+    // "Property" fallback — so it no longer blocks the page. The unit is the
+    // only data required to render.
+    const { data: property } = usePublicPropertyQuery(params.propertyId);
 
-    if (unitLoading || propertyLoading) {
-        return <LoadingState />;
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const images = unit?.images ?? [];
+
+    useEffect(() => {
+        if (lightboxIndex === null || images.length === 0) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setLightboxIndex(null);
+            if (e.key === "ArrowRight") {
+                setLightboxIndex((i) => (i === null ? i : (i + 1) % images.length));
+            }
+            if (e.key === "ArrowLeft") {
+                setLightboxIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length));
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [lightboxIndex, images.length]);
+
+    if (unitLoading) {
+        return <LoadingState message="Loading unit…" />;
     }
 
     if (unitError || !unit) {
         return (
-            <div className="min-h-screen bg-canvas flex items-center justify-center">
+            <div className="min-h-screen bg-canvas flex items-center justify-center px-6">
                 <EmptyState
                     title="Unit not found"
                     description="This unit may no longer be available."
@@ -42,18 +65,17 @@ export default function UnitDetailPage() {
         );
     }
 
-    const handleReserve = () => {
-        alert("Reservation flow coming soon.");
-    };
-
     const badge = occupancyBadge(unit.occupancyStatus);
-    const [heroImage, ...restImages] = unit.images ?? [];
+    const isVacant = unit.occupancyStatus === "VACANT";
+    const [heroImage, ...restImages] = images;
+    const visibleThumbs = restImages.slice(0, 2);
+    const remainingCount = restImages.length - visibleThumbs.length;
 
     return (
         <div className="min-h-screen bg-canvas pb-24 lg:pb-0">
 
             {/* Header */}
-            <div className="bg-white border-b border-ink/[0.08]">
+            <div className="bg-surface border-b border-ink/[0.08]">
                 <div className="container mx-auto px-6 py-8 max-w-5xl">
                     <nav className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
                         <Link href="/listings" className="hover:text-ink transition-colors">
@@ -71,7 +93,7 @@ export default function UnitDetailPage() {
                     </nav>
 
                     <div className="flex items-center gap-3">
-                        <h1 className="text-2xl md:text-3xl font-semibold text-ink">
+                        <h1 className="font-display text-2xl md:text-3xl font-semibold text-ink">
                             Unit {unit.unitNumber}
                         </h1>
                         <span className={badge.className}>{badge.label}</span>
@@ -87,25 +109,45 @@ export default function UnitDetailPage() {
                     {heroImage ? (
                         <section>
                             <div className="grid gap-3 grid-cols-3 grid-rows-2 h-[340px]">
-                                <img
-                                    src={heroImage}
-                                    alt={`Unit ${unit.unitNumber} main photo`}
-                                    className="col-span-3 row-span-2 md:col-span-2 md:row-span-2 w-full h-full object-cover rounded-2xl shadow-sm"
-                                />
-                                {restImages.slice(0, 2).map((url, index) => (
+                                <button
+                                    type="button"
+                                    onClick={() => setLightboxIndex(0)}
+                                    className="col-span-3 row-span-2 md:col-span-2 md:row-span-2 relative overflow-hidden rounded-2xl shadow-sm group"
+                                >
                                     <img
-                                        key={index}
-                                        src={url}
-                                        alt={`Unit ${unit.unitNumber} photo ${index + 2}`}
-                                        className="hidden md:block w-full h-full object-cover rounded-2xl shadow-sm"
+                                        src={heroImage}
+                                        alt={`Unit ${unit.unitNumber} main photo`}
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                                     />
-                                ))}
+                                </button>
+                                {visibleThumbs.map((url, index) => {
+                                    const isLastVisible = index === visibleThumbs.length - 1;
+                                    return (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            onClick={() => setLightboxIndex(index + 1)}
+                                            className="hidden md:block relative overflow-hidden rounded-2xl shadow-sm group"
+                                        >
+                                            <img
+                                                src={url}
+                                                alt={`Unit ${unit.unitNumber} photo ${index + 2}`}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                            />
+                                            {isLastVisible && remainingCount > 0 && (
+                                                <span className="absolute inset-0 bg-ink/60 flex items-center justify-center text-white text-sm font-semibold">
+                                                    +{remainingCount} more
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </section>
                     ) : (
-                        <div className="w-full h-56 bg-ink/[0.04] rounded-2xl flex flex-col items-center justify-center text-ink-muted gap-2">
-                            <Home className="w-8 h-8" />
-                            <span className="text-xs">No images available</span>
+                        <div className="h-56 rounded-2xl border border-dashed border-ink/15 bg-surface flex flex-col items-center justify-center gap-2 text-ink-muted">
+                            <ImageOff className="w-6 h-6" strokeWidth={1.5} />
+                            <p className="text-xs">No photos available yet</p>
                         </div>
                     )}
 
@@ -129,39 +171,121 @@ export default function UnitDetailPage() {
                             <span className="font-sans text-base font-normal text-ink-muted"> / month</span>
                         </p>
 
-                        <Link
-                            href={`/reserve/${unit.id}`}
-                            className="btn-primary block w-full text-center py-3"
-                        >
-                            Reserve this unit
-                        </Link>
-
-                        <div className="flex items-start gap-2 pt-2 border-t border-ink/[0.08]">
-                            <ShieldCheck className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-ink-muted leading-relaxed">
-                                Refundable deposit, paid securely via M-Pesa. Held until your
-                                move-in is confirmed.
-                            </p>
-                        </div>
+                        {isVacant ? (
+                            <>
+                                <Link
+                                    href={`/reserve/${unit.id}`}
+                                    className="btn-primary block w-full text-center py-3"
+                                >
+                                    Reserve this unit
+                                </Link>
+                                <div className="flex items-start gap-2 pt-2 border-t border-ink/[0.08]">
+                                    <ShieldCheck className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-ink-muted leading-relaxed">
+                                        Refundable deposit, paid securely via M-Pesa. Held until your
+                                        move-in is confirmed.
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div
+                                    className="w-full text-center py-3 rounded-lg bg-ink/[0.06] text-ink-muted text-sm font-medium"
+                                    aria-disabled="true"
+                                >
+                                    Not currently available
+                                </div>
+                                <p className="text-xs text-ink-muted leading-relaxed pt-2 border-t border-ink/[0.08]">
+                                    This unit is {badge.label.toLowerCase()}. Check back later or
+                                    browse other vacant units on this property.
+                                </p>
+                            </>
+                        )}
                     </div>
                 </aside>
             </div>
 
             {/* Mobile sticky action bar */}
-            <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-ink/[0.08] px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-4px_16px_rgba(20,33,61,0.08)]">
+            <div className="lg:hidden fixed bottom-0 inset-x-0 bg-surface border-t border-ink/[0.08] px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-4px_16px_rgba(20,33,61,0.08)]">
                 <div>
                     <p className="font-data text-lg font-semibold text-ink leading-none">
                         KES {unit.rentAmount.toLocaleString()}
                     </p>
                     <p className="text-xs text-ink-muted mt-1">/ month</p>
                 </div>
-                <Link
-                    href={`/reserve/${unit.id}`}
-                    className="btn-primary px-6 py-3"
-                >
-                    Reserve
-                </Link>
+                {isVacant ? (
+                    <Link href={`/reserve/${unit.id}`} className="btn-primary px-6 py-3">
+                        Reserve
+                    </Link>
+                ) : (
+                    <span
+                        className="px-6 py-3 rounded-lg bg-ink/[0.06] text-ink-muted text-sm font-medium"
+                        aria-disabled="true"
+                    >
+                        Unavailable
+                    </span>
+                )}
             </div>
+
+            {/* Photo lightbox */}
+            {lightboxIndex !== null && (
+                <div
+                    className="fixed inset-0 z-50 bg-ink/90 flex items-center justify-center px-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Unit ${unit.unitNumber} photos`}
+                    onClick={() => setLightboxIndex(null)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setLightboxIndex(null)}
+                        className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors"
+                        aria-label="Close"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLightboxIndex((i) =>
+                                        i === null ? i : (i - 1 + images.length) % images.length
+                                    );
+                                }}
+                                className="absolute left-4 md:left-8 text-white/80 hover:text-white transition-colors"
+                                aria-label="Previous photo"
+                            >
+                                <ChevronLeft className="w-8 h-8" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLightboxIndex((i) => (i === null ? i : (i + 1) % images.length));
+                                }}
+                                className="absolute right-4 md:right-8 text-white/80 hover:text-white transition-colors"
+                                aria-label="Next photo"
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        </>
+                    )}
+
+                    <img
+                        src={images[lightboxIndex]}
+                        alt={`Unit ${unit.unitNumber} photo ${lightboxIndex + 1}`}
+                        className="max-h-[85vh] max-w-full object-contain rounded-lg"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    <span className="absolute bottom-6 text-white/70 text-sm">
+                        {lightboxIndex + 1} / {images.length}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
