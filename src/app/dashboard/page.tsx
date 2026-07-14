@@ -273,7 +273,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                         <Clock className="h-3.5 w-3.5" strokeWidth={2} />
                         Updated {lastUpdated}
                     </span>
-                    <Link href="/dashboard/properties/new" className="btn-primary inline-flex items-center gap-1.5">
+                    <Link href="/dashboard/properties/create" className="btn-primary inline-flex items-center gap-1.5">
                         <Plus className="h-4 w-4" strokeWidth={2} />
                         Add property
                     </Link>
@@ -389,7 +389,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                                         ? "Activate a property or switch to \"All\" to see draft and archived listings."
                                         : "Add your first property to start tracking occupancy and rent."}
                                 </p>
-                                <Link href="/dashboard/properties/new"
+                                <Link href="/dashboard/properties/create"
                                       className="btn-primary inline-flex items-center gap-1.5 w-fit mx-auto">
                                     <Plus className="h-4 w-4" strokeWidth={2} />
                                     Add property
