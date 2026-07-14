@@ -25,6 +25,7 @@ import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { propertyApi } from "@/features/property/api/property-api";
 import { PropertyStatus } from "@/features/property/types/property";
 import { usePropertyDashboardMetrics } from "@/features/property/hooks/use-property-dashboard-metrics";
+import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
 // NOTE: fixed a stray space in this import path ("/ use-daraja-status-query")
 // that would have failed module resolution — flagging in case the real file
 // on disk is actually named with that space, which would be worth renaming.
@@ -200,25 +201,29 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
     // Recent activity intentionally stays decoupled from the table's toggle —
     // "what changed recently" shouldn't disappear just because someone is
-    // filtering the table to Active.
-    const recentPropertiesQuery = useQuery({
-        queryKey: ["properties", "dashboard-recent", tenantId],
-        queryFn: () => propertyApi.list({ page: 0, size: 5 }),
-        enabled: Boolean(tenantId),
-    });
+    // filtering the table to Active. Backed by the live activity feed module
+    // (REST for the initial batch + SSE for live updates) rather than the
+    // "last 5 created properties" proxy this used to be.
+    const {
+        activities,
+        isConnected,
+        isLoading: activitiesLoading,
+        isError: activitiesError,
+        refetch: refetchActivities,
+    } = useActivityFeed(tenantId);
 
-    if (metricsLoading || propertiesQuery.isLoading || recentPropertiesQuery.isLoading) {
+    if (metricsLoading || propertiesQuery.isLoading || activitiesLoading) {
         return <div className="page-container"><DashboardSkeleton /></div>;
     }
 
-    if (metricsError || propertiesQuery.isError || recentPropertiesQuery.isError) {
+    if (metricsError || propertiesQuery.isError || activitiesError) {
         return (
             <div className="page-container">
                 <DashboardError
                     onRetry={() => {
                         refetchMetrics();
                         propertiesQuery.refetch();
-                        recentPropertiesQuery.refetch();
+                        refetchActivities();
                     }}
                 />
             </div>
@@ -227,7 +232,6 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
     const isDarajaConnected = darajaStatus.data?.configured ?? false;
     const properties = propertiesQuery.data?.content ?? [];
-    const recentProperties = recentPropertiesQuery.data?.content ?? [];
     const lastUpdated = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     // --- Derived, honest tones — the value decides the color, not the slot ---
@@ -502,7 +506,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
                     <div className="card animate-fade-in-up">
                         <h2 className="section-header">Recent activity</h2>
-                        <RecentActivity properties={recentProperties} />
+                        <RecentActivity activities={activities} isConnected={isConnected} />
                     </div>
                 </div>
             </div>
