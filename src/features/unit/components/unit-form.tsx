@@ -2,9 +2,37 @@
 
 import { Path, useForm } from "react-hook-form";
 import { useRef, useEffect, useState } from "react";
-import { DoorOpen, Wallet, FileText, ImagePlus, X, Loader2 } from "lucide-react";
+import { DoorOpen, Wallet, FileText, ImagePlus, X, Loader2, Building2 } from "lucide-react";
 import { CreateUnitRequest } from "../types/unit-request";
 import { UnitFormValues, unitSchema } from "../validations/unit-schema";
+
+const FLOOR_OPTIONS = [
+    { value: "", label: "Select floor" },
+    { value: "Basement", label: "Basement" },
+    { value: "Ground Floor", label: "Ground Floor" },
+    { value: "1st Floor", label: "1st Floor" },
+    { value: "2nd Floor", label: "2nd Floor" },
+    { value: "3rd Floor", label: "3rd Floor" },
+    { value: "4th Floor", label: "4th Floor" },
+    { value: "5th Floor", label: "5th Floor" },
+    { value: "6th Floor", label: "6th Floor" },
+    { value: "7th Floor", label: "7th Floor" },
+    { value: "8th Floor", label: "8th Floor" },
+    { value: "9th Floor", label: "9th Floor" },
+    { value: "10th Floor", label: "10th Floor" },
+    { value: "11th Floor", label: "11th Floor" },
+    { value: "12th Floor", label: "12th Floor" },
+    { value: "13th Floor", label: "13th Floor" },
+    { value: "14th Floor", label: "14th Floor" },
+    { value: "15th Floor", label: "15th Floor" },
+    { value: "16th Floor", label: "16th Floor" },
+    { value: "17th Floor", label: "17th Floor" },
+    { value: "18th Floor", label: "18th Floor" },
+    { value: "19th Floor", label: "19th Floor" },
+    { value: "20th Floor", label: "20th Floor" },
+    { value: "Penthouse", label: "Penthouse" },
+    { value: "Rooftop", label: "Rooftop" },
+];
 
 type UnitFormProps = {
     propertyId: string;
@@ -19,7 +47,9 @@ const emptyValues = (propertyId: string): UnitFormValues => ({
     propertyId,
     unitNumber: "",
     label: undefined,
+    floor: undefined,
     rentAmount: 0,
+    depositAmount: 0,
     description: undefined,
 });
 
@@ -49,7 +79,7 @@ export const UnitForm = ({
                              submitLabel = "Save",
                          }: UnitFormProps) => {
     const imageInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const {
@@ -77,7 +107,7 @@ export const UnitForm = ({
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        setSelectedFileName(file?.name ?? null);
+        setSelectedFile(file);
         setPreviewUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return file ? URL.createObjectURL(file) : null;
@@ -85,7 +115,7 @@ export const UnitForm = ({
     };
 
     const handleRemoveImage = () => {
-        setSelectedFileName(null);
+        setSelectedFile(undefined);
         setPreviewUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return null;
@@ -106,8 +136,7 @@ export const UnitForm = ({
             return;
         }
 
-        const imageFile = imageInputRef.current?.files?.[0];
-        return onSubmit(parsed.data as CreateUnitRequest, imageFile);
+        return onSubmit(parsed.data as CreateUnitRequest, selectedFile);
     });
 
     return (
@@ -134,11 +163,40 @@ export const UnitForm = ({
                         <span className="form-label">Label</span>
                         <input
                             className="form-input"
-                            placeholder="Optional label"
+                            placeholder="e.g. Executive Suite"
                             {...register("label")}
                         />
                         {errors.label && (
                             <span className="text-xs text-danger">{errors.label.message}</span>
+                        )}
+                    </label>
+
+                    <label className="space-y-1">
+                        <span className="form-label">Floor</span>
+                        <div className="relative">
+                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted pointer-events-none" strokeWidth={2} />
+                            <select
+                                className="form-input appearance-none pl-10 pr-8"
+                                {...register("floor")}
+                            >
+                                {FLOOR_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <svg
+                                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted pointer-events-none"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                        {errors.floor && (
+                            <span className="text-xs text-danger">{errors.floor.message}</span>
                         )}
                     </label>
                 </div>
@@ -147,27 +205,51 @@ export const UnitForm = ({
             {/* Pricing */}
             <div className="border-t border-ink/10 pt-8">
                 <SectionHeader icon={Wallet} title="Pricing" />
-                <label className="space-y-1 block max-w-xs">
-                    <span className="form-label">Rent amount</span>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted font-data pointer-events-none">
-                            KES
-                        </span>
-                        <input
-                            className="form-input font-data pl-12"
-                            type="number"
-                            step="1"
-                            min="0"
-                            placeholder="25000"
-                            {...register("rentAmount", { valueAsNumber: true })}
-                        />
-                    </div>
-                    {errors.rentAmount && (
-                        <span className="text-xs text-danger">
-                            {errors.rentAmount.message}
-                        </span>
-                    )}
-                </label>
+                <div className="grid gap-4 md:grid-cols-2">
+                    <label className="space-y-1">
+                        <span className="form-label">Rent amount</span>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted font-data pointer-events-none">
+                                KES
+                            </span>
+                            <input
+                                className="form-input font-data pl-12"
+                                type="number"
+                                step="1"
+                                min="0"
+                                placeholder="25000"
+                                {...register("rentAmount", { valueAsNumber: true })}
+                            />
+                        </div>
+                        {errors.rentAmount && (
+                            <span className="text-xs text-danger">
+                                {errors.rentAmount.message}
+                            </span>
+                        )}
+                    </label>
+
+                    <label className="space-y-1">
+                        <span className="form-label">Deposit amount</span>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted font-data pointer-events-none">
+                                KES
+                            </span>
+                            <input
+                                className="form-input font-data pl-12"
+                                type="number"
+                                step="1"
+                                min="0"
+                                placeholder="25000"
+                                {...register("depositAmount", { valueAsNumber: true })}
+                            />
+                        </div>
+                        {errors.depositAmount && (
+                            <span className="text-xs text-danger">
+                                {errors.depositAmount.message}
+                            </span>
+                        )}
+                    </label>
+                </div>
             </div>
 
             {/* Description */}
@@ -202,7 +284,7 @@ export const UnitForm = ({
                             className="h-20 w-20 rounded-lg object-cover border border-ink/10"
                         />
                         <div className="min-w-0">
-                            <p className="text-sm text-ink truncate max-w-[240px]">{selectedFileName}</p>
+                            <p className="text-sm text-ink truncate max-w-[240px]">{selectedFile?.name}</p>
                             <div className="flex items-center gap-3 mt-1.5">
                                 <button
                                     type="button"

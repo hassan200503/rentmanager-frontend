@@ -22,10 +22,12 @@ export interface Unit {
     tenantId: string;
 
     unitNumber: string;
-    floor?: number;
+    label?: string;
+    floor?: string;
     description?: string;
 
     rentAmount: number;
+    depositAmount: number;
 
     // FIXED: was `status: string` — UnitStatusBadge and UnitTable both compare
     // this against UnitStatus enum members (canActivate/canDeactivate checks,

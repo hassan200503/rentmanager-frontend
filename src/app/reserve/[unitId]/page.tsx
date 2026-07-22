@@ -10,6 +10,7 @@ import { publicEndpoints } from "@/features/public-listings/api/public-endpoints
 // --- Types ---
 interface UnitDetails {
     unitNumber: string;
+    label?: string;
     propertyName: string;
     monthlyRent: number;
     depositAmount: number;
@@ -40,6 +41,7 @@ interface InitiateReservationResponse {
 interface UnitSummaryResponse {
     unitId: string;
     unitNumber: string;
+    label?: string;
     propertyName: string;
     monthlyRent: number;
     depositAmount: number;
@@ -108,8 +110,8 @@ export default function ReservationPage() {
             .get<UnitSummaryResponse>(publicEndpoints.unitReservationSummary(unitId))
             .then((data) => {
                 if (cancelled) return;
-                const { unitNumber, propertyName, monthlyRent, depositAmount } = data;
-                setUnit({ unitNumber, propertyName, monthlyRent, depositAmount });
+                const { unitNumber, label, propertyName, monthlyRent, depositAmount } = data;
+                setUnit({ unitNumber, label, propertyName, monthlyRent, depositAmount });
                 setUnitLoading(false);
             })
             .catch((err: unknown) => {
@@ -217,9 +219,12 @@ export default function ReservationPage() {
                 <p className="text-xs font-medium uppercase tracking-widest text-ink-muted mb-1">
                     You are reserving
                 </p>
-                <h2 className="text-xl font-semibold text-ink mb-4">
-                    Unit {unit.unitNumber} — {unit.propertyName}
+                <h2 className="text-xl font-semibold text-ink mb-1">
+                    {unit.label || `Unit ${unit.unitNumber}`}
                 </h2>
+                <p className="text-sm text-ink-muted mb-4">
+                    {unit.label ? unit.unitNumber + " \u00B7 " : ""}{unit.propertyName}
+                </p>
 
                 {/* The deposit is the amount actually charged right now via STK
                     Push, so it leads — the monthly rent below is reference info,

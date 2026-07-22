@@ -31,6 +31,7 @@ export const useCreateUnitMutation = () => {
             return unit;
         },
         onSuccess: (data) => {
+            queryClient.setQueryData(unitKeys.detail(data.id), data);
             queryClient.invalidateQueries({ queryKey: unitKeys.lists() });
             queryClient.invalidateQueries({ queryKey: ["unit-summary"] });
             queryClient.invalidateQueries({ queryKey: ['activities'] });

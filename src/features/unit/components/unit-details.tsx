@@ -17,6 +17,9 @@ type UnitDetailsProps = {
     unit: Unit;
 };
 
+const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+
 // Cosmetic only -- turns "UNDER_MAINTENANCE" into "Under Maintenance" for
 // display. Does not touch the raw unit.status / occupancyStatus values.
 const formatEnumLabel = (value: string) =>
@@ -66,11 +69,18 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="page-title mb-1">
-                            Unit {unit.unitNumber}
+                            {unit.label || `Unit ${unit.unitNumber}`}
                         </h1>
-                        <p className="text-sm text-ink-muted">
-                            Property unit details
-                        </p>
+                        {unit.label && (
+                            <p className="text-sm text-ink-muted">
+                                Unit {unit.unitNumber}
+                            </p>
+                        )}
+                        {!unit.label && (
+                            <p className="text-sm text-ink-muted">
+                                Property unit details
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -121,13 +131,19 @@ export function UnitDetails({ unit }: UnitDetailsProps) {
 
             {/* Pricing */}
             <SectionCard icon={Wallet} title="Pricing">
-                <div>
-                    <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Rent amount</p>
-                    <p className="mt-1.5 font-data text-xl font-semibold text-ink">
-                        {unit.rentAmount != null
-                            ? new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(unit.rentAmount)
-                            : "—"}
-                    </p>
+                <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Rent amount</p>
+                        <p className="mt-1.5 font-data text-xl font-semibold text-ink">
+                            {unit.rentAmount != null ? formatCurrency(unit.rentAmount) : "—"}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Deposit amount</p>
+                        <p className="mt-1.5 font-data text-xl font-semibold text-ink">
+                            {unit.depositAmount != null ? formatCurrency(unit.depositAmount) : "—"}
+                        </p>
+                    </div>
                 </div>
             </SectionCard>
 

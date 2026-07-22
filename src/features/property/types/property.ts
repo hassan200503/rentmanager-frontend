@@ -8,6 +8,7 @@ export enum PropertyStatus {
 
 export enum OccupancyStatus {
     VACANT = "VACANT",
+    PARTIALLY_OCCUPIED = "PARTIALLY_OCCUPIED",
     FULLY_OCCUPIED = "FULLY_OCCUPIED",
 }
 

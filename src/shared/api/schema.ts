@@ -443,7 +443,9 @@ export interface components {
         UpdateUnitRequest: {
             unitNumber?: string;
             label?: string;
+            floor?: string;
             rentAmount?: number;
+            depositAmount?: number;
             description?: string;
         };
         ApiResponseUnitResponse: {
@@ -462,10 +464,11 @@ export interface components {
             /** Format: uuid */
             propertyId?: string;
             unitNumber?: string;
-            /** Format: int32 */
-            floor?: number;
+            label?: string;
+            floor?: string;
             description?: string;
             rentAmount?: number;
+            depositAmount?: number;
             status?: string;
             occupancyStatus?: string;
         };

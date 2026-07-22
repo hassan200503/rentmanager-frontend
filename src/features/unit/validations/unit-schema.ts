@@ -17,9 +17,15 @@ export const unitSchema = z.object({
 
     label: optionalText,
 
+    floor: optionalText,
+
     rentAmount: z.coerce
         .number()
         .positive("Rent amount must be greater than 0"),
+
+    depositAmount: z.coerce
+        .number()
+        .nonnegative("Deposit amount cannot be negative"),
 
     description: optionalText,
 });

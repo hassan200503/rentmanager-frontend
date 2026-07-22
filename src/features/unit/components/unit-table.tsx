@@ -83,7 +83,10 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                     className="border-t border-ink/[0.06] hover:bg-ink/[0.02] transition-colors"
                 >
                   <td className="p-3 text-sm font-medium text-ink">
-                    {u.unitNumber}
+                    {u.label || u.unitNumber}
+                    {u.label && (
+                        <span className="ml-1.5 text-xs text-ink-muted font-normal">{u.unitNumber}</span>
+                    )}
                   </td>
                   <td className="p-3">
                     <UnitStatusBadge status={u.status} />

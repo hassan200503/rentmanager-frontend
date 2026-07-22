@@ -46,11 +46,34 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
                 )}
 
                 <div className="p-4">
-                    <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-ink">Unit {unit.unitNumber}</h4>
-                        <span className={badge.className}>
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <h4 className="font-semibold text-ink truncate">
+                                {unit.label || `Unit ${unit.unitNumber}`}
+                            </h4>
+                            {unit.label && (
+                                <p className="text-xs text-ink-muted font-normal mt-0.5 tracking-tight">
+                                    {unit.unitNumber}
+                                </p>
+                            )}
+                        </div>
+                        <span className={badge.className + " flex-shrink-0"}>
                             {badge.label}
                         </span>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
+                        {unit.floor && (
+                            <span className="inline-flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                                {unit.floor}
+                            </span>
+                        )}
+                        {unit.depositAmount ? (
+                            <span>{unit.depositAmount.toLocaleString()} KES deposit</span>
+                        ) : null}
                     </div>
 
                     <p className="mt-2 font-data text-lg font-semibold text-ink">

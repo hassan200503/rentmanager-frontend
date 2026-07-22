@@ -2,14 +2,17 @@ export interface PublicUnitResponse {
     id: string;
     propertyId: string;
     unitNumber: string;
+    label?: string;
+    floor?: string;
     description: string;
     rentAmount: number;
+    depositAmount?: number;
     occupancyStatus: string;
     images: string[];
 
-    propertyName?: string;   // ADDED
-    propertyArea?: string;   // ADDED
-    vacatedAt?: string;      // ADDED
+    propertyName?: string;
+    propertyArea?: string;
+    vacatedAt?: string;
 }
 
 export interface PublicUnitPageResponse {

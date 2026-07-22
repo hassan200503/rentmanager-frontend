@@ -61,9 +61,8 @@ export default function EditUnitPage() {
     if (!unit) return null;
 
     const handleSubmit = async (data: CreateUnitRequest) => {
-        const { unitNumber, ...updatePayload } = data;
+        const { unitNumber, propertyId: _propertyId, ...updatePayload } = data;
         await updateUnit(unitId, updatePayload as UpdateUnitRequest);
-        await queryClient.refetchQueries({ queryKey: unitKeys.detail(unitId) });
         router.push(`/dashboard/properties/${propertyId}/units/${unitId}`);
     };
 
@@ -103,7 +102,9 @@ export default function EditUnitPage() {
                     propertyId={propertyId}
                     defaultValues={{
                         unitNumber: unit.unitNumber,
+                        label: unit.label,
                         rentAmount: unit.rentAmount,
+                        depositAmount: unit.depositAmount,
                         description: unit.description,
                     }}
                     onSubmit={handleSubmit}

@@ -6,6 +6,7 @@ export interface PropertyDashboardMetrics {
     totalProperties: number;
     activeProperties: number;
     fullyOccupied: number;
+    partiallyOccupied: number;
     vacant: number;
     underMaintenance: number;
     draft: number;
@@ -23,12 +24,14 @@ const dashboardKeys = {
 
 function countOccupancy(properties: Property[]) {
     let fullyOccupied = 0;
+    let partiallyOccupied = 0;
     let vacant = 0;
     for (const p of properties) {
         if (p.occupancyStatus === OccupancyStatus.FULLY_OCCUPIED) fullyOccupied += 1;
+        else if (p.occupancyStatus === OccupancyStatus.PARTIALLY_OCCUPIED) partiallyOccupied += 1;
         else if (p.occupancyStatus === OccupancyStatus.VACANT) vacant += 1;
     }
-    return { fullyOccupied, vacant };
+    return { fullyOccupied, partiallyOccupied, vacant };
 }
 
 export function usePropertyDashboardMetrics(tenantId: string | undefined) {
@@ -78,12 +81,13 @@ export function usePropertyDashboardMetrics(tenantId: string | undefined) {
         draftQuery.isError ||
         archivedQuery.isError;
 
-    const { fullyOccupied, vacant } = countOccupancy(activeQuery.data?.content ?? []);
+    const { fullyOccupied, partiallyOccupied, vacant } = countOccupancy(activeQuery.data?.content ?? []);
 
     const metrics: PropertyDashboardMetrics = {
         totalProperties: totalQuery.data?.totalElements ?? 0,
         activeProperties: activeQuery.data?.totalElements ?? 0,
         fullyOccupied,
+        partiallyOccupied,
         vacant,
         underMaintenance: maintenanceQuery.data?.totalElements ?? 0,
         draft: draftQuery.data?.totalElements ?? 0,

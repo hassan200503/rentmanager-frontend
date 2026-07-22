@@ -6,14 +6,18 @@ export interface CreateUnitRequest {
     propertyId: string;
     unitNumber: string;
     label?: string;
+    floor?: string;
     rentAmount: number;
+    depositAmount: number;
     description?: string;
 }
 
 export interface UpdateUnitRequest {
     unitNumber?: string;
     label?: string;
+    floor?: string;
     rentAmount?: number;
+    depositAmount?: number;
     description?: string;
 }
 

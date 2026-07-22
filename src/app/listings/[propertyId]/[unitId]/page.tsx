@@ -89,15 +89,26 @@ export default function UnitDetailPage() {
                             {property?.name ?? "Property"}
                         </Link>
                         <ChevronRight className="w-3.5 h-3.5" />
-                        <span className="text-ink font-medium">Unit {unit.unitNumber}</span>
+                        <span className="text-ink font-medium">{unit.label || `Unit ${unit.unitNumber}`}</span>
                     </nav>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <h1 className="font-display text-2xl md:text-3xl font-semibold text-ink">
-                            Unit {unit.unitNumber}
+                            {unit.label || `Unit ${unit.unitNumber}`}
                         </h1>
                         <span className={badge.className}>{badge.label}</span>
                     </div>
+                    {unit.label && (
+                        <p className="mt-1 text-sm text-ink-muted font-normal">{unit.unitNumber}</p>
+                    )}
+                    {unit.floor && (
+                        <p className="mt-1 text-xs text-ink-muted flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            {unit.floor}
+                        </p>
+                    )}
                 </div>
             </div>
 
