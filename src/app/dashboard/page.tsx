@@ -212,11 +212,11 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
         refetch: refetchActivities,
     } = useActivityFeed(tenantId);
 
-    if (metricsLoading || propertiesQuery.isLoading || activitiesLoading) {
+    if (metricsLoading || propertiesQuery.isLoading) {
         return <div className="page-container"><DashboardSkeleton /></div>;
     }
 
-    if (metricsError || propertiesQuery.isError || activitiesError) {
+    if (metricsError || propertiesQuery.isError) {
         return (
             <div className="page-container">
                 <DashboardError
@@ -505,8 +505,19 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                     </div>
 
                     <div className="card animate-fade-in-up">
-                        <h2 className="section-header">Recent activity</h2>
-                        <RecentActivity activities={activities} isConnected={isConnected} />
+                        <div className="flex items-center justify-between mb-1">
+                            <h2 className="section-header !mb-0">Recent activity</h2>
+                            {activities.length > 0 && (
+                                <Link
+                                    href="/dashboard/activity"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                >
+                                    View all
+                                    <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+                                </Link>
+                            )}
+                        </div>
+                        <RecentActivity activities={activities} isConnected={isConnected} isLoading={activitiesLoading} />
                     </div>
                 </div>
             </div>

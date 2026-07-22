@@ -16,6 +16,7 @@ export const useUpdateUnitMutation = () => {
                 queryClient.refetchQueries({ queryKey: unitKeys.detail(data.id) }),
                 queryClient.invalidateQueries({ queryKey: unitKeys.lists() }),
             ]);
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
             toast.success("Unit updated successfully");
         },
         onError: (error) => {

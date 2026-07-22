@@ -12,6 +12,7 @@ const refreshUnitViews = (
     queryClient.invalidateQueries({ queryKey: unitKeys.lists() });
     queryClient.invalidateQueries({ queryKey: ["unit-summary"] });
     queryClient.invalidateQueries({ queryKey: ["public-units"] });
+    queryClient.invalidateQueries({ queryKey: ['activities'] });
 };
 
 export const useActivateUnitMutation = () => {

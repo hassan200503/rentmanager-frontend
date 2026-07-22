@@ -33,6 +33,7 @@ export const useCreateUnitMutation = () => {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: unitKeys.lists() });
             queryClient.invalidateQueries({ queryKey: ["unit-summary"] });
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
             toast.success(
                 `Unit ${data.unitNumber} created as inactive. Activate it to publish publicly.`
             );

@@ -14,6 +14,7 @@ export const useArchivePropertyMutation = () => {
             qc.invalidateQueries({ queryKey: propertyKeys.all });
             qc.invalidateQueries({ queryKey: ["public-properties"] });
             qc.invalidateQueries({ queryKey: ["public-units"] });
+            qc.invalidateQueries({ queryKey: ['activities'] });
             toast.success("Property deactivated and removed from public listings");
         },
         onError: (error) => {

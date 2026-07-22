@@ -20,6 +20,7 @@ export const useUpdatePropertyMutation = () => {
         onSuccess: (_, vars) => {
             qc.invalidateQueries({ queryKey: propertyKeys.detail(vars.id) });
             qc.invalidateQueries({ queryKey: propertyKeys.all });
+            qc.invalidateQueries({ queryKey: ['activities'] });
             toast.success("Property updated successfully");
         },
         onError: (error) => {

@@ -13,6 +13,7 @@ export const useActivatePropertyMutation = () => {
             qc.invalidateQueries({ queryKey: propertyKeys.detail(id) });
             qc.invalidateQueries({ queryKey: propertyKeys.all });
             qc.invalidateQueries({ queryKey: ["public-properties"] });
+            qc.invalidateQueries({ queryKey: ['activities'] });
             toast.success("Property activated and eligible for public listings");
         },
         onError: (error) => {

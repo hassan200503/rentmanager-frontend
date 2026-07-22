@@ -19,21 +19,43 @@ function mergeActivity(current: Activity[], incoming: Activity): Activity[] {
 }
 
 /**
+ * Merges a fresh batch from the REST API into the current local state.
+ *
+ * Strategy: union both sets by id, sort descending by createdAt, cap at
+ * MAX_ACTIVITIES. This means:
+ * - Items that arrived via SSE before the refetch are kept (no wipe).
+ * - New items from the refetch that weren't in local state are inserted at
+ *   their correct chronological position, not blindly prepended.
+ * - Duplicates are deduplicated by id.
+ */
+function mergeFromRefetch(current: Activity[], incoming: Activity[]): Activity[] {
+    const byId = new Map<string, Activity>();
+    // Current first so incoming can overwrite with fresher server data for
+    // any id that already exists locally (e.g. an update event arriving via
+    // SSE before the REST refetch completes).
+    for (const a of current) byId.set(a.id, a);
+    for (const a of incoming) byId.set(a.id, a);
+
+    return Array.from(byId.values())
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, MAX_ACTIVITIES);
+}
+
+/**
  * Fetches the initial activity batch via React Query, then layers live
  * updates from the SSE stream on top. Graceful degradation per integration
  * spec §9: if the stream never connects, the initial REST fetch still
  * renders a correct, non-live list — isConnected just stays false.
  *
+ * On each React Query cache update (e.g. triggered by invalidateQueries
+ * after a property/unit mutation) the fresh server data is *merged* into
+ * local state rather than replacing it — so SSE-prepended live items are
+ * never wiped out by a background refetch.
+ *
  * tenantId comes straight from the caller (useCurrentUser, via the
  * dashboard) and is passed through to activityApi as-is — confirmed correct
  * end-to-end by inserting an activity_log row under this exact UUID and
- * seeing it render. An earlier version of this hook instead sourced tenant
- * id from useOrgStore (the Clerk org id, hashed via uuidv5), which matched
- * a different, unrelated backend endpoint by coincidence but pointed
- * activity queries at a tenant with no matching rows. Since this hook only
- * runs once tenantId is already resolved (DashboardContent doesn't mount
- * until user.tenantId is truthy), there's no store-hydration race to guard
- * against here — the prop is reliably available from the first render.
+ * seeing it render.
  */
 export function useActivityFeed(tenantId: string | undefined) {
     const initialQuery = useQuery({
@@ -42,35 +64,29 @@ export function useActivityFeed(tenantId: string | undefined) {
         enabled: Boolean(tenantId),
     });
 
-    const [activities, setActivities] = useState<Activity[]>([]);
+    const [activities, setActivities] = useState<Activity[]>(() => initialQuery.data ?? []);
     const [isConnected, setIsConnected] = useState(false);
-    const seededRef = useRef(false);
 
-    // Seed local state from the initial REST fetch once, rather than
-    // continuously syncing — otherwise a React Query cache update after the
-    // stream has already started prepending live items would wipe them out.
+    const lastMergedDataRef = useRef<Activity[] | undefined>(undefined);
+
+    // On tenant change or query refetch, merge the fresh REST data into
+    // local state. Keyed by tenantId so navigating away and back always
+    // re-seeds from cached (or freshly fetched) data.
     useEffect(() => {
-        if (initialQuery.data && !seededRef.current) {
+        lastMergedDataRef.current = undefined;
+
+        if (!initialQuery.data) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setActivities(initialQuery.data.slice(0, MAX_ACTIVITIES));
-            seededRef.current = true;
+            setActivities([]);
+            return;
         }
-    }, [initialQuery.data]);
 
-    // tenantId changing tears down and reopens the stream, and resets the
-    // list/seed so one tenant's activities never leak into another's.
+        lastMergedDataRef.current = initialQuery.data;
+        setActivities((current) => mergeFromRefetch(current, initialQuery.data!));
+    }, [initialQuery.data, tenantId]);
+
+    // SSE stream: prepends live items and manages reconnection.
     useEffect(() => {
-        // Intentional synchronous reset: the list/seed must be cleared
-        // before the new tenant's connection starts below, so a prior
-        // tenant's activities can't briefly linger on screen. Suppressing
-        // the lint rule here rather than moving this into a callback, since
-        // there is no user event to attach it to — it's driven by tenantId
-        // changing.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        seededRef.current = false;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setActivities([]);
-
         if (!tenantId) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsConnected(false);
@@ -100,10 +116,6 @@ export function useActivityFeed(tenantId: string | undefined) {
                     tenantId
                 );
             } catch {
-                // Connection failed to open or errored mid-stream. Either way
-                // we fall through to the reconnect scheduling below — the
-                // initial REST fetch has already rendered a working list, so
-                // there's nothing to blank out here.
             }
 
             if (cancelled) return;

@@ -74,13 +74,30 @@ const getAuthContext = async (tenantId?: string) => {
  * conventions apiClient uses, so it stays as close to in-convention as the
  * backend's actual response shape allows.
  */
+export interface ActivityPage {
+    content: Activity[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+}
+
+export interface ActivityFilters {
+    entityType?: string;
+    eventType?: string;
+}
+
 const getRecent = async (limit: number, tenantId?: string): Promise<Activity[]> => {
     const { token, tenantId: resolvedTenantId } = await getAuthContext(tenantId);
     const query = new URLSearchParams({ limit: String(limit) }).toString();
+    const url = `${appConfig.api.baseUrl}${activityEndpoints.base}?${query}`;
 
     let res: Response;
     try {
-        res = await fetch(`${appConfig.api.baseUrl}${activityEndpoints.base}?${query}`, {
+        res = await fetch(url, {
             headers: buildHeaders(token, resolvedTenantId),
             signal: AbortSignal.timeout(RECENT_REQUEST_TIMEOUT_MS),
         });
@@ -117,11 +134,30 @@ const getRecent = async (limit: number, tenantId?: string): Promise<Activity[]> 
     // comment above). If the backend ever grows a { content: [...] }
     // envelope this keeps callers from breaking, but the array branch below
     // is the real, current path.
-    if (Array.isArray(data)) {
-        return data as Activity[];
-    }
+    const activities = Array.isArray(data)
+        ? (data as Activity[])
+        : ((data?.content as Activity[] | undefined) ?? []);
 
-    return (data?.content as Activity[] | undefined) ?? [];
+    return activities;
+};
+
+const getAll = async (
+    page: number,
+    size: number,
+    filters?: ActivityFilters,
+    tenantId?: string
+): Promise<ActivityPage> => {
+    const { token, tenantId: resolvedTenantId } = await getAuthContext(tenantId);
+    const query = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filters?.entityType) query.set("entityType", filters.entityType);
+    if (filters?.eventType) query.set("eventType", filters.eventType);
+    const url = `${appConfig.api.baseUrl}${activityEndpoints.paginated}?${query.toString()}`;
+
+    const res = await fetch(url, { headers: buildHeaders(token, resolvedTenantId) });
+    if (!res.ok) {
+        throw new ApiError({ message: "Request failed", status: res.status, code: "BUSINESS_ERROR" });
+    }
+    return res.json() as Promise<ActivityPage>;
 };
 
 /**
@@ -214,5 +250,6 @@ const connectToStream = async (
 
 export const activityApi = {
     getRecent,
+    getAll,
     connectToStream,
 };

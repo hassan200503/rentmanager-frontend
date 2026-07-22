@@ -11,6 +11,7 @@ export const useCreatePropertyMutation = () => {
         mutationFn: propertyApi.create,
         onSuccess: (property) => {
             qc.invalidateQueries({ queryKey: propertyKeys.all });
+            qc.invalidateQueries({ queryKey: ['activities'] });
             toast.success(`${property.name} created as a draft`);
         },
         onError: (error) => {
