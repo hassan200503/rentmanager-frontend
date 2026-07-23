@@ -4,9 +4,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-    FileText, Plus, SlidersHorizontal, AlertTriangle, ChevronRight,
+    Users, Plus, SlidersHorizontal, AlertTriangle, ChevronRight,
     Search, Download, X, ArrowUpDown, ArrowUp, ArrowDown, Wallet,
-    CheckCircle2, CalendarClock, ChevronLeft,
+    CheckCircle2, CalendarClock, ChevronLeft, Phone,
 } from "lucide-react";
 import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { LeaseStatusBadge } from "@/features/lease/components/lease-status-badge";
@@ -43,7 +43,7 @@ const STATUS_FILTER_OPTIONS: { label: string; value: LeaseStatus | "" }[] = [
 
 const PAGE_SIZE = 20;
 
-type SortKey = "leaseNumber" | "endDate" | "rentAmount" | "status";
+type SortKey = "tenantFullName" | "endDate" | "rentAmount" | "status";
 type SortDir = "asc" | "desc";
 
 // Hoisted out of LeasesPage: defining a component inline inside another
@@ -91,7 +91,9 @@ export default function LeasesPage() {
     const filteredLeases = useMemo(() => {
         const term = search.trim().toLowerCase();
         if (!term) return rawLeases;
-        return rawLeases.filter((lease) => lease.leaseNumber.toLowerCase().includes(term));
+        return rawLeases.filter((lease) =>
+            (lease.tenantFullName?.toLowerCase() ?? lease.leaseNumber.toLowerCase()).includes(term)
+        );
     }, [rawLeases, search]);
 
     const sortedLeases = useMemo(() => {
@@ -100,7 +102,9 @@ export default function LeasesPage() {
         return [...filteredLeases].sort((a, b) => {
             if (sortKey === "rentAmount") return (a.rentAmount - b.rentAmount) * dir;
             if (sortKey === "endDate") return (new Date(a.endDate).getTime() - new Date(b.endDate).getTime()) * dir;
-            return a[sortKey].localeCompare(b[sortKey]) * dir;
+            const aVal = (a as any)[sortKey] ?? a.leaseNumber;
+            const bVal = (b as any)[sortKey] ?? b.leaseNumber;
+            return String(aVal).localeCompare(String(bVal)) * dir;
         });
     }, [filteredLeases, sortKey, sortDir]);
 
@@ -112,6 +116,8 @@ export default function LeasesPage() {
             .reduce((sum, l) => sum + l.rentAmount, 0);
         return { activeCount, expiringSoonCount, monthlyRent };
     }, [rawLeases]);
+
+    const displayName = (lease: LeaseSummaryResponse) => lease.tenantFullName || lease.leaseNumber;
 
     const toggleSort = (key: SortKey) => {
         if (sortKey !== key) {
@@ -156,11 +162,11 @@ export default function LeasesPage() {
             <div className="flex flex-wrap items-start justify-between gap-4 animate-fade-in-up">
                 <div className="flex items-start gap-3">
                     <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                        <FileText className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                        <Users className="h-5 w-5 text-primary-dark" strokeWidth={2} />
                     </div>
                     <div>
-                        <h1 className="page-title mb-1">Leases</h1>
-                        <p className="page-subtitle mb-0">Manage lease agreements across your portfolio</p>
+                        <h1 className="page-title mb-1">Tenants</h1>
+                        <p className="page-subtitle mb-0">Residents, lease terms, and rent status across your portfolio</p>
                     </div>
                 </div>
 
@@ -186,10 +192,10 @@ export default function LeasesPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-fade-in-up">
                 <LeaseStatCard
-                    label="Total leases"
+                    label="Total tenants"
                     value={totalElements.toLocaleString()}
                     caption="across your portfolio"
-                    icon={FileText}
+                    icon={Users}
                 />
                 <LeaseStatCard
                     label="Active now"
@@ -237,7 +243,7 @@ export default function LeasesPage() {
                                 <input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search lease number..."
+                                    placeholder="Search tenant name..."
                                     className="form-input pl-8 w-full"
                                 />
                             </div>
@@ -295,13 +301,13 @@ export default function LeasesPage() {
                         ) : sortedLeases.length === 0 ? (
                             <div className="text-center py-12">
                                 <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05]">
-                                    <FileText className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                                    <Users className="h-5 w-5 text-ink-muted" strokeWidth={2} />
                                 </div>
-                                <p className="text-sm font-medium text-ink mb-1">No leases found</p>
+                                <p className="text-sm font-medium text-ink mb-1">No tenants found</p>
                                 <p className="text-xs text-ink-muted mb-4">
                                     {hasFilters
-                                        ? "Try a different search term or status filter, or create a new lease."
-                                        : "Create your first lease to start tracking terms and rent."}
+                                        ? "Try a different search term or status filter."
+                                        : "No tenants yet — they appear once a lease is created."}
                                 </p>
                                 <button
                                     onClick={() => router.push("/dashboard/leases/create")}
@@ -323,12 +329,12 @@ export default function LeasesPage() {
                                                     checked={selected.size > 0 && selected.size === sortedLeases.length}
                                                     onChange={toggleSelectAll}
                                                     className="rounded border-ink/20"
-                                                    aria-label="Select all leases"
+                                                    aria-label="Select all tenants"
                                                 />
                                             </th>
                                             <th className="py-2 px-2 font-medium">
-                                                <button onClick={() => toggleSort("leaseNumber")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
-                                                    Lease # <SortIcon column="leaseNumber" activeKey={sortKey} dir={sortDir} />
+                                                <button onClick={() => toggleSort("tenantFullName")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
+                                                    Tenant <SortIcon column="tenantFullName" activeKey={sortKey} dir={sortDir} />
                                                 </button>
                                             </th>
                                             <th className="py-2 px-2 font-medium">
@@ -361,14 +367,27 @@ export default function LeasesPage() {
                                                         checked={selected.has(lease.id)}
                                                         onChange={() => toggleSelected(lease.id)}
                                                         className="rounded border-ink/20"
-                                                        aria-label={`Select lease ${lease.leaseNumber}`}
+                                                        aria-label={`Select ${displayName(lease)}`}
                                                     />
                                                 </td>
                                                 <td
                                                     onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                     className="py-3 px-2 font-medium text-ink cursor-pointer"
                                                 >
-                                                    {lease.leaseNumber}
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-light text-[11px] font-semibold text-primary-dark">
+                                                            {(lease.tenantFullName ?? lease.leaseNumber).slice(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-ink group-hover:underline">
+                                                                {lease.tenantFullName || lease.leaseNumber}
+                                                            </p>
+                                                            <p className="text-[11px] text-ink-muted">
+                                                                {lease.tenantFullName ? lease.leaseNumber : ""}
+                                                                {lease.tenantPhone ? ` · ${lease.tenantPhone}` : ""}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td
                                                     onClick={() => router.push(`/dashboard/leases/${lease.id}`)}

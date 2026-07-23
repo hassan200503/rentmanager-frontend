@@ -25,6 +25,7 @@ const TYPE_LABELS: Record<RentTransactionType, string> = {
     REFUND: "Refund",
     CREDIT_APPLIED: "Credit Applied",
     ADJUSTMENT: "Adjustment",
+    DEPOSIT: "Deposit",
 };
 
 const amountColorClass = (type: RentTransactionType) => {

@@ -54,6 +54,8 @@ export interface LeaseDetailResponse {
     createdAt: string;
     updatedAt: string;
     version: number;
+    tenantFullName: string | null;
+    tenantPhone: string | null;
 
     // NEW this session: lifecycle metadata, previously persisted correctly
     // on the backend but never exposed to this DTO. All nullable -- a
@@ -78,6 +80,8 @@ export interface LeaseSummaryResponse {
     startDate: string;
     endDate: string;
     rentAmount: number;
+    tenantFullName: string | null;
+    tenantPhone: string | null;
 }
 
 export interface LeaseActionResponse {

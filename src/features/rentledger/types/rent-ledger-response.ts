@@ -29,7 +29,8 @@ export type RentTransactionType =
     | "WAIVER"
     | "REFUND"
     | "CREDIT_APPLIED"
-    | "ADJUSTMENT";
+    | "ADJUSTMENT"
+    | "DEPOSIT";
 
 export type RentTransactionSource =
     | "MPESA"
@@ -49,4 +50,19 @@ export interface RentTransactionResponse {
     occurredAt: string;          // LocalDateTime -> ISO string
     createdAt: string;           // Instant -> ISO string
     version: number;
+}
+
+export interface RentTransactionSummaryResponse {
+    id: string;
+    ledgerEntryId: string;
+    leaseId: string;
+    type: RentTransactionType;
+    amount: number;
+    externalReference: string | null;
+    source: RentTransactionSource;
+    recordedBy: string;
+    occurredAt: string;
+    tenantFullName: string | null;
+    tenantPhone: string | null;
+    leaseNumber: string | null;
 }

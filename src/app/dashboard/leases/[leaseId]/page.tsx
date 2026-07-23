@@ -173,7 +173,7 @@ export default function LeaseDetailPage() {
                         className="btn-outline inline-flex items-center gap-1.5 w-fit mx-auto"
                     >
                         <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
-                        Back to leases
+                    Back to tenants
                     </button>
                 </div>
             </div>
@@ -332,7 +332,7 @@ export default function LeaseDetailPage() {
                     Back to leases
                 </button>
                 <div className="flex items-center gap-1.5">
-                    <h1 className="page-title mb-1">{lease.leaseNumber}</h1>
+                    <h1 className="page-title mb-1">{lease.tenantFullName || lease.leaseNumber}</h1>
                     <button
                         onClick={handleCopyLeaseNumber}
                         className="mb-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:text-ink hover:bg-ink/[0.05] transition-colors"
@@ -342,9 +342,12 @@ export default function LeaseDetailPage() {
                         {copied ? <Check className="h-3.5 w-3.5 text-primary-dark" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5" strokeWidth={2} />}
                     </button>
                 </div>
+                <p className="text-sm text-ink-muted mb-2">
+                    Lease {lease.leaseNumber} · {formatEnumLabel(lease.leaseType)}
+                    {lease.tenantPhone ? ` · ${lease.tenantPhone}` : ""}
+                </p>
                 <div className="flex gap-2 items-center">
                     <LeaseStatusBadge status={lease.status} />
-                    <span className="text-sm text-ink-muted">{formatEnumLabel(lease.leaseType)}</span>
                 </div>
             </div>
 

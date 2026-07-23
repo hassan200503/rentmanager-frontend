@@ -8,4 +8,5 @@ export const rentLedgerEndpoints = {
     byLease: (leaseId: string) => `${base}/leases/${leaseId}/entries`,
     byStatus: (status: RentLedgerStatus) => `${base}/entries/status/${status}`,
     transactionsForEntry: (entryId: string) => `${base}/entries/${entryId}/transactions`,
+    allTransactions: () => `${base}/transactions`,
 };

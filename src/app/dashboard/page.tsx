@@ -13,12 +13,13 @@ import {
     Wallet,
     Plus,
     Receipt,
-    FileText,
+    Users,
     ShieldCheck,
     Clock,
     ArrowRight,
     ArrowUpRight,
     Smartphone,
+    ArrowLeftRight,
 } from "lucide-react";
 import type { ElementType } from "react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
@@ -527,19 +528,22 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                 <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Modules</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <PhasePlaceholderCard
+                        icon={ArrowLeftRight}
+                        title="Transactions"
+                        note="Live payments, charges, and adjustments feed"
+                        href="/dashboard/payments" />
+                    <PhasePlaceholderCard
                         icon={Receipt}
                         title="Rent ledger"
                         note="Collection status, overdue balances"
                         href="/dashboard/rent-ledger" />
                     <PhasePlaceholderCard
-                        icon={FileText}
-                        title="Leases"
-                        note="Active leases, renewals, pending actions"
+                        icon={Users}
+                        title="Tenants"
+                        note="Residents, lease terms, rent collection"
                         href="/dashboard/leases" />
                     <PhasePlaceholderCard icon={Wallet} title="Upcoming disbursements"
-                                          note="Phase 5 — pending payouts to your M-Pesa" />
-                    <PhasePlaceholderCard icon={ShieldCheck} title="Verification status"
-                                          note="Phase 7 — KYC and identity checks" />
+                                           note="Phase 5 — pending payouts to your M-Pesa" />
                 </div>
             </div>
         </div>

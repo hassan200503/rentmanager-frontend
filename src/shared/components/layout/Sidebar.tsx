@@ -14,6 +14,8 @@ import {
     LogOut,
     Menu,
     X,
+    ArrowLeftRight,
+    Wallet,
     type LucideIcon,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
@@ -27,9 +29,10 @@ interface NavItem {
 const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/properties", label: "Properties", icon: Building2 },
+    { href: "/dashboard/payments", label: "Transactions", icon: ArrowLeftRight },
     { href: "/dashboard/rent-ledger", label: "Rent ledger", icon: Receipt },
-    { href: "/dashboard/leases", label: "Leases", icon: FileText },
-    { href: "/daraja/config", label: "Payments", icon: Smartphone },
+    { href: "/dashboard/leases", label: "Tenants", icon: Users },
+    { href: "/daraja/config", label: "M-Pesa", icon: Smartphone },
     { href: "/dashboard/team", label: "Team", icon: Users },
 ];
 
