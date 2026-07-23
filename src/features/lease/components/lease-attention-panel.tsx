@@ -1,4 +1,3 @@
-// src/features/lease/components/lease-attention-panel.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -30,9 +29,6 @@ const buildAttentionItems = (leases: LeaseSummaryResponse[]): AttentionItem[] =>
                         : `Expires in ${remaining} days`,
             });
         } else if (needsAction(lease.status) && lease.status !== "PENDING_ACTIVATION") {
-            // PENDING_ACTIVATION transitions to ACTIVE automatically once the
-            // move date arrives — there's no landlord action to take, so it
-            // doesn't belong in a "needs attention" list.
             items.push({
                 lease,
                 reason: "action",
@@ -64,17 +60,17 @@ export function LeaseAttentionPanel({ leases }: { leases: LeaseSummaryResponse[]
 
     return (
         <div className="card-sm lg:sticky lg:top-4 h-fit">
-            <div className="flex items-center gap-1.5 mb-3 text-xs font-medium text-ink-muted">
+            <div className="flex items-center gap-1.5 mb-3 text-xs font-medium text-fg-muted dark:text-fg-muted-dark">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
                 Needs attention
             </div>
 
             {items.length === 0 ? (
                 <div className="py-6 text-center">
-                    <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-light">
-                        <ClipboardList className="h-4 w-4 text-primary-dark" strokeWidth={2} />
+                    <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-800">
+                        <ClipboardList className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
                     </div>
-                    <p className="text-xs text-ink-muted">Nothing on this page needs action right now.</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Nothing on this page needs action right now.</p>
                 </div>
             ) : (
                 <ul className="space-y-1">
@@ -82,23 +78,23 @@ export function LeaseAttentionPanel({ leases }: { leases: LeaseSummaryResponse[]
                         <li key={item.lease.id}>
                             <button
                                 onClick={() => router.push(`/dashboard/leases/${item.lease.id}`)}
-                                className="w-full flex items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-ink/[0.03] transition-colors group"
+                                className="w-full flex items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-border-subtle/50 dark:hover:bg-border-subtle-dark/50 transition-colors group"
                             >
                                 <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                                    item.reason === "expiring" ? "bg-warning/10" : "bg-primary-light"
+                                    item.reason === "expiring" ? "bg-warning-bg dark:bg-warning-bg-dark" : "bg-brand-50 dark:bg-brand-800"
                                 }`}>
                                     {item.reason === "expiring" ? (
-                                        <CalendarClock className="h-3.5 w-3.5 text-warning-dark" strokeWidth={2} />
+                                        <CalendarClock className="h-3.5 w-3.5 text-warning-dark dark:text-warning" strokeWidth={2} />
                                     ) : (
-                                        <AlertCircle className="h-3.5 w-3.5 text-primary-dark" strokeWidth={2} />
+                                        <AlertCircle className="h-3.5 w-3.5 text-brand dark:text-brand-300" strokeWidth={2} />
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-medium text-ink truncate">{item.lease.leaseNumber}</p>
-                                    <p className="text-[11px] text-ink-muted truncate">{item.detail}</p>
+                                    <p className="text-xs font-medium text-fg dark:text-fg-dark truncate">{item.lease.leaseNumber}</p>
+                                    <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark truncate">{item.detail}</p>
                                 </div>
                                 <ChevronRight
-                                    className="h-3.5 w-3.5 text-ink-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                    className="h-3.5 w-3.5 text-fg-muted dark:text-fg-muted-dark opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                     strokeWidth={2}
                                 />
                             </button>
@@ -107,7 +103,7 @@ export function LeaseAttentionPanel({ leases }: { leases: LeaseSummaryResponse[]
                 </ul>
             )}
 
-            <p className="mt-3 pt-3 border-t border-ink/[0.06] text-[11px] text-ink-muted">
+            <p className="mt-3 pt-3 border-t border-border dark:border-border-dark text-[11px] text-fg-muted dark:text-fg-muted-dark">
                 Based on leases loaded on this page. Renewals inside 30 days and drafts awaiting action surface first.
             </p>
         </div>

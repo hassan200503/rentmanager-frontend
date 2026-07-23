@@ -33,18 +33,18 @@ export default function CreateUnitPage() {
         <div className="page-container max-w-2xl">
             <button
                 onClick={() => router.push(`/dashboard/properties/${propertyId}`)}
-                className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-4"
+                className="inline-flex items-center gap-1.5 text-sm text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors mb-4"
             >
                 <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                 Back to property
             </button>
 
             <div className="mb-6 flex items-start gap-3 animate-fade-in-up">
-                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                    <DoorOpen className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                    <DoorOpen className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                 </div>
                 <div>
-                    <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Units</p>
+                    <p className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark uppercase tracking-wide mb-1">Units</p>
                     <h1 className="page-title mb-1">Add new unit</h1>
                     <p className="page-subtitle mb-0">Add a unit to this property</p>
                 </div>

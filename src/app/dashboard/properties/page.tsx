@@ -18,11 +18,10 @@ export default function PropertiesPage() {
 
     return (
         <div className="page-container space-y-6">
-            {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-4 animate-fade-in-up">
                 <div className="flex items-start gap-3">
-                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                        <Building2 className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                        <Building2 className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                     </div>
                     <div>
                         <h1 className="page-title mb-1">Properties</h1>
@@ -32,17 +31,15 @@ export default function PropertiesPage() {
 
                 <button
                     onClick={() => router.push("/dashboard/properties/create")}
-                    className="btn-primary inline-flex items-center gap-1.5"
+                    className="btn-primary"
                 >
                     <Plus className="h-4 w-4" strokeWidth={2} />
                     New property
                 </button>
             </div>
 
-            {/* Filters — PropertyFilters has no self-styling of its own (plain flex row),
-                so it genuinely needs this card-sm shell. */}
             <div className="card-sm animate-fade-in-up">
-                <div className="flex items-center gap-1.5 mb-3 text-xs font-medium text-ink-muted">
+                <div className="flex items-center gap-1.5 mb-3 text-xs font-medium text-fg-muted dark:text-fg-muted-dark">
                     <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
                     Filters
                 </div>
@@ -53,13 +50,8 @@ export default function PropertiesPage() {
                 />
             </div>
 
-            {/*
-              PropertyTable already self-wraps with its own border/shadow-sm/rounded-lg shell
-              (confirmed against its source, same as UnitTable) — no outer .card here to avoid
-              a card-in-card double border/shadow. Fade-in kept on a plain wrapper instead.
-            */}
             <div className="animate-fade-in-up">
-                <PropertyTable params={filters} />
+                <PropertyTable params={filters} onFilterChange={updateFilter} />
             </div>
         </div>
     );

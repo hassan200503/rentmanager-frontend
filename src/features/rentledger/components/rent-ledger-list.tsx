@@ -1,4 +1,3 @@
-// features/rent-ledger/components/rent-ledger-list.tsx
 import { useRentLedgerByLeaseQuery } from "../hooks/use-rent-ledger-by-lease-query";
 import { RentLedgerEntryRow } from "./rent-ledger-entry-row";
 
@@ -23,7 +22,7 @@ export const RentLedgerList = ({ leaseId, onSelectEntry }: RentLedgerListProps) 
     }
 
     if (!entries || entries.length === 0) {
-        return <div className="card-sm text-sm text-ink-muted">No ledger entries yet for this lease.</div>;
+        return <div className="card-sm text-sm text-fg-muted dark:text-fg-muted-dark">No ledger entries yet for this lease.</div>;
     }
 
     return (

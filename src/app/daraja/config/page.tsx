@@ -16,15 +16,10 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
-
 import { toast } from "sonner";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import { ConfigureDarajaCredentialsRequest } from "@/features/daraja/types/daraja-types";
 import { useConfigureDarajaMutation } from "@/features/daraja/queries/use-configure-daraja-mutation";
-
-// FIXED: stray leading space in the import path was breaking module resolution
-// ("/ use-daraja-status-query" instead of "/use-daraja-status-query"). Bug, not
-// a style change.
 import { useDarajaStatusQuery } from "@/features/daraja/queries/ use-daraja-status-query";
 
 type FormState = ConfigureDarajaCredentialsRequest;
@@ -49,23 +44,19 @@ function validate(form: FormState): Partial<Record<keyof FormState, string>> {
     return errors;
 }
 
-// Persistent header rendered across every state of this page (loading,
-// permission-denied, error, onboarding, configured, editing) -- previously
-// none of those states had any navigation chrome at all, so there was no
-// way back to the dashboard except the browser back button.
 function PageHeader() {
     return (
         <div className="mb-6 animate-fade-in-up">
             <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-4"
+                className="inline-flex items-center gap-1.5 text-sm text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors mb-4"
             >
                 <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                 Back to dashboard
             </Link>
             <div className="flex items-start gap-3">
-                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                    <Smartphone className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                    <Smartphone className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                 </div>
                 <div>
                     <h1 className="page-title mb-1">M-Pesa configuration</h1>
@@ -76,20 +67,11 @@ function PageHeader() {
     );
 }
 
-// No shared LoadingSkeleton / PermissionDeniedState components exist in this
-// codebase (confirmed - grepped the repo, nothing matches). Other
-// OWNER-gated UI (invite-user-form.tsx) doesn't gate whole pages either, it
-// just conditionally hides pieces. So these are minimal inline states local
-// to this file rather than invented shared components. Swap for real shared
-// components later if/when this pattern gets used in more than one place.
-// (Visual treatment below brought in line with the dashboard page's own
-// InlinePermissionDenied so the copy/layout at least *reads* the same,
-// without actually extracting a shared component.)
 function InlineLoading() {
     return (
         <div className="page-container max-w-xl">
             <PageHeader />
-            <div className="card flex items-center justify-center gap-2 py-10 text-sm text-ink-muted">
+            <div className="card flex items-center justify-center gap-2 py-10 text-sm text-fg-muted dark:text-fg-muted-dark">
                 <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                 Loading…
             </div>
@@ -102,11 +84,11 @@ function InlinePermissionDenied() {
         <div className="page-container max-w-xl">
             <PageHeader />
             <div className="card text-center py-10">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05]">
-                    <ShieldCheck className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                    <ShieldCheck className="h-5 w-5 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
                 </div>
-                <p className="text-sm font-medium text-ink mb-1">Restricted page</p>
-                <p className="text-sm text-ink-muted">
+                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Restricted page</p>
+                <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
                     You don&#39;t have permission to view this page. Ask an account owner for access.
                 </p>
             </div>
@@ -115,7 +97,6 @@ function InlinePermissionDenied() {
 }
 
 export default function DarajaConfigPage() {
-    // Confirmed: UserResponse.tenantId is a plain string (src/features/user/types/user.ts)
     const { user, isOwner, isLoading: isUserLoading } = useCurrentUser();
 
     if (isUserLoading) return <InlineLoading />;
@@ -125,8 +106,6 @@ export default function DarajaConfigPage() {
     return <DarajaConfigPageContent tenantId={user.tenantId} />;
 }
 
-// Split so hooks below only run once we know we have a tenantId and the
-// user is confirmed OWNER — keeps the rules-of-hooks ordering clean above.
 function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
     const statusQuery = useDarajaStatusQuery(tenantId);
     const mutation = useConfigureDarajaMutation(tenantId);
@@ -144,12 +123,12 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
         return (
             <div className="page-container max-w-xl">
                 <PageHeader />
-                <div className="card border-danger/20 bg-danger/[0.03] text-center py-10">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger/10">
+                <div className="card text-center py-10">
+                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-bg dark:bg-danger-bg-dark">
                         <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
                     </div>
-                    <p className="text-sm font-medium text-danger-dark mb-1">Couldn&#39;t load your M-Pesa configuration status</p>
-                    <p className="text-xs text-ink-muted mb-4">Please refresh the page. If this keeps happening, contact support.</p>
+                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Couldn&#39;t load your M-Pesa configuration status</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please refresh the page. If this keeps happening, contact support.</p>
                     <button onClick={() => window.location.reload()} className="btn-outline mx-auto">
                         Refresh
                     </button>
@@ -192,19 +171,16 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
         }
     }
 
-    // ---------------------------------------------------------------
-    // NOT YET CONFIGURED — onboarding state
-    // ---------------------------------------------------------------
     if (!isConfigured && mode === "view") {
         return (
             <div className="page-container max-w-xl">
                 <PageHeader />
                 <div className="card text-center py-10 animate-fade-in-up">
-                    <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-ink/[0.05]">
-                        <Smartphone className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                    <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                        <Smartphone className="h-5 w-5 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
                     </div>
-                    <h2 className="text-lg font-semibold text-ink">Set up M-Pesa</h2>
-                    <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto">
+                    <h2 className="text-lg font-semibold text-fg dark:text-fg-dark">Set up M-Pesa</h2>
+                    <p className="mt-2 text-sm text-fg-muted dark:text-fg-muted-dark max-w-sm mx-auto">
                         Connect your Daraja (M-Pesa) credentials to start accepting reservation
                         payments directly to your paybill or till number.
                     </p>
@@ -221,13 +197,6 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
         );
     }
 
-    // ---------------------------------------------------------------
-    // CONFIGURED — view mode
-    // ---------------------------------------------------------------
-    // Note: there is no "last updated by / at" data available — the backend
-    // status endpoint returns only `{ configured: boolean }`. That field from
-    // the original spec can't be surfaced until/unless the backend response
-    // is extended to include it.
     if (isConfigured && mode === "view") {
         return (
             <div className="page-container max-w-xl">
@@ -235,36 +204,36 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                 <div className="card animate-fade-in-up">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-ink">M-Pesa (Daraja)</h2>
-                            <p className="mt-1 text-sm text-ink-muted">
+                            <h2 className="text-lg font-semibold text-fg dark:text-fg-dark">M-Pesa (Daraja)</h2>
+                            <p className="mt-1 text-sm text-fg-muted dark:text-fg-muted-dark">
                                 Your M-Pesa credentials are configured.
                             </p>
                         </div>
-                        <span className="pill pill-success inline-flex items-center gap-1">
+                        <span className="pill-success inline-flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
                             Configured
                         </span>
                     </div>
 
                     <div className="mt-6 space-y-3 text-sm">
-                        <div className="flex justify-between border-b border-ink/[0.08] pb-2">
-                            <span className="text-ink-muted">Consumer key</span>
-                            <span className="font-mono text-ink">••••••••</span>
+                        <div className="flex justify-between border-b border-border dark:border-border-dark pb-2">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Consumer key</span>
+                            <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                         </div>
-                        <div className="flex justify-between border-b border-ink/[0.08] pb-2">
-                            <span className="text-ink-muted">Consumer secret</span>
-                            <span className="font-mono text-ink">••••••••</span>
+                        <div className="flex justify-between border-b border-border dark:border-border-dark pb-2">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Consumer secret</span>
+                            <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                         </div>
-                        <div className="flex justify-between border-b border-ink/[0.08] pb-2">
-                            <span className="text-ink-muted">Shortcode</span>
-                            <span className="font-mono text-ink">••••••••</span>
+                        <div className="flex justify-between border-b border-border dark:border-border-dark pb-2">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Shortcode</span>
+                            <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                         </div>
                         <div className="flex justify-between pb-2">
-                            <span className="text-ink-muted">Passkey</span>
-                            <span className="font-mono text-ink">••••••••</span>
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Passkey</span>
+                            <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-ink-muted">
+                    <p className="mt-3 text-xs text-fg-muted dark:text-fg-muted-dark">
                         For security, stored credentials are never displayed — the backend
                         doesn&#39;t return them once saved. To change them, update below.
                     </p>
@@ -272,7 +241,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                     <button
                         type="button"
                         onClick={() => setMode("edit")}
-                        className="btn-secondary mt-6 inline-flex items-center gap-1.5"
+                        className="btn-secondary mt-6"
                     >
                         <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
                         Update credentials
@@ -282,17 +251,14 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
         );
     }
 
-    // ---------------------------------------------------------------
-    // EDITING — form (used for both first-time setup and updates)
-    // ---------------------------------------------------------------
     return (
         <div className="page-container max-w-xl">
             <PageHeader />
             <div className="card animate-fade-in-up">
-                <h2 className="text-lg font-semibold text-ink">
+                <h2 className="text-lg font-semibold text-fg dark:text-fg-dark">
                     {isConfigured ? "Update M-Pesa credentials" : "Set up M-Pesa"}
                 </h2>
-                <p className="mt-1 text-sm text-ink-muted">
+                <p className="mt-1 text-sm text-fg-muted dark:text-fg-muted-dark">
                     These are used to authenticate STK Push requests to your own Till or
                     Paybill. They&#39;re encrypted at rest and never shown again once saved.
                 </p>
@@ -335,7 +301,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                         <button
                             type="submit"
                             disabled={mutation.isPending}
-                            className="btn-primary inline-flex items-center gap-1.5 disabled:opacity-50"
+                            className="btn-primary"
                         >
                             {mutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
@@ -348,7 +314,7 @@ function DarajaConfigPageContent({ tenantId }: { tenantId: string }) {
                             type="button"
                             onClick={handleCancel}
                             disabled={mutation.isPending}
-                            className="btn-secondary disabled:opacity-50"
+                            className="btn-secondary"
                         >
                             Cancel
                         </button>
@@ -378,20 +344,20 @@ function FormField({
 }) {
     return (
         <div>
-            <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
+            <label className="form-label">{label}</label>
             <div className="relative">
                 <input
                     type={secret && !showSecrets ? "password" : "text"}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     autoComplete="off"
-                    className={`form-input w-full text-sm ${secret ? "pr-10" : ""} ${error ? "border-danger" : ""}`}
+                    className={`form-input w-full text-sm ${secret ? "pr-10" : ""} ${error ? "!border-danger" : ""}`}
                 />
                 {secret && (
                     <button
                         type="button"
                         onClick={onToggleShowSecrets}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
                         aria-label={showSecrets ? "Hide value" : "Show value"}
                     >
                         {showSecrets ? (

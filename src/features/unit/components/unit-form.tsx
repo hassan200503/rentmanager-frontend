@@ -1,8 +1,8 @@
 "use client";
 
-import { Path, useForm } from "react-hook-form";
+import { Path, useForm, useController, Control } from "react-hook-form";
 import { useRef, useEffect, useState } from "react";
-import { DoorOpen, Wallet, FileText, ImagePlus, X, Loader2, Building2 } from "lucide-react";
+import { DoorOpen, Wallet, FileText, ImagePlus, X, Loader2, Building2, ChevronDown } from "lucide-react";
 import { CreateUnitRequest } from "../types/unit-request";
 import { UnitFormValues, unitSchema } from "../validations/unit-schema";
 
@@ -62,11 +62,48 @@ function SectionHeader({
 }) {
     return (
         <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-ink/[0.05]">
-                <Icon className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-border-subtle dark:bg-border-subtle-dark">
+                <Icon className="h-3.5 w-3.5 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
             </div>
-            <h3 className="text-sm font-semibold text-ink">{title}</h3>
+            <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">{title}</h3>
         </div>
+    );
+}
+
+function CurrencyInput({ label, name, control, error }: {
+    label: string;
+    name: "rentAmount" | "depositAmount";
+    control: Control<UnitFormValues>;
+    error?: string;
+}) {
+    const { field } = useController({ name, control });
+
+    return (
+        <label className="space-y-1.5">
+            <span className="form-label">{label}</span>
+            <div className="relative">
+                <input
+                    className="form-input font-mono-nums !pl-16 pr-3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="e.g. 25000"
+                    value={field.value || ""}
+                    onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        field.onChange(raw ? Number(raw) : 0);
+                    }}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                />
+                <span className="absolute left-0 top-0 bottom-0 flex items-center px-3 text-xs font-medium tracking-wider text-fg-subtle dark:text-fg-subtle-dark uppercase select-none pointer-events-none bg-border-subtle dark:bg-border-subtle-dark rounded-l-lg border-r border-border dark:border-border-dark">
+                    KES
+                </span>
+            </div>
+            {error && (
+                <span className="text-xs text-danger">{error}</span>
+            )}
+        </label>
     );
 }
 
@@ -86,6 +123,7 @@ export const UnitForm = ({
         register,
         handleSubmit,
         setError,
+        control,
         formState: { errors },
     } = useForm<UnitFormValues>({
         defaultValues: { ...emptyValues(propertyId), ...defaultValues },
@@ -97,8 +135,6 @@ export const UnitForm = ({
         });
     }, [onSetUnitNumberError, setError]);
 
-    // Revoke the object URL on unmount / when replaced, so we don't leak
-    // blob URLs as the user swaps images before submitting.
     useEffect(() => {
         return () => {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -141,11 +177,10 @@ export const UnitForm = ({
 
     return (
         <form onSubmit={submit} className="space-y-8">
-            {/* Basic info */}
             <div>
                 <SectionHeader icon={DoorOpen} title="Unit details" />
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-1">
+                    <label className="space-y-1.5">
                         <span className="form-label">Unit number</span>
                         <input
                             className="form-input"
@@ -159,7 +194,7 @@ export const UnitForm = ({
                         )}
                     </label>
 
-                    <label className="space-y-1">
+                    <label className="space-y-1.5">
                         <span className="form-label">Label</span>
                         <input
                             className="form-input"
@@ -171,12 +206,12 @@ export const UnitForm = ({
                         )}
                     </label>
 
-                    <label className="space-y-1">
+                    <label className="space-y-1.5">
                         <span className="form-label">Floor</span>
                         <div className="relative">
-                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted pointer-events-none" strokeWidth={2} />
+                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark pointer-events-none z-10" strokeWidth={1.5} />
                             <select
-                                className="form-input appearance-none pl-10 pr-8"
+                                className="form-input appearance-none !pl-9 pr-10"
                                 {...register("floor")}
                             >
                                 {FLOOR_OPTIONS.map((opt) => (
@@ -185,15 +220,7 @@ export const UnitForm = ({
                                     </option>
                                 ))}
                             </select>
-                            <svg
-                                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted pointer-events-none"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark pointer-events-none" strokeWidth={1.5} />
                         </div>
                         {errors.floor && (
                             <span className="text-xs text-danger">{errors.floor.message}</span>
@@ -202,58 +229,25 @@ export const UnitForm = ({
                 </div>
             </div>
 
-            {/* Pricing */}
-            <div className="border-t border-ink/10 pt-8">
+            <div className="border-t border-border dark:border-border-dark pt-8">
                 <SectionHeader icon={Wallet} title="Pricing" />
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-1">
-                        <span className="form-label">Rent amount</span>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted font-data pointer-events-none">
-                                KES
-                            </span>
-                            <input
-                                className="form-input font-data pl-12"
-                                type="number"
-                                step="1"
-                                min="0"
-                                placeholder="25000"
-                                {...register("rentAmount", { valueAsNumber: true })}
-                            />
-                        </div>
-                        {errors.rentAmount && (
-                            <span className="text-xs text-danger">
-                                {errors.rentAmount.message}
-                            </span>
-                        )}
-                    </label>
-
-                    <label className="space-y-1">
-                        <span className="form-label">Deposit amount</span>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted font-data pointer-events-none">
-                                KES
-                            </span>
-                            <input
-                                className="form-input font-data pl-12"
-                                type="number"
-                                step="1"
-                                min="0"
-                                placeholder="25000"
-                                {...register("depositAmount", { valueAsNumber: true })}
-                            />
-                        </div>
-                        {errors.depositAmount && (
-                            <span className="text-xs text-danger">
-                                {errors.depositAmount.message}
-                            </span>
-                        )}
-                    </label>
+                    <CurrencyInput
+                        label="Rent amount"
+                        name="rentAmount"
+                        control={control}
+                        error={errors.rentAmount?.message}
+                    />
+                    <CurrencyInput
+                        label="Deposit amount"
+                        name="depositAmount"
+                        control={control}
+                        error={errors.depositAmount?.message}
+                    />
                 </div>
             </div>
 
-            {/* Description */}
-            <div className="border-t border-ink/10 pt-8">
+            <div className="border-t border-border dark:border-border-dark pt-8">
                 <SectionHeader icon={FileText} title="Description" />
                 <textarea
                     className="form-input min-h-[100px]"
@@ -262,8 +256,7 @@ export const UnitForm = ({
                 />
             </div>
 
-            {/* Image Upload */}
-            <div className="border-t border-ink/10 pt-8">
+            <div className="border-t border-border dark:border-border-dark pt-8">
                 <SectionHeader icon={ImagePlus} title="Unit photo" />
 
                 <input
@@ -281,14 +274,14 @@ export const UnitForm = ({
                         <img
                             src={previewUrl}
                             alt="Selected unit"
-                            className="h-20 w-20 rounded-lg object-cover border border-ink/10"
+                            className="h-20 w-20 rounded-lg object-cover border border-border dark:border-border-dark"
                         />
                         <div className="min-w-0">
-                            <p className="text-sm text-ink truncate max-w-[240px]">{selectedFile?.name}</p>
+                            <p className="text-sm text-fg dark:text-fg-dark truncate max-w-[240px]">{selectedFile?.name}</p>
                             <div className="flex items-center gap-3 mt-1.5">
                                 <button
                                     type="button"
-                                    className="text-xs font-medium text-primary hover:underline"
+                                    className="text-xs font-medium text-brand dark:text-brand-300 hover:underline"
                                     onClick={() => imageInputRef.current?.click()}
                                 >
                                     Change
@@ -308,23 +301,22 @@ export const UnitForm = ({
                     <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="flex flex-col items-center justify-center gap-2 w-full rounded-lg border border-dashed border-ink/15 bg-ink/[0.015] py-8 text-center hover:bg-ink/[0.03] hover:border-ink/25 transition-colors"
+                        className="flex flex-col items-center justify-center gap-2 w-full rounded-lg border border-dashed border-border dark:border-border-dark bg-border-subtle/30 dark:bg-border-subtle-dark/30 py-8 text-center hover:bg-border-subtle/50 dark:hover:bg-border-subtle-dark/50 hover:border-fg-muted/30 dark:hover:border-fg-muted-dark/30 transition-colors"
                     >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/[0.05]">
-                            <ImagePlus className="h-4 w-4 text-ink-muted" strokeWidth={2} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                            <ImagePlus className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
                         </div>
-                        <span className="text-sm font-medium text-ink">Click to upload a photo</span>
-                        <span className="text-xs text-ink-muted">PNG or JPG</span>
+                        <span className="text-sm font-medium text-fg dark:text-fg-dark">Click to upload a photo</span>
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark">PNG or JPG</span>
                     </button>
                 )}
             </div>
 
-            {/* Submit */}
-            <div className="border-t border-ink/10 pt-6">
+            <div className="border-t border-border dark:border-border-dark pt-6">
                 <button
                     type="submit"
                     disabled={loading}
-                    className="btn-primary w-full inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {loading && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
                     {loading ? "Saving…" : submitLabel}

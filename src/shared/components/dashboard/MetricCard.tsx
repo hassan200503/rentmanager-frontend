@@ -1,4 +1,3 @@
-// shared/components/dashboard/MetricCard.tsx
 "use client";
 
 import type { ElementType } from "react";
@@ -12,19 +11,17 @@ interface MetricCardProps {
 }
 
 const toneClasses: Record<NonNullable<MetricCardProps["tone"]>, string> = {
-    success: "text-primary",
-    warning: "text-warning-dark",
-    danger: "text-danger",
-    neutral: "text-ink",
+    success: "text-brand dark:text-brand-300",
+    warning: "text-warning-dark dark:text-warning",
+    danger: "text-danger dark:text-danger",
+    neutral: "text-fg dark:text-fg-dark",
 };
 
-// Matches the existing pill-* light-bg/dark-text pairing so icon badges
-// feel like the same design language, not a new accent system.
 const iconToneClasses: Record<NonNullable<MetricCardProps["tone"]>, string> = {
-    success: "bg-primary-light text-primary-dark",
-    warning: "bg-brass-light text-warning-dark",
-    danger: "bg-danger/10 text-danger-dark",
-    neutral: "bg-ink/[0.05] text-ink-muted",
+    success: "bg-brand-50 dark:bg-brand-800 text-brand-dark dark:text-brand-200",
+    warning: "bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning",
+    danger: "bg-danger-bg dark:bg-danger-bg-dark text-danger-dark dark:text-danger",
+    neutral: "bg-border-subtle dark:bg-border-subtle-dark text-fg-muted dark:text-fg-muted-dark",
 };
 
 export default function MetricCard({
@@ -35,16 +32,16 @@ export default function MetricCard({
                                        icon: Icon,
                                    }: MetricCardProps) {
     return (
-        <div className="card-sm animate-fade-in-up">
+        <div className="card animate-fade-in-up">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wide">
+                    <p className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark mb-1.5 uppercase tracking-wide">
                         {label}
                     </p>
-                    <p className={`font-data text-2xl font-semibold ${toneClasses[tone]}`}>
+                    <p className={`font-mono-nums text-2xl font-semibold ${toneClasses[tone]}`}>
                         {value}
                     </p>
-                    {hint && <p className="text-xs text-ink-muted mt-1">{hint}</p>}
+                    {hint && <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">{hint}</p>}
                 </div>
                 {Icon && (
                     <div className={`shrink-0 rounded-lg p-2 ${iconToneClasses[tone]}`}>
@@ -58,7 +55,7 @@ export default function MetricCard({
 
 export function MetricCardSkeleton() {
     return (
-        <div className="card-sm">
+        <div className="card">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 w-full">
                     <div className="skeleton h-3 w-20 mb-2" />

@@ -18,16 +18,10 @@ import {
     SlidersHorizontal,
 } from "lucide-react";
 import { rentLedgerApi } from "@/features/rentledger/api/rent-ledger-api";
-import { RentTransactionSummaryResponse, RentTransactionType, RentTransactionSource } from "@/features/rentledger/types/rent-ledger-response";
+import { RentTransactionType, RentTransactionSource } from "@/features/rentledger/types/rent-ledger-response";
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
-
-const formatDateTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" }) +
-        " " + d.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
-};
 
 const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -45,13 +39,13 @@ const typeLabels: Record<RentTransactionType, string> = {
 };
 
 const typeColors: Record<RentTransactionType, string> = {
-    RENT_CHARGE: "text-ink-muted bg-ink/[0.05]",
-    PAYMENT: "text-success-dark bg-success/10",
-    WAIVER: "text-warning-dark bg-warning/10",
-    REFUND: "text-danger bg-danger/10",
-    CREDIT_APPLIED: "text-primary-dark bg-primary-light",
-    ADJUSTMENT: "text-ink-muted bg-ink/[0.05]",
-    DEPOSIT: "text-info-dark bg-info/10",
+    RENT_CHARGE: "text-fg-muted dark:text-fg-muted-dark bg-border-subtle dark:bg-border-subtle-dark",
+    PAYMENT: "text-success-dark dark:text-success bg-success-bg dark:bg-success-bg-dark",
+    WAIVER: "text-warning-dark dark:text-warning bg-warning-bg dark:bg-warning-bg-dark",
+    REFUND: "text-danger bg-danger-bg dark:bg-danger-bg-dark",
+    CREDIT_APPLIED: "text-brand-dark dark:text-brand-200 bg-brand-50 dark:bg-brand-800",
+    ADJUSTMENT: "text-fg-muted dark:text-fg-muted-dark bg-border-subtle dark:bg-border-subtle-dark",
+    DEPOSIT: "text-info-dark dark:text-info bg-info-bg dark:bg-info-bg-dark",
 };
 
 const sourceIcon: Record<RentTransactionSource, typeof Smartphone> = {
@@ -157,12 +151,12 @@ export default function PaymentsPage() {
     if (isError) {
         return (
             <div className="page-container">
-                <div className="card border-danger/20 bg-danger/[0.03] text-center py-10">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger/10">
+                <div className="card text-center py-10 max-w-xl mx-auto">
+                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-bg dark:bg-danger-bg-dark">
                         <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
                     </div>
-                    <p className="text-sm font-medium text-danger-dark mb-1">Couldn&#39;t load transactions</p>
-                    <p className="text-xs text-ink-muted mb-4">Please refresh the page. If this keeps happening, contact support.</p>
+                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Couldn&#39;t load transactions</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please refresh the page. If this keeps happening, contact support.</p>
                     <button onClick={() => refetch()} className="btn-outline mx-auto">Retry</button>
                 </div>
             </div>
@@ -173,8 +167,8 @@ export default function PaymentsPage() {
         <div className="page-container space-y-6">
             <div className="flex flex-wrap items-start justify-between gap-4 animate-fade-in-up">
                 <div className="flex items-start gap-3">
-                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                        <Receipt className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                        <Receipt className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                     </div>
                     <div>
                         <h1 className="page-title mb-1">Transactions</h1>
@@ -183,7 +177,7 @@ export default function PaymentsPage() {
                 </div>
                 <button
                     onClick={() => refetch()}
-                    className="btn-secondary inline-flex items-center gap-1.5"
+                    className="btn-secondary"
                 >
                     <RefreshCw className="h-4 w-4" strokeWidth={2} />
                     Refresh
@@ -192,13 +186,13 @@ export default function PaymentsPage() {
 
             <div className="card-sm animate-fade-in-up">
                 <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-fg-muted dark:text-fg-muted-dark">
                         <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
                         Filters
-                        <span className="text-ink-muted font-normal">· {sorted.length} transactions</span>
+                        <span className="font-normal">· {sorted.length} transactions</span>
                     </div>
                     {hasFilters && (
-                        <button onClick={clearFilters} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink transition-colors">
+                        <button onClick={clearFilters} className="inline-flex items-center gap-1 text-xs font-medium text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors">
                             <X className="h-3 w-3" strokeWidth={2} />
                             Clear filters
                         </button>
@@ -206,12 +200,12 @@ export default function PaymentsPage() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[200px] max-w-xs">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
                         <input
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                             placeholder="Search tenant, lease, or receipt..."
-                            className="form-input pl-8 w-full"
+                            className="form-input !pl-8 w-full"
                         />
                     </div>
                     <select
@@ -226,100 +220,98 @@ export default function PaymentsPage() {
                 </div>
             </div>
 
-            <div className="card animate-fade-in-up">
+            <div className="card animate-fade-in-up overflow-hidden !p-0">
                 {transactions && transactions.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05]">
-                            <Receipt className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                            <Receipt className="h-5 w-5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
                         </div>
-                        <p className="text-sm font-medium text-ink mb-1">No transactions yet</p>
-                            <p className="text-xs text-ink-muted">Transactions appear here once rent charges, deposits, or payments are posted.</p>
+                        <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No transactions yet</p>
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Transactions appear here once rent charges, deposits, or payments are posted.</p>
                     </div>
                 ) : paged.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05]">
-                            <Search className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                            <Search className="h-5 w-5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
                         </div>
-                        <p className="text-sm font-medium text-ink mb-1">No matching transactions</p>
-                        <p className="text-xs text-ink-muted">Try a different search term or filter.</p>
+                        <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No matching transactions</p>
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Try a different search term or filter.</p>
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto -mx-2">
+                        <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="text-left text-ink-muted border-b border-ink/10">
-                                        <th className="py-2 px-2 font-medium">
-                                            <button onClick={() => toggleSort("occurredAt")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
-                                                Date <SortIcon column="occurredAt" activeKey={sortKey} dir={sortDir} />
-                                            </button>
-                                        </th>
-                                        <th className="py-2 px-2 font-medium">
-                                            <button onClick={() => toggleSort("tenantFullName")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
-                                                Tenant <SortIcon column="tenantFullName" activeKey={sortKey} dir={sortDir} />
-                                            </button>
-                                        </th>
-                                        <th className="py-2 px-2 font-medium">
-                                            <button onClick={() => toggleSort("type")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
-                                                Type <SortIcon column="type" activeKey={sortKey} dir={sortDir} />
-                                            </button>
-                                        </th>
-                                        <th className="py-2 px-2 font-medium">
-                                            <button onClick={() => toggleSort("amount")} className="inline-flex items-center gap-1 hover:text-ink transition-colors">
-                                                Amount <SortIcon column="amount" activeKey={sortKey} dir={sortDir} />
-                                            </button>
-                                        </th>
-                                        <th className="py-2 px-2 font-medium">Source</th>
-                                        <th className="py-2 px-2 font-medium">Reference</th>
-                                        <th className="py-2 px-2 font-medium">Lease</th>
-                                    </tr>
+                                <tr className="text-left text-fg-muted dark:text-fg-muted-dark border-b border-border dark:border-border-dark">
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">
+                                        <button onClick={() => toggleSort("occurredAt")} className="inline-flex items-center gap-1 hover:text-fg dark:hover:text-fg-dark transition-colors">
+                                            Date <SortIcon column="occurredAt" activeKey={sortKey} dir={sortDir} />
+                                        </button>
+                                    </th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">
+                                        <button onClick={() => toggleSort("tenantFullName")} className="inline-flex items-center gap-1 hover:text-fg dark:hover:text-fg-dark transition-colors">
+                                            Tenant <SortIcon column="tenantFullName" activeKey={sortKey} dir={sortDir} />
+                                        </button>
+                                    </th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">
+                                        <button onClick={() => toggleSort("type")} className="inline-flex items-center gap-1 hover:text-fg dark:hover:text-fg-dark transition-colors">
+                                            Type <SortIcon column="type" activeKey={sortKey} dir={sortDir} />
+                                        </button>
+                                    </th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">
+                                        <button onClick={() => toggleSort("amount")} className="inline-flex items-center gap-1 hover:text-fg dark:hover:text-fg-dark transition-colors">
+                                            Amount <SortIcon column="amount" activeKey={sortKey} dir={sortDir} />
+                                        </button>
+                                    </th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">Source</th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">Reference</th>
+                                    <th className="py-2.5 px-3 font-medium text-xs uppercase tracking-wide">Lease</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {paged.map((tx) => {
-                                        const SourceIcon = sourceIcon[tx.source] || RefreshCw;
-                                        return (
-                                            <tr key={tx.id} className="border-b border-ink/[0.06] last:border-0 hover:bg-ink/[0.02] transition-colors group">
-                                                <td className="py-3 px-2 text-ink-muted whitespace-nowrap">
-                                                    <p className="text-xs font-medium text-ink">{formatDate(tx.occurredAt)}</p>
-                                                    <p className="text-[11px] text-ink-muted">
-                                                        {new Date(tx.occurredAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
-                                                    </p>
-                                                </td>
-                                                <td className="py-3 px-2">
-                                                    <p className="text-sm font-medium text-ink">{tx.tenantFullName || "—"}</p>
-                                                    {tx.tenantPhone && (
-                                                        <p className="text-[11px] text-ink-muted">{tx.tenantPhone}</p>
-                                                    )}
-                                                </td>
-                                                <td className="py-3 px-2">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${typeColors[tx.type] || ""}`}>
-                                                        {typeLabels[tx.type] || tx.type}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-2 font-data text-ink">
-                                                    {tx.type === "RENT_CHARGE" ? "−" : "+"}{formatCurrency(tx.amount)}
-                                                </td>
-                                                <td className="py-3 px-2">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <SourceIcon className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
-                                                        <span className="text-xs text-ink-muted capitalize">{tx.source.toLowerCase().replace(/_/g, " ")}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-2">
-                                                    <span className="text-xs text-ink-muted font-mono">{tx.externalReference || "—"}</span>
-                                                </td>
-                                                <td className="py-3 px-2">
-                                                    <span className="text-xs text-ink-muted">{tx.leaseNumber || "—"}</span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                {paged.map((tx) => {
+                                    const SourceIcon = sourceIcon[tx.source] || RefreshCw;
+                                    return (
+                                        <tr key={tx.id} className="border-b border-border-subtle dark:border-border-subtle-dark last:border-0 hover:bg-border-subtle/50 dark:hover:bg-border-subtle-dark/50 transition-colors group">
+                                            <td className="py-3 px-3 text-fg-muted dark:text-fg-muted-dark whitespace-nowrap">
+                                                <p className="text-xs font-medium text-fg dark:text-fg-dark">{formatDate(tx.occurredAt)}</p>
+                                                <p className="text-[11px]">{new Date(tx.occurredAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</p>
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <p className="text-sm font-medium text-fg dark:text-fg-dark">{tx.tenantFullName || "—"}</p>
+                                                {tx.tenantPhone && (
+                                                    <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark">{tx.tenantPhone}</p>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${typeColors[tx.type] || ""}`}>
+                                                    {typeLabels[tx.type] || tx.type}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3 font-mono-nums text-fg dark:text-fg-dark">
+                                                {tx.type === "RENT_CHARGE" ? "−" : "+"}{formatCurrency(tx.amount)}
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <SourceIcon className="h-3.5 w-3.5 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                                                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark capitalize">{tx.source.toLowerCase().replace(/_/g, " ")}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <span className="text-xs text-fg-muted dark:text-fg-muted-dark font-mono">{tx.externalReference || "—"}</span>
+                                            </td>
+                                            <td className="py-3 px-3">
+                                                <span className="text-xs text-fg-muted dark:text-fg-muted-dark">{tx.leaseNumber || "—"}</span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                                 </tbody>
                             </table>
                         </div>
 
-                        <div className="flex items-center justify-between pt-4 mt-2 border-t border-ink/[0.06]">
-                            <p className="text-xs text-ink-muted">
+                        <div className="flex items-center justify-between px-3 py-3 border-t border-border dark:border-border-dark">
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
                                 {sorted.length > 0
                                     ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, sorted.length)} of ${sorted.length}`
                                     : "No results"}
@@ -328,7 +320,7 @@ export default function PaymentsPage() {
                                 <button
                                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                                     disabled={page === 0}
-                                    className="btn-secondary inline-flex items-center gap-1 text-xs py-1.5 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="btn-secondary text-xs py-1.5 px-2.5"
                                 >
                                     <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />
                                     Prev
@@ -336,7 +328,7 @@ export default function PaymentsPage() {
                                 <button
                                     onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                                     disabled={page >= totalPages - 1}
-                                    className="btn-secondary inline-flex items-center gap-1 text-xs py-1.5 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="btn-secondary text-xs py-1.5 px-2.5"
                                 >
                                     Next
                                     <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />

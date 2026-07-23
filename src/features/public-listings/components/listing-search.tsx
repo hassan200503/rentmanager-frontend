@@ -27,7 +27,7 @@ export function ListingSearch({
                 value={value}
                 onChange={handleChange}
                 placeholder={placeholder}
-                className="form-input w-full pl-10 text-sm shadow-sm"
+                className="form-input w-full !pl-10 text-sm shadow-sm"
             />
         </div>
     );

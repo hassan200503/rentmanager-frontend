@@ -14,21 +14,16 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 interface Segment {
     label: string;
     value: number;
-    // Tailwind text-* class — reused for stroke (via currentColor) and,
-    // with .replace("text-", "bg-"), for the legend dot.
     colorClass: string;
 }
 
 export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties }: OccupancyDonutProps) {
-    // "Partially occupied" (or any status the metrics hook doesn't explicitly
-    // track) falls out as the remainder so the donut always reconciles with
-    // the Active count above it — no separate assumption baked in here.
     const other = Math.max(activeProperties - fullyOccupied - vacant, 0);
     const total = activeProperties;
 
     const segments: Segment[] = [
-        { label: "Fully occupied", value: fullyOccupied, colorClass: "text-primary" },
-        { label: "Partially occupied", value: other, colorClass: "text-warning-dark" },
+        { label: "Fully occupied", value: fullyOccupied, colorClass: "text-brand" },
+        { label: "Partially occupied", value: other, colorClass: "text-warning-dark dark:text-warning" },
         { label: "Vacant", value: vacant, colorClass: "text-danger" },
     ];
 
@@ -46,7 +41,7 @@ export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties
                         r={RADIUS}
                         fill="none"
                         strokeWidth={STROKE}
-                        className="stroke-ink/[0.06]"
+                        className="stroke-border dark:stroke-border-dark"
                     />
                     {total > 0 &&
                         segments.map((seg) => {
@@ -73,25 +68,22 @@ export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties
                         })}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="font-data text-xl font-semibold text-ink">
+                    <span className="font-mono-nums text-xl font-semibold text-fg dark:text-fg-dark">
                         {occupancyRate !== null ? `${occupancyRate}%` : "—"}
                     </span>
-                    <span className="text-[10px] text-ink-muted">occupied</span>
+                    <span className="text-[10px] text-fg-muted dark:text-fg-muted-dark">occupied</span>
                 </div>
             </div>
 
             <div className="space-y-2">
                 {total === 0 ? (
-                    <p className="text-xs text-ink-muted">No active properties yet.</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark">No active properties yet.</p>
                 ) : (
                     segments.map((seg) => (
                         <div key={seg.label} className="flex items-center gap-2 text-xs">
-                            <span
-                                className={`h-2 w-2 rounded-full shrink-0 ${seg.colorClass.replace("text-", "bg-")}`}
-                                aria-hidden
-                            />
-                            <span className="text-ink-muted">{seg.label}</span>
-                            <span className="font-data font-medium text-ink">{seg.value}</span>
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${seg.colorClass.replace("text-", "bg-")}`} aria-hidden />
+                            <span className="text-fg-muted dark:text-fg-muted-dark">{seg.label}</span>
+                            <span className="font-mono-nums font-medium text-fg dark:text-fg-dark">{seg.value}</span>
                         </div>
                     ))
                 )}

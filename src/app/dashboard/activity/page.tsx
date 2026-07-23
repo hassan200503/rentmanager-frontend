@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Activity as ActivityIcon, History, Filter, X, ChevronRight, RotateCw } from "lucide-react";
+import { Activity as ActivityIcon, History, Filter, X, ChevronRight, RotateCw, Building2, Home, FileText } from "lucide-react";
 import { activityApi, type ActivityFilters } from "@/features/activity/api/activity-api";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { timeAgo, ENTITY_ICON, getActivityHref, describe } from "@/features/activity/utils/activity-display";
@@ -19,10 +19,37 @@ function getEventTypeLabel(eventType: string): string {
 
 function entityBadgeClass(entityType: string): string {
     switch (entityType) {
-        case "Property": return "bg-blue-50 text-blue-700 border-blue-200";
-        case "Unit": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-        case "Lease": return "bg-amber-50 text-amber-700 border-amber-200";
-        default: return "bg-ink/[0.05] text-ink-muted border-ink/[0.1]";
+        case "Property": return "pill-info";
+        case "Unit": return "pill-success";
+        case "Lease": return "pill-warning";
+        default: return "pill-neutral";
+    }
+}
+
+function entityIcon(entityType: string) {
+    switch (entityType) {
+        case "Property": return Building2;
+        case "Unit": return Home;
+        case "Lease": return FileText;
+        default: return History;
+    }
+}
+
+function entityIconBg(entityType: string): string {
+    switch (entityType) {
+        case "Property": return "bg-brand-50 dark:bg-brand-800";
+        case "Unit": return "bg-success-bg dark:bg-success-bg-dark";
+        case "Lease": return "bg-warning-bg dark:bg-warning-bg-dark";
+        default: return "bg-border-subtle dark:bg-border-subtle-dark";
+    }
+}
+
+function entityIconColor(entityType: string): string {
+    switch (entityType) {
+        case "Property": return "text-brand dark:text-brand-300";
+        case "Unit": return "text-success-dark dark:text-success";
+        case "Lease": return "text-warning-dark dark:text-warning";
+        default: return "text-fg-muted dark:text-fg-muted-dark";
     }
 }
 
@@ -77,7 +104,7 @@ export default function ActivityPage() {
         return (
             <div className="page-container space-y-6">
                 <div className="skeleton h-8 w-48 rounded" />
-                <div className="rounded-lg border border-ink/[0.08] divide-y divide-ink/[0.06]">
+                <div className="card divide-y divide-border dark:divide-border-dark">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <ActivitySkeleton key={i} />
                     ))}
@@ -90,8 +117,8 @@ export default function ActivityPage() {
         <div className="page-container space-y-6">
             <div className="flex flex-wrap items-start justify-between gap-4 animate-fade-in-up">
                 <div className="flex items-start gap-3">
-                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                        <History className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                    <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                        <History className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                     </div>
                     <div>
                         <h1 className="page-title mb-1">Activity Log</h1>
@@ -105,7 +132,7 @@ export default function ActivityPage() {
                     <Filter className="h-4 w-4" strokeWidth={2} />
                     Filters
                     {(entityType || eventType) && (
-                        <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                        <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] text-white">
                             {(entityType ? 1 : 0) + (eventType ? 1 : 0)}
                         </span>
                     )}
@@ -115,7 +142,7 @@ export default function ActivityPage() {
             {showFilters && (
                 <div className="card-sm animate-fade-in-up space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-ink-muted">Filter by</span>
+                        <span className="form-label !mb-0">Filter by</span>
                         {(entityType || eventType) && (
                             <button
                                 onClick={() => { setEntityType(""); setEventType(""); }}
@@ -127,53 +154,53 @@ export default function ActivityPage() {
                         )}
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-ink-muted">Entity Type</label>
+                        <label className="space-y-1">
+                            <span className="form-label">Entity Type</span>
                             <select
                                 value={entityType}
                                 onChange={(e) => setEntityType(e.target.value)}
-                                className="select-sm"
+                                className="form-input"
                             >
                                 <option value="">All entities</option>
                                 {ENTITY_TYPE_OPTIONS.filter(Boolean).map((opt) => (
                                     <option key={opt} value={opt}>{opt}</option>
                                 ))}
                             </select>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-ink-muted">Event Type</label>
+                        </label>
+                        <label className="space-y-1">
+                            <span className="form-label">Event Type</span>
                             <select
                                 value={eventType}
                                 onChange={(e) => setEventType(e.target.value)}
-                                className="select-sm"
+                                className="form-input"
                             >
                                 <option value="">All events</option>
                                 {EVENT_TYPE_OPTIONS.filter(Boolean).map((opt) => (
                                     <option key={opt} value={opt}>{getEventTypeLabel(opt)}</option>
                                 ))}
                             </select>
-                        </div>
+                        </label>
                     </div>
                 </div>
             )}
 
             <div className="animate-fade-in-up">
                 {isLoading ? (
-                    <div className="rounded-lg border border-ink/[0.08] divide-y divide-ink/[0.06]">
+                    <div className="card divide-y divide-border dark:divide-border-dark">
                         {Array.from({ length: 8 }).map((_, i) => (
                             <ActivitySkeleton key={i} />
                         ))}
                     </div>
                 ) : isError ? (
                     <div className="card-sm text-center py-10">
-                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger/10">
+                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-bg dark:bg-danger-bg-dark">
                             <ActivityIcon className="h-5 w-5 text-danger" strokeWidth={1.5} />
                         </div>
-                        <p className="text-sm font-medium text-ink mb-1">Failed to load activity log</p>
-                        <p className="text-xs text-ink-muted mb-4">{(error as Error)?.message || "An unexpected error occurred."}</p>
+                        <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load activity log</p>
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">{(error as Error)?.message || "An unexpected error occurred."}</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="btn-outline inline-flex items-center gap-1.5"
+                            className="btn-secondary inline-flex items-center gap-1.5"
                         >
                             <RotateCw className="h-3.5 w-3.5" strokeWidth={2} />
                             Try again
@@ -181,39 +208,37 @@ export default function ActivityPage() {
                     </div>
                 ) : activities.length === 0 ? (
                     <div className="card-sm text-center py-14">
-                        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-ink/[0.04]">
-                            <ActivityIcon className="h-6 w-6 text-ink-muted/40" strokeWidth={1.5} />
+                        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                            <ActivityIcon className="h-6 w-6 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={1.5} />
                         </div>
-                        <p className="text-sm font-medium text-ink mb-1">No activity found</p>
+                        <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No activity found</p>
                         {entityType || eventType ? (
-                            <p className="text-xs text-ink-muted">No results match your filters. Try adjusting or clearing them.</p>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">No results match your filters. Try adjusting or clearing them.</p>
                         ) : (
-                            <p className="text-xs text-ink-muted">Activity will appear here as you manage your properties, units, and leases.</p>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Activity will appear here as you manage your properties, units, and leases.</p>
                         )}
                     </div>
                 ) : (
                     <>
-                        <div className="rounded-lg border border-ink/[0.08] bg-surface overflow-hidden">
-                            <div className="divide-y divide-ink/[0.06]">
+                        <div className="card overflow-hidden">
+                            <div className="divide-y divide-border dark:divide-border-dark">
                                 {activities.map((activity) => {
-                                    const Icon = ENTITY_ICON[activity.entityType] ?? ActivityIcon;
+                                    const Icon = entityIcon(activity.entityType);
                                     const href = getActivityHref(activity);
                                     const label = timeAgo(activity.createdAt);
 
                                     const row = (
-                                        <div className="flex items-center gap-3 px-4 py-3.5 transition-all hover:bg-ink/[0.02] cursor-pointer group/item">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light group-hover/item:shadow-sm transition-shadow">
-                                                <Icon className="h-4.5 w-4.5 text-primary-dark" strokeWidth={2} />
+                                        <div className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-border-subtle/40 dark:hover:bg-border-subtle-dark/40 cursor-pointer group/item">
+                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${entityIconBg(activity.entityType)} group-hover/item:shadow-sm transition-shadow`}>
+                                                <Icon className={`h-4 w-4 ${entityIconColor(activity.entityType)}`} strokeWidth={2} />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                    <p className="truncate text-sm font-medium text-ink">
-                                                        {describe(activity)}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${entityBadgeClass(activity.entityType)}`}>
-                                                        {activity.entityType === "Property" ? "Property" : activity.entityType === "Unit" ? "Unit" : "Lease"}
+                                                <p className="truncate text-sm font-medium text-fg dark:text-fg-dark">
+                                                    {describe(activity)}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className={entityBadgeClass(activity.entityType)}>
+                                                        {activity.entityType}
                                                     </span>
                                                 </div>
                                             </div>
@@ -221,14 +246,14 @@ export default function ActivityPage() {
                                                 {label && (
                                                     <time
                                                         dateTime={activity.createdAt}
-                                                        className="text-xs text-ink-muted/70"
+                                                        className="text-xs text-fg-muted dark:text-fg-muted-dark whitespace-nowrap"
                                                         title={new Date(activity.createdAt).toLocaleString()}
                                                     >
                                                         {label}
                                                     </time>
                                                 )}
                                                 {href && (
-                                                    <ChevronRight className="h-4 w-4 text-ink-muted/30 group-hover/item:text-primary transition-colors" strokeWidth={2} />
+                                                    <ChevronRight className="h-4 w-4 text-fg-muted/30 dark:text-fg-muted-dark/30 group-hover/item:text-fg dark:group-hover/item:text-fg-dark transition-colors" strokeWidth={2} />
                                                 )}
                                             </div>
                                         </div>
@@ -273,7 +298,7 @@ export default function ActivityPage() {
                         )}
 
                         {!hasNextPage && activities.length > 0 && (
-                            <p className="pt-4 pb-1 text-center text-xs text-ink-muted/60">
+                            <p className="pt-4 pb-1 text-center text-xs text-fg-muted dark:text-fg-muted-dark">
                                 Showing all {activities.length} entries
                             </p>
                         )}
@@ -282,4 +307,4 @@ export default function ActivityPage() {
             </div>
         </div>
     );
-}
+};

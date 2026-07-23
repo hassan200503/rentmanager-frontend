@@ -1,4 +1,3 @@
-// components/rent-ledger-transactions.tsx
 import { useRentLedgerTransactionsQuery } from "../hooks/use-rent-ledger-transactions-query";
 import { RentTransactionType } from "../types/rent-ledger-response";
 
@@ -12,12 +11,6 @@ const formatCurrency = (amount: number) =>
 const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-// ASSUMPTION FLAGGED: charges increase the balance owed, everything else
-// reduces or corrects it (RentTransactionType.java's own doc comments confirm
-// this for every type except ADJUSTMENT, which can go either way -- amount is
-// always stored positive per that file, so ADJUSTMENT's sign can't be inferred
-// from the DTO alone.  Displaying it neutrally (ink, no +/-) rather than
-// guessing a direction that might be wrong.
 const TYPE_LABELS: Record<RentTransactionType, string> = {
     RENT_CHARGE: "Rent Charge",
     PAYMENT: "Payment",
@@ -29,15 +22,15 @@ const TYPE_LABELS: Record<RentTransactionType, string> = {
 };
 
 const amountColorClass = (type: RentTransactionType) => {
-    if (type === "RENT_CHARGE") return "text-danger-dark";
-    if (type === "ADJUSTMENT") return "text-ink";
-    return "text-success-dark";
+    if (type === "RENT_CHARGE") return "text-danger-dark dark:text-danger";
+    if (type === "ADJUSTMENT") return "text-fg dark:text-fg-dark";
+    return "text-success-dark dark:text-success";
 };
 
 const amountSign = (type: RentTransactionType) => {
     if (type === "RENT_CHARGE") return "+";
     if (type === "ADJUSTMENT") return "";
-    return "−";
+    return "\u2212";
 };
 
 export const RentLedgerTransactions = ({ entryId }: RentLedgerTransactionsProps) => {
@@ -63,7 +56,7 @@ export const RentLedgerTransactions = ({ entryId }: RentLedgerTransactionsProps)
 
     if (!transactions || transactions.length === 0) {
         return (
-            <div className="card-sm text-sm text-ink-muted">
+            <div className="card-sm text-sm text-fg-muted dark:text-fg-muted-dark">
                 No transactions recorded yet.
             </div>
         );
@@ -74,14 +67,14 @@ export const RentLedgerTransactions = ({ entryId }: RentLedgerTransactionsProps)
             {transactions.map((tx) => (
                 <div key={tx.id} className="card-sm flex items-center justify-between gap-4">
                     <div>
-                        <p className="font-medium text-ink">{TYPE_LABELS[tx.type]}</p>
-                        <p className="text-xs text-ink-muted">
+                        <p className="font-medium text-fg dark:text-fg-dark">{TYPE_LABELS[tx.type]}</p>
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
                             {formatDateTime(tx.occurredAt)}
-                            {tx.externalReference ? ` · ${tx.externalReference}` : ""}
+                            {tx.externalReference ? ` \u00b7 ${tx.externalReference}` : ""}
                         </p>
                     </div>
 
-                    <p className={`font-data font-medium ${amountColorClass(tx.type)}`}>
+                    <p className={`font-mono-nums font-medium ${amountColorClass(tx.type)}`}>
                         {amountSign(tx.type)}{formatCurrency(tx.amount)}
                     </p>
                 </div>
