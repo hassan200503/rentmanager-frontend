@@ -41,4 +41,8 @@ export const unitService = {
     async uploadImage(id: string, file: File) {
         return unitApi.uploadImage(id, file);
     },
+
+    async remove(id: string) {
+        return unitApi.remove(id);
+    },
 };

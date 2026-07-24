@@ -1,9 +1,11 @@
+import { Address, GeoLocation } from "@/features/property/types/property";
+
 export interface PublicPropertyResponse {
     propertyId: string;
     name: string;
     propertyType: string;
-    address: unknown | null;
-    geoLocation: unknown | null;
+    address: Address | null;
+    geoLocation: GeoLocation | null;
     description: string;
 
     images: string[];

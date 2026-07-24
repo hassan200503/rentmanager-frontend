@@ -87,12 +87,15 @@ export const unitApi = {
         // the filtered subset of the fetched page, not a true global count
         // for that status — acceptable given typical per-property unit counts.
         if (params.status && !params.propertyId) {
-            const units = await apiClient.get<UnitResponse[]>(
+            const result = await apiClient.get<UnitResponse[] | UnitPageResponse>(
                 unitEndpoints.byStatus(params.status),
                 token,
                 tenantId
             );
-            return toPage(units, params);
+            if (Array.isArray(result)) {
+                return toPage(result, params);
+            }
+            return result;
         }
 
         if (params.status && params.propertyId) {
@@ -218,6 +221,15 @@ export const unitApi = {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<UnitSummaryResponse>(
             unitEndpoints.summary,
+            token,
+            tenantId
+        );
+    },
+
+    remove: async (id: string): Promise<void> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.delete<void>(
+            unitEndpoints.remove(id),
             token,
             tenantId
         );

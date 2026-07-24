@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef } from "react";
 import { useUnitMedia } from "@/features/unit/hooks/use-unit-media";
 import {
@@ -7,6 +5,7 @@ import {
     useDeleteUnitMedia,
     useSetPrimaryUnitMedia,
 } from "@/features/unit/queries/use-unit-media-mutations";
+import { Upload, Trash2, Star, ImagePlus, Loader2 } from "lucide-react";
 
 export function UnitMediaManager({ unitId }: { unitId: string }) {
     const { data: media, isLoading } = useUnitMedia(unitId);
@@ -14,6 +13,7 @@ export function UnitMediaManager({ unitId }: { unitId: string }) {
     const remove = useDeleteUnitMedia(unitId);
     const setPrimary = useSetPrimaryUnitMedia(unitId);
     const [isPrimary, setIsPrimary] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFiles = (files: FileList | null) => {
@@ -23,9 +23,36 @@ export function UnitMediaManager({ unitId }: { unitId: string }) {
         });
     };
 
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        handleFiles(e.dataTransfer.files);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = () => setIsDragOver(false);
+
     return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-3">
+        <div className="space-y-5">
+            {/* Upload area */}
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
+                    isDragOver
+                        ? "border-brand bg-brand-50 shadow-sm"
+                        : "border-border hover:border-brand-300 hover:bg-ink/[0.02]"
+                }`}
+            >
                 <input
                     ref={inputRef}
                     type="file"
@@ -34,70 +61,112 @@ export function UnitMediaManager({ unitId }: { unitId: string }) {
                     className="hidden"
                     onChange={(e) => handleFiles(e.target.files)}
                 />
-                <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={upload.isPending}
-                    className="rounded-md bg-primary px-4 py-2 text-sm text-white disabled:opacity-50"
-                >
-                    {upload.isPending ? "Uploading..." : "Upload Photos"}
-                </button>
 
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={isPrimary}
-                        onChange={(e) => setIsPrimary(e.target.checked)}
-                    />
-                    Set as primary
-                </label>
+                <div className="flex flex-col items-center gap-3">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
+                        isDragOver ? "bg-brand-100" : "bg-ink/[0.05]"
+                    }`}>
+                        {upload.isPending ? (
+                            <Loader2 className="w-6 h-6 text-brand animate-spin" strokeWidth={1.5} />
+                        ) : (
+                            <Upload className={`w-6 h-6 transition-colors ${
+                                isDragOver ? "text-brand" : "text-ink-muted"
+                            }`} strokeWidth={1.5} />
+                        )}
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-ink">
+                            {upload.isPending
+                                ? "Uploading..."
+                                : isDragOver
+                                    ? "Drop files to upload"
+                                    : "Drop images here or click to browse"
+                            }
+                        </p>
+                        <p className="text-xs text-ink-muted mt-1">
+                            PNG, JPG, WebP up to 10MB
+                        </p>
+                    </div>
+                </div>
+
+                {!upload.isPending && (
+                    <label
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-lg bg-ink/[0.05] hover:bg-ink/[0.08] transition-colors cursor-pointer"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={isPrimary}
+                            onChange={(e) => setIsPrimary(e.target.checked)}
+                            className="rounded border-border text-brand focus:ring-brand/30"
+                        />
+                        <span className="text-xs font-medium text-ink-muted">Set as primary photo</span>
+                    </label>
+                )}
             </div>
 
             {upload.isError && (
-                <p className="text-sm text-red-500">
-                    {(upload.error as Error)?.message ?? "Upload failed"}
-                </p>
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-danger/10 border border-danger/20">
+                    <p className="text-sm text-danger-dark font-medium">
+                        {(upload.error as Error)?.message ?? "Upload failed"}
+                    </p>
+                </div>
             )}
 
+            {/* Media grid */}
             {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading media...</p>
-            ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {media?.map((item) => (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-5 h-5 text-ink-muted animate-spin" strokeWidth={1.5} />
+                    <span className="ml-2 text-sm text-ink-muted">Loading media...</span>
+                </div>
+            ) : media && media.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {media.map((item) => (
                         <div
                             key={item.id}
-                            className="group relative aspect-square overflow-hidden rounded-md border"
+                            className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-ink/[0.02] shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200"
                         >
                             <img
                                 src={item.url}
                                 alt={item.caption ?? "Unit media"}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
                             {item.primary && (
-                                <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+                                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-lg bg-brand/90 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm shadow-sm">
+                                    <Star className="w-3 h-3 fill-white" strokeWidth={2} />
                                     Primary
                                 </span>
                             )}
-                            <div className="absolute inset-0 flex items-end justify-between gap-1 bg-black/0 p-1 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                            <div className="absolute inset-0 flex items-end justify-center gap-2 bg-gradient-to-t from-ink/60 via-ink/10 to-transparent p-3 opacity-0 transition-all duration-200 group-hover:opacity-100">
                                 {!item.primary && (
                                     <button
                                         type="button"
                                         onClick={() => setPrimary.mutate(item.id)}
-                                        className="rounded bg-white/90 px-1.5 py-0.5 text-[10px]"
+                                        className="flex-1 rounded-lg bg-white/95 px-2 py-1.5 text-[11px] font-medium text-ink shadow-sm hover:bg-white transition-colors flex items-center justify-center gap-1"
                                     >
+                                        <Star className="w-3 h-3" strokeWidth={1.5} />
                                         Make primary
                                     </button>
                                 )}
                                 <button
                                     type="button"
                                     onClick={() => remove.mutate(item.id)}
-                                    className="rounded bg-red-500/90 px-1.5 py-0.5 text-[10px] text-white"
+                                    className="rounded-lg bg-danger/90 px-2 py-1.5 text-[11px] font-medium text-white shadow-sm hover:bg-danger transition-colors flex items-center justify-center gap-1"
                                 >
+                                    <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                                     Delete
                                 </button>
                             </div>
                         </div>
                     ))}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-ink/[0.05] flex items-center justify-center">
+                        <ImagePlus className="w-5 h-5 text-ink-muted" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-sm text-ink-muted">No photos yet</p>
+                    <p className="text-xs text-ink-muted/60">Upload images above to showcase this unit</p>
                 </div>
             )}
         </div>

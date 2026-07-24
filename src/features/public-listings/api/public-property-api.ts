@@ -16,6 +16,10 @@ const buildQuery = (filters?: PublicListingFilters) => {
         query.set("keyword", filters.keyword.trim());
     }
 
+    if (filters?.location?.trim()) {
+        query.set("location", filters.location.trim());
+    }
+
     return query.toString();
 };
 

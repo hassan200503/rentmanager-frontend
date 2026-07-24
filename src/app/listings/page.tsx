@@ -1,11 +1,9 @@
-// app/listings/page.tsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { X, RefreshCw, AlertTriangle, MapPin } from "lucide-react";
+import { X, RefreshCw, AlertTriangle, MapPin, Search } from "lucide-react";
 import { usePublicProperties } from "@/features/public-listings/hooks/use-public-properties";
-import { ListingSearch } from "@/features/public-listings/components/listing-search";
 import { PropertyGrid } from "@/features/public-listings/components/property-grid";
 import { ListingPagination } from "@/features/public-listings/components/listing-pagination";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
@@ -15,8 +13,6 @@ const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
 
 export default function ListingsPage() {
-    // useSearchParams requires a Suspense boundary in the App Router,
-    // otherwise the production build fails on static generation.
     return (
         <Suspense fallback={<LoadingState message="Loading properties…" />}>
             <ListingsPageContent />
@@ -29,22 +25,14 @@ function ListingsPageContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Seed from the URL so a search is shareable, bookmarkable, and survives
-    // a refresh or back/forward navigation.
     const [keyword, setKeyword] = useState(searchParams.get("q") ?? "");
     const [location, setLocation] = useState(searchParams.get("location") ?? "");
     const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
     const [debouncedLocation, setDebouncedLocation] = useState(location);
     const [page, setPage] = useState(Number(searchParams.get("page") ?? 0));
 
-    // Tracks whether we've completed at least one load, so the full-page
-    // loader only shows once. This is intentionally a conditional setState
-    // during render (React's documented pattern for "adjust state based on
-    // a value change") rather than a useEffect — doing it in an Effect
-    // would fire an extra render after paint for no benefit.
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-    // Debounce both fields together — don't fire a request on every keystroke.
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedKeyword(keyword.trim());
@@ -54,7 +42,6 @@ function ListingsPageContent() {
         return () => clearTimeout(timer);
     }, [keyword, location]);
 
-    // Keep the URL in sync with the active search + page.
     useEffect(() => {
         const params = new URLSearchParams();
         if (debouncedKeyword) params.set("q", debouncedKeyword);
@@ -64,10 +51,6 @@ function ListingsPageContent() {
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     }, [debouncedKeyword, debouncedLocation, page, pathname, router]);
 
-    // NOTE: `location` is assumed here as a new field on PublicListingFilters.
-    // Wasn't able to see that type — add `location?: string` to it (and to
-    // the query key / API call inside usePublicPropertiesQuery) if it isn't
-    // there yet, or this will just be silently ignored by the backend.
     const { data, isLoading, isError } = usePublicProperties({
         keyword: debouncedKeyword,
         location: debouncedLocation,
@@ -101,9 +84,6 @@ function ListingsPageContent() {
         setPage(0);
     };
 
-    // Only the very first load blocks the whole page. Every load after that
-    // (typing a search, changing page) keeps the header in place and swaps
-    // just the results area, so the page never feels like it's reloading.
     if (isLoading && !hasLoadedOnce) {
         return <LoadingState message="Loading properties…" />;
     }
@@ -120,7 +100,7 @@ function ListingsPageContent() {
                     />
                     <button
                         onClick={() => window.location.reload()}
-                        className="btn-primary inline-flex items-center gap-2"
+                        className="btn-primary inline-flex items-center gap-2 mt-6"
                     >
                         <RefreshCw className="w-4 h-4" />
                         Try again
@@ -133,78 +113,101 @@ function ListingsPageContent() {
     return (
         <div className="min-h-screen bg-canvas">
             {/* Hero banner */}
-            <div className="bg-surface border-b border-ink/[0.08]">
-                <div className="container mx-auto px-6 py-16 max-w-5xl">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-                        Rental Listings
-                    </p>
-                    <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink leading-[1.1] tracking-tight">
-                        Available Properties
-                    </h1>
-                    <p className="mt-3 text-ink-muted max-w-xl leading-relaxed">
-                        Browse verified rental properties across Kenya and find your next home —
-                        with real vacancies, not stale listings.
-                    </p>
-
-                    <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl">
-                        <div className="flex-1">
-                            <ListingSearch
-                                value={keyword}
-                                onChange={setKeyword}
-                                placeholder="Search by name or type..."
-                            />
+            <div className="relative bg-gradient-to-b from-brand-50/60 via-surface to-surface border-b border-border">
+                <div className="container mx-auto px-6 py-20 max-w-5xl">
+                    <div className="max-w-2xl">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold tracking-wide mb-5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                            Rental Listings
                         </div>
-                        <div className="flex-1 relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted w-4 h-4" />
-                            <input
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                placeholder="Location — city or neighborhood"
-                                className="form-input w-full pl-10 text-sm shadow-sm"
-                            />
+                        <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink leading-[1.1] tracking-tight">
+                            Available Properties
+                        </h1>
+                        <p className="mt-3 text-ink-muted max-w-xl leading-relaxed">
+                            Browse verified rental properties across Kenya and find your next home —
+                            with real vacancies, not stale listings.
+                        </p>
+                    </div>
+
+                    <div className="mt-10 flex flex-col sm:flex-row gap-3 max-w-2xl">
+                        <div className="flex-1">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                                    <Search className="w-4 h-4 text-ink-muted" strokeWidth={1.5} />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={keyword}
+                                    onChange={(e) => setKeyword(e.target.value)}
+                                    placeholder="Search by name or type..."
+                                    className="form-input w-full !pl-10 text-sm shadow-sm transition-all duration-200 focus:shadow-md focus:shadow-brand/10 focus:border-brand-300"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                                    <MapPin className="w-4 h-4 text-ink-muted" strokeWidth={1.5} />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    placeholder="Location — city or neighborhood"
+                                    className="form-input w-full !pl-10 text-sm shadow-sm transition-all duration-200 focus:shadow-md focus:shadow-brand/10 focus:border-brand-300"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Sticky results toolbar */}
-            <div className="sticky top-0 z-10 bg-canvas/85 backdrop-blur-sm border-b border-ink/[0.08]">
+            <div className="sticky top-0 z-20 bg-canvas/80 backdrop-blur-xl border-b border-border">
                 <div className="container mx-auto px-6 max-w-5xl">
                     <div className="flex items-center justify-between gap-4 py-4">
-                        <p className="text-sm font-medium text-ink-muted" aria-live="polite">
+                        <p className="text-sm text-ink-muted" aria-live="polite">
                             {isLoading ? (
-                                "Searching…"
+                                <span className="inline-flex items-center gap-2">
+                                    <span className="w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                                    Searching…
+                                </span>
                             ) : (
                                 <>
                                     <span className="text-ink font-semibold">
                                         {data?.totalElements ?? 0}
                                     </span>{" "}
                                     {data?.totalElements === 1 ? "property" : "properties"} found
-                                    {isSearching && <> for {searchDescription}</>}
+                                    {isSearching && (
+                                        <span className="text-ink-muted/60">
+                                            {" "}for {searchDescription}
+                                        </span>
+                                    )}
                                 </>
                             )}
                         </p>
 
-                        {isSearching && (
-                            <button
-                                onClick={clearSearch}
-                                className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors shrink-0"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                                Clear search
-                            </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {isSearching && (
+                                <button
+                                    onClick={clearSearch}
+                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors shrink-0"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    Clear
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="container mx-auto px-6 py-10 max-w-5xl space-y-8">
+            <div className="container mx-auto px-6 py-12 max-w-5xl space-y-8">
                 {isLoading && hasLoadedOnce ? (
                     <SkeletonGrid />
                 ) : !hasResults ? (
-                    <div className="py-8">
+                    <div className="py-12">
                         <EmptyState
                             title={isSearching ? "No properties found" : "No properties available"}
                             description={
@@ -217,7 +220,7 @@ function ListingsPageContent() {
                             <div className="flex justify-center mt-4">
                                 <button
                                     onClick={clearSearch}
-                                    className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                                    className="text-sm font-medium text-brand hover:text-brand-700 transition-colors"
                                 >
                                     Clear search and view all properties
                                 </button>
@@ -233,13 +236,15 @@ function ListingsPageContent() {
                             <PropertyGrid properties={data?.content ?? []} />
                         </div>
 
-                        <div className="pt-4 border-t border-ink/[0.08]">
-                            <ListingPagination
-                                page={data?.number ?? 0}
-                                totalPages={data?.totalPages ?? 0}
-                                onPageChange={handlePageChange}
-                            />
-                        </div>
+                        {(data?.totalPages ?? 0) > 1 && (
+                            <div className="pt-4 border-t border-border">
+                                <ListingPagination
+                                    page={data?.number ?? 0}
+                                    totalPages={data?.totalPages ?? 0}
+                                    onPageChange={handlePageChange}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -249,13 +254,19 @@ function ListingsPageContent() {
 
 function SkeletonGrid() {
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card-sm space-y-3">
-                    <div className="skeleton aspect-[4/3] w-full" />
-                    <div className="skeleton h-4 w-3/4" />
-                    <div className="skeleton h-3 w-1/2" />
-                    <div className="skeleton h-3 w-1/3" />
+                <div key={i} className="bg-surface rounded-2xl border border-border overflow-hidden">
+                    <div className="skeleton aspect-[4/3] w-full rounded-none" />
+                    <div className="p-5 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="skeleton h-5 w-3/4" />
+                            <div className="skeleton h-5 w-16 rounded-full shrink-0" />
+                        </div>
+                        <div className="skeleton h-4 w-1/2" />
+                        <div className="skeleton h-3 w-full" />
+                        <div className="skeleton h-3 w-2/3" />
+                    </div>
                 </div>
             ))}
         </div>

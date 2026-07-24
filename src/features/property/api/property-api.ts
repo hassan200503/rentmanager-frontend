@@ -72,12 +72,15 @@ export const propertyApi = {
         const token = preloadedToken ?? contextToken;
 
         if (params?.status) {
-            const properties = await apiClient.get<PropertyResponse[]>(
+            const result = await apiClient.get<PropertyResponse[] | PropertyPageResponse>(
                 propertyEndpoints.byStatus(params.status),
                 token,
                 tenantId
             );
-            return toPage(properties, params);
+            if (Array.isArray(result)) {
+                return toPage(result, params);
+            }
+            return result;
         }
 
         const query = buildPageQuery(params);
@@ -132,6 +135,15 @@ export const propertyApi = {
         return apiClient.post<PropertyResponse>(
             propertyEndpoints.archive(id),
             undefined,
+            token,
+            tenantId
+        );
+    },
+
+    remove: async (id: string): Promise<void> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.delete<void>(
+            propertyEndpoints.remove(id),
             token,
             tenantId
         );

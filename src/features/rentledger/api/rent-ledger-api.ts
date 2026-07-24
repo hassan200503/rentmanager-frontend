@@ -83,4 +83,13 @@ export const rentLedgerApi = {
             tenantId
         );
     },
+
+    remove: async (transactionId: string): Promise<void> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.delete<void>(
+            rentLedgerEndpoints.deleteTransaction(transactionId),
+            token,
+            tenantId
+        );
+    },
 };

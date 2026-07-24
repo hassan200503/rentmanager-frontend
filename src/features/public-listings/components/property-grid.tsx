@@ -11,7 +11,7 @@ export function PropertyGrid({
                                  properties,
                              }: PropertyGridProps) {
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (
                 <PropertyCard
                     key={property.propertyId}

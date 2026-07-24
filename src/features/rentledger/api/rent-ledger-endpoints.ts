@@ -9,4 +9,5 @@ export const rentLedgerEndpoints = {
     byStatus: (status: RentLedgerStatus) => `${base}/entries/status/${status}`,
     transactionsForEntry: (entryId: string) => `${base}/entries/${entryId}/transactions`,
     allTransactions: () => `${base}/transactions`,
+    deleteTransaction: (transactionId: string) => `${base}/transactions/${transactionId}`,
 };

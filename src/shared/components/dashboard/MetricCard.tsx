@@ -33,19 +33,19 @@ export default function MetricCard({
                                    }: MetricCardProps) {
     return (
         <div className="card animate-fade-in-up">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <p className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark mb-1.5 uppercase tracking-wide">
+                    <p className="text-[11px] font-medium text-fg-muted dark:text-fg-muted-dark mb-2 uppercase tracking-widest">
                         {label}
                     </p>
-                    <p className={`font-mono-nums text-2xl font-semibold ${toneClasses[tone]}`}>
+                    <p className={`font-mono-nums text-3xl font-semibold tracking-tight ${toneClasses[tone]}`}>
                         {value}
                     </p>
-                    {hint && <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">{hint}</p>}
+                    {hint && <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1.5">{hint}</p>}
                 </div>
                 {Icon && (
-                    <div className={`shrink-0 rounded-lg p-2 ${iconToneClasses[tone]}`}>
-                        <Icon className="h-4 w-4" strokeWidth={2} />
+                    <div className={`shrink-0 rounded-xl p-2.5 ${iconToneClasses[tone]}`}>
+                        <Icon className="h-5 w-5" strokeWidth={1.75} />
                     </div>
                 )}
             </div>
@@ -56,12 +56,12 @@ export default function MetricCard({
 export function MetricCardSkeleton() {
     return (
         <div className="card">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 w-full">
-                    <div className="skeleton h-3 w-20 mb-2" />
-                    <div className="skeleton h-7 w-14" />
+                    <div className="skeleton h-3 w-24 mb-2" />
+                    <div className="skeleton h-8 w-20" />
                 </div>
-                <div className="skeleton h-8 w-8 rounded-lg shrink-0" />
+                <div className="skeleton h-10 w-10 rounded-xl shrink-0" />
             </div>
         </div>
     );

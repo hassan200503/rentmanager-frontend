@@ -19,6 +19,12 @@ import {
     Activity,
     Tag,
     Home,
+    MapPin,
+    RefreshCw,
+    Layers,
+    KeyRound,
+    ScrollText,
+    Radio,
 } from "lucide-react";
 
 import { useProperty } from "@/features/property/hooks/use-property";
@@ -32,8 +38,6 @@ import { UnitTable } from "@/features/unit/components/unit-table";
 import { PropertyMediaManager } from "@/features/property/components/upload-gallery";
 import { PropertyStatus } from "@/features/property/types/property";
 
-// Cosmetic only -- turns "FULLY_OCCUPIED" into "Fully Occupied" for display.
-// Does not touch the raw occupancyStatus value used anywhere else.
 const formatEnumLabel = (value: string) =>
     value
         .toLowerCase()
@@ -41,32 +45,34 @@ const formatEnumLabel = (value: string) =>
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
 
-function SectionTitle({
-                          icon: Icon,
-                          children,
-                          trailing,
-                      }: {
+function SectionCard({ icon: Icon, title, trailing, children }: {
     icon: typeof Building2;
-    children: React.ReactNode;
+    title: string;
     trailing?: React.ReactNode;
+    children: React.ReactNode;
 }) {
     return (
-        <div className="flex items-center justify-between mb-3">
-            <h3 className="section-header mb-0 inline-flex items-center gap-1.5">
-                <Icon className="h-4 w-4 text-ink-muted" strokeWidth={2} />
-                {children}
-            </h3>
-            {trailing}
+        <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 space-y-5 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
+                        <Icon className="w-3.5 h-3.5 text-brand-600" strokeWidth={2} />
+                    </div>
+                    {title}
+                </h3>
+                {trailing}
+            </div>
+            {children}
         </div>
     );
 }
 
 function UnsavedTag() {
     return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning-dark">
-        <Circle className="h-1.5 w-1.5 fill-current" />
-        Unsaved
-      </span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-warning-bg border border-warning/20 text-[11px] font-medium text-warning-dark">
+            <Circle className="h-1.5 w-1.5 fill-current" />
+            Unsaved
+        </span>
     );
 }
 
@@ -86,10 +92,6 @@ export default function PropertyDetailPage() {
 
     const updateInProgressRef = useRef(false);
 
-    // Dirty-state tracking, additive only -- mirrors the exact semantics
-    // handleUpdate already uses (empty string = "no change", per the existing
-    // fallback-to-original behavior noted below). Does not change what gets
-    // submitted; only drives the "unsaved changes" indicator and discard button.
     const isNameDirty = name !== "" && property ? name !== property.name : false;
     const isDescriptionDirty =
         description !== "" && property ? description !== (property.description || "") : false;
@@ -100,10 +102,6 @@ export default function PropertyDetailPage() {
         setDescription("");
     };
 
-    // Warn on tab close / refresh while there are unsaved edits. Does not
-    // (and cannot, without a routing library hook) intercept Next.js
-    // client-side navigation to other pages -- see the "Back to properties"
-    // button below for that case specifically.
     useEffect(() => {
         if (!hasUnsavedChanges) return;
         const handler = (e: BeforeUnloadEvent) => {
@@ -127,10 +125,6 @@ export default function PropertyDetailPage() {
         updateInProgressRef.current = true;
 
         try {
-            // TODO: name/description fall back to the original value whenever the
-            // local state is an empty string, which makes it impossible to
-            // intentionally clear either field. Confirm whether empty name/description
-            // should be allowed before changing this — depends on backend validation.
             await updateProperty(property.propertyId, {
                 name: name || property.name,
                 description: description || property.description,
@@ -147,19 +141,19 @@ export default function PropertyDetailPage() {
     if (isLoading) {
         return (
             <div className="page-container space-y-6">
-                <div>
-                    <div className="skeleton h-4 w-32 mb-4" />
-                    <div className="skeleton h-8 w-64 mb-2" />
+                <div className="space-y-2">
+                    <div className="skeleton h-4 w-32" />
+                    <div className="skeleton h-8 w-64" />
                     <div className="skeleton h-4 w-48" />
                 </div>
-                <div className="card skeleton h-40" />
+                <div className="skeleton h-40 rounded-2xl" />
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="card-sm skeleton h-20" />
-                    <div className="card-sm skeleton h-20" />
+                    <div className="skeleton h-24 rounded-2xl" />
+                    <div className="skeleton h-24 rounded-2xl" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="card skeleton h-28" />
-                    <div className="card skeleton h-28" />
+                    <div className="skeleton h-36 rounded-2xl" />
+                    <div className="skeleton h-36 rounded-2xl" />
                 </div>
             </div>
         );
@@ -168,17 +162,17 @@ export default function PropertyDetailPage() {
     if (!property) {
         return (
             <div className="page-container">
-                <div className="card text-center max-w-md mx-auto mt-12">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05]">
-                        <FileQuestion className="h-5 w-5 text-ink-muted" strokeWidth={2} />
+                <div className="max-w-md mx-auto mt-16 bg-surface rounded-2xl border border-border shadow-sm p-10 text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink/[0.05]">
+                        <FileQuestion className="h-7 w-7 text-ink-muted" strokeWidth={1.5} />
                     </div>
-                    <p className="text-sm font-medium text-ink mb-1">Property not found</p>
-                    <p className="text-xs text-ink-muted mb-4">
+                    <p className="text-base font-semibold text-ink mb-1">Property not found</p>
+                    <p className="text-sm text-ink-muted mb-5">
                         It may have been removed, or the link is out of date.
                     </p>
                     <button
                         onClick={() => router.push("/dashboard/properties")}
-                        className="btn-outline inline-flex items-center gap-1.5 w-fit mx-auto"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink hover:bg-ink/[0.02] hover:border-brand-200 transition-all duration-200"
                     >
                         <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
                         Back to properties
@@ -200,131 +194,184 @@ export default function PropertyDetailPage() {
     ).length ?? 0;
 
     return (
-        <div className="page-container space-y-6">
+        <div className="page-container space-y-8">
             {/* Header */}
-            <div className="animate-fade-in-up">
+            <div className="animate-fade-in-up space-y-4">
                 <button
                     onClick={handleBackClick}
-                    className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors mb-2"
+                    className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors group"
                 >
-                    <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                    <div className="w-6 h-6 rounded-lg bg-ink/[0.05] flex items-center justify-center group-hover:bg-ink/[0.08] transition-colors">
+                        <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
+                    </div>
                     Back to properties
                 </button>
-                <h1 className="page-title mb-1">{property.name}</h1>
-                <div className="flex flex-wrap gap-2 items-center">
-                    <PropertyStatusBadge status={property.status} />
-                    <span className="text-sm text-ink-muted">{property.propertyType}</span>
-                    {!isActive && !isArchived && (
-                        <span className="pill-warning inline-flex items-center gap-1">
-                  <EyeOff className="h-3 w-3" strokeWidth={2} />
-                  Not visible in listings until activated
-                </span>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <PropertyStatusBadge status={property.status} />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-ink/[0.05] text-xs font-medium text-ink-muted">
+                                <Building2 className="w-3 h-3" strokeWidth={1.5} />
+                                {property.propertyType}
+                            </span>
+                            {!isActive && !isArchived && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning-bg border border-warning/20 text-xs font-medium text-warning-dark">
+                                    <EyeOff className="w-3 h-3" strokeWidth={1.5} />
+                                    Hidden from listings
+                                </span>
+                            )}
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-semibold text-ink tracking-tight font-display leading-tight">
+                            {property.name}
+                        </h1>
+                    </div>
+
+                    {!isArchived && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {canActivate && (
+                                <button
+                                    onClick={() => activateProperty(property.propertyId)}
+                                    disabled={isActivating}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
+                                    {isActivating ? "Activating…" : "Activate"}
+                                </button>
+                            )}
+                            {isActive && (
+                                <button
+                                    onClick={() => archiveProperty(property.propertyId)}
+                                    disabled={isArchiving}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.03] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Archive className="w-4 h-4" strokeWidth={2} />
+                                    {isArchiving ? "Archiving…" : "Archive"}
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* Archived notice -- moved up from the bottom action bar so it's the
-            first thing you see on a read-only property, not something you
-            find by scrolling to the actions row. */}
+            {/* Archived notice */}
             {isArchived && (
-                <div className="card-sm animate-fade-in-up border-l-4 border-ink/15 bg-ink/[0.02] flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/[0.06]">
-                        <Archive className="h-4 w-4 text-ink-muted" strokeWidth={2} />
+                <div className="animate-fade-in-up flex items-start gap-4 p-5 rounded-2xl bg-ink/[0.02] border border-ink/[0.08] shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-ink/[0.06] flex items-center justify-center shrink-0">
+                        <Archive className="w-5 h-5 text-ink-muted" strokeWidth={1.5} />
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-ink">This property is archived</p>
-                        <p className="text-xs text-ink-muted mt-0.5">
-                            It&#39;s read-only and hidden from listings. Editing and status actions are disabled.
+                        <p className="text-sm text-ink-muted mt-0.5">
+                            It&apos;s read-only and hidden from listings. Editing and status actions are disabled.
                         </p>
                     </div>
                 </div>
             )}
 
             {/* Photos */}
-            <section className="card animate-fade-in-up">
-                <SectionTitle icon={Images}>Photos</SectionTitle>
-                <PropertyMediaManager propertyId={property.propertyId} />
-            </section>
+            <div className="animate-fade-in-up">
+                <SectionCard icon={Images} title="Photos">
+                    <PropertyMediaManager propertyId={property.propertyId} />
+                </SectionCard>
+            </div>
 
             {/* Unit Summary Cards */}
             <div className="grid grid-cols-2 gap-4">
-                <div className="card-sm animate-fade-in-up">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                        <Building2 className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
-                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Total units</p>
+                <div className="bg-surface rounded-2xl border border-border shadow-sm p-5 animate-fade-in-up transition-all hover:shadow-md hover:border-brand-200">
+                    <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-ink/[0.04] flex items-center justify-center shadow-sm">
+                            <Layers className="w-4 h-4 text-ink-muted" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold text-ink-muted uppercase tracking-widest">Total units</p>
+                        </div>
                     </div>
-                    <p className="font-data text-2xl font-semibold text-ink">{totalUnits}</p>
+                    <p className="font-data text-3xl font-bold text-ink tracking-tight">{totalUnits}</p>
                 </div>
-                <div className="card-sm animate-fade-in-up">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                        <DoorOpen className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
-                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Vacant units</p>
+                <div className="bg-surface rounded-2xl border border-border shadow-sm p-5 animate-fade-in-up transition-all hover:shadow-md hover:border-brand-200">
+                    <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-success-bg flex items-center justify-center shadow-sm">
+                            <KeyRound className="w-4 h-4 text-success-dark" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold text-success-dark/70 uppercase tracking-widest">Vacant units</p>
+                        </div>
                     </div>
-                    <p className="font-data text-2xl font-semibold text-primary">{vacantUnits}</p>
+                    <p className="font-data text-3xl font-bold text-success-dark tracking-tight">{vacantUnits}</p>
                 </div>
             </div>
 
             {/* Info Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="card animate-fade-in-up">
-                    <SectionTitle icon={FileText} trailing={isDescriptionDirty && <UnsavedTag />}>
-                        Description
-                    </SectionTitle>
-                    {!isArchived ? (
-                        <>
-                  <textarea
-                      value={description || property.description || ""}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="form-input"
-                      rows={3}
-                      placeholder="No description"
-                  />
-                            <p className="text-xs text-ink-muted mt-2">
-                                Saved together with the name field via Update, below.
-                            </p>
-                        </>
-                    ) : (
-                        <p className="text-sm text-ink-muted">
-                            {property.description || "No description"}
-                        </p>
-                    )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="animate-fade-in-up">
+                    <SectionCard icon={ScrollText} title="Description" trailing={isDescriptionDirty && <UnsavedTag />}>
+                        {!isArchived ? (
+                            <div className="space-y-2">
+                                <textarea
+                                    value={description || property.description || ""}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="form-input min-h-[100px] text-sm leading-relaxed"
+                                    placeholder="Write a description for this property…"
+                                />
+                            </div>
+                        ) : (
+                            <div className="p-4 rounded-xl bg-ink/[0.02] border border-border/50">
+                                <p className="text-sm text-ink-muted leading-relaxed">
+                                    {property.description || (
+                                        <span className="italic text-ink-muted/60">No description provided.</span>
+                                    )}
+                                </p>
+                            </div>
+                        )}
+                    </SectionCard>
                 </div>
 
-                <div className="card animate-fade-in-up">
-                    <SectionTitle icon={Activity}>Occupancy</SectionTitle>
-                    <span className="pill-neutral">{formatEnumLabel(property.occupancyStatus)}</span>
+                <div className="animate-fade-in-up space-y-5">
+                    <SectionCard icon={Radio} title="Occupancy">
+                        <div className="p-4 rounded-xl bg-ink/[0.02] border border-border/50">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-ink-muted">Current status</span>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-success-bg text-success-dark shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-success shadow-sm shadow-success/30" />
+                                    {formatEnumLabel(property.occupancyStatus)}
+                                </span>
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    {!isArchived && (
+                        <SectionCard icon={Tag} title="Name" trailing={isNameDirty && <UnsavedTag />}>
+                            <input
+                                type="text"
+                                value={name || property.name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="form-input font-medium text-ink"
+                            />
+                        </SectionCard>
+                    )}
                 </div>
             </div>
 
-            {/* Name field (editable) */}
-            {!isArchived && (
-                <div className="card max-w-md animate-fade-in-up">
-                    <SectionTitle icon={Tag} trailing={isNameDirty && <UnsavedTag />}>
-                        Name
-                    </SectionTitle>
-                    <input
-                        type="text"
-                        value={name || property.name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="form-input"
-                    />
-                </div>
-            )}
-
             {/* Units Section */}
-            <section className="space-y-4 animate-fade-in-up">
-                <div className="flex justify-between items-center">
-                    <h2 className="section-header mb-0 inline-flex items-center gap-1.5">
-                        <Home className="h-4 w-4 text-ink-muted" strokeWidth={2} />
-                        Units
-                    </h2>
+            <section className="animate-fade-in-up space-y-5">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center">
+                            <Home className="w-4 h-4 text-brand-600" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-ink">Units</h2>
+                            <p className="text-xs text-ink-muted">Manage units under this property</p>
+                        </div>
+                    </div>
                     <button
                         onClick={() =>
                             router.push(`/dashboard/properties/${propertyId}/units/create`)
                         }
-                        className="btn-primary inline-flex items-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20"
                     >
-                        <Plus className="h-4 w-4" strokeWidth={2} />
+                        <Plus className="w-4 h-4" strokeWidth={2} />
                         Add unit
                     </button>
                 </div>
@@ -334,47 +381,25 @@ export default function PropertyDetailPage() {
 
             {/* Actions */}
             {!isArchived && (
-                <div className="flex items-center gap-3 flex-wrap animate-fade-in-up">
+                <div className="flex items-center gap-3 flex-wrap animate-fade-in-up pt-2">
                     <button
                         onClick={handleUpdate}
                         disabled={isUpdating}
-                        className={`btn-primary inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed ${
-                            hasUnsavedChanges ? "ring-2 ring-primary/30 ring-offset-2" : ""
+                        className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none ${
+                            hasUnsavedChanges ? "ring-2 ring-brand/30 ring-offset-2" : ""
                         }`}
                     >
-                        <Save className="h-4 w-4" strokeWidth={2} />
-                        {isUpdating ? "Updating…" : "Update"}
+                        <Save className="w-4 h-4" strokeWidth={2} />
+                        {isUpdating ? "Saving…" : "Save changes"}
                     </button>
 
                     {hasUnsavedChanges && !isUpdating && (
                         <button
                             onClick={handleDiscardChanges}
-                            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-ink-muted hover:text-ink hover:border-ink/20 transition-all duration-200"
                         >
-                            <Undo2 className="h-3.5 w-3.5" strokeWidth={2} />
-                            Discard changes
-                        </button>
-                    )}
-
-                    {canActivate && (
-                        <button
-                            onClick={() => activateProperty(property.propertyId)}
-                            disabled={isActivating}
-                            className="btn-success inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
-                            {isActivating ? "Activating…" : "Activate"}
-                        </button>
-                    )}
-
-                    {isActive && (
-                        <button
-                            onClick={() => archiveProperty(property.propertyId)}
-                            disabled={isArchiving}
-                            className="btn-danger inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Archive className="h-4 w-4" strokeWidth={2} />
-                            {isArchiving ? "Deactivating…" : "Deactivate"}
+                            <Undo2 className="w-3.5 h-3.5" strokeWidth={2} />
+                            Discard
                         </button>
                     )}
                 </div>

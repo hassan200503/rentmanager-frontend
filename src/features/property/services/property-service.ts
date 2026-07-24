@@ -29,4 +29,8 @@ export const propertyService = {
     async activate(id: string) {
         return propertyApi.activate(id);
     },
+
+    async remove(id: string) {
+        return propertyApi.remove(id);
+    },
 };

@@ -21,13 +21,15 @@ export function ListingSearch({
 
     return (
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted w-4 h-4" />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="w-4 h-4 text-ink-muted" />
+            </div>
             <input
                 type="text"
                 value={value}
                 onChange={handleChange}
                 placeholder={placeholder}
-                className="form-input w-full !pl-10 text-sm shadow-sm"
+                className="form-input w-full !pl-10 text-sm shadow-sm transition-shadow duration-200 focus:shadow-md focus:shadow-brand/10"
             />
         </div>
     );

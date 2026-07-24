@@ -189,6 +189,20 @@ export default function ReservationPage() {
                 throw new Error("Unexpected response from server.");
             }
 
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("rm_reservation", JSON.stringify({
+                    propertyName: unit?.propertyName ?? "",
+                    unitNumber: unit?.unitNumber ?? "",
+                    unitLabel: unit?.label ?? "",
+                    monthlyRent: unit?.monthlyRent ?? 0,
+                    depositAmount: unit?.depositAmount ?? 0,
+                    tenantName: form.fullName.trim(),
+                    tenantPhone: normalizePhone(form.phone),
+                    tenantEmail: form.email.trim(),
+                    createdAt: new Date().toISOString(),
+                }));
+            }
+
             router.push(`/reserve/waiting?paymentIntentId=${paymentIntentId}`);
         } catch (err: unknown) {
             setSubmitError(err instanceof Error ? err.message : "Unexpected error.");

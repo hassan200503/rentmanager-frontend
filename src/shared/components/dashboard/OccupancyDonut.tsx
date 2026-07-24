@@ -60,7 +60,7 @@ export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties
                                     strokeWidth={STROKE}
                                     strokeDasharray={dashArray}
                                     strokeDashoffset={offset}
-                                    strokeLinecap="butt"
+                                    strokeLinecap="round"
                                     stroke="currentColor"
                                     className={seg.colorClass}
                                 />
@@ -75,7 +75,7 @@ export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties
                 </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
                 {total === 0 ? (
                     <p className="text-xs text-fg-muted dark:text-fg-muted-dark">No active properties yet.</p>
                 ) : (
@@ -83,7 +83,7 @@ export default function OccupancyDonut({ fullyOccupied, vacant, activeProperties
                         <div key={seg.label} className="flex items-center gap-2 text-xs">
                             <span className={`h-2 w-2 rounded-full shrink-0 ${seg.colorClass.replace("text-", "bg-")}`} aria-hidden />
                             <span className="text-fg-muted dark:text-fg-muted-dark">{seg.label}</span>
-                            <span className="font-mono-nums font-medium text-fg dark:text-fg-dark">{seg.value}</span>
+                            <span className="font-mono-nums font-semibold text-fg dark:text-fg-dark">{seg.value}</span>
                         </div>
                     ))
                 )}

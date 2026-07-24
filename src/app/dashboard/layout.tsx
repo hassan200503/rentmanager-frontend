@@ -1,9 +1,15 @@
 import AppShell from "@/shared/components/layout/AppShell";
+import NotificationSync from "@/shared/components/dashboard/NotificationSync";
 
 export default function DashboardLayout({
                                             children,
                                         }: {
     children: React.ReactNode;
 }) {
-    return <AppShell>{children}</AppShell>;
+    return (
+        <>
+            <NotificationSync />
+            <AppShell>{children}</AppShell>
+        </>
+    );
 }

@@ -65,4 +65,5 @@ export interface RentTransactionSummaryResponse {
     tenantFullName: string | null;
     tenantPhone: string | null;
     leaseNumber: string | null;
+    leaseStatus: string | null;
 }

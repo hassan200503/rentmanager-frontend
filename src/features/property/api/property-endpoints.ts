@@ -9,5 +9,5 @@ export const propertyEndpoints = {
     byStatus: (status: string) => `${base}/status/${status}`,
     activate: (id: string) => `${base}/${id}/activate`,
     archive: (id: string) => `${base}/${id}/archive`,
-
+    remove: (id: string) => `${base}/${id}`,
 };
