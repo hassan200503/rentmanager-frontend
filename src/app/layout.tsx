@@ -1,7 +1,7 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 
 import QueryProvider from "@/providers/query-provider";
 import AuthProvider from "@/providers/auth-provider";
@@ -18,6 +18,13 @@ const plexMono = IBM_Plex_Mono({
     subsets: ["latin"],
     variable: "--font-mono",
     weight: ["400", "500", "600"],
+});
+
+const instrumentSerif = Instrument_Serif({
+    subsets: ["latin"],
+    variable: "--font-display-face",
+    weight: ["400"],
+    style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +45,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={`${inter.variable} ${plexMono.variable}`} suppressHydrationWarning>
+        <html lang="en" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
         <body className="antialiased">
         <QueryProvider>
             <AuthProvider>

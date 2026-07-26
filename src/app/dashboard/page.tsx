@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, Suspense, lazy } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   Building2,
   CheckCircle2,
@@ -12,8 +13,6 @@ import {
   Receipt,
   Users,
   ShieldCheck,
-  Clock,
-  ArrowRight,
   ArrowUpRight,
   Smartphone,
   ArrowLeftRight,
@@ -22,11 +21,9 @@ import {
   DoorOpen,
   Wrench,
   Sparkles,
-  BarChart3,
   Lightbulb,
   RefreshCw,
   ChevronRight,
-  Activity,
 } from "lucide-react";
 import type { ElementType } from "react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
@@ -35,7 +32,6 @@ import { PropertyStatus } from "@/features/property/types/property";
 import { usePropertyDashboardMetrics } from "@/features/property/hooks/use-property-dashboard-metrics";
 import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
 import { useDarajaStatusQuery } from "@/features/daraja/queries/ use-daraja-status-query";
-import MetricCard, { MetricCardSkeleton } from "@/shared/components/dashboard/MetricCard";
 import PortfolioBar from "@/shared/components/dashboard/PortfolioBar";
 import KpiCard, { KpiCardSkeleton } from "@/shared/components/dashboard/KpiCard";
 import HealthScore from "@/shared/components/dashboard/HealthScore";
@@ -48,6 +44,7 @@ import PortfolioAlerts from "@/shared/components/dashboard/PortfolioAlerts";
 import QuickActions from "@/shared/components/dashboard/QuickActions";
 import FinancialOverview from "@/shared/components/dashboard/FinancialOverview";
 import InsightsEngine from "@/shared/components/dashboard/InsightsEngine";
+import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
 import { useOrgStore } from "@/stores/org-store";
 
 function DashboardSkeleton() {
@@ -263,21 +260,18 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
   const attentionCount = metrics.vacant + metrics.underMaintenance;
 
-  function getOccupancyBadge(status: string): "success" | "warning" | "danger" | "info" | "neutral" | "emerald" {
-    const s = status?.toUpperCase() ?? "";
-    if (s === "FULLY_OCCUPIED") return "emerald";
-    if (s === "PARTIALLY_OCCUPIED") return "warning";
-    if (s === "VACANT") return "danger";
-    return "neutral";
-  }
-
   return (
     <div className="page-container space-y-8">
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 1: Executive Hero — Portfolio Health, Revenue, Occupancy
          ═══════════════════════════════════════════════════════════ */}
-      <div className="hero-card animate-fade-in-up">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+        className="hero-card"
+      >
         <div className="flex flex-col lg:flex-row items-start justify-between gap-6 relative z-10">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
@@ -286,7 +280,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               </p>
               <span className="status-dot-success status-dot-live" title="Live" />
             </div>
-            <h1 className="page-title !text-3xl !font-bold mb-1">Portfolio Overview</h1>
+            <h1 className="page-title !text-[2rem] mb-1">Portfolio Overview</h1>
             <p className="page-subtitle !text-sm">
               Your rental business at a glance.
               <span className="text-fg-muted dark:text-fg-muted-dark ml-2 text-xs">
@@ -345,12 +339,17 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 2: Portfolio Health + Executive KPIs
          ═══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1], delay: 0.1 }}
+        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
+      >
         {/* Portfolio Health — expanded executive component */}
         <div className="lg:col-span-1">
           <div className="card-elevated h-full">
@@ -422,26 +421,29 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 2: Financial Intelligence
          ═══════════════════════════════════════════════════════════ */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="section-title">Financial Intelligence</h2>
-          <Link href="/dashboard/payments" className="inline-flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "var(--color-brand)" }}>
-            View payments <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
-          </Link>
+      <ScrollReveal>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="section-title">Financial Intelligence</h2>
+            <Link href="/dashboard/payments" className="inline-flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "var(--color-brand)" }}>
+              View payments <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
+            </Link>
+          </div>
+          <FinancialOverview />
         </div>
-        <FinancialOverview />
-      </div>
+      </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 3: Analytics Command Center
          ═══════════════════════════════════════════════════════════ */}
-      <div>
-        <h2 className="section-title mb-4">Analytics</h2>
+      <ScrollReveal>
+        <div>
+          <h2 className="section-title mb-4">Analytics</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Portfolio Growth */}
           <div className="card-elevated lg:col-span-1">
@@ -536,12 +538,14 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 3: Insights + Alerts
          ═══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ScrollReveal>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card-elevated">
           <div className="flex items-center gap-2 mb-4">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
@@ -575,12 +579,14 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             activeProperties={metrics.activeProperties}
           />
         </div>
-      </div>
+        </div>
+      </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 4: Activity + Properties
          ═══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <ScrollReveal>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Activity Timeline */}
         <div className="card-elevated">
           <div className="flex items-center justify-between mb-4">
@@ -700,44 +706,49 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 4: Quick Actions
          ═══════════════════════════════════════════════════════════ */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="section-title !text-sm">Quick Actions</h2>
+      <ScrollReveal>
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="section-title !text-sm">Quick Actions</h2>
+          </div>
+          <QuickActions />
         </div>
-        <QuickActions />
-      </div>
+      </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 5: Module Quick Access
          ═══════════════════════════════════════════════════════════ */}
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-3">
-          Module access
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ModuleCard
-            icon={ArrowLeftRight}
-            title="Payments"
-            note="Live payments, charges, and adjustments feed"
-            href="/dashboard/payments" />
-          <ModuleCard
-            icon={Receipt}
-            title="Rent ledger"
-            note="Collection status, overdue balances"
-            href="/dashboard/rent-ledger" />
-          <ModuleCard
-            icon={Users}
-            title="Tenants"
-            note="Residents, lease terms, rent collection"
-            href="/dashboard/leases" />
-          <ModuleCard icon={Archive} title="Upcoming disbursements" note="Phase 5 — pending payouts to your M-Pesa" />
+      <ScrollReveal>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-3">
+            Module access
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModuleCard
+              icon={ArrowLeftRight}
+              title="Payments"
+              note="Live payments, charges, and adjustments feed"
+              href="/dashboard/payments" />
+            <ModuleCard
+              icon={Receipt}
+              title="Rent ledger"
+              note="Collection status, overdue balances"
+              href="/dashboard/rent-ledger" />
+            <ModuleCard
+              icon={Users}
+              title="Tenants"
+              note="Residents, lease terms, rent collection"
+              href="/dashboard/leases" />
+            <ModuleCard icon={Archive} title="Upcoming disbursements" note="Phase 5 — pending payouts to your M-Pesa" />
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
     </div>
   );
 }

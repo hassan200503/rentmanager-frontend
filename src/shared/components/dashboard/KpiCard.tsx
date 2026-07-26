@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ElementType, ReactNode } from "react";
+import { motion } from "framer-motion";
+import type { ElementType } from "react";
 
 interface KpiCardProps {
   icon: ElementType;
@@ -24,18 +25,19 @@ function MiniSparkline({ data }: { data: number[] }) {
   const h = 24;
   const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
   const color = data[data.length - 1] >= data[0] ? "var(--color-success)" : "var(--color-danger)";
+  const gradientId = `sparkline-${data.join("").slice(0, 8)}`;
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden>
       <defs>
-        <linearGradient id={`sparkline-fill-${data.join("")}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity={0.12} />
           <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
       <path
         d={`M${points} L${w},${h} L0,${h} Z`}
-        fill={`url(#sparkline-fill-${data.join("")})`}
+        fill={`url(#${gradientId})`}
       />
       <polyline fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" points={points} />
     </svg>
@@ -46,7 +48,7 @@ export function KpiCardSkeleton() {
   return (
     <div className="card-elevated">
       <div className="flex items-start justify-between mb-3">
-        <div className="skeleton h-9 w-9 rounded-xl" />
+        <div className="skeleton h-10 w-10 rounded-xl" />
       </div>
       <div className="skeleton h-3 w-20 mb-2" />
       <div className="skeleton h-9 w-28 mb-2" />
@@ -98,7 +100,13 @@ export default function KpiCard({
   }, [numericValue]);
 
   return (
-    <div ref={ref} className="card-elevated group cursor-default animate-fade-in-up">
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      className="card-elevated group cursor-default"
+    >
       <div className="flex items-start justify-between mb-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
@@ -134,6 +142,6 @@ export default function KpiCard({
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

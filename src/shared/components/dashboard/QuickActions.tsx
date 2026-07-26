@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   Plus,
   Building2,
@@ -33,31 +34,50 @@ const actions: QuickAction[] = [
   { icon: LifeBuoy, label: "Support", description: "Get help with the platform", href: "/dashboard/settings", color: "var(--color-info)", bg: "var(--color-info-bg)" },
 ];
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04, delayChildren: 0.05 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const } },
+};
+
 export default function QuickActions() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+    >
       {actions.map((action) => {
         const Icon = action.icon;
         return (
-          <Link
-            key={action.label}
-            href={action.href}
-            className="group flex flex-col items-start gap-2 rounded-2xl border border-border dark:border-border-dark p-4 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-600 hover:shadow-card-hover hover:-translate-y-0.5 bg-surface dark:bg-surface-dark animate-fade-in-up"
-          >
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
-              style={{ backgroundColor: action.bg }}
+          <motion.div key={action.label} variants={item}>
+            <Link
+              href={action.href}
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 dark:border-border-dark/60 p-4 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700/40 hover:shadow-card-hover hover:-translate-y-0.5 bg-surface dark:bg-surface-dark"
             >
-              <Icon className="h-4 w-4" strokeWidth={1.75} style={{ color: action.color }} />
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-fg dark:text-fg-dark">{action.label}</span>
-              <ArrowUpRight className="h-3 w-3 text-fg-muted dark:text-fg-muted-dark opacity-0 group-hover:opacity-100 transition-all duration-200" strokeWidth={2} />
-            </div>
-            <span className="text-[11px] text-fg-muted dark:text-fg-muted-dark leading-tight">{action.description}</span>
-          </Link>
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
+                style={{ backgroundColor: action.bg }}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.75} style={{ color: action.color }} />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-semibold text-fg dark:text-fg-dark">{action.label}</span>
+                <ArrowUpRight className="h-3 w-3 text-fg-muted dark:text-fg-muted-dark opacity-0 group-hover:opacity-100 transition-all duration-200" strokeWidth={2} />
+              </div>
+              <span className="text-[11px] text-fg-muted dark:text-fg-muted-dark leading-tight">{action.description}</span>
+            </Link>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

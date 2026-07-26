@@ -1,6 +1,7 @@
 "use client";
 
-import { DollarSign, TrendingUp, TrendingDown, Wallet, Banknote, Smartphone, Percent, ArrowLeftRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { DollarSign, TrendingUp, Wallet, Smartphone, Percent, ArrowLeftRight } from "lucide-react";
 
 const financialCards = [
   {
@@ -67,13 +68,35 @@ function MiniTrend({ value, positive }: { value: number; positive: boolean }) {
   );
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05, delayChildren: 0.1 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] as const } },
+};
+
 export default function FinancialOverview() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+    >
       {financialCards.map((card) => {
         const Icon = card.icon;
         return (
-          <div key={card.label} className="card-elevated !p-4 group cursor-default animate-fade-in-up">
+          <motion.div
+            key={card.label}
+            variants={item}
+            className="card-elevated !p-4 group cursor-default"
+          >
             <div className="flex items-center justify-between mb-3">
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
@@ -90,9 +113,9 @@ export default function FinancialOverview() {
               {card.value}
             </p>
             <p className="text-[10px] text-fg-muted dark:text-fg-muted-dark">{card.subtitle}</p>
-          </div>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }
