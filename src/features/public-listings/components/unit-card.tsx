@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PublicUnitResponse } from "../types/public-unit";
+import { VerifiedBadge } from "./verified-badge";
 
 interface UnitCardProps {
     propertyId: string;
@@ -48,10 +49,13 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
                             </p>
                         )}
                     </div>
-                    <span className={badge.className + " flex-shrink-0 mt-0.5"}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                        {badge.label}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+                        {unit.landlordVerified && <VerifiedBadge size="sm" />}
+                        <span className={badge.className}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                            {badge.label}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">

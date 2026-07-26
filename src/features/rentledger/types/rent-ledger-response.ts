@@ -67,3 +67,28 @@ export interface RentTransactionSummaryResponse {
     leaseNumber: string | null;
     leaseStatus: string | null;
 }
+
+// ── Unmatched Payments (for manual review queue) ────────────────────────
+
+export interface UnmatchedPaymentResponse {
+    id: string;
+    transactionId: string;
+    amount: number;
+    phoneNumber: string;           // masked to last 4 digits in UI
+    accountReference: string;      // raw reference as received
+    occurredAt: string;
+    matchConfidence: "exact" | "fuzzy" | "phone" | "amount_timing" | null;
+    suggestedUnits: Array<{
+        unitId: string;
+        unitNumber: string;
+        tenantName: string;
+        rentAmount: number;
+        matchReason: string;
+    }>;
+}
+
+export interface ResolveUnmatchedPaymentRequest {
+    transactionId: string;
+    unitId: string;
+    // tenantId derived from unit on backend
+}

@@ -1,7 +1,7 @@
 // api/rent-ledger-api.ts
 import { v5 as uuidv5 } from "uuid";
 import { rentLedgerEndpoints } from "./rent-ledger-endpoints";
-import { RentLedgerEntryResponse, RentLedgerStatus, RentTransactionResponse, RentTransactionSummaryResponse } from "../types/rent-ledger-response";
+import { RentLedgerEntryResponse, RentLedgerStatus, RentTransactionResponse, RentTransactionSummaryResponse, UnmatchedPaymentResponse, ResolveUnmatchedPaymentRequest } from "../types/rent-ledger-response";
 import { apiClient } from "@/lib/api/client";
 import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
 import { getTenantIdFromSession } from "@/shared/tenant/get-tenant-id";
@@ -79,6 +79,25 @@ export const rentLedgerApi = {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<RentTransactionSummaryResponse[]>(
             rentLedgerEndpoints.allTransactions(),
+            token,
+            tenantId
+        );
+    },
+
+    getUnmatchedPayments: async (): Promise<UnmatchedPaymentResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<UnmatchedPaymentResponse[]>(
+            rentLedgerEndpoints.unmatchedPayments(),
+            token,
+            tenantId
+        );
+    },
+
+    resolveUnmatchedPayment: async (request: ResolveUnmatchedPaymentRequest): Promise<void> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<void>(
+            rentLedgerEndpoints.resolveUnmatched(request.transactionId),
+            request,
             token,
             tenantId
         );

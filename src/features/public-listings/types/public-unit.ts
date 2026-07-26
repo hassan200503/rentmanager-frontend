@@ -13,6 +13,7 @@ export interface PublicUnitResponse {
     propertyName?: string;
     propertyArea?: string;
     vacatedAt?: string;
+    landlordVerified?: boolean;
 }
 
 export interface PublicUnitPageResponse {

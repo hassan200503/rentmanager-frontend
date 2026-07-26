@@ -10,4 +10,6 @@ export const rentLedgerEndpoints = {
     transactionsForEntry: (entryId: string) => `${base}/entries/${entryId}/transactions`,
     allTransactions: () => `${base}/transactions`,
     deleteTransaction: (transactionId: string) => `${base}/transactions/${transactionId}`,
+    unmatchedPayments: () => `${base}/unmatched-payments`,
+    resolveUnmatched: (transactionId: string) => `${base}/unmatched-payments/${transactionId}/resolve`,
 };

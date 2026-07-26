@@ -1,0 +1,172 @@
+// api/tenant-portal-api.ts
+import { apiClient } from "@/lib/api/client";
+import { tenantPortalEndpoints } from "./tenant-portal-endpoints";
+
+// Types for tenant portal responses
+export interface TenantDashboardResponse {
+    tenantId: string;
+    tenantName: string;
+    tenantPhone: string;
+    tenantEmail: string;
+    currentBalance: number;
+    nextDueDate: string | null;
+    nextDueAmount: number;
+    overdueAmount: number;
+    leaseStatus: string;
+    unitNumber: string;
+    propertyName: string;
+    monthlyRent: number;
+    depositAmount: number;
+    recentPayments: TenantPaymentHistoryItem[];
+}
+
+export interface TenantLeaseResponse {
+    leaseId: string;
+    leaseNumber: string;
+    startDate: string;
+    endDate: string | null;
+    monthlyRent: number;
+    depositAmount: number;
+    status: string;
+    unitNumber: string;
+    unitLabel: string | null;
+    propertyName: string;
+    propertyAddress: string;
+    landlordName: string;
+    landlordPhone: string;
+    landlordEmail: string;
+    terms: string;
+}
+
+export interface TenantPaymentSummaryResponse {
+    totalPaid: number;
+    totalDue: number;
+    currentBalance: number;
+    overdueAmount: number;
+    paymentsThisYear: number;
+    lastPaymentDate: string | null;
+    lastPaymentAmount: number | null;
+}
+
+export interface TenantPaymentHistoryItem {
+    id: string;
+    type: "RENT_CHARGE" | "PAYMENT" | "WAIVER" | "REFUND" | "CREDIT_APPLIED" | "ADJUSTMENT" | "DEPOSIT";
+    amount: number;
+    source: "MPESA" | "CASH" | "ADMIN_ADJUSTMENT" | "SYSTEM";
+    externalReference: string | null;
+    occurredAt: string;
+    status: "PAID" | "PARTIALLY_PAID" | "OVERDUE" | "DUE";
+    billingPeriodStart: string;
+    billingPeriodEnd: string;
+    mpesaTransactionId: string | null;
+}
+
+export interface TenantPaymentHistoryResponse {
+    content: TenantPaymentHistoryItem[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+}
+
+export interface TenantPaymentReceiptResponse {
+    transactionId: string;
+    receiptNumber: string;
+    paymentDate: string;
+    amount: number;
+    mpesaTransactionId: string | null;
+    tenantName: string;
+    tenantPhone: string;
+    unitNumber: string;
+    propertyName: string;
+    billingPeriodStart: string;
+    billingPeriodEnd: string;
+    balanceAfterPayment: number;
+    eTimsInvoiceNumber: string | null;
+    eTimsQrCodeUrl: string | null;
+}
+// API client
+export const tenantPortalApi = {
+    getDashboard: async (): Promise<TenantDashboardResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<TenantDashboardResponse>(
+            tenantPortalEndpoints.dashboard(),
+            token,
+            tenantId
+        );
+    },
+
+    getLease: async (): Promise<TenantLeaseResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<TenantLeaseResponse>(
+            tenantPortalEndpoints.lease(),
+            token,
+            tenantId
+        );
+    },
+
+    getPaymentSummary: async (): Promise<TenantPaymentSummaryResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<TenantPaymentSummaryResponse>(
+            tenantPortalEndpoints.paymentSummary(),
+            token,
+            tenantId
+        );
+    },
+
+    getPaymentHistory: async (page: number = 0, size: number = 20): Promise<TenantPaymentHistoryResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<TenantPaymentHistoryResponse>(
+            tenantPortalEndpoints.paymentHistory(page, size),
+            token,
+            tenantId
+        );
+    },
+
+    getPaymentReceipt: async (transactionId: string): Promise<TenantPaymentReceiptResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<TenantPaymentReceiptResponse>(
+            tenantPortalEndpoints.paymentReceipt(transactionId),
+            token,
+            tenantId
+        );
+    },
+};
+
+// Auth context helper (same pattern as other features)
+async function getAuthContext(): Promise<{ token: string | undefined; tenantId: string | undefined }> {
+    if (typeof window === "undefined") {
+        return { token: undefined, tenantId: undefined };
+    }
+
+    const { useOrgStore } = await import("@/stores/org-store");
+    const { getTenantIdFromSession } = await import("@/shared/tenant/get-tenant-id");
+    const { v5: uuidv5 } = await import("uuid");
+
+    const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+    const { BACKEND_JWT_TEMPLATE } = await import("@/lib/auth/token");
+
+    const rawTenantId = useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+
+    const tenantId = rawTenantId
+        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
+        : undefined;
+
+    type ClerkWindow = Window & {
+        Clerk?: {
+            session?: {
+                getToken?: (options?: { template?: string }) => Promise<string | null>;
+            };
+        };
+    };
+
+    const token =
+        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
+            template: BACKEND_JWT_TEMPLATE,
+        })) ?? undefined;
+
+    return { token, tenantId };
+}

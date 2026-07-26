@@ -70,7 +70,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         <ClerkProvider
             signInUrl="/public/sign-in"
             signUpUrl="/public/sign-up"
-            // Adjust to your actual (auth) and (dashboard) route group paths.
+            signInFallbackRedirectUrl="/portal"
             afterSignOutUrl="/"
         >
             <OrgStoreSync>{children}</OrgStoreSync>

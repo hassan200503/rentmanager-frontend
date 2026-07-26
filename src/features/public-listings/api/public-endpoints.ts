@@ -25,4 +25,10 @@ export const publicEndpoints = {
 
     reservationPaymentStatus: (paymentIntentId: string) =>
         `/public/reservations/payment-status?id=${encodeURIComponent(paymentIntentId)}`,
+
+    reservationDetail: (reservationId: string) =>
+        `/public/reservations/${encodeURIComponent(reservationId)}`,
+
+    resendSignInLink: (reservationId: string) =>
+        `/public/reservations/${encodeURIComponent(reservationId)}/resend-link`,
 };

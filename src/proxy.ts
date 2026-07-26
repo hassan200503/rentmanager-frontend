@@ -29,6 +29,16 @@ export default clerkMiddleware(async (auth, req) => {
         return redirectToSignIn();
     }
 
+    // Tenant portal route: any authenticated user may access /portal.
+    // Landlords (with tenant_id claim) are redirected to /dashboard instead.
+    if (req.nextUrl.pathname.startsWith("/portal")) {
+        const tenantId = sessionClaims?.tenant_id;
+        if (tenantId) {
+            return NextResponse.redirect(new URL("/dashboard", req.url));
+        }
+        return NextResponse.next();
+    }
+
     const tenantId = sessionClaims?.tenant_id;
 
     // NOTE: once the real KYC review step exists, this should also check
