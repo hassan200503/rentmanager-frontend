@@ -2,11 +2,16 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
+import dynamic from "next/dynamic";
 
 import QueryProvider from "@/providers/query-provider";
 import AuthProvider from "@/providers/auth-provider";
 import ThemeProvider from "@/providers/theme-provider";
 import { Toaster } from "sonner";
+
+const DevPortalSwitcher = dynamic(
+    () => import("@/shared/dev/DevPortalSwitcher")
+);
 
 const inter = Inter({
     subsets: ["latin"],
@@ -53,6 +58,7 @@ export default function RootLayout({
                     <ToastProvider>
                         <Toaster position="top-right" richColors />
                         {children}
+                        <DevPortalSwitcher />
                     </ToastProvider>
                 </ThemeProvider>
             </AuthProvider>

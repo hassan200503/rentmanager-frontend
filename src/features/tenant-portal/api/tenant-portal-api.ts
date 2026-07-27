@@ -149,7 +149,15 @@ async function getAuthContext(): Promise<{ token: string | undefined; tenantId: 
     const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
     const { BACKEND_JWT_TEMPLATE } = await import("@/lib/auth/token");
 
-    const rawTenantId = useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
+    // Dev-mode override: when _dev_portal=renter cookie is set, suppress
+    // tenantId so the API does not send X-Tenant-Id (renter context).
+    const isDevRenter =
+        typeof window !== "undefined" &&
+        document.cookie.split("; ").some((c) => c === "_dev_portal=renter");
+
+    const rawTenantId = !isDevRenter
+        ? (useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined)
+        : undefined;
 
     const tenantId = rawTenantId
         ? uuidv5(rawTenantId, TENANT_NAMESPACE)

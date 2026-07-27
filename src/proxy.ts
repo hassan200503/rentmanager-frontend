@@ -31,9 +31,17 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Tenant portal route: any authenticated user may access /portal.
     // Landlords (with tenant_id claim) are redirected to /dashboard instead.
+    // In development mode, setting cookie _dev_portal=renter bypasses this
+    // so the same user can preview both landlord and renter portals.
     if (req.nextUrl.pathname.startsWith("/portal")) {
         const tenantId = sessionClaims?.tenant_id;
         if (tenantId) {
+            if (
+                process.env.NODE_ENV === "development" &&
+                req.cookies.get("_dev_portal")?.value === "renter"
+            ) {
+                return NextResponse.next();
+            }
             return NextResponse.redirect(new URL("/dashboard", req.url));
         }
         return NextResponse.next();
