@@ -1,5 +1,5 @@
 // src/features/lease/utils/lease-csv-export.ts
-import {LeaseResponse, LeaseSummaryResponse} from "@/features/lease/types/lease-response";
+import {LeaseSummaryResponse} from "@/features/lease/types/lease-response";
 
 const escapeCsvCell = (value: string | number): string => {
     const str = String(value);

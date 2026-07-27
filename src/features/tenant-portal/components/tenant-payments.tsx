@@ -14,7 +14,7 @@ export const TenantPaymentsPage = () => {
     const [page, setPage] = useState(0);
     const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
-    const { data: summary, isLoading: summaryLoading } = useTenantPaymentSummaryQuery();
+    const { data: summary } = useTenantPaymentSummaryQuery();
     const { data: history, isLoading, isError, refetch } = useTenantPaymentHistoryQuery(page, PAGE_SIZE);
     const { data: receipt, isLoading: receiptLoading } = useTenantPaymentReceiptQuery(selectedReceiptId ?? "");
 

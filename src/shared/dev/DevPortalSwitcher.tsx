@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { appConfig } from "@/lib/config/app-config";
 import {
     isDevRenterMode,
@@ -10,17 +10,18 @@ import {
 import { ArrowLeftRight, Building2, User, Plus, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 
 export default function DevPortalSwitcher() {
-    const [isRenter, setIsRenter] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const mounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false,
+    );
+    const [isRenter, setIsRenter] = useState(() => {
+        try { return isDevRenterMode(); } catch { return false; }
+    });
     const [setupState, setSetupState] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [setupResult, setSetupResult] = useState<string>("");
     const [leaseNumber, setLeaseNumber] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        setMounted(true);
-        setIsRenter(isDevRenterMode());
-    }, []);
 
     if (!mounted || !appConfig.flags.isDevelopment) return null;
 

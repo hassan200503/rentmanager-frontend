@@ -83,18 +83,16 @@ function CurrencyInput({ label, name, control, error }: {
             <span className="form-label">{label}</span>
             <div className="relative">
                 <input
+                    {...field}
                     className="form-input font-mono-nums !pl-16 pr-3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     placeholder="e.g. 25000"
-                    value={field.value || ""}
                     onChange={(e) => {
                         const raw = e.target.value.replace(/\D/g, "");
                         field.onChange(raw ? Number(raw) : 0);
                     }}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
                 />
                 <span className="absolute left-0 top-0 bottom-0 flex items-center px-3 text-xs font-medium tracking-wider text-fg-subtle dark:text-fg-subtle-dark uppercase select-none pointer-events-none bg-border-subtle dark:bg-border-subtle-dark rounded-l-lg border-r border-border dark:border-border-dark">
                     KES

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Activity as ActivityIcon, Building2, Home, FileText, ArrowRight, Clock } from "lucide-react";
+import { Activity as ActivityIcon, ArrowRight } from "lucide-react";
 import type { Activity } from "@/features/activity/types/activity";
 import { timeAgo, getActivityHref, describe, ENTITY_ICON } from "@/features/activity/utils/activity-display";
 

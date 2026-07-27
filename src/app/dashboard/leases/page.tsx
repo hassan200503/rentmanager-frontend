@@ -80,8 +80,8 @@ export default function LeasesPage() {
         return [...filteredLeases].sort((a, b) => {
             if (sortKey === "rentAmount") return (a.rentAmount - b.rentAmount) * dir;
             if (sortKey === "endDate") return (new Date(a.endDate).getTime() - new Date(b.endDate).getTime()) * dir;
-            const aVal = (a as any)[sortKey] ?? a.leaseNumber;
-            const bVal = (b as any)[sortKey] ?? b.leaseNumber;
+            const aVal = (a as unknown as Record<string, string | number | null>)[sortKey] ?? a.leaseNumber;
+            const bVal = (b as unknown as Record<string, string | number | null>)[sortKey] ?? b.leaseNumber;
             return String(aVal).localeCompare(String(bVal)) * dir;
         });
     }, [filteredLeases, sortKey, sortDir]);

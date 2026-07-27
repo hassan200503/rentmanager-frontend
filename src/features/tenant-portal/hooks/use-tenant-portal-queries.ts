@@ -1,7 +1,6 @@
 // hooks/use-tenant-portal-queries.ts
 import { useQuery } from "@tanstack/react-query";
 import { tenantPortalApi } from "../api/tenant-portal-api";
-import { TenantPaymentReceiptResponse } from "../api/tenant-portal-api";
 
 export const tenantPortalKeys = {
     all: ["tenant-portal"] as const,

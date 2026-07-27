@@ -16,13 +16,11 @@ import {
   X,
   Star,
   CheckCircle2,
-  Clock,
   TrendingUp,
   Key,
   FileText,
   Smartphone,
   HeadphonesIcon,
-  RefreshCw,
 } from "lucide-react";
 import VideoBackground from "@/shared/components/landing/VideoBackground";
 import { BrandBadge } from "@/shared/components/brand";
@@ -157,10 +155,10 @@ function SkylineBackground({ parallaxOffset = 0 }: { parallaxOffset?: number }) 
           <div className="absolute inset-0" style={{ background: SCENE_PALETTES[scene.name].sky }} />
           <div className="absolute left-0 right-0 bottom-0 h-40" style={{ background: SCENE_PALETTES[scene.name].glow }} />
           <svg className="absolute bottom-0 left-0 w-full h-full" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice" style={{ transform: `translateY(${parallaxOffset * 0.15}px)` }}>
-            {scene.buildings.map((b: any) => (
+            {scene.buildings.map((b: { id: string; x: number; y: number; width: number; height: number; floors: number; cols: number; depth: "back" | "front"; windows: Array<{ cx: number; cy: number; variant: "bright" | "mid" | "dim"; delay: number; duration: number }> }) => (
               <g key={b.id}>
                 <rect x={b.x} y={b.y} width={b.width} height={b.height} fill={b.depth === "back" ? "#182647" : "#0A0F1C"} opacity={b.depth === "back" ? 0.75 : 1} />
-                {b.windows.map((w: any, wi: number) => (
+                {b.windows.map((w: { cx: number; cy: number; variant: "bright" | "mid" | "dim"; delay: number; duration: number }, wi: number) => (
                   <rect key={wi} x={w.cx} y={w.cy} width={5} height={7} rx={0.5} className={`sky-window sky-window--${w.variant}`} style={{ animationDelay: `${w.delay}s`, animationDuration: `${w.duration}s` }} fill="#F2C879" />
                 ))}
               </g>
@@ -757,7 +755,7 @@ export default function HomePage() {
               { icon: CheckCircle2, title: "Secure Payments", desc: "Encrypted M-Pesa transactions" },
               { icon: FileText, title: "Digital Leases", desc: "Legally binding online agreements" },
               { icon: HeadphonesIcon, title: "24/7 Support", desc: "Real-time assistance always" },
-            ].map((item, i) => {
+            ].map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="text-center p-6 rounded-2xl border border-white/5 bg-white/[0.02]">

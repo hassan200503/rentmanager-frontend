@@ -3,8 +3,8 @@
 
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
 import { useCallback, useRef, useState } from "react";
-import { tenantPortalApi, type RentPaymentRequestResponse } from "../api/tenant-portal-api";
-import { Loader2, AlertTriangle, CheckCircle2, AlertCircle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone, ExternalLink } from "lucide-react";
+import { tenantPortalApi } from "../api/tenant-portal-api";
+import { Loader2, AlertTriangle, CheckCircle2, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 export const formatCurrency = (amount: number) =>
@@ -16,16 +16,14 @@ export const formatDate = (iso: string) =>
 export const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const KpiCard = ({ icon: Icon, label, value, trend, subtitle, iconColor, iconBg, className = "", badge }: {
+const KpiCard = ({ icon: Icon, label, value, trend, iconColor, iconBg, className = "" }: {
     icon: React.ElementType;
     label: string;
     value: string | number;
     trend?: { value: number; positive: boolean };
-    subtitle?: string;
     iconColor?: string;
     iconBg?: string;
     className?: string;
-    badge?: { label: string; variant: "success" | "warning" | "danger" | "info" | "neutral" | "emerald" };
 }) => (
     <div className={`card-elevated ${className}`}>
         <div className="flex items-start justify-between mb-3">
@@ -64,6 +62,67 @@ export const StatusBadge = ({ status }: { status: string }) => {
 
 export const TenantDashboard = () => {
     const { data, isLoading, isError, refetch } = useTenantDashboardQuery();
+
+    const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
+    const [payMessage, setPayMessage] = useState("");
+    const [mpesaPhone, setMpesaPhone] = useState("");
+    const [, setRequestId] = useState<string | null>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const initiatePayment = useCallback(async () => {
+        const entryId = data?.currentEntryId;
+        if (!entryId) return;
+        setPayState("initiating");
+        setPayMessage("");
+        try {
+            const result = await tenantPortalApi.collectPayment(entryId, mpesaPhone);
+            setRequestId(result.id);
+            setPayState("pending");
+            setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
+
+            // Poll for status up to 10 times (every 5s = 50s total)
+            let attempts = 0;
+            pollRef.current = setInterval(async () => {
+                attempts++;
+                try {
+                    const status = await tenantPortalApi.getPaymentRequestStatus(result.id);
+                    if (status.status === "PAID") {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("success");
+                        setPayMessage("Payment received successfully!");
+                        setTimeout(() => { refetch(); }, 1500);
+                    } else if (status.status === "FAILED") {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("error");
+                        setPayMessage("Payment failed. Please try again.");
+                    } else if (attempts >= 10) {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("pending");
+                        setPayMessage("Still waiting for confirmation. You can check your payment status on the Payments page.");
+                    }
+                } catch {
+                    // ignore poll errors — retry next interval
+                }
+            }, 5000);
+        } catch (err) {
+            setPayState("error");
+            setPayMessage(String(err) || "Failed to initiate payment. Please try again.");
+        }
+    }, [data, mpesaPhone, refetch]);
+
+    const resetPay = () => {
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+        setPayState("idle");
+        setPayMessage("");
+        setRequestId(null);
+        setMpesaPhone(data?.tenantPhone || "");
+    };
 
     if (isLoading) {
         return (
@@ -105,71 +164,11 @@ export const TenantDashboard = () => {
         );
     }
 
-    const { tenantName, tenantPhone, tenantEmail, currentBalance, currentEntryId, nextDueDate, nextDueAmount, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent, depositAmount } = data;
+    const { tenantName, tenantPhone, currentBalance, currentEntryId, nextDueDate, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent } = data;
 
     const isOverdue = overdueAmount > 0;
     const hasActiveLease = leaseStatus === "ACTIVE";
     const canPay = hasActiveLease && currentEntryId && currentBalance > 0;
-
-    const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
-    const [payMessage, setPayMessage] = useState("");
-    const [mpesaPhone, setMpesaPhone] = useState(tenantPhone || "");
-    const [requestId, setRequestId] = useState<string | null>(null);
-    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const initiatePayment = useCallback(async () => {
-        if (!currentEntryId) return;
-        setPayState("initiating");
-        setPayMessage("");
-        try {
-            const result = await tenantPortalApi.collectPayment(currentEntryId, mpesaPhone);
-            setRequestId(result.id);
-            setPayState("pending");
-            setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
-
-            // Poll for status up to 10 times (every 5s = 50s total)
-            let attempts = 0;
-            pollRef.current = setInterval(async () => {
-                attempts++;
-                try {
-                    const status = await tenantPortalApi.getPaymentRequestStatus(result.id);
-                    if (status.status === "PAID") {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("success");
-                        setPayMessage("Payment received successfully!");
-                        setTimeout(() => { refetch(); }, 1500);
-                    } else if (status.status === "FAILED") {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("error");
-                        setPayMessage("Payment failed. Please try again.");
-                    } else if (attempts >= 10) {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("pending");
-                        setPayMessage("Still waiting for confirmation. You can check your payment status on the Payments page.");
-                    }
-                } catch {
-                    // ignore poll errors — retry next interval
-                }
-            }, 5000);
-        } catch (err) {
-            setPayState("error");
-            setPayMessage(String(err) || "Failed to initiate payment. Please try again.");
-        }
-    }, [currentEntryId, mpesaPhone, refetch]);
-
-    const resetPay = () => {
-        if (pollRef.current) {
-            clearInterval(pollRef.current);
-            pollRef.current = null;
-        }
-        setPayState("idle");
-        setPayMessage("");
-        setRequestId(null);
-        setMpesaPhone(tenantPhone || "");
-    };
 
     const payButtonDisabled = payState === "initiating" || payState === "pending";
 
@@ -204,13 +203,11 @@ export const TenantDashboard = () => {
                         value={formatCurrency(overdueAmount)}
                         iconColor="var(--color-danger)"
                         iconBg="var(--color-danger-bg)"
-                        badge={overdueAmount > 0 ? { label: "Action needed", variant: "danger" } : { label: "Clear", variant: "emerald" }}
                     />
                     <KpiCard
                         icon={TrendingUp}
                         label="Next Due"
                         value={nextDueDate ? formatDate(nextDueDate) : "—"}
-                        subtitle={nextDueAmount > 0 ? formatCurrency(nextDueAmount) : "No upcoming payment"}
                         iconColor={isOverdue ? "var(--color-warning)" : "var(--color-success)"}
                         iconBg={isOverdue ? "var(--color-warning-bg)" : "var(--color-success-bg)"}
                     />
@@ -218,7 +215,6 @@ export const TenantDashboard = () => {
                         icon={Home}
                         label="Monthly Rent"
                         value={formatCurrency(monthlyRent)}
-                        subtitle="Fixed for lease term"
                         iconColor="var(--color-brand)"
                         iconBg="var(--color-brand-50)"
                     />
@@ -246,7 +242,7 @@ export const TenantDashboard = () => {
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="tel"
-                                        value={mpesaPhone}
+                                        value={mpesaPhone || tenantPhone || ""}
                                         onChange={(e) => setMpesaPhone(e.target.value)}
                                         placeholder="+254712345678"
                                         className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm
@@ -258,7 +254,7 @@ export const TenantDashboard = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={initiatePayment}
-                                        disabled={payButtonDisabled || !mpesaPhone}
+                                        disabled={payButtonDisabled || !(mpesaPhone || tenantPhone)}
                                         className="btn-primary btn-sm flex-1"
                                     >
                                         {payButtonDisabled ? (

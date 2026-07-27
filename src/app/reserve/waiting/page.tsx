@@ -248,7 +248,8 @@ function ReservationWaitingContent() {
                 // new value, this fails to compile instead of silently
                 // falling through to a wrong render — which is exactly the
                 // bug the PAID case above was hitting.
-                const _exhaustive: never = status;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const _exhaustiveCheck: never = status;
                 return null;
             }
         }

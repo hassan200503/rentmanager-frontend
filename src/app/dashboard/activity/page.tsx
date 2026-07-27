@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Activity as ActivityIcon, History, Filter, X, ChevronRight, RotateCw, Building2, Home, FileText } from "lucide-react";
 import { activityApi, type ActivityFilters } from "@/features/activity/api/activity-api";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
-import { timeAgo, ENTITY_ICON, getActivityHref, describe } from "@/features/activity/utils/activity-display";
+import { timeAgo, getActivityHref, describe } from "@/features/activity/utils/activity-display";
 
 const PAGE_SIZE = 20;
 

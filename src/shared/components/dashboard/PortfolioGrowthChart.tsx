@@ -22,7 +22,7 @@ interface PortfolioGrowthChartProps {
   currentUnits?: number;
 }
 
-export default function PortfolioGrowthChart({ currentProperties: _cp }: PortfolioGrowthChartProps) {
+export default function PortfolioGrowthChart({}: PortfolioGrowthChartProps) {
   return (
     <div className="h-72">
       <ResponsiveContainer width="100%" height="100%">

@@ -1,4 +1,3 @@
-import { type SVGProps } from "react";
 
 interface BrandBadgeProps {
   size?: "sm" | "md" | "lg";

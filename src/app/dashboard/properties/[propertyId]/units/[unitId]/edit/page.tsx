@@ -2,13 +2,11 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AlertTriangle, Pencil } from "lucide-react";
 import { useUnit } from "@/features/unit/hooks/use-unit";
 import { useUpdateUnit } from "@/features/unit/hooks/use-update-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest, UpdateUnitRequest } from "@/features/unit/types/unit-request";
-import { unitKeys } from "@/features/unit/queries/unit-keys";
 import Loading from "@/app/loading";
 
 export default function EditUnitPage() {
@@ -16,8 +14,6 @@ export default function EditUnitPage() {
     const params = useParams();
     const propertyId = params.propertyId as string;
     const unitId = params.unitId as string;
-    const queryClient = useQueryClient();
-
     const {
         data: unit,
         isLoading: loadingUnit,
@@ -61,7 +57,8 @@ export default function EditUnitPage() {
     if (!unit) return null;
 
     const handleSubmit = async (data: CreateUnitRequest) => {
-        const { unitNumber, propertyId: _propertyId, ...updatePayload } = data;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { unitNumber, propertyId, ...updatePayload } = data;
         await updateUnit(unitId, updatePayload as UpdateUnitRequest);
         router.push(`/dashboard/properties/${propertyId}/units/${unitId}`);
     };

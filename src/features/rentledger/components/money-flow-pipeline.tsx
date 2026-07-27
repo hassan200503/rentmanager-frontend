@@ -2,9 +2,6 @@
 
 import {
     Landmark,
-    CheckCircle2,
-    TrendingUp,
-    Wallet,
     ChevronRight,
 } from "lucide-react";
 

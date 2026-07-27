@@ -24,9 +24,6 @@ import { UnitStatusBadge } from "@/features/unit/components/unit-status-badge";
 
 type Tab = "properties" | "units";
 
-const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
-
 function ConfirmDeleteDialog({
     open,
     title,

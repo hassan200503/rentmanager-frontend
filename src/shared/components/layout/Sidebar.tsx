@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Users,
   Smartphone,
+  Send,
   UserCog,
   Settings,
   Archive,
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/rent-ledger", label: "Rent Ledger", icon: ClipboardList },
   { href: "/dashboard/leases", label: "Tenants", icon: Users },
   { href: "/daraja/config", label: "M-Pesa", icon: Smartphone },
+  { href: "/dashboard/disbursements", label: "Disbursements", icon: Send },
   { href: "/dashboard/team", label: "Team", icon: UserCog },
 ];
 

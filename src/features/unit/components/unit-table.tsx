@@ -7,7 +7,7 @@ import { DEFAULT_UNIT_FILTERS, UnitFilterState } from "../hooks/use-unit-filters
 import { UnitResponse } from "../types/unit-request";
 import { useUnitLifecycle } from "../hooks/use-unit-lifecycle";
 import { UnitStatus } from "../types/unit";
-import { Eye, PencilLine, CheckCircle2, PauseCircle, Home, ChevronRight } from "lucide-react";
+import { Eye, PencilLine, CheckCircle2, PauseCircle, Home } from "lucide-react";
 
 type UnitTableProps = {
     propertyId: string;

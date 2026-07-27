@@ -46,8 +46,8 @@ function sendBrowserNotification(title: string, body: string) {
 
 export default function NotificationSync() {
   const tenantId = useOrgStore((s) => s.tenantId);
-  const { activities, isConnected, isLoading } = useActivityFeed(tenantId ?? undefined);
-  const { setActivities, mergeActivity, notifications, unreadCount } = useNotificationStore();
+  const { activities, isLoading } = useActivityFeed(tenantId ?? undefined);
+  const { setActivities, mergeActivity, unreadCount } = useNotificationStore();
   const { toast } = useToast();
   const processedIds = useRef(new Set<string>());
 

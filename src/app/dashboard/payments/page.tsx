@@ -13,7 +13,6 @@ import {
     Banknote,
     RefreshCw,
     X,
-    SlidersHorizontal,
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
@@ -44,20 +43,6 @@ const formatCurrency = (amount: number) =>
 const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
-};
-
-const formatRelativeTime = (iso: string) => {
-    const now = Date.now();
-    const then = new Date(iso).getTime();
-    const diffMs = now - then;
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return formatDate(iso);
 };
 
 const formatTime = (iso: string) =>
@@ -286,16 +271,6 @@ export default function PaymentsPage() {
     }, [transactions, allLeasesData]);
 
     const pipelineLoading = isLoading || leasesLoading;
-
-    const totalDepositsVal = useMemo(() => {
-        if (!transactions) return 0;
-        return transactions.filter((tx) => tx.type === "DEPOSIT").reduce((s, tx) => s + tx.amount, 0);
-    }, [transactions]);
-
-    const totalPaymentsVal = useMemo(() => {
-        if (!transactions) return 0;
-        return transactions.filter((tx) => tx.type === "PAYMENT").reduce((s, tx) => s + tx.amount, 0);
-    }, [transactions]);
 
     const toggleSort = (key: SortKey) => {
         if (sortKey !== key) {
@@ -626,7 +601,7 @@ export default function PaymentsPage() {
                                 </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border/40">
-                                {paged.map((tx, idx) => {
+                                {paged.map((tx) => {
                                     const cfg = typeConfig[tx.type] ?? typeConfig.RENT_CHARGE;
                                     const src = sourceMeta[tx.source] ?? sourceMeta.SYSTEM;
                                     const SrcIcon = src.icon;

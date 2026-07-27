@@ -6,7 +6,6 @@ import {
   Bell,
   BellOff,
   CheckCheck,
-  Archive,
   X,
   Search,
   Building2,
@@ -16,14 +15,9 @@ import {
   Users,
   Wrench,
   Activity,
-  AlertTriangle,
-  Info,
-  CheckCircle2,
   Settings,
   ExternalLink,
   ChevronRight,
-  Filter,
-  Clock,
 } from "lucide-react";
 import { useNotificationStore, type AppNotification } from "@/stores/notification-store";
 
