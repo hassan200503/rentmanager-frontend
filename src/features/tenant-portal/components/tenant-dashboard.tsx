@@ -2,7 +2,9 @@
 "use client";
 
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
-import { Loader2, AlertTriangle, CheckCircle2, AlertCircle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { tenantPortalApi, type RentPaymentRequestResponse } from "../api/tenant-portal-api";
+import { Loader2, AlertTriangle, CheckCircle2, AlertCircle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export const formatCurrency = (amount: number) =>
@@ -103,10 +105,73 @@ export const TenantDashboard = () => {
         );
     }
 
-    const { tenantName, tenantPhone, tenantEmail, currentBalance, nextDueDate, nextDueAmount, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent, depositAmount } = data;
+    const { tenantName, tenantPhone, tenantEmail, currentBalance, currentEntryId, nextDueDate, nextDueAmount, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent, depositAmount } = data;
 
     const isOverdue = overdueAmount > 0;
     const hasActiveLease = leaseStatus === "ACTIVE";
+    const canPay = hasActiveLease && currentEntryId && currentBalance > 0;
+
+    const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
+    const [payMessage, setPayMessage] = useState("");
+    const [mpesaPhone, setMpesaPhone] = useState(tenantPhone || "");
+    const [requestId, setRequestId] = useState<string | null>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const initiatePayment = useCallback(async () => {
+        if (!currentEntryId) return;
+        setPayState("initiating");
+        setPayMessage("");
+        try {
+            const result = await tenantPortalApi.collectPayment(currentEntryId, mpesaPhone);
+            setRequestId(result.id);
+            setPayState("pending");
+            setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
+
+            // Poll for status up to 10 times (every 5s = 50s total)
+            let attempts = 0;
+            pollRef.current = setInterval(async () => {
+                attempts++;
+                try {
+                    const status = await tenantPortalApi.getPaymentRequestStatus(result.id);
+                    if (status.status === "PAID") {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("success");
+                        setPayMessage("Payment received successfully!");
+                        setTimeout(() => { refetch(); }, 1500);
+                    } else if (status.status === "FAILED") {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("error");
+                        setPayMessage("Payment failed. Please try again.");
+                    } else if (attempts >= 10) {
+                        clearInterval(pollRef.current!);
+                        pollRef.current = null;
+                        setPayState("pending");
+                        setPayMessage("Still waiting for confirmation. You can check your payment status on the Payments page.");
+                    }
+                } catch {
+                    // ignore poll errors — retry next interval
+                }
+            }, 5000);
+        } catch (err) {
+            setPayState("error");
+            setPayMessage(String(err) || "Failed to initiate payment. Please try again.");
+        }
+    }, [currentEntryId, mpesaPhone, refetch]);
+
+    const resetPay = () => {
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+        setPayState("idle");
+        setPayMessage("");
+        setRequestId(null);
+        setMpesaPhone(tenantPhone || "");
+    };
+
+    const payButtonDisabled = payState === "initiating" || payState === "pending";
 
     return (
         <div className="space-y-6">
@@ -175,6 +240,88 @@ export const TenantDashboard = () => {
                 <div className="card-elevated">
                     <h3 className="section-header !text-sm !mb-4">Quick Actions</h3>
                     <div className="space-y-3">
+                        {payState === "phone_prompt" && canPay && (
+                            <div className="card-sm space-y-3 mb-3">
+                                <p className="text-xs font-medium text-fg dark:text-fg-dark">Enter your M-Pesa number</p>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="tel"
+                                        value={mpesaPhone}
+                                        onChange={(e) => setMpesaPhone(e.target.value)}
+                                        placeholder="+254712345678"
+                                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm
+                                            focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                                        disabled={payButtonDisabled}
+                                        onKeyDown={(e) => { if (e.key === "Enter") initiatePayment(); }}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={initiatePayment}
+                                        disabled={payButtonDisabled || !mpesaPhone}
+                                        className="btn-primary btn-sm flex-1"
+                                    >
+                                        {payButtonDisabled ? (
+                                            <><Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} /> Sending...</>
+                                        ) : (
+                                            <><Smartphone className="h-3 w-3" strokeWidth={2} /> Confirm</>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={resetPay}
+                                        disabled={payButtonDisabled}
+                                        className="btn-outline btn-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {payState === "pending" && (
+                            <div className="card-sm space-y-2 mb-3">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
+                                    <span className="font-medium text-fg dark:text-fg-dark">Awaiting M-Pesa confirmation</span>
+                                </div>
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{payMessage}</p>
+                            </div>
+                        )}
+
+                        {payState === "success" && (
+                            <div className="card-sm space-y-2 mb-3">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <CheckCircle2 className="h-4 w-4 text-success" strokeWidth={2} />
+                                    <span className="font-medium text-success">Payment successful!</span>
+                                </div>
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Your dashboard will update shortly.</p>
+                            </div>
+                        )}
+
+                        {payState === "error" && (
+                            <div className="card-sm space-y-2 mb-3">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <AlertTriangle className="h-4 w-4 text-danger" strokeWidth={2} />
+                                    <span className="font-medium text-danger">Payment failed</span>
+                                </div>
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{payMessage}</p>
+                                <button onClick={resetPay} className="btn-outline btn-sm">Try again</button>
+                            </div>
+                        )}
+
+                        {payState === "idle" && canPay && (
+                            <button
+                                onClick={() => setPayState("phone_prompt")}
+                                className="btn-primary w-full justify-start gap-3 py-3"
+                            >
+                                <Smartphone className="h-5 w-5" strokeWidth={1.75} />
+                                <div>
+                                    <p className="font-medium">Pay Now</p>
+                                    <p className="text-xs opacity-80">{formatCurrency(currentBalance)} due</p>
+                                </div>
+                            </button>
+                        )}
+
                         <Link href="/portal/payments" className="btn-secondary w-full justify-start gap-3 py-3">
                             <CreditCard className="h-5 w-5" strokeWidth={1.75} />
                             <div>

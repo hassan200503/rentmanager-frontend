@@ -9,6 +9,7 @@ export interface TenantDashboardResponse {
     tenantPhone: string;
     tenantEmail: string;
     currentBalance: number;
+    currentEntryId: string | null;
     nextDueDate: string | null;
     nextDueAmount: number;
     overdueAmount: number;
@@ -88,6 +89,15 @@ export interface TenantPaymentReceiptResponse {
     eTimsInvoiceNumber: string | null;
     eTimsQrCodeUrl: string | null;
 }
+
+export interface RentPaymentRequestResponse {
+    id: string;
+    leaseId: string;
+    rentLedgerEntryId: string;
+    amount: number;
+    status: "PENDING" | "PAID" | "FAILED";
+    mpesaReceiptNumber: string | null;
+}
 // API client
 export const tenantPortalApi = {
     getDashboard: async (): Promise<TenantDashboardResponse> => {
@@ -130,6 +140,25 @@ export const tenantPortalApi = {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<TenantPaymentReceiptResponse>(
             tenantPortalEndpoints.paymentReceipt(transactionId),
+            token,
+            tenantId
+        );
+    },
+
+    collectPayment: async (entryId: string, mpesaPhone: string): Promise<RentPaymentRequestResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<RentPaymentRequestResponse>(
+            tenantPortalEndpoints.collectPayment(entryId),
+            { mpesaPhone },
+            token,
+            tenantId
+        );
+    },
+
+    getPaymentRequestStatus: async (requestId: string): Promise<RentPaymentRequestResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<RentPaymentRequestResponse>(
+            tenantPortalEndpoints.paymentRequestStatus(requestId),
             token,
             tenantId
         );

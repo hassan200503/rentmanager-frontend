@@ -9,4 +9,8 @@ export const tenantPortalEndpoints = {
         `${base}/payments/history?page=${page}&size=${size}`,
     paymentReceipt: (transactionId: string) =>
         `${base}/payments/${transactionId}/receipt`,
+    collectPayment: (entryId: string) =>
+        `${base}/entries/${entryId}/collect`,
+    paymentRequestStatus: (requestId: string) =>
+        `${base}/rent-payment-requests/${requestId}/status`,
 };
