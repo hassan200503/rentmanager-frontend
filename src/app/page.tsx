@@ -840,20 +840,20 @@ export default function HomePage() {
               <Link href="/" className="flex items-center gap-2.5 mb-4">
               <BrandBadge size="md" />
             </Link>
-              <p className="text-xs text-white/40 leading-relaxed max-w-xs">The modern way to find and reserve rental properties across Kenya. Verified listings, secure deposits, digital leases.</p>
+              <p className="text-xs text-white/55 leading-relaxed max-w-xs">The modern way to find and reserve rental properties across Kenya. Verified listings, secure deposits, digital leases.</p>
               <div className="flex items-center gap-3 mt-4">
                 {["Twitter", "LinkedIn", "Instagram"].map((social) => (
-                  <Link key={social} href="#" className="text-xs text-white/30 hover:text-white/50 transition-colors">{social}</Link>
+                  <Link key={social} href="#" className="text-xs text-white/60 hover:text-white/90 transition-colors">{social}</Link>
                 ))}
               </div>
             </div>
             {Object.entries(FOOTER_LINKS).map(([category, links]) => (
               <div key={category}>
-                <p className="text-[10px] font-semibold tracking-widest uppercase text-white/50 mb-4">{category}</p>
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-white/60 mb-4">{category}</p>
                 <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <Link href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">{link}</Link>
+                      <Link href="#" className="text-sm text-white/60 hover:text-white/90 transition-colors">{link}</Link>
                     </li>
                   ))}
                 </ul>
@@ -861,11 +861,11 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-white/30">&copy; {new Date().getFullYear()} RentManager. All rights reserved.</p>
-            <div className="flex items-center gap-6 text-xs text-white/30">
-              <Link href="#" className="hover:text-white/50 transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-white/50 transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-white/50 transition-colors">Cookie Policy</Link>
+            <p className="text-xs text-white/50">&copy; {new Date().getFullYear()} RentManager. All rights reserved.</p>
+            <div className="flex items-center gap-6 text-xs text-white/55">
+              <Link href="#" className="hover:text-white/85 transition-colors">Privacy Policy</Link>
+              <Link href="#" className="hover:text-white/85 transition-colors">Terms of Service</Link>
+              <Link href="#" className="hover:text-white/85 transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </div>

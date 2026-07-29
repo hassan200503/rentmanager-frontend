@@ -73,8 +73,8 @@ export default function PublicPropertyPage() {
 
             <div className="card animate-fade-in-up">
                 <div className="flex items-start gap-3">
-                    <div className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                        <Building2 className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                    <div className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                        <Building2 className="h-5 w-5 text-brand-700 dark:text-brand-300" strokeWidth={2} />
                     </div>
                     <div>
                         <h1 className="page-title mb-1.5">

@@ -350,7 +350,7 @@ export const PropertyForm = ({
                   <div className="flex items-center gap-3 mt-1.5">
                     <button
                         type="button"
-                        className="text-xs font-medium text-primary hover:underline"
+                        className="text-xs font-medium text-brand dark:text-brand-300 hover:underline"
                         onClick={() => document.getElementById("property-image-upload")?.click()}
                     >
                       Change

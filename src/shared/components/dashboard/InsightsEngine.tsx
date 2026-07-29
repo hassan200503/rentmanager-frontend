@@ -126,8 +126,7 @@ export default function InsightsEngine({
               {insight.actionLabel && insight.actionHref && (
                 <Link
                   href={insight.actionHref}
-                  className="inline-flex items-center gap-1 text-xs font-semibold mt-2 hover:underline"
-                  style={{ color: "var(--color-brand)" }}
+                  className="link-brand inline-flex items-center gap-1 text-xs font-semibold mt-2 hover:underline"
                 >
                   {insight.actionLabel}
                   <ArrowRight className="h-3 w-3" strokeWidth={2.5} />

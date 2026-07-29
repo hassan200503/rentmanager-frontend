@@ -245,11 +245,11 @@ export default function ReservationPage() {
                     not what's being paid today. Uses only established tokens
                     (primary-light/primary-dark); brass intentionally not used
                     per earlier note, not yet a confirmed token for this. */}
-                <div className="rounded-xl bg-primary-light px-4 py-3 mb-3">
-                    <p className="text-xs font-medium text-primary-dark uppercase tracking-wide mb-1">
+                <div className="rounded-xl bg-brand-50 dark:bg-brand-800 px-4 py-3 mb-3">
+                    <p className="text-xs font-medium text-brand-700 dark:text-brand-300 uppercase tracking-wide mb-1">
                         Deposit due now
                     </p>
-                    <p className="font-data text-2xl font-semibold text-primary-dark">
+                    <p className="font-data text-2xl font-semibold text-brand-700 dark:text-brand-300">
                         {formatKES(unit.depositAmount)}
                     </p>
                 </div>

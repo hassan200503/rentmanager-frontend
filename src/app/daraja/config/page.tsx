@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import { ConfigureDarajaCredentialsRequest } from "@/features/daraja/types/daraja-types";
 import { useConfigureDarajaMutation } from "@/features/daraja/queries/use-configure-daraja-mutation";
-import { useDarajaStatusQuery } from "@/features/daraja/queries/ use-daraja-status-query";
+import { useDarajaStatusQuery } from "@/features/daraja/queries/use-daraja-status-query";
 
 type FormState = ConfigureDarajaCredentialsRequest;
 

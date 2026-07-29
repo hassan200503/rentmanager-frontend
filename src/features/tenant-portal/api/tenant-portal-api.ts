@@ -163,6 +163,16 @@ export const tenantPortalApi = {
             tenantId
         );
     },
+
+    initiatePortalPayment: async (amount: number, mpesaPhone: string): Promise<RentPaymentRequestResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<RentPaymentRequestResponse>(
+            tenantPortalEndpoints.initiatePortalPayment(),
+            { amount, mpesaPhone },
+            token,
+            tenantId
+        );
+    },
 };
 
 // Auth context helper (same pattern as other features)

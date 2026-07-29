@@ -2,7 +2,7 @@
 "use client";
 
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { Loader2, AlertTriangle, CheckCircle2, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone } from "lucide-react";
 import Link from "next/link";
@@ -65,64 +65,89 @@ export const TenantDashboard = () => {
 
     const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
     const [payMessage, setPayMessage] = useState("");
+    const [payAmount, setPayAmount] = useState("");
     const [mpesaPhone, setMpesaPhone] = useState("");
-    const [, setRequestId] = useState<string | null>(null);
+    const [requestId, setRequestId] = useState<string | null>(null);
+    const [sentToPhone, setSentToPhone] = useState("");
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    useEffect(() => {
+        if (data?.tenantPhone) setMpesaPhone(data.tenantPhone);
+    }, [data?.tenantPhone]);
+
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    const checkStatus = useCallback(async (rid: string) => {
+        try {
+            const status = await tenantPortalApi.getPaymentRequestStatus(rid);
+            if (status.status === "PAID") {
+                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                setPayState("success");
+                setPayMessage("Payment received successfully!");
+                setTimeout(() => { refetch(); }, 1500);
+                return true;
+            }
+            if (status.status === "FAILED") {
+                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                setPayState("error");
+                setPayMessage("Payment failed. Please try again.");
+                return true;
+            }
+        } catch {
+        }
+        return false;
+    }, [refetch]);
+
     const initiatePayment = useCallback(async () => {
-        const entryId = data?.currentEntryId;
-        if (!entryId) return;
+        const amount = parseFloat(payAmount || ((data?.currentBalance ?? 0).toString()));
+        if (isNaN(amount) || amount <= 0) return;
+        const phone = (mpesaPhone || data?.tenantPhone || "").replace(/\s+/g, "");
+        if (!phone) return;
+
         setPayState("initiating");
         setPayMessage("");
         try {
-            const result = await tenantPortalApi.collectPayment(entryId, mpesaPhone);
+            const result = await tenantPortalApi.initiatePortalPayment(amount, phone);
             setRequestId(result.id);
+            setSentToPhone(phone);
             setPayState("pending");
             setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
 
-            // Poll for status up to 10 times (every 5s = 50s total)
-            let attempts = 0;
             pollRef.current = setInterval(async () => {
-                attempts++;
-                try {
-                    const status = await tenantPortalApi.getPaymentRequestStatus(result.id);
-                    if (status.status === "PAID") {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("success");
-                        setPayMessage("Payment received successfully!");
-                        setTimeout(() => { refetch(); }, 1500);
-                    } else if (status.status === "FAILED") {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("error");
-                        setPayMessage("Payment failed. Please try again.");
-                    } else if (attempts >= 10) {
-                        clearInterval(pollRef.current!);
-                        pollRef.current = null;
-                        setPayState("pending");
-                        setPayMessage("Still waiting for confirmation. You can check your payment status on the Payments page.");
-                    }
-                } catch {
-                    // ignore poll errors — retry next interval
+                const done = await checkStatus(result.id);
+                if (!done) {
+                    setPayMessage("Still awaiting confirmation. Check your M-Pesa messages.");
                 }
             }, 5000);
         } catch (err) {
             setPayState("error");
-            setPayMessage(String(err) || "Failed to initiate payment. Please try again.");
+            setPayMessage(err instanceof Error ? err.message : "Failed to initiate payment");
         }
-    }, [data, mpesaPhone, refetch]);
+    }, [payAmount, data, mpesaPhone, checkStatus]);
 
-    const resetPay = () => {
+    const refreshStatus = useCallback(async () => {
+        if (requestId) {
+            setPayMessage("Checking…");
+            await checkStatus(requestId);
+        }
+    }, [requestId, checkStatus]);
+
+    const resetPay = useCallback(() => {
         if (pollRef.current) {
             clearInterval(pollRef.current);
             pollRef.current = null;
         }
         setPayState("idle");
         setPayMessage("");
+        setPayAmount("");
         setRequestId(null);
+        setSentToPhone("");
         setMpesaPhone(data?.tenantPhone || "");
-    };
+    }, [data]);
 
     if (isLoading) {
         return (
@@ -164,11 +189,10 @@ export const TenantDashboard = () => {
         );
     }
 
-    const { tenantName, tenantPhone, currentBalance, currentEntryId, nextDueDate, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent } = data;
+    const { tenantName, tenantPhone, currentBalance, nextDueDate, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent } = data;
 
     const isOverdue = overdueAmount > 0;
-    const hasActiveLease = leaseStatus === "ACTIVE";
-    const canPay = hasActiveLease && currentEntryId && currentBalance > 0;
+    const canPay = leaseStatus === "ACTIVE";
 
     const payButtonDisabled = payState === "initiating" || payState === "pending";
 
@@ -238,20 +262,35 @@ export const TenantDashboard = () => {
                     <div className="space-y-3">
                         {payState === "phone_prompt" && canPay && (
                             <div className="card-sm space-y-3 mb-3">
-                                <p className="text-xs font-medium text-fg dark:text-fg-dark">Enter your M-Pesa number</p>
-                                <div className="flex items-center gap-2">
+                                <p className="text-xs font-medium text-fg dark:text-fg-dark">Pay {formatCurrency(parseFloat(payAmount || currentBalance.toString()))}</p>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">Amount</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark font-mono-nums text-sm">KSh</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            value={payAmount || currentBalance}
+                                            onChange={(e) => setPayAmount(e.target.value)}
+                                            className="input-field pl-12 w-full text-sm"
+                                            disabled={payButtonDisabled}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">M-Pesa Number</label>
                                     <input
                                         type="tel"
                                         value={mpesaPhone || tenantPhone || ""}
                                         onChange={(e) => setMpesaPhone(e.target.value)}
                                         placeholder="+254712345678"
-                                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm
-                                            focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                                        className="input-field w-full text-sm"
                                         disabled={payButtonDisabled}
                                         onKeyDown={(e) => { if (e.key === "Enter") initiatePayment(); }}
                                     />
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 pt-1">
                                     <button
                                         onClick={initiatePayment}
                                         disabled={payButtonDisabled || !(mpesaPhone || tenantPhone)}
@@ -260,7 +299,7 @@ export const TenantDashboard = () => {
                                         {payButtonDisabled ? (
                                             <><Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} /> Sending...</>
                                         ) : (
-                                            <><Smartphone className="h-3 w-3" strokeWidth={2} /> Confirm</>
+                                            <><Smartphone className="h-3 w-3" strokeWidth={2} /> Pay {formatCurrency(parseFloat(payAmount || currentBalance.toString()))}</>
                                         )}
                                     </button>
                                     <button
@@ -274,6 +313,15 @@ export const TenantDashboard = () => {
                             </div>
                         )}
 
+                        {payState === "initiating" && (
+                            <div className="card-sm space-y-2 mb-3">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
+                                    <span className="font-medium text-fg dark:text-fg-dark">Sending payment request…</span>
+                                </div>
+                            </div>
+                        )}
+
                         {payState === "pending" && (
                             <div className="card-sm space-y-2 mb-3">
                                 <div className="flex items-center gap-2 text-sm">
@@ -281,6 +329,12 @@ export const TenantDashboard = () => {
                                     <span className="font-medium text-fg dark:text-fg-dark">Awaiting M-Pesa confirmation</span>
                                 </div>
                                 <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{payMessage}</p>
+                                {sentToPhone && (
+                                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                                        Sent to <span className="font-medium font-mono-nums">{sentToPhone}</span>
+                                    </p>
+                                )}
+                                <button onClick={refreshStatus} className="btn-outline btn-sm mt-1">Check Status</button>
                             </div>
                         )}
 
@@ -306,16 +360,30 @@ export const TenantDashboard = () => {
                         )}
 
                         {payState === "idle" && canPay && (
-                            <button
-                                onClick={() => setPayState("phone_prompt")}
-                                className="btn-primary w-full justify-start gap-3 py-3"
-                            >
-                                <Smartphone className="h-5 w-5" strokeWidth={1.75} />
+                            <div className="space-y-3 mb-3">
                                 <div>
-                                    <p className="font-medium">Pay Now</p>
-                                    <p className="text-xs opacity-80">{formatCurrency(currentBalance)} due</p>
+                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">Amount to pay</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark font-mono-nums text-sm">KSh</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            value={payAmount || currentBalance}
+                                            onChange={(e) => setPayAmount(e.target.value)}
+                                            className="input-field pl-12 w-full text-sm"
+                                        />
+                                    </div>
                                 </div>
-                            </button>
+                                <button
+                                    onClick={() => setPayState("phone_prompt")}
+                                    disabled={!payAmount && currentBalance <= 0}
+                                    className="btn-primary w-full justify-center gap-2 py-2.5"
+                                >
+                                    <Smartphone className="h-5 w-5" strokeWidth={1.75} />
+                                    Continue to Payment
+                                </button>
+                            </div>
                         )}
 
                         <Link href="/portal/payments" className="btn-secondary w-full justify-start gap-3 py-3">

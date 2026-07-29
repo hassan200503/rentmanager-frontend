@@ -156,7 +156,7 @@ function ReservationConfirmedContent() {
             <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
                 <div className="mx-auto max-w-md w-full">
                     <div className="card p-8 text-center">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" strokeWidth={2} />
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand mb-4" strokeWidth={2} />
                         <p className="text-sm text-ink-muted">Loading reservation details…</p>
                     </div>
                 </div>
@@ -185,7 +185,7 @@ function ReservationConfirmedContent() {
                         </button>
                         <Link
                             href="/listings"
-                            className="mt-3 block text-center text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                            className="mt-3 block text-center text-sm font-medium text-brand hover:text-brand-700 dark:text-brand-300 transition-colors"
                         >
                             Browse listings
                         </Link>
@@ -197,17 +197,17 @@ function ReservationConfirmedContent() {
 
     const deposit = depositLabel(detail.status);
     const iconMap = {
-        held: <ShieldCheck className="w-8 h-8 text-primary" strokeWidth={2.5} />,
+        held: <ShieldCheck className="w-8 h-8 text-brand" strokeWidth={2.5} />,
         released: <ShieldCheck className="w-8 h-8 text-success" strokeWidth={2.5} />,
         refunded: <Shield className="w-8 h-8 text-brass-dark" strokeWidth={2.5} />,
-        unknown: <Check className="w-8 h-8 text-primary" strokeWidth={2.5} />,
+        unknown: <Check className="w-8 h-8 text-brand" strokeWidth={2.5} />,
     };
 
     const bgMap = {
-        held: "bg-primary-light",
+        held: "bg-brand-50 dark:bg-brand-800",
         released: "bg-success/10",
         refunded: "bg-brass-light",
-        unknown: "bg-primary-light",
+        unknown: "bg-brand-50 dark:bg-brand-800",
     };
 
     return (
@@ -245,7 +245,7 @@ function ReservationConfirmedContent() {
                         <button
                             type="button"
                             onClick={handleCopy}
-                            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+                            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:text-brand-700 dark:text-brand-300 transition-colors"
                         >
                             {copied ? (
                                 <>
@@ -291,7 +291,7 @@ function ReservationConfirmedContent() {
                                 type="button"
                                 onClick={handleResend}
                                 disabled={resending}
-                                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition-colors disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:text-brand-700 dark:text-brand-300 transition-colors disabled:opacity-50"
                             >
                                 {resending ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -308,7 +308,7 @@ function ReservationConfirmedContent() {
 
                     <Link
                         href="/listings"
-                        className="mt-6 inline-block text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                        className="mt-6 inline-block text-sm font-medium text-brand hover:text-brand-700 dark:text-brand-300 transition-colors"
                     >
                         Browse more listings
                     </Link>

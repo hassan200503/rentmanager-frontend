@@ -13,4 +13,5 @@ export const tenantPortalEndpoints = {
         `${base}/entries/${entryId}/collect`,
     paymentRequestStatus: (requestId: string) =>
         `${base}/rent-payment-requests/${requestId}/status`,
+    initiatePortalPayment: () => `${base}/rent-payments/initiate`,
 };

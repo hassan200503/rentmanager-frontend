@@ -91,11 +91,12 @@ export default function FinancialOverview() {
     >
       {financialCards.map((card) => {
         const Icon = card.icon;
+        const isEmpty = card.value === "KES 0" || card.value === "—" || card.value === "0";
         return (
           <motion.div
             key={card.label}
             variants={item}
-            className="card-elevated !p-4 group cursor-default"
+            className={`card-elevated !p-4 group cursor-default ${isEmpty ? "opacity-80" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <div
@@ -104,13 +105,20 @@ export default function FinancialOverview() {
               >
                 <Icon className="h-4 w-4" strokeWidth={1.75} style={{ color: card.color }} />
               </div>
-              {card.trend && (
+              {card.trend && !isEmpty && (
                 <MiniTrend value={card.trend.value} positive={card.trend.positive} />
               )}
             </div>
             <p className="kpi-label !text-[10px] mb-0.5">{card.label}</p>
-            <p className="text-sm font-bold font-mono-nums tracking-tight mb-0.5 text-fg dark:text-fg-dark">
-              {card.value}
+            <p className={`text-sm font-bold font-mono-nums tracking-tight mb-0.5 ${isEmpty ? "text-fg-subtle dark:text-fg-subtle-dark" : "text-fg dark:text-fg-dark"}`}>
+              {isEmpty ? (
+                <span className="flex items-center gap-1">
+                  <span className="opacity-50">{card.value}</span>
+                  <span className="text-[10px] font-normal text-fg-subtle dark:text-fg-subtle-dark">(no data)</span>
+                </span>
+              ) : (
+                card.value
+              )}
             </p>
             <p className="text-[10px] text-fg-muted dark:text-fg-muted-dark">{card.subtitle}</p>
           </motion.div>

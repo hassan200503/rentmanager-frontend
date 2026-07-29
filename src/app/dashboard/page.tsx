@@ -8,7 +8,6 @@ import {
   Building2,
   CheckCircle2,
   AlertTriangle,
-  Archive,
   Plus,
   Receipt,
   Users,
@@ -24,6 +23,7 @@ import {
   Lightbulb,
   RefreshCw,
   ChevronRight,
+  Send,
 } from "lucide-react";
 import type { ElementType } from "react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
@@ -31,7 +31,7 @@ import { propertyApi } from "@/features/property/api/property-api";
 import { PropertyStatus } from "@/features/property/types/property";
 import { usePropertyDashboardMetrics } from "@/features/property/hooks/use-property-dashboard-metrics";
 import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
-import { useDarajaStatusQuery } from "@/features/daraja/queries/ use-daraja-status-query";
+import { useDarajaStatusQuery } from "@/features/daraja/queries/use-daraja-status-query";
 import PortfolioBar from "@/shared/components/dashboard/PortfolioBar";
 import KpiCard, { KpiCardSkeleton } from "@/shared/components/dashboard/KpiCard";
 import HealthScore from "@/shared/components/dashboard/HealthScore";
@@ -126,29 +126,39 @@ function ModuleCard(props: ModuleCardProps) {
   const isAvailable = Boolean(props.href);
 
   const content = (
-    <div className={`card-hover h-full ${!isAvailable ? "opacity-60" : ""}`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-          isAvailable ? "bg-brand-50 dark:bg-brand-800" : "bg-border-subtle dark:bg-border-subtle-dark"
-        }`}>
-          <Icon className={`h-4 w-4 ${isAvailable ? "text-brand dark:text-brand-300" : "text-fg-subtle dark:text-fg-subtle-dark"}`} strokeWidth={2} />
+    <div className={`relative h-full rounded-2xl border transition-all duration-200 ${
+      isAvailable
+        ? "border-border/70 dark:border-border-dark/70 bg-surface dark:bg-surface-dark hover:border-brand-200 dark:hover:border-brand-700/40 hover:shadow-card-hover hover:-translate-y-0.5"
+        : "border-dashed border-border dark:border-border-dark bg-transparent"
+    }`}>
+      {/* Subtle brand accent at top */}
+      {isAvailable && (
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-brand/20 to-transparent" />
+      )}
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+            isAvailable ? "bg-brand-50 dark:bg-brand-800" : "bg-border-subtle dark:bg-border-subtle-dark"
+          }`}>
+            <Icon className={`h-4 w-4 ${isAvailable ? "text-brand dark:text-brand-300" : "text-fg-subtle dark:text-fg-subtle-dark"}`} strokeWidth={2} />
+          </div>
+          {isAvailable ? (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 text-[10px] font-semibold text-brand-700 dark:text-brand-300 border border-brand-200/50 dark:border-brand-700/30">
+              Open
+              <ArrowUpRight className="h-2.5 w-2.5" strokeWidth={3} />
+            </span>
+          ) : (
+            <span className="rounded-full bg-border-subtle dark:bg-border-subtle-dark px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-fg-subtle dark:text-fg-subtle-dark">Coming soon</span>
+          )}
         </div>
-        {isAvailable ? (
-          <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand dark:text-brand-300">
-            Open
-            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
-          </span>
-        ) : (
-          <span className="pill-neutral !text-[10px]">Coming soon</span>
-        )}
+        <h3 className="text-sm font-semibold text-fg dark:text-fg-dark mb-1">{props.title}</h3>
+        <p className="text-xs text-fg-muted dark:text-fg-muted-dark leading-relaxed">{props.note}</p>
       </div>
-      <h3 className="text-sm font-medium text-fg dark:text-fg-dark mb-1">{props.title}</h3>
-      <p className="text-xs text-fg-muted dark:text-fg-muted-dark leading-relaxed">{props.note}</p>
     </div>
   );
 
   if (props.href) {
-    return <Link href={props.href} className="block h-full">{content}</Link>;
+    return <Link href={props.href} className="block h-full group">{content}</Link>;
   }
 
   return content;
@@ -300,7 +310,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
         </div>
 
         {/* Hero metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-6 relative z-10">
+        <div className="hero-metrics grid grid-cols-2 sm:grid-cols-4 gap-6 mt-8 relative z-10">
           <div className="kpi-metric">
             <span className="kpi-metric-label">Portfolio Health</span>
             <div className="flex items-baseline gap-2">
@@ -430,7 +440,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title">Financial Intelligence</h2>
-            <Link href="/dashboard/payments" className="inline-flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "var(--color-brand)" }}>
+            <Link href="/dashboard/payments" className="link-brand inline-flex items-center gap-1 text-xs hover:underline">
               View payments <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
             </Link>
           </div>
@@ -637,8 +647,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               {properties.length > 0 && (
                 <Link
                   href="/dashboard/properties"
-                  className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-                  style={{ color: "var(--color-brand)" }}
+                  className="link-brand inline-flex items-center gap-1 text-xs hover:underline"
                 >
                   View all
                   <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
@@ -679,7 +688,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                 </thead>
                 <tbody>
                 {properties.map((p) => (
-                  <tr key={p.propertyId}>
+                  <tr key={p.propertyId} className="table-row-hover transition-colors">
                     <td>
                       <Link href={`/dashboard/properties/${p.propertyId}`} className="flex items-center gap-3 group">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-800 text-[12px] font-bold text-brand-dark dark:text-brand-200 transition-all group-hover:scale-105 group-hover:shadow-sm">
@@ -687,11 +696,11 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                         </div>
                         <div>
                           <span className="font-semibold text-fg group-hover:text-brand transition-colors">{p.name}</span>
-                          <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark">{p.propertyType?.toLowerCase()}</p>
+                          <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark capitalize">{p.propertyType?.toLowerCase()}</p>
                         </div>
                       </Link>
                     </td>
-                    <td className="text-fg-muted dark:text-fg-muted-dark text-xs">{p.propertyType?.toLowerCase()}</td>
+                    <td className="text-fg-muted dark:text-fg-muted-dark text-xs capitalize">{p.propertyType?.toLowerCase()}</td>
                     <td><StatusBadge status={p.status} /></td>
                     <td>
                       <StatusBadge status={p.occupancyStatus ?? "VACANT"} />
@@ -745,7 +754,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               title="Tenants"
               note="Residents, lease terms, rent collection"
               href="/dashboard/leases" />
-            <ModuleCard icon={Archive} title="Upcoming disbursements" note="Phase 5 — pending payouts to your M-Pesa" />
+            <ModuleCard icon={Send} title="Disbursements" note="B2C payouts, settlement status, pending transfers" href="/dashboard/disbursements" />
           </div>
         </div>
       </ScrollReveal>

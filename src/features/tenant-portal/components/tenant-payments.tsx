@@ -1,22 +1,111 @@
-// components/tenant-payments.tsx
 "use client";
 
-import { useState } from "react";
-import { useTenantPaymentHistoryQuery, useTenantPaymentSummaryQuery, useTenantPaymentReceiptQuery } from "../hooks/use-tenant-portal-queries";
-import { Loader2, AlertTriangle, Download, FileText, ChevronRight } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useTenantDashboardQuery, useTenantPaymentHistoryQuery, useTenantPaymentSummaryQuery, useTenantPaymentReceiptQuery } from "../hooks/use-tenant-portal-queries";
+import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, CheckCircle, XCircle } from "lucide-react";
 import { formatCurrency, formatDateTime, formatDate, StatusBadge } from "./tenant-dashboard";
-import { TenantPaymentReceiptResponse } from "../api/tenant-portal-api";
+import { TenantPaymentReceiptResponse, tenantPortalApi } from "../api/tenant-portal-api";
 import { downloadReceiptPdf } from "@/features/rentledger/components/download-receipt";
 
 const PAGE_SIZE = 20;
+
+type PayState = "idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error";
 
 export const TenantPaymentsPage = () => {
     const [page, setPage] = useState(0);
     const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
-    const { data: summary } = useTenantPaymentSummaryQuery();
+    const { data: dashboardData } = useTenantDashboardQuery();
+    const { data: summary, refetch: refetchSummary } = useTenantPaymentSummaryQuery();
     const { data: history, isLoading, isError, refetch } = useTenantPaymentHistoryQuery(page, PAGE_SIZE);
     const { data: receipt, isLoading: receiptLoading } = useTenantPaymentReceiptQuery(selectedReceiptId ?? "");
+
+    const [payState, setPayState] = useState<PayState>("idle");
+    const [payMessage, setPayMessage] = useState("");
+    const [payAmount, setPayAmount] = useState("");
+    const [amountOverridden, setAmountOverridden] = useState(false);
+    const [mpesaPhone, setMpesaPhone] = useState("");
+    const [requestId, setRequestId] = useState<string | null>(null);
+    const [sentToPhone, setSentToPhone] = useState("");
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        if (dashboardData?.tenantPhone && !mpesaPhone) setMpesaPhone(dashboardData.tenantPhone);
+    }, [dashboardData?.tenantPhone]);
+
+    const currentBalance = summary?.currentBalance ?? 0;
+    const canPay = true;
+    const defaultPayAmount = canPay ? currentBalance.toString() : "";
+    const effectivePayAmount = amountOverridden ? payAmount : defaultPayAmount;
+
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    const checkStatus = useCallback(async (rid: string) => {
+        try {
+            const status = await tenantPortalApi.getPaymentRequestStatus(rid);
+            if (status.status === "PAID") {
+                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                setPayState("success");
+                setPayMessage("Payment successful!");
+                setTimeout(() => { refetchSummary(); refetch(); }, 1500);
+                return true;
+            }
+            if (status.status === "FAILED") {
+                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                setPayState("error");
+                setPayMessage("Payment failed. Please try again.");
+                return true;
+            }
+        } catch {
+        }
+        return false;
+    }, [refetchSummary, refetch]);
+
+    const initiatePayment = useCallback(async () => {
+        const resolvedAmount = !amountOverridden && currentBalance > 0 ? currentBalance : parseFloat(payAmount);
+        if (isNaN(resolvedAmount) || resolvedAmount <= 0) return;
+        const phone = mpesaPhone.replace(/\s+/g, "");
+        if (!phone) return;
+
+        setPayState("initiating");
+        setPayMessage("");
+        try {
+            const result = await tenantPortalApi.initiatePortalPayment(resolvedAmount, phone);
+            setRequestId(result.id);
+            setSentToPhone(phone);
+            setPayState("pending");
+            setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
+
+            pollRef.current = setInterval(async () => {
+                const done = await checkStatus(result.id);
+                if (!done) {
+                    setPayMessage("Still awaiting confirmation. Check your M-Pesa messages.");
+                }
+            }, 5000);
+        } catch (err) {
+            setPayState("error");
+            setPayMessage(err instanceof Error ? err.message : "Failed to initiate payment");
+        }
+    }, [amountOverridden, currentBalance, payAmount, mpesaPhone, checkStatus]);
+
+    const refreshStatus = useCallback(async () => {
+        if (requestId) {
+            setPayMessage("Checking…");
+            await checkStatus(requestId);
+        }
+    }, [requestId, checkStatus]);
+
+    const resetPay = useCallback(() => {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setPayState("idle");
+        setPayMessage("");
+        setRequestId(null);
+        setSentToPhone("");
+    }, []);
 
     if (isLoading && page === 0) {
         return (
@@ -67,6 +156,121 @@ export const TenantPaymentsPage = () => {
 
     return (
         <div className="space-y-6">
+            {/* Pay Now Card */}
+            {canPay && (
+                <div className="card-elevated p-5">
+                    <div className="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 className="font-semibold text-fg dark:text-fg-dark">Make a Payment</h3>
+                            <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-1">
+                                Current balance due: <span className="font-data font-semibold text-danger-dark dark:text-danger">{formatCurrency(currentBalance)}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {payState === "idle" && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label-text">Amount to pay</label>
+                                <div className="relative mt-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark font-mono-nums text-sm">KSh</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={effectivePayAmount}
+                                        onChange={(e) => { setAmountOverridden(true); setPayAmount(e.target.value); }}
+                                        className="input-field pl-12 w-full"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setPayState("phone_prompt")}
+                                disabled={!effectivePayAmount || parseFloat(effectivePayAmount) <= 0}
+                                className="btn-primary w-full justify-center gap-2 py-2.5"
+                            >
+                                <Smartphone className="h-5 w-5" strokeWidth={1.75} />
+                                Continue to Payment
+                            </button>
+                        </div>
+                    )}
+
+                    {payState === "phone_prompt" && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label-text">M-Pesa Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={mpesaPhone}
+                                    onChange={(e) => setMpesaPhone(e.target.value)}
+                                    placeholder="+254712345678"
+                                    className="input-field mt-1 w-full"
+                                />
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">
+                                    You will receive an M-Pesa prompt on this number.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={resetPay} className="btn-outline flex-1">Cancel</button>
+                                <button
+                                    onClick={initiatePayment}
+                                    disabled={!mpesaPhone}
+                                    className="btn-primary flex-1"
+                                >
+                                    Pay {formatCurrency(parseFloat(effectivePayAmount || "0"))}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {payState === "initiating" && (
+                        <div className="flex items-center gap-3 py-3">
+                            <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
+                            <span className="text-sm text-fg-muted dark:text-fg-muted-dark">Sending payment request…</span>
+                        </div>
+                    )}
+
+                    {payState === "pending" && (
+                        <div className="space-y-3 py-2">
+                            <div className="flex items-center gap-3">
+                                <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
+                                <span className="text-sm font-medium text-fg dark:text-fg-dark">Awaiting M-Pesa confirmation</span>
+                            </div>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark pl-8">{payMessage}</p>
+                            {sentToPhone && (
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark pl-8">
+                                    Sent to <span className="font-medium font-mono-nums">{sentToPhone}</span>
+                                </p>
+                            )}
+                            <button onClick={refreshStatus} className="btn-outline btn-sm ml-8">Check Status</button>
+                        </div>
+                    )}
+
+                    {payState === "success" && (
+                        <div className="space-y-3 py-2">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle className="h-6 w-6 text-success-dark dark:text-success" strokeWidth={2} />
+                                <span className="text-sm font-medium text-fg dark:text-fg-dark">Payment successful!</span>
+                            </div>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark pl-9">Your dashboard will update shortly.</p>
+                            <button onClick={resetPay} className="btn-outline btn-sm mt-2">Make another payment</button>
+                        </div>
+                    )}
+
+                    {payState === "error" && (
+                        <div className="space-y-3 py-2">
+                            <div className="flex items-center gap-3">
+                                <XCircle className="h-6 w-6 text-danger" strokeWidth={2} />
+                                <span className="text-sm font-medium text-fg dark:text-fg-dark">Payment failed</span>
+                            </div>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark pl-9">{payMessage}</p>
+                            <button onClick={resetPay} className="btn-outline btn-sm mt-2">Try again</button>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="card-elevated p-4">
@@ -213,7 +417,6 @@ const ReceiptModalContent = ({ receipt, onClose }: { receipt: TenantPaymentRecei
         try {
             await downloadReceiptPdf(receipt);
         } catch {
-            // Fall back to print if PDF generation fails
             window.print();
         } finally {
             setDownloading(false);

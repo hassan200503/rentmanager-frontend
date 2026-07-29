@@ -141,7 +141,7 @@ function ReservationWaitingContent() {
     const browseListingsLink = (
         <Link
             href="/listings"
-            className="mt-3 block text-center text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+            className="mt-3 block text-center text-sm font-medium text-brand hover:text-brand-700 dark:text-brand-300 transition-colors"
         >
             Browse listings
         </Link>
@@ -161,7 +161,7 @@ function ReservationWaitingContent() {
 
                         <div className="mt-6 h-1.5 w-full rounded-full bg-ink/[0.08] overflow-hidden">
                             <div
-                                className="h-full rounded-full bg-primary transition-all duration-1000 ease-linear"
+                                className="h-full rounded-full bg-brand transition-all duration-1000 ease-linear"
                                 style={{ width: `${progressPct}%` }}
                             />
                         </div>
@@ -179,8 +179,8 @@ function ReservationWaitingContent() {
                 // briefly showing "Something went wrong" is a bad flash.
                 return (
                     <>
-                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-light">
-                            <Check className="w-8 h-8 text-primary" strokeWidth={2.5} />
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-800">
+                            <Check className="w-8 h-8 text-brand" strokeWidth={2.5} />
                         </div>
                         <h1 className="font-display text-xl font-bold text-ink">Payment confirmed</h1>
                         <p className="mt-2 text-sm text-ink-muted">

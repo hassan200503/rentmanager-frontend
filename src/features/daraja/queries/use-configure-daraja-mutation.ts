@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { configureDarajaCredentials } from "../api/daraja-api";
 import type { ConfigureDarajaCredentialsRequest } from "../types/daraja-types";
-import {darajaStatusQueryKey} from "@/features/daraja/queries/ use-daraja-status-query";
+import {darajaStatusQueryKey} from "@/features/daraja/queries/use-daraja-status-query";
 
 
 export function useConfigureDarajaMutation(tenantId: string | undefined) {

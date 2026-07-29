@@ -74,8 +74,8 @@ export default function EditUnitPage() {
             </button>
 
             <div className="mb-6 flex items-start gap-3 animate-fade-in-up">
-                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-light">
-                    <Pencil className="h-5 w-5 text-primary-dark" strokeWidth={2} />
+                <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                    <Pencil className="h-5 w-5 text-brand-700 dark:text-brand-300" strokeWidth={2} />
                 </div>
                 <div>
                     <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Units</p>
