@@ -8,4 +8,6 @@ export const tenantPortalKeys = {
         [...tenantPortalKeys.all, "payment-history", page, size] as const,
     paymentReceipt: (transactionId: string) =>
         [...tenantPortalKeys.all, "receipt", transactionId] as const,
+    maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
+    autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
 };

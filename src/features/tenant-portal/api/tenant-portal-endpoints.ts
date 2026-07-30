@@ -14,4 +14,9 @@ export const tenantPortalEndpoints = {
     paymentRequestStatus: (requestId: string) =>
         `${base}/rent-payment-requests/${requestId}/status`,
     initiatePortalPayment: () => `${base}/rent-payments/initiate`,
+    autoPay: () => `${base}/auto-pay`,
+    autoPayToggle: () => `${base}/auto-pay/toggle`,
+    autoPayPhone: () => `${base}/auto-pay/phone`,
+    maintenanceList: () => `${base}/maintenance`,
+    maintenanceSubmit: () => `${base}/maintenance`,
 };

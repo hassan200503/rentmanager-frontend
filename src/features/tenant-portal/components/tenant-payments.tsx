@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTenantDashboardQuery, useTenantPaymentHistoryQuery, useTenantPaymentSummaryQuery, useTenantPaymentReceiptQuery } from "../hooks/use-tenant-portal-queries";
-import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, XCircle, Wallet, TrendingUp, CreditCard, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatDateTime, formatDate, StatusBadge } from "./tenant-dashboard";
 import { TenantPaymentReceiptResponse, tenantPortalApi } from "../api/tenant-portal-api";
 import { downloadReceiptPdf } from "@/features/rentledger/components/download-receipt";
@@ -12,6 +13,7 @@ const PAGE_SIZE = 20;
 type PayState = "idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error";
 
 export const TenantPaymentsPage = () => {
+    const router = useRouter();
     const [page, setPage] = useState(0);
     const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
@@ -49,9 +51,7 @@ export const TenantPaymentsPage = () => {
             const status = await tenantPortalApi.getPaymentRequestStatus(rid);
             if (status.status === "PAID") {
                 if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
-                setPayState("success");
-                setPayMessage("Payment successful!");
-                setTimeout(() => { refetchSummary(); refetch(); }, 1500);
+                router.push(`/portal/payment-success?requestId=${rid}`);
                 return true;
             }
             if (status.status === "FAILED") {
@@ -63,7 +63,7 @@ export const TenantPaymentsPage = () => {
         } catch {
         }
         return false;
-    }, [refetchSummary, refetch]);
+    }, [refetchSummary, refetch, router]);
 
     const initiatePayment = useCallback(async () => {
         const resolvedAmount = !amountOverridden && currentBalance > 0 ? currentBalance : parseFloat(payAmount);
@@ -109,7 +109,7 @@ export const TenantPaymentsPage = () => {
 
     if (isLoading && page === 0) {
         return (
-            <div className="space-y-6">
+            <div className="page-container space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[0, 1, 2].map((i) => (
                         <div key={i} className="card-elevated p-4 space-y-2">
@@ -125,10 +125,12 @@ export const TenantPaymentsPage = () => {
 
     if (isError) {
         return (
-            <div className="card p-6 text-center">
-                <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load payment history</p>
-                <button onClick={() => refetch()} className="mt-2 btn-outline btn-sm">Retry</button>
+            <div className="page-container">
+                <div className="card p-6 text-center max-w-md mx-auto">
+                    <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
+                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load payment history</p>
+                    <button onClick={() => refetch()} className="mt-2 btn-outline btn-sm">Retry</button>
+                </div>
             </div>
         );
     }
@@ -155,16 +157,24 @@ export const TenantPaymentsPage = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="page-container space-y-6 animate-fade-in-up">
             {/* Pay Now Card */}
             {canPay && (
                 <div className="card-elevated p-5">
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <h3 className="font-semibold text-fg dark:text-fg-dark">Make a Payment</h3>
-                            <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-1">
-                                Current balance due: <span className="font-data font-semibold text-danger-dark dark:text-danger">{formatCurrency(currentBalance)}</span>
-                            </p>
+                    <div className="flex items-start justify-between mb-4 gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
+                                <Smartphone className="h-5 w-5" strokeWidth={1.75} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-semibold text-fg dark:text-fg-dark">Make a Payment</h3>
+                                    <span className="text-[9px] font-bold uppercase tracking-wide bg-emerald-600 text-white px-1.5 py-0.5 rounded">M-Pesa</span>
+                                </div>
+                                <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-0.5">
+                                    Current balance due: <span className="font-data font-semibold text-danger-dark dark:text-danger">{formatCurrency(currentBalance)}</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -247,17 +257,6 @@ export const TenantPaymentsPage = () => {
                         </div>
                     )}
 
-                    {payState === "success" && (
-                        <div className="space-y-3 py-2">
-                            <div className="flex items-center gap-3">
-                                <CheckCircle className="h-6 w-6 text-success-dark dark:text-success" strokeWidth={2} />
-                                <span className="text-sm font-medium text-fg dark:text-fg-dark">Payment successful!</span>
-                            </div>
-                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark pl-9">Your dashboard will update shortly.</p>
-                            <button onClick={resetPay} className="btn-outline btn-sm mt-2">Make another payment</button>
-                        </div>
-                    )}
-
                     {payState === "error" && (
                         <div className="space-y-3 py-2">
                             <div className="flex items-center gap-3">
@@ -273,15 +272,24 @@ export const TenantPaymentsPage = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="card-elevated p-4">
+                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-success-bg dark:bg-success-bg-dark text-success">
+                        <TrendingUp className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+                    </div>
                     <p className="kpi-label">Total Paid</p>
                     <p className="kpi-value font-data text-success-dark dark:text-success">{formatCurrency(summary?.totalPaid ?? 0)}</p>
                 </div>
-                <div className="card-elevated p-4">
+                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-danger-bg dark:bg-danger-bg-dark text-danger">
+                        <CreditCard className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+                    </div>
                     <p className="kpi-label">Total Due</p>
                     <p className="kpi-value font-data text-danger-dark dark:text-danger">{formatCurrency(summary?.totalDue ?? 0)}</p>
                 </div>
-                <div className="card-elevated p-4">
+                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
+                        <Wallet className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+                    </div>
                     <p className="kpi-label">Current Balance</p>
                     <p className={`kpi-value font-data ${(summary?.currentBalance ?? 0) > 0 ? "text-danger-dark dark:text-danger" : "text-success-dark dark:text-success"}`}>
                         {formatCurrency(summary?.currentBalance ?? 0)}
@@ -299,8 +307,10 @@ export const TenantPaymentsPage = () => {
                 </div>
 
                 {payments.length === 0 ? (
-                    <div className="p-8 text-center">
-                        <FileText className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-border-subtle dark:bg-border-subtle-dark mb-3">
+                            <FileText className="h-6 w-6 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={1.5} />
+                        </div>
                         <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No payments yet</p>
                         <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Your payment history will appear here once you make your first payment.</p>
                     </div>
@@ -385,8 +395,8 @@ export const TenantPaymentsPage = () => {
 
                 {/* Receipt Modal */}
                 {selectedReceiptId && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedReceiptId(null)}>
-                        <div className="bg-surface dark:bg-surface-dark rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedReceiptId(null)}>
+                        <div className="bg-surface dark:bg-surface-dark rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-dropdown border border-border dark:border-border-dark animate-scale-in" onClick={(e) => e.stopPropagation()}>
                             {receiptLoading ? (
                                 <div className="p-8 text-center">
                                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand mb-3" strokeWidth={2} />
@@ -426,9 +436,14 @@ const ReceiptModalContent = ({ receipt, onClose }: { receipt: TenantPaymentRecei
     return (
         <div className="p-6" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">RENTMANAGER</p>
-                    <p className="font-semibold text-fg dark:text-fg-dark">Payment Receipt</p>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-bg dark:bg-success-bg-dark text-success">
+                        <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">RENTMANAGER</p>
+                        <p className="font-semibold text-fg dark:text-fg-dark">Payment Receipt</p>
+                    </div>
                 </div>
                 <button onClick={onClose} className="p-2 rounded-lg text-fg-muted hover:text-fg hover:bg-border/30 transition-colors" aria-label="Close">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

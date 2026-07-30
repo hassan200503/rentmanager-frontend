@@ -9,6 +9,8 @@ export const tenantPortalKeys = {
     paymentSummary: ["tenant-portal", "payment-summary"] as const,
     paymentHistory: (page: number) => ["tenant-portal", "payment-history", page] as const,
     paymentReceipt: (transactionId: string) => ["tenant-portal", "receipt", transactionId] as const,
+    maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
+    autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
 };
 
 export const useTenantDashboardQuery = () => {
@@ -49,5 +51,23 @@ export const useTenantPaymentReceiptQuery = (transactionId: string) => {
         queryKey: tenantPortalKeys.paymentReceipt(transactionId),
         queryFn: () => tenantPortalApi.getPaymentReceipt(transactionId),
         enabled: !!transactionId,
+    });
+};
+
+export const useTenantMaintenanceRequestsQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.maintenance(),
+        queryFn: () => tenantPortalApi.getMaintenanceRequests(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
+    });
+};
+
+export const useTenantAutoPaySettingsQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.autoPay(),
+        queryFn: () => tenantPortalApi.getAutoPaySettings(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
     });
 };

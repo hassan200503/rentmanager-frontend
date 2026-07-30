@@ -3,12 +3,13 @@
 
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { tenantPortalApi } from "../api/tenant-portal-api";
-import { Loader2, AlertTriangle, CheckCircle2, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone } from "lucide-react";
+import { Loader2, AlertTriangle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone, ArrowDownLeft, ArrowUpRight, Receipt, Wallet, Wrench } from "lucide-react";
 import Link from "next/link";
 
 export const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0 }).format(amount);
 
 export const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -25,7 +26,7 @@ const KpiCard = ({ icon: Icon, label, value, trend, iconColor, iconBg, className
     iconBg?: string;
     className?: string;
 }) => (
-    <div className={`card-elevated ${className}`}>
+    <div className={`card-elevated transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown ${className}`}>
         <div className="flex items-start justify-between mb-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" }}>
                 <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
@@ -61,6 +62,7 @@ export const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export const TenantDashboard = () => {
+    const router = useRouter();
     const { data, isLoading, isError, refetch } = useTenantDashboardQuery();
 
     const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
@@ -86,9 +88,7 @@ export const TenantDashboard = () => {
             const status = await tenantPortalApi.getPaymentRequestStatus(rid);
             if (status.status === "PAID") {
                 if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
-                setPayState("success");
-                setPayMessage("Payment received successfully!");
-                setTimeout(() => { refetch(); }, 1500);
+                router.push(`/portal/payment-success?requestId=${rid}`);
                 return true;
             }
             if (status.status === "FAILED") {
@@ -100,7 +100,7 @@ export const TenantDashboard = () => {
         } catch {
         }
         return false;
-    }, [refetch]);
+    }, [refetch, router]);
 
     const initiatePayment = useCallback(async () => {
         const amount = parseFloat(payAmount || ((data?.currentBalance ?? 0).toString()));
@@ -151,7 +151,7 @@ export const TenantDashboard = () => {
 
     if (isLoading) {
         return (
-            <div className="space-y-6">
+            <div className="page-container space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[0, 1, 2, 3].map((i) => (
                         <div key={i} className="card-elevated p-4 space-y-2">
@@ -170,21 +170,25 @@ export const TenantDashboard = () => {
 
     if (isError) {
         return (
-            <div className="card p-6 text-center">
-                <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load dashboard</p>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please try again</p>
-                <button onClick={() => refetch()} className="btn-outline btn-sm">Retry</button>
+            <div className="page-container">
+                <div className="card p-6 text-center max-w-md mx-auto">
+                    <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
+                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load dashboard</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please try again</p>
+                    <button onClick={() => refetch()} className="btn-outline btn-sm">Retry</button>
+                </div>
             </div>
         );
     }
 
     if (!data) {
         return (
-            <div className="card p-8 text-center">
-                <Home className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No lease yet</p>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Your portal will activate once your reservation is confirmed and lease is created.</p>
+            <div className="page-container">
+                <div className="card p-8 text-center max-w-md mx-auto">
+                    <Home className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
+                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No lease yet</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Your portal will activate once your reservation is confirmed and lease is created.</p>
+                </div>
             </div>
         );
     }
@@ -197,17 +201,20 @@ export const TenantDashboard = () => {
     const payButtonDisabled = payState === "initiating" || payState === "pending";
 
     return (
-        <div className="space-y-6">
+        <div className="page-container space-y-6 animate-fade-in-up">
             {/* Welcome Header */}
             <div className="hero-card">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-base font-semibold text-fg dark:text-fg-dark">Welcome back,</p>
-                        <h1 className="page-title !text-[1.75rem] mt-0.5">{tenantName}</h1>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Welcome back</p>
+                        <h1 className="page-title !text-[1.75rem] mt-1">{tenantName}</h1>
                         <p className="page-subtitle !text-sm mt-1">Unit {unitNumber} · {propertyName}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <StatusBadge status={leaseStatus} />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                            <span className="status-dot-success status-dot-live" />
+                            {leaseStatus?.toLowerCase()}
+                        </span>
                     </div>
                 </div>
 
@@ -338,16 +345,6 @@ export const TenantDashboard = () => {
                             </div>
                         )}
 
-                        {payState === "success" && (
-                            <div className="card-sm space-y-2 mb-3">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle2 className="h-4 w-4 text-success" strokeWidth={2} />
-                                    <span className="font-medium text-success">Payment successful!</span>
-                                </div>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Your dashboard will update shortly.</p>
-                            </div>
-                        )}
-
                         {payState === "error" && (
                             <div className="card-sm space-y-2 mb-3">
                                 <div className="flex items-center gap-2 text-sm">
@@ -386,27 +383,36 @@ export const TenantDashboard = () => {
                             </div>
                         )}
 
-                        <Link href="/portal/payments" className="btn-secondary w-full justify-start gap-3 py-3">
-                            <CreditCard className="h-5 w-5" strokeWidth={1.75} />
-                            <div>
-                                <p className="font-medium text-fg dark:text-fg-dark">View Payment History</p>
+                        <Link href="/portal/payments" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
+                                <CreditCard className="h-4 w-4" strokeWidth={1.75} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-fg dark:text-fg-dark">View Payment History</p>
                                 <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Download receipts, check status</p>
                             </div>
+                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
                         </Link>
-                        <Link href="/portal/lease" className="btn-secondary w-full justify-start gap-3 py-3">
-                            <Home className="h-5 w-5" strokeWidth={1.75} />
-                            <div>
-                                <p className="font-medium text-fg dark:text-fg-dark">Lease Agreement</p>
+                        <Link href="/portal/lease" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
+                                <Home className="h-4 w-4" strokeWidth={1.75} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-fg dark:text-fg-dark">Lease Agreement</p>
                                 <p className="text-xs text-fg-muted dark:text-fg-muted-dark">View terms, landlord contacts</p>
                             </div>
+                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
                         </Link>
-                        <button className="btn-secondary w-full justify-start gap-3 py-3" disabled>
-                            <Loader2 className="h-5 w-5" strokeWidth={1.75} />
-                            <div>
-                                <p className="font-medium text-fg dark:text-fg-dark">Maintenance Request</p>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Submit a repair request (coming soon)</p>
+                        <Link href="/portal/maintenance" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
+                                <Wrench className="h-4 w-4" strokeWidth={1.75} />
                             </div>
-                        </button>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-fg dark:text-fg-dark">Maintenance Request</p>
+                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Submit a repair request</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -428,9 +434,12 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
 }> }) => {
     if (!payments || payments.length === 0) {
         return (
-            <div className="p-6 text-center">
-                <CreditCard className="h-10 w-10 mx-auto text-fg-muted dark:text-fg-muted-dark mb-2" strokeWidth={1.5} />
-                <p className="text-sm text-fg-muted dark:text-fg-muted-dark">No payment history yet</p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-border-subtle dark:bg-border-subtle-dark mb-3">
+                    <CreditCard className="h-6 w-6 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={1.5} />
+                </div>
+                <p className="text-sm font-medium text-fg dark:text-fg-dark">No payments yet</p>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">Your payment history will appear here</p>
             </div>
         );
     }
@@ -445,26 +454,39 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
         DEPOSIT: "Deposit",
     };
 
+    const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+        PAYMENT: { icon: ArrowDownLeft, color: "var(--color-success)", bg: "var(--color-success-bg)" },
+        RENT_CHARGE: { icon: ArrowUpRight, color: "var(--color-danger)", bg: "var(--color-danger-bg)" },
+        DEPOSIT: { icon: Wallet, color: "var(--color-brand)", bg: "var(--color-brand-50)" },
+    };
+
     return (
         <div className="space-y-2">
-            {payments.slice(0, 5).map((tx) => (
-                <div key={tx.id} className="card-sm flex items-center justify-between gap-4">
-                    <div>
-                        <p className="font-medium text-fg dark:text-fg-dark">{TYPE_LABELS[tx.type] ?? tx.type}</p>
-                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
-                            {formatDate(tx.occurredAt)}
-                            {tx.externalReference ? ` · ${tx.externalReference}` : ""}
-                            {tx.mpesaTransactionId ? ` · M-Pesa: ${tx.mpesaTransactionId}` : ""}
-                        </p>
+            {payments.slice(0, 5).map((tx) => {
+                const meta = TYPE_META[tx.type] ?? { icon: Receipt, color: "var(--color-fg-muted)", bg: "var(--color-border-subtle)" };
+                const MetaIcon = meta.icon;
+                return (
+                    <div key={tx.id} className="card-sm flex items-center gap-3 p-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: meta.bg, color: meta.color }}>
+                            <MetaIcon className="h-4 w-4" strokeWidth={2} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm text-fg dark:text-fg-dark">{TYPE_LABELS[tx.type] ?? tx.type}</p>
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark truncate">
+                                {formatDate(tx.occurredAt)}
+                                {tx.externalReference ? ` · ${tx.externalReference}` : ""}
+                                {tx.mpesaTransactionId ? ` · M-Pesa: ${tx.mpesaTransactionId}` : ""}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <p className={`font-mono-nums font-semibold text-sm ${tx.type === "RENT_CHARGE" ? "text-danger" : tx.type === "PAYMENT" ? "text-success" : "text-fg"}`}>
+                                {tx.type === "RENT_CHARGE" ? "+" : tx.type === "ADJUSTMENT" ? "" : "−"}{formatCurrency(tx.amount)}
+                            </p>
+                            <StatusBadge status={tx.status} />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <p className={`font-mono-nums font-medium ${tx.type === "RENT_CHARGE" ? "text-danger" : tx.type === "PAYMENT" ? "text-success" : "text-fg"}`}>
-                            {tx.type === "RENT_CHARGE" ? "+" : tx.type === "ADJUSTMENT" ? "" : "−"}{formatCurrency(tx.amount)}
-                        </p>
-                        <StatusBadge status={tx.status} />
-                    </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };

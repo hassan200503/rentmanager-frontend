@@ -97,7 +97,64 @@ export interface RentPaymentRequestResponse {
     amount: number;
     status: "PENDING" | "PAID" | "FAILED";
     mpesaReceiptNumber: string | null;
+    transactionId: string | null;
 }
+// Maintenance types
+export interface MaintenanceRequestResponse {
+    id: string;
+    unitId: string;
+    propertyId: string;
+    tenantProfileId: string;
+    leaseId: string | null;
+    title: string;
+    description: string | null;
+    category: "PLUMBING" | "ELECTRICAL" | "STRUCTURAL" | "APPLIANCE" | "PEST_CONTROL" | "GENERAL";
+    priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+    status: "SUBMITTED" | "IN_REVIEW" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+    scheduledDate: string | null;
+    completedAt: string | null;
+    notes: string | null;
+    createdBy: string | null;
+    assignedTo: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateMaintenanceRequest {
+    unitId: string;
+    propertyId: string;
+    tenantProfileId: string;
+    leaseId?: string;
+    title: string;
+    description?: string;
+    category: MaintenanceRequestResponse["category"];
+    priority: MaintenanceRequestResponse["priority"];
+}
+
+// Auto-pay types
+export interface AutoPaySettingsResponse {
+    id: string;
+    leaseId: string;
+    tenantProfileId: string;
+    enabled: boolean;
+    mpesaPhone: string | null;
+    lastAutoPayDate: string | null;
+    consecutiveFailures: number;
+    lastAttemptAt: string | null;
+}
+
+export interface ToggleAutoPayRequest {
+    enabled: boolean;
+    mpesaPhone: string;
+}
+
+export interface UpdateAutoPayPhoneRequest {
+    mpesaPhone: string;
+}
+
+// Maintenance endpoints (separate base — not under /tenant-portal)
+const maintenanceBase = "/maintenance";
+
 // API client
 export const tenantPortalApi = {
     getDashboard: async (): Promise<TenantDashboardResponse> => {
@@ -169,6 +226,56 @@ export const tenantPortalApi = {
         return apiClient.post<RentPaymentRequestResponse>(
             tenantPortalEndpoints.initiatePortalPayment(),
             { amount, mpesaPhone },
+            token,
+            tenantId
+        );
+    },
+
+    // Maintenance
+    getMaintenanceRequests: async (): Promise<MaintenanceRequestResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<MaintenanceRequestResponse[]>(
+            maintenanceBase,
+            token,
+            tenantId
+        );
+    },
+
+    submitMaintenanceRequest: async (request: CreateMaintenanceRequest): Promise<MaintenanceRequestResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<MaintenanceRequestResponse>(
+            maintenanceBase,
+            request,
+            token,
+            tenantId
+        );
+    },
+
+    // Auto-pay
+    getAutoPaySettings: async (): Promise<AutoPaySettingsResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<AutoPaySettingsResponse>(
+            tenantPortalEndpoints.autoPay(),
+            token,
+            tenantId
+        );
+    },
+
+    toggleAutoPay: async (request: ToggleAutoPayRequest): Promise<AutoPaySettingsResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<AutoPaySettingsResponse>(
+            tenantPortalEndpoints.autoPayToggle(),
+            request,
+            token,
+            tenantId
+        );
+    },
+
+    updateAutoPayPhone: async (request: UpdateAutoPayPhoneRequest): Promise<AutoPaySettingsResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<AutoPaySettingsResponse>(
+            tenantPortalEndpoints.autoPayPhone(),
+            request,
             token,
             tenantId
         );

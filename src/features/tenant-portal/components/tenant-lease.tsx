@@ -1,8 +1,9 @@
 // components/tenant-lease.tsx
 "use client";
 
-import { useTenantDashboardQuery, useTenantLeaseQuery, useTenantPaymentSummaryQuery } from "../hooks/use-tenant-portal-queries";
-import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileText, MapPin, User, Clock, Smartphone, Loader2, CheckCircle2 } from "lucide-react";
+import { useTenantDashboardQuery, useTenantLeaseQuery, useTenantPaymentSummaryQuery, useTenantAutoPaySettingsQuery } from "../hooks/use-tenant-portal-queries";
+import { useToggleAutoPayMutation } from "../hooks/use-tenant-portal-mutations";
+import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileText, MapPin, User, Clock, Smartphone, Loader2, CheckCircle2, Bell, BellOff } from "lucide-react";
 import { formatCurrency, formatDate } from "./tenant-dashboard";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,6 +12,9 @@ export const TenantLeasePage = () => {
     const { data: dashboardData } = useTenantDashboardQuery();
     const { data: lease, isLoading, isError, refetch } = useTenantLeaseQuery();
     const { data: summary, refetch: refetchSummary } = useTenantPaymentSummaryQuery();
+    const { data: autoPaySettings } = useTenantAutoPaySettingsQuery();
+    const toggleAutoPayMut = useToggleAutoPayMutation();
+    const autoPay = autoPaySettings?.enabled ?? false;
 
     const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
     const [payMessage, setPayMessage] = useState("");
@@ -100,6 +104,12 @@ export const TenantLeasePage = () => {
         setRequestId(null);
         setSentToPhone("");
     }, []);
+
+    const handleToggleAutoPay = async () => {
+        const next = !autoPay;
+        const phone = autoPaySettings?.mpesaPhone || mpesaPhone || dashboardData?.tenantPhone || "";
+        await toggleAutoPayMut.mutateAsync({ enabled: next, mpesaPhone: phone });
+    };
 
     if (isLoading) {
         return (
@@ -205,6 +215,21 @@ export const TenantLeasePage = () => {
                             <Smartphone className="h-5 w-5" strokeWidth={1.75} />
                             Pay Now
                         </button>
+                        <button
+                            onClick={handleToggleAutoPay}
+                            disabled={toggleAutoPayMut.isPending}
+                            className={`btn-outline btn-sm gap-2 ${autoPay ? "text-brand border-brand/40 dark:border-brand/40" : ""}`}
+                            title={autoPay ? "Auto-pay is on" : "Enable auto-pay"}
+                        >
+                            {toggleAutoPayMut.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                            ) : autoPay ? (
+                                <Bell className="h-4 w-4" strokeWidth={2} />
+                            ) : (
+                                <BellOff className="h-4 w-4" strokeWidth={2} />
+                            )}
+                            {autoPay ? "Auto-Pay On" : "Auto-Pay"}
+                        </button>
                     </div>
                 </div>
             )}
@@ -296,6 +321,42 @@ export const TenantLeasePage = () => {
                     </div>
                     <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">{payMessage}</p>
                     <button onClick={resetPay} className="btn-outline btn-sm mt-3">Try again</button>
+                </div>
+            )}
+
+            {/* Auto-Pay Settings */}
+            {autoPaySettings && (
+                <div className="card-elevated p-6">
+                    <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-brand" strokeWidth={2} />
+                        Auto-Pay Settings
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Status</span>
+                            <span className={`font-medium ${autoPay ? "text-success" : "text-fg-muted dark:text-fg-muted-dark"}`}>
+                                {autoPay ? "Enabled" : "Disabled"}
+                            </span>
+                        </div>
+                        {autoPaySettings.mpesaPhone && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-fg-muted dark:text-fg-muted-dark">M-Pesa Phone</span>
+                                <span className="font-mono-nums">{autoPaySettings.mpesaPhone}</span>
+                            </div>
+                        )}
+                        {autoPaySettings.lastAutoPayDate && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-fg-muted dark:text-fg-muted-dark">Last Auto-Pay</span>
+                                <span className="font-medium">{formatDate(autoPaySettings.lastAutoPayDate)}</span>
+                            </div>
+                        )}
+                        {autoPaySettings.consecutiveFailures > 0 && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-fg-muted dark:text-fg-muted-dark">Consecutive Failures</span>
+                                <span className="font-medium text-danger">{autoPaySettings.consecutiveFailures}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
