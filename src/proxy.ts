@@ -64,13 +64,6 @@ export default clerkMiddleware(async (auth, req) => {
         return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    if (
-        req.nextUrl.pathname.startsWith("/upgrade") &&
-        sessionClaims?.subscription !== "premium"
-    ) {
-        return NextResponse.redirect(new URL("/upgrade", req.url));
-    }
-
     return NextResponse.next();
 });
 

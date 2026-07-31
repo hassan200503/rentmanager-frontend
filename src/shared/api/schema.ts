@@ -707,7 +707,7 @@ export interface components {
             /** @enum {string} */
             tenantType?: "TRIAL" | "STANDARD" | "PREMIUM" | "ENTERPRISE";
             /** @enum {string} */
-            subscriptionStatus?: "TRIAL" | "ACTIVE" | "EXPIRED" | "CANCELLED" | "PAST_DUE";
+            subscriptionStatus?: "TRIAL" | "ACTIVE" | "LAPSED" | "CANCELLED" | "PAST_DUE" | "GRACE_PERIOD";
         };
         ApiResponseTenantResponse: {
             success?: boolean;

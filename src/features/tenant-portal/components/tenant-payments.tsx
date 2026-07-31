@@ -31,10 +31,6 @@ export const TenantPaymentsPage = () => {
     const [sentToPhone, setSentToPhone] = useState("");
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        if (dashboardData?.tenantPhone && !mpesaPhone) setMpesaPhone(dashboardData.tenantPhone);
-    }, [dashboardData?.tenantPhone]);
-
     const currentBalance = summary?.currentBalance ?? 0;
     const canPay = true;
     const defaultPayAmount = canPay ? currentBalance.toString() : "";
@@ -68,7 +64,7 @@ export const TenantPaymentsPage = () => {
     const initiatePayment = useCallback(async () => {
         const resolvedAmount = !amountOverridden && currentBalance > 0 ? currentBalance : parseFloat(payAmount);
         if (isNaN(resolvedAmount) || resolvedAmount <= 0) return;
-        const phone = mpesaPhone.replace(/\s+/g, "");
+        const phone = (mpesaPhone || dashboardData?.tenantPhone || "").replace(/\s+/g, "");
         if (!phone) return;
 
         setPayState("initiating");
@@ -212,7 +208,7 @@ export const TenantPaymentsPage = () => {
                                 <label className="label-text">M-Pesa Phone Number</label>
                                 <input
                                     type="tel"
-                                    value={mpesaPhone}
+                                    value={mpesaPhone || dashboardData?.tenantPhone || ""}
                                     onChange={(e) => setMpesaPhone(e.target.value)}
                                     placeholder="+254712345678"
                                     className="input-field mt-1 w-full"
@@ -225,7 +221,7 @@ export const TenantPaymentsPage = () => {
                                 <button onClick={resetPay} className="btn-outline flex-1">Cancel</button>
                                 <button
                                     onClick={initiatePayment}
-                                    disabled={!mpesaPhone}
+                                    disabled={!(mpesaPhone || dashboardData?.tenantPhone)}
                                     className="btn-primary flex-1"
                                 >
                                     Pay {formatCurrency(parseFloat(effectivePayAmount || "0"))}

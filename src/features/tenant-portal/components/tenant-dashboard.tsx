@@ -74,10 +74,6 @@ export const TenantDashboard = () => {
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
-        if (data?.tenantPhone) setMpesaPhone(data.tenantPhone);
-    }, [data?.tenantPhone]);
-
-    useEffect(() => {
         return () => {
             if (pollRef.current) clearInterval(pollRef.current);
         };
@@ -146,8 +142,8 @@ export const TenantDashboard = () => {
         setPayAmount("");
         setRequestId(null);
         setSentToPhone("");
-        setMpesaPhone(data?.tenantPhone || "");
-    }, [data]);
+        setMpesaPhone("");
+    }, []);
 
     if (isLoading) {
         return (

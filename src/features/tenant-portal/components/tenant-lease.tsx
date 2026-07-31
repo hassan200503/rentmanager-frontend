@@ -24,10 +24,6 @@ export const TenantLeasePage = () => {
     const [sentToPhone, setSentToPhone] = useState("");
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        if (dashboardData?.tenantPhone && !mpesaPhone) setMpesaPhone(dashboardData.tenantPhone);
-    }, [dashboardData?.tenantPhone]);
-
     const currentBalance = summary?.currentBalance ?? 0;
     const leaseStatus = lease?.status;
     const canPay = leaseStatus === "ACTIVE";
@@ -62,7 +58,7 @@ export const TenantLeasePage = () => {
     const initiatePayment = useCallback(async () => {
         const amount = parseFloat(payAmount || currentBalance.toString());
         if (isNaN(amount) || amount <= 0) return;
-        const phone = mpesaPhone.replace(/\s+/g, "");
+        const phone = (mpesaPhone || dashboardData?.tenantPhone || "").replace(/\s+/g, "");
         if (!phone) return;
 
         setPayState("initiating");
@@ -256,7 +252,7 @@ export const TenantLeasePage = () => {
                             <label className="label-text">M-Pesa Phone Number</label>
                             <input
                                 type="tel"
-                                value={mpesaPhone}
+                                value={mpesaPhone || dashboardData?.tenantPhone || ""}
                                 onChange={(e) => setMpesaPhone(e.target.value)}
                                 placeholder="+254712345678"
                                 className="input-field mt-1 w-full"
@@ -266,7 +262,7 @@ export const TenantLeasePage = () => {
                             <button onClick={resetPay} className="btn-outline flex-1">Cancel</button>
                             <button
                                 onClick={initiatePayment}
-                                disabled={!mpesaPhone}
+                                disabled={!(mpesaPhone || dashboardData?.tenantPhone)}
                                 className="btn-primary flex-1"
                             >
                                 Pay {formatCurrency(parseFloat(payAmount || currentBalance.toString()))}

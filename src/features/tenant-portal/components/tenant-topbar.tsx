@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, string> = {
     "/portal": "Dashboard",
     "/portal/payments": "Payments",
     "/portal/lease": "Lease",
+    "/portal/landlord": "Landlord",
     "/portal/maintenance": "Maintenance",
     "/portal/payment-success": "Payment Receipt",
 };

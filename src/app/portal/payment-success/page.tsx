@@ -20,34 +20,34 @@ export default function PaymentSuccessPage() {
     );
 }
 
+async function fetchPaymentReceipt(requestId: string): Promise<TenantPaymentReceiptResponse> {
+    const paymentStatus = await tenantPortalApi.getPaymentRequestStatus(requestId);
+    if (paymentStatus.status !== "PAID") {
+        throw new Error(paymentStatus.status === "FAILED" ? "Payment failed." : "Payment is still pending.");
+    }
+    if (!paymentStatus.transactionId) {
+        throw new Error("Receipt is not yet available. Please try again shortly.");
+    }
+    return tenantPortalApi.getPaymentReceipt(paymentStatus.transactionId);
+}
+
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const requestId = searchParams.get("requestId");
 
-    const [status, setStatus] = useState<"loading" | "not_found" | "success" | "error">("loading");
+    const [status, setStatus] = useState<"loading" | "not_found" | "success" | "error">(
+        requestId ? "loading" : "not_found"
+    );
     const [errorMessage, setErrorMessage] = useState("");
     const [receipt, setReceipt] = useState<TenantPaymentReceiptResponse | null>(null);
     const [downloading, setDownloading] = useState(false);
 
     const loadData = useCallback(async () => {
-        if (!requestId) {
-            setStatus("not_found");
-            return;
-        }
+        if (!requestId) return;
+        setStatus("loading");
         try {
-            const paymentStatus = await tenantPortalApi.getPaymentRequestStatus(requestId);
-            if (paymentStatus.status !== "PAID") {
-                setStatus("error");
-                setErrorMessage(paymentStatus.status === "FAILED" ? "Payment failed." : "Payment is still pending.");
-                return;
-            }
-            if (!paymentStatus.transactionId) {
-                setStatus("error");
-                setErrorMessage("Receipt is not yet available. Please try again shortly.");
-                return;
-            }
-            const receiptData = await tenantPortalApi.getPaymentReceipt(paymentStatus.transactionId);
+            const receiptData = await fetchPaymentReceipt(requestId);
             setReceipt(receiptData);
             setStatus("success");
         } catch (err) {
@@ -57,8 +57,25 @@ function PaymentSuccessContent() {
     }, [requestId]);
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        if (!requestId) return;
+        let cancelled = false;
+        fetchPaymentReceipt(requestId)
+            .then((receiptData) => {
+                if (cancelled) return;
+                setReceipt(receiptData);
+                setStatus("success");
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                setStatus("error");
+                setErrorMessage(
+                    err instanceof Error ? err.message : "Failed to load payment details"
+                );
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [requestId]);
 
     const handleDownload = async () => {
         if (!receipt) return;

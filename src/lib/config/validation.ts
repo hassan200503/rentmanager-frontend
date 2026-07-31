@@ -11,7 +11,7 @@ export const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_VERSION: z.string().optional(),
   NEXT_PUBLIC_TENANT_ID: z.string().uuid().optional(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z
     .string()
     .url()
@@ -21,8 +21,8 @@ export const clientEnvSchema = z.object({
 
 export const serverEnvSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   ENABLE_PREMIUM_FEATURES: z
     .enum(["true", "false"])
     .default("false")

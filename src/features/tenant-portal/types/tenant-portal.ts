@@ -26,6 +26,12 @@ export interface TenantLeaseResponse {
     moveInDate: string;
     landlordName: string;
     landlordPhone: string;
+    landlordEmail: string;
+    landlordCode: string | null;
+    landlordAddress: string | null;
+    landlordLogoUrl: string | null;
+    landlordSince: string | null;
+    landlordVerified: boolean;
 }
 
 export interface TenantPaymentSummaryResponse {

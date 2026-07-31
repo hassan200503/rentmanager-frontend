@@ -11,6 +11,8 @@ import {
     FileText,
     Wrench,
     HelpCircle,
+    Building2,
+    Sparkles,
     X,
     Sun,
     Moon,
@@ -33,6 +35,7 @@ const navItems: NavItem[] = [
     { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
     { href: "/portal/payments", label: "Payments", icon: CreditCard },
     { href: "/portal/lease", label: "Lease", icon: FileText },
+    { href: "/portal/landlord", label: "Landlord", icon: Building2, badge: "Premium" },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -81,7 +84,8 @@ function NavLink({
             </span>
             {!collapsed && <span className="relative flex-1">{item.label}</span>}
             {!collapsed && item.badge && (
-                <span className="relative text-[9px] font-semibold uppercase tracking-wide text-fg-subtle dark:text-fg-subtle-dark bg-border-subtle dark:bg-border-subtle-dark px-1.5 py-0.5 rounded-md">
+                <span className="relative inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
+                    {item.badge === "Premium" && <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />}
                     {item.badge}
                 </span>
             )}

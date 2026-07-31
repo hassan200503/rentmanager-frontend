@@ -36,6 +36,11 @@ export interface TenantLeaseResponse {
     landlordName: string;
     landlordPhone: string;
     landlordEmail: string;
+    landlordCode: string | null;
+    landlordAddress: string | null;
+    landlordLogoUrl: string | null;
+    landlordSince: string | null;
+    landlordVerified: boolean;
     terms: string;
 }
 
