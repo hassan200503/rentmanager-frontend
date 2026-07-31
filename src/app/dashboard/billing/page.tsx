@@ -396,12 +396,22 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
     };
 
     return (
-        <SectionCard icon={CreditCard} label="Go premium">
+        <div className="card animate-fade-in-up">
+            <div className="mb-5 flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/40">
+                    <CreditCard className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
+                </span>
+                <h2 className="font-display text-xl font-semibold tracking-tight text-fg dark:text-fg-dark">Go premium</h2>
+            </div>
             <div className="space-y-5">
-                <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                    Pay a flat monthly fee instead of per-payment commission. Rent
-                    payments to your tenants settle at 100% — zero commission.
-                </p>
+                <div className="flex items-start gap-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50/70 dark:bg-brand-900/20 px-4 py-3">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand dark:text-brand-300" strokeWidth={2} />
+                    <p className="text-sm text-fg dark:text-fg-dark">
+                        Pay a flat monthly fee instead of per-payment commission. Rent
+                        payments to your tenants settle at{" "}
+                        <span className="font-semibold text-brand-700 dark:text-brand-300">100% — zero commission</span>.
+                    </p>
+                </div>
 
                 {paymentRequestId != null ? (
                     paymentStatus === "PAID" ? (
@@ -463,9 +473,9 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                 ) : (
                     <>
                         {plans.isLoading ? (
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                 {[0, 1, 2].map((i) => (
-                                    <div key={i} className="skeleton h-16 rounded-xl" />
+                                    <div key={i} className="skeleton h-36 rounded-2xl" />
                                 ))}
                             </div>
                         ) : plans.isError ? (
@@ -493,22 +503,30 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-2" role="radiogroup" aria-label="Choose a plan">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Choose a plan">
                                 {availablePlans.map((plan) => {
                                     const active = plan.code === selectedCode;
+                                    const popular = plan.name?.toLowerCase() === "growth";
                                     return (
                                         <label
                                             key={plan.id ?? plan.code}
-                                            className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
+                                            className={`relative flex h-full cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all ${
                                                 active
-                                                    ? "border-brand bg-brand-50 dark:bg-brand-800/40 dark:border-brand-600"
-                                                    : "border-border dark:border-border-dark hover:border-brand-200 dark:hover:border-brand-600"
+                                                    ? "border-brand bg-brand-50/70 dark:bg-brand-900/30 dark:border-brand-600 ring-1 ring-brand/30"
+                                                    : popular
+                                                      ? "border-brand-300 dark:border-brand-700 shadow-sm hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-md"
+                                                      : "border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-sm"
                                             }`}
                                         >
+                                            {popular && (
+                                                <span className="absolute right-3 top-3 rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                                                    Most popular
+                                                </span>
+                                            )}
                                             <input
                                                 type="radio"
                                                 name="plan"
-                                                className="accent-brand"
+                                                className="accent-brand h-4 w-4"
                                                 checked={active}
                                                 onChange={() => setSelectedCode(plan.code)}
                                             />
@@ -516,11 +534,11 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                                                 <p className="text-sm font-semibold text-fg dark:text-fg-dark">
                                                     {plan.name}
                                                 </p>
-                                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                                                <p className="mt-0.5 text-xs text-fg-muted dark:text-fg-muted-dark">
                                                     {plan.description || `${plan.maxUnits ?? "Unlimited"} units`}
                                                 </p>
                                             </div>
-                                            <p className="text-sm font-semibold text-brand dark:text-brand-300">
+                                            <p className="font-data text-lg font-semibold tabular-nums text-fg dark:text-fg-dark">
                                                 {formatMoney(plan.monthlyPrice)}
                                                 <span className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark">
                                                     {" "}/ month
@@ -564,9 +582,13 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                             disabled={
                                 !selectedPlan || !phoneValid || switchToPremium.isPending
                             }
-                            className="btn-primary inline-flex items-center gap-2 disabled:opacity-50"
+                            className="btn-primary inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                            {switchToPremium.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                            ) : (
+                                <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                            )}
                             {switchToPremium.isPending
                                 ? "Sending M-Pesa prompt…"
                                 : selectedPlan
@@ -586,7 +608,7 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                     </>
                 )}
             </div>
-        </SectionCard>
+        </div>
     );
 }
 
@@ -702,17 +724,24 @@ export default function BillingPage() {
             <SectionCard icon={CreditCard} label="Current plan">
                 <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <p className="text-lg font-semibold text-fg dark:text-fg-dark">
+                        <div className="min-w-0">
+                            <p className="text-lg font-semibold tracking-tight text-fg dark:text-fg-dark">
                                 {isPremium ? (data.planName ?? "Premium monthly") : "Commission billing"}
                             </p>
-                            <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
+                            <p className="mt-0.5 text-sm text-fg-muted dark:text-fg-muted-dark">
                                 {isPremium
                                     ? `Flat ${formatMoney(data.planMonthlyPrice)}/month — zero commission on rent payments`
                                     : "Pay per rent payment — no monthly commitment"}
                             </p>
                         </div>
-                        <StatusChip status={data.subscriptionStatus} />
+                        {isPremium ? (
+                            <StatusChip status={data.subscriptionStatus} />
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                Active
+                            </span>
+                        )}
                     </div>
 
                     {isPremium && (

@@ -27,7 +27,7 @@ type ViewState = "list" | "form" | "detail";
 const STATUS_META: Record<string, { label: string; icon: React.ElementType; className: string }> = {
     SUBMITTED: { label: "Submitted", icon: Clock, className: "badge-info" },
     IN_REVIEW: { label: "In Review", icon: Search, className: "badge-warning" },
-    SCHEDULED: { label: "Scheduled", icon: Clock, className: "badge-brand" },
+    SCHEDULED: { label: "Scheduled", icon: Clock, className: "badge-emerald" },
     IN_PROGRESS: { label: "In Progress", icon: Loader2, className: "badge-warning" },
     COMPLETED: { label: "Completed", icon: CheckCircle2, className: "badge-success" },
     CANCELLED: { label: "Cancelled", icon: X, className: "badge-neutral" },
@@ -250,33 +250,33 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
 
             <form onSubmit={handleSubmit} className="card-elevated p-6 space-y-5">
                 <div className="space-y-1.5">
-                    <label className="label-text">Title *</label>
+                    <label className="form-label">Title *</label>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g. Leaking kitchen faucet"
-                        className="input-field"
+                        className="form-input"
                         required
                         maxLength={200}
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="label-text">Description</label>
+                    <label className="form-label">Description</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Describe the issue in detail, including location and how long it has been happening"
-                        className="input-field min-h-[100px] resize-y"
+                        className="form-input min-h-[100px] resize-y"
                         rows={4}
                     />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="label-text">Category *</label>
-                        <select value={category} onChange={(e) => setCategory(e.target.value as CreateMaintenanceRequest["category"])} className="input-field">
+                        <label className="form-label">Category *</label>
+                        <select value={category} onChange={(e) => setCategory(e.target.value as CreateMaintenanceRequest["category"])} className="form-input">
                             {CATEGORIES.map((c) => (
                                 <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
@@ -284,8 +284,8 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="label-text">Priority *</label>
-                        <select value={priority} onChange={(e) => setPriority(e.target.value as CreateMaintenanceRequest["priority"])} className="input-field">
+                        <label className="form-label">Priority *</label>
+                        <select value={priority} onChange={(e) => setPriority(e.target.value as CreateMaintenanceRequest["priority"])} className="form-input">
                             {PRIORITIES.map((p) => (
                                 <option key={p.value} value={p.value}>{p.label}</option>
                             ))}

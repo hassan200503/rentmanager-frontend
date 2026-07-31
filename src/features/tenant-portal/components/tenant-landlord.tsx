@@ -51,10 +51,10 @@ const DetailItem = ({ icon: Icon, label, value, tone = "brand" }: {
 }) => {
     const tones: Record<string, string> = {
         brand: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300",
-        green: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400",
-        blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
-        amber: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-        violet: "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400",
+        green: "bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success",
+        blue: "bg-info-bg dark:bg-info-bg-dark text-info-dark dark:text-info",
+        amber: "bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning",
+        violet: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300",
     };
     return (
         <div className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 dark:border-border-dark/60">
@@ -77,7 +77,7 @@ const ContactAction = ({ href, icon: Icon, label, external = true }: {
 }) => {
     const inner = (
         <>
-            <Icon className="h-4 w-4" strokeWidth={2} />
+            <Icon className="h-4 w-4 text-success-dark dark:text-success" strokeWidth={2} />
             <span>{label}</span>
         </>
     );
@@ -219,7 +219,7 @@ export const TenantLandlordPage = () => {
                             {landlordName ?? "Your Landlord"}
                             {landlordVerified && (
                                 <span
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800"
                                     title="This landlord is an active, verified RentManager account holder"
                                 >
                                     <BadgeCheck className="h-3 w-3" strokeWidth={2.5} />
@@ -245,7 +245,7 @@ export const TenantLandlordPage = () => {
                         href={landlordPhone ? `tel:${landlordPhone}` : undefined}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 ${!landlordPhone ? "opacity-50 pointer-events-none" : ""}`}
                     >
-                        <Phone className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={2} />
+                        <Phone className="h-4 w-4 text-success-dark dark:text-success" strokeWidth={2} />
                         Call
                     </a>
                     <ContactAction href={waLink} icon={MessageCircle} label="WhatsApp" />
@@ -253,7 +253,7 @@ export const TenantLandlordPage = () => {
                         href={landlordEmail ? `mailto:${landlordEmail}` : undefined}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 ${!landlordEmail ? "opacity-50 pointer-events-none" : ""}`}
                     >
-                        <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                        <Mail className="h-4 w-4 text-info-dark dark:text-info" strokeWidth={2} />
                         Email
                     </a>
                     <button
@@ -261,7 +261,7 @@ export const TenantLandlordPage = () => {
                         onClick={() => downloadVCard(lease)}
                         className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15"
                     >
-                        <Save className="h-4 w-4 text-violet-600 dark:text-violet-400" strokeWidth={2} />
+                        <Save className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
                         Save Contact
                     </button>
                 </div>
@@ -334,7 +334,7 @@ export const TenantLandlordPage = () => {
                         tone="green"
                         label="Lease Status"
                         value={
-                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${lease.status === "ACTIVE" ? "text-emerald-600 dark:text-emerald-400" : "text-fg-muted dark:text-fg-muted-dark"}`}>
+                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${lease.status === "ACTIVE" ? "text-success-dark dark:text-success" : "text-fg-muted dark:text-fg-muted-dark"}`}>
                                 <span className={`status-dot-live ${lease.status === "ACTIVE" ? "status-dot-success" : ""}`} />
                                 {lease.status?.toLowerCase()}
                             </span>
@@ -361,7 +361,7 @@ export const TenantLandlordPage = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[11px] font-semibold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success text-[11px] font-semibold uppercase tracking-wide">
                             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
                             Secure
                         </span>
