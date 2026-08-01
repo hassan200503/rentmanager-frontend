@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { Loader2, MessageSquareHeart, Star } from "lucide-react";
+import { BadgeCheck, Loader2, MessageSquareHeart, Quote, Star } from "lucide-react";
 import { toast } from "sonner";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { tenantPortalKeys, useMyReviewQuery } from "../hooks/use-tenant-portal-queries";
@@ -16,12 +16,12 @@ const StarRow = ({ value, onChange, interactive }: {
     onChange?: (v: number) => void;
     interactive?: boolean;
 }) => (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
         {[1, 2, 3, 4, 5].map((i) => {
             const star = (
                 <Star
                     key={i}
-                    className={`h-6 w-6 transition-colors ${
+                    className={`${interactive ? "h-7 w-7" : "h-6 w-6"} transition-all duration-200 ${
                         i <= value
                             ? "fill-amber-400 text-amber-400"
                             : "text-border dark:text-border-dark"
@@ -36,7 +36,7 @@ const StarRow = ({ value, onChange, interactive }: {
                     type="button"
                     onClick={() => onChange?.(i)}
                     aria-label={`Rate ${i} star${i === 1 ? "" : "s"}`}
-                    className="transition-transform hover:scale-110"
+                    className="rounded-md p-0.5 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
                 >
                     {star}
                 </button>
@@ -73,16 +73,16 @@ export function TenantReviewCard() {
     };
 
     return (
-        <div className="card-elevated p-6">
-            <div className="flex items-center gap-2.5 mb-1">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
-                    <MessageSquareHeart className="h-4.5 w-4.5" strokeWidth={2} />
+        <div className="card-elevated p-6 sm:p-7">
+            <div className="flex items-center gap-3 mb-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
+                    <MessageSquareHeart className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <div>
                     <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">
                         Rate your landlord
                     </h3>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">
                         Only verified renters can review — your name shows as a first name publicly
                     </p>
                 </div>
@@ -91,29 +91,31 @@ export function TenantReviewCard() {
             {isLoading ? (
                 <div className="skeleton h-24 w-full mt-4" />
             ) : myReview ? (
-                <div className="mt-4 rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-fg dark:text-fg-dark">
+                <div className="mt-5 relative rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-4 sm:p-5 overflow-hidden">
+                    <Quote className="absolute -top-1 -right-1 h-14 w-14 text-brand/10 dark:text-brand/15 rotate-180 pointer-events-none" strokeWidth={1.5} aria-hidden />
+                    <div className="relative flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-fg dark:text-fg-dark">
                             Your review
                         </p>
                         <StarRow value={myReview.rating} />
                     </div>
                     {myReview.comment && (
-                        <p className="mt-2 text-sm text-fg-muted dark:text-fg-muted-dark">
+                        <p className="relative mt-2.5 text-sm text-fg-muted dark:text-fg-muted-dark leading-relaxed">
                             {myReview.comment}
                         </p>
                     )}
-                    <p className="mt-2 text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
+                    <p className="relative mt-2 text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
                         Submitted {formatDate(myReview.createdAt)}
                     </p>
-                    <p className="mt-3 text-xs text-fg-subtle dark:text-fg-subtle-dark border-t border-border dark:border-border-dark pt-3">
+                    <p className="relative mt-3 text-xs text-fg-subtle dark:text-fg-subtle-dark border-t border-border dark:border-border-dark pt-3 flex items-center gap-1.5">
+                        <BadgeCheck className="h-3.5 w-3.5 text-success" strokeWidth={2} />
                         One review per landlord — thank you for your feedback.
                     </p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-                    <div className="space-y-1.5">
-                        <label className="form-label">Your rating *</label>
+                <form onSubmit={handleSubmit} className="mt-5 space-y-5">
+                    <div className="space-y-2">
+                        <label className="form-label">Your rating <span className="text-danger">*</span></label>
                         <StarRow value={rating} onChange={setRating} interactive />
                         {rating === 0 && (
                             <p className="text-xs text-fg-subtle dark:text-fg-subtle-dark">
@@ -122,13 +124,16 @@ export function TenantReviewCard() {
                         )}
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="form-label">Comment</label>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="form-label !mb-0">Comment</label>
+                            <span className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark font-mono-nums">{comment.length}/1000</span>
+                        </div>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder="What was it like renting from this landlord?"
-                            className="form-input min-h-[90px] resize-y"
+                            className="form-input min-h-[96px] resize-y"
                             rows={3}
                             maxLength={1000}
                         />

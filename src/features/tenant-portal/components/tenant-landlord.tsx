@@ -1,7 +1,7 @@
 // components/tenant-landlord.tsx
 "use client";
 
-import { AlertTriangle, BadgeCheck, Building2, CalendarDays, Copy, Home, Mail, MapPin, MessageCircle, Phone, Save, ShieldCheck, Sparkles, User, Landmark, PhoneCall, Clock, BriefcaseBusiness } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Building2, CalendarDays, Contact, Copy, Home, Mail, MapPin, MessageCircle, Phone, Save, ShieldCheck, Sparkles, User, Landmark, PhoneCall, Clock, BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
@@ -51,20 +51,20 @@ const DetailItem = ({ icon: Icon, label, value, tone = "brand" }: {
     tone?: "brand" | "green" | "blue" | "amber" | "violet";
 }) => {
     const tones: Record<string, string> = {
-        brand: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300",
-        green: "bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success",
-        blue: "bg-info-bg dark:bg-info-bg-dark text-info-dark dark:text-info",
-        amber: "bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning",
-        violet: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300",
+        brand: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-brand-200/60 dark:ring-brand-700/40",
+        green: "bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success ring-success/20 dark:ring-success/30",
+        blue: "bg-info-bg dark:bg-info-bg-dark text-info-dark dark:text-info ring-info/20 dark:ring-info/30",
+        amber: "bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning ring-warning/20 dark:ring-warning/30",
+        violet: "bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-brand-200/60 dark:ring-brand-700/40",
     };
     return (
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 dark:border-border-dark/60">
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tones[tone]}`}>
+        <div className="group flex items-start gap-3.5 p-3.5 rounded-xl bg-surface dark:bg-surface-dark/60 border border-border/70 dark:border-border-dark/60 transition-all duration-200 hover:border-brand-300/70 dark:hover:border-brand-700/50 hover:bg-brand-50/40 dark:hover:bg-brand-900/10 hover:shadow-sm">
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${tones[tone]}`}>
                 <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
             </div>
-            <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">{label}</p>
-                <div className="text-sm font-medium text-fg dark:text-fg-dark break-words">{value}</div>
+            <div className="min-w-0 pt-0.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-muted dark:text-fg-muted-dark">{label}</p>
+                <div className="mt-0.5 text-sm font-medium text-fg dark:text-fg-dark break-words">{value}</div>
             </div>
         </div>
     );
@@ -78,11 +78,13 @@ const ContactAction = ({ href, icon: Icon, label, external = true }: {
 }) => {
     const inner = (
         <>
-            <Icon className="h-4 w-4 text-success-dark dark:text-success" strokeWidth={2} />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success transition-transform duration-200 group-hover:scale-105">
+                <Icon className="h-4 w-4" strokeWidth={2} />
+            </span>
             <span>{label}</span>
         </>
     );
-    const cls = "flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 disabled:opacity-50 disabled:pointer-events-none";
+    const cls = "group flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border dark:border-border-dark bg-surface/80 dark:bg-surface-dark/60 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface dark:focus-visible:ring-offset-surface-dark disabled:opacity-50 disabled:pointer-events-none";
     if (!href) {
         return <span className={`${cls} opacity-50 cursor-not-allowed`}>{inner}</span>;
     }
@@ -114,18 +116,32 @@ export const TenantLandlordPage = () => {
 
     if (isLoading) {
         return (
-            <div className="page-container space-y-6">
-                <div className="hero-card p-6 space-y-3">
-                    <div className="skeleton h-20 w-20 rounded-2xl" />
-                    <div className="skeleton h-6 w-1/3" />
-                    <div className="skeleton h-4 w-1/4" />
+            <div className="page-container space-y-6 animate-fade-in-up">
+                <div className="hero-card p-6 sm:p-8 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                        <div className="skeleton h-20 w-20 rounded-2xl shrink-0" />
+                        <div className="space-y-2.5 flex-1">
+                            <div className="skeleton h-3 w-24 rounded" />
+                            <div className="skeleton h-7 w-1/3 rounded" />
+                            <div className="skeleton h-4 w-2/5 rounded" />
+                            <div className="skeleton h-3 w-1/4 rounded" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+                        {[0, 1, 2, 3].map((i) => (
+                            <div key={i} className="skeleton h-12 w-full rounded-xl" />
+                        ))}
+                    </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="card-elevated p-4"><div className="skeleton h-16 w-full" /></div>
-                    ))}
+                <div className="card-elevated p-5 space-y-3">
+                    <div className="skeleton h-4 w-32 rounded" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="skeleton h-16 w-full rounded-xl" />
+                        ))}
+                    </div>
                 </div>
-                <div className="card-elevated p-4"><div className="skeleton h-48 w-full" /></div>
+                <div className="skeleton h-16 w-full rounded-2xl" />
             </div>
         );
     }
@@ -133,10 +149,12 @@ export const TenantLandlordPage = () => {
     if (isError) {
         return (
             <div className="page-container">
-                <div className="card p-6 text-center max-w-md mx-auto">
-                    <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load landlord details</p>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please try again</p>
+                <div className="card p-8 text-center max-w-md mx-auto animate-fade-in-up">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-danger-bg dark:bg-danger-bg-dark text-danger dark:text-danger ring-1 ring-danger/20 mb-4">
+                        <AlertTriangle className="h-7 w-7" strokeWidth={1.75} />
+                    </div>
+                    <p className="text-sm font-semibold text-fg dark:text-fg-dark mb-1">Failed to load landlord details</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-5">Please try again</p>
                     <button onClick={() => refetch()} className="btn-outline btn-sm">Retry</button>
                 </div>
             </div>
@@ -146,10 +164,12 @@ export const TenantLandlordPage = () => {
     if (!lease) {
         return (
             <div className="page-container">
-                <div className="card p-8 text-center max-w-md mx-auto">
-                    <Building2 className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No landlord details yet</p>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">
+                <div className="card p-8 text-center max-w-md mx-auto animate-fade-in-up">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40 mb-4">
+                        <Building2 className="h-8 w-8" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-sm font-semibold text-fg dark:text-fg-dark mb-1">No landlord details yet</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-5">
                         Your landlord&apos;s profile will appear here once your lease is activated.
                     </p>
                     <Link href="/portal" className="btn-outline btn-sm">Back to Dashboard</Link>
@@ -196,49 +216,81 @@ export const TenantLandlordPage = () => {
     return (
         <div className="page-container space-y-6 animate-fade-in-up" style={themeVars}>
             {/* Hero / identity card */}
-            <div className="hero-card relative overflow-hidden">
+            <div className="hero-card relative overflow-hidden p-6 sm:p-8">
+                {/* Branding gradient wash */}
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
                         backgroundImage: hasBranding
-                            ? "linear-gradient(135deg, color-mix(in srgb, var(--brand-theme-primary) 18%, transparent), color-mix(in srgb, var(--brand-theme-secondary) 6%, transparent) 60%, transparent)"
+                            ? "linear-gradient(135deg, color-mix(in srgb, var(--brand-theme-primary) 22%, transparent), color-mix(in srgb, var(--brand-theme-secondary) 8%, transparent) 55%, transparent)"
                             : undefined,
                     }}
                     aria-hidden
                 />
+                {/* Decorative glow orb */}
+                <div
+                    className="absolute -top-24 -right-16 h-64 w-64 rounded-full pointer-events-none opacity-70 blur-3xl"
+                    style={{
+                        background: hasBranding
+                            ? "radial-gradient(circle, color-mix(in srgb, var(--brand-theme-primary) 30%, transparent), transparent 70%)"
+                            : "radial-gradient(circle, color-mix(in srgb, var(--color-brand) 16%, transparent), transparent 70%)",
+                    }}
+                    aria-hidden
+                />
                 <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
-                    {landlordLogoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                            src={landlordLogoUrl}
-                            alt={`${landlordName} logo`}
-                            className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/60 dark:ring-white/10 shadow-dropdown bg-surface dark:bg-surface-dark"
-                        />
-                    ) : (
-                        <div
-                            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold text-white shadow-dropdown"
-                            style={
-                                hasBranding
-                                    ? { backgroundImage: "linear-gradient(135deg, var(--brand-theme-primary), var(--brand-theme-secondary))" }
-                                    : undefined
-                            }
-                        >
-                            {initials}
-                        </div>
-                    )}
+                    <div className="relative shrink-0">
+                        {landlordLogoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={landlordLogoUrl}
+                                alt={`${landlordName} logo`}
+                                className="h-24 w-24 rounded-2xl object-cover ring-4 ring-white/70 dark:ring-white/10 shadow-dropdown bg-surface dark:bg-surface-dark"
+                            />
+                        ) : (
+                            <div
+                                className="flex h-24 w-24 items-center justify-center rounded-2xl text-2xl font-semibold text-white shadow-dropdown ring-1 ring-white/40 dark:ring-white/10"
+                                style={
+                                    hasBranding
+                                        ? { backgroundImage: "linear-gradient(135deg, var(--brand-theme-primary), var(--brand-theme-secondary))" }
+                                        : { backgroundImage: "linear-gradient(135deg, var(--color-brand), var(--color-brand-accent))" }
+                                }
+                            >
+                                {initials}
+                            </div>
+                        )}
+                        {landlordVerified && (
+                            <span
+                                className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-surface dark:bg-surface-dark text-brand dark:text-brand-300 ring-2 ring-white/80 dark:ring-surface-dark shadow-sm"
+                                title="Verified RentManager account holder"
+                            >
+                                <BadgeCheck className="h-4.5 w-4.5" strokeWidth={2.5} />
+                            </span>
+                        )}
+                    </div>
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted dark:text-fg-muted-dark">
                                 Your Landlord
                             </p>
                             {premium && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
                                     <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
                                     Premium
                                 </span>
                             )}
+                            <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${
+                                    lease.status === "ACTIVE"
+                                        ? "bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success ring-1 ring-inset ring-success/20 dark:ring-success/30"
+                                        : "bg-surface dark:bg-surface-dark text-fg-muted dark:text-fg-muted-dark border border-border dark:border-border-dark"
+                                }`}
+                                title={`Lease status: ${lease.status?.toLowerCase()}`}
+                            >
+                                <span className={`status-dot ${lease.status === "ACTIVE" ? "status-dot-success status-dot-live" : ""}`} />
+                                {lease.status?.toLowerCase()}
+                            </span>
                         </div>
-                        <h1 className="page-title !text-[1.75rem] mt-1 flex flex-wrap items-center gap-2">
+                        <h1 className="page-title !text-[1.75rem] mt-1.5 flex flex-wrap items-center gap-2">
                             {landlordName ?? "Your Landlord"}
                             {landlordVerified && (
                                 <span
@@ -254,7 +306,7 @@ export const TenantLandlordPage = () => {
                             {propertyName} · Unit {unitNumber}{unitLabel ? ` · ${unitLabel}` : ""}
                         </p>
                         {memberSince && (
-                            <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-fg-muted dark:text-fg-muted-dark">
+                            <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-fg-muted dark:text-fg-muted-dark">
                                 <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
                                 Renting with this landlord since {memberSince}
                             </p>
@@ -263,36 +315,50 @@ export const TenantLandlordPage = () => {
                 </div>
 
                 {/* Quick contact actions */}
-                <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-2 mt-6">
+                <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-7">
                     <a
                         href={landlordPhone ? `tel:${landlordPhone}` : undefined}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 ${!landlordPhone ? "opacity-50 pointer-events-none" : ""}`}
+                        className={`group flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border dark:border-border-dark bg-surface/80 dark:bg-surface-dark/60 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface dark:focus-visible:ring-offset-surface-dark ${!landlordPhone ? "opacity-50 pointer-events-none" : ""}`}
                     >
-                        <Phone className="h-4 w-4 text-success-dark dark:text-success" strokeWidth={2} />
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success transition-transform duration-200 group-hover:scale-105">
+                            <Phone className="h-4 w-4" strokeWidth={2} />
+                        </span>
                         Call
                     </a>
                     <ContactAction href={waLink} icon={MessageCircle} label="WhatsApp" />
                     <a
                         href={landlordEmail ? `mailto:${landlordEmail}` : undefined}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 ${!landlordEmail ? "opacity-50 pointer-events-none" : ""}`}
+                        className={`group flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border dark:border-border-dark bg-surface/80 dark:bg-surface-dark/60 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface dark:focus-visible:ring-offset-surface-dark ${!landlordEmail ? "opacity-50 pointer-events-none" : ""}`}
                     >
-                        <Mail className="h-4 w-4 text-info-dark dark:text-info" strokeWidth={2} />
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-info-bg dark:bg-info-bg-dark text-info-dark dark:text-info transition-transform duration-200 group-hover:scale-105">
+                            <Mail className="h-4 w-4" strokeWidth={2} />
+                        </span>
                         Email
                     </a>
                     <button
                         type="button"
                         onClick={() => downloadVCard(lease)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15"
+                        className="group flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border dark:border-border-dark bg-surface/80 dark:bg-surface-dark/60 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface dark:focus-visible:ring-offset-surface-dark"
                     >
-                        <Save className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 transition-transform duration-200 group-hover:scale-105">
+                            <Save className="h-4 w-4" strokeWidth={2} />
+                        </span>
                         Save Contact
                     </button>
                 </div>
             </div>
 
             {/* Contact details */}
-            <div>
-                <h3 className="section-header !text-sm mb-3">Contact Details</h3>
+            <div className="card-elevated">
+                <div className="flex items-center gap-2.5 mb-4">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
+                        <Contact className="h-4.5 w-4.5" strokeWidth={2} />
+                    </span>
+                    <div>
+                        <h3 className="section-header !text-sm !mb-0">Contact Details</h3>
+                        <p className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark -mt-0.5">Reach your landlord &amp; reference info</p>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <DetailItem
                         icon={Phone}
@@ -413,10 +479,18 @@ export const TenantLandlordPage = () => {
             </div>
 
             {/* Trust / reassurance */}
-            <div className="card-elevated p-5 border-2 border-brand/15 dark:border-brand/15">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
-                        <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
+            <div className="relative card-elevated p-5 sm:p-6 overflow-hidden border-2 border-brand/20 dark:border-brand/20">
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-70"
+                    style={{
+                        backgroundImage: "linear-gradient(120deg, color-mix(in srgb, var(--color-brand) 8%, transparent), transparent 60%)",
+                    }}
+                    aria-hidden
+                />
+                <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-brand to-brand-accent" aria-hidden />
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
+                        <ShieldCheck className="h-5.5 w-5.5" strokeWidth={1.75} />
                     </div>
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-fg dark:text-fg-dark">
@@ -424,13 +498,13 @@ export const TenantLandlordPage = () => {
                                 ? "Verified landlord — you're in safe hands"
                                 : "Payments are always protected"}
                         </p>
-                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5 leading-relaxed">
                             Rent payments are processed securely through RentManager and remitted directly to {landlordName ?? "your landlord"}&apos;s
                             M-Pesa account. Every payment you make is recorded in your ledger and receipt history.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success text-[11px] font-semibold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset ring-success/20 dark:ring-success/30">
                             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
                             Secure
                         </span>
