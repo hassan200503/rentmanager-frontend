@@ -21,7 +21,8 @@ import {
     Menu as MenuIcon,
 } from "lucide-react";
 import { BrandBadge } from "@/shared/components/brand";
-import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
+import { useTenantDashboardQuery, useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
+import { isPremiumLandlord } from "../api/tenant-portal-api";
 
 interface NavItem {
     href: string;
@@ -31,11 +32,11 @@ interface NavItem {
     badge?: string;
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
     { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
     { href: "/portal/payments", label: "Payments", icon: CreditCard },
     { href: "/portal/lease", label: "Lease", icon: FileText },
-    { href: "/portal/landlord", label: "Landlord", icon: Building2, badge: "Premium" },
+    { href: "/portal/landlord", label: "Landlord", icon: Building2 },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -129,6 +130,13 @@ function TenantSidebarBody({
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
     const { data } = useTenantDashboardQuery();
+    const { data: lease } = useTenantLeaseQuery();
+
+    const navItems: NavItem[] = baseNavItems.map((item) =>
+        item.href === "/portal/landlord"
+            ? { ...item, badge: isPremiumLandlord(lease ?? { billingMode: null, subscriptionStatus: null }) ? "Premium" : undefined }
+            : item,
+    );
 
     const mounted = useSyncExternalStore(
         () => () => {},
@@ -279,7 +287,7 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
     return (
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-border dark:border-border-dark safe-area-bottom">
             <div className="flex items-center justify-around h-16 px-2">
-                {navItems.map((item) => {
+                {baseNavItems.map((item) => {
                     const active = isItemActive(pathname, item.href);
                     const Icon = item.icon;
                     return (

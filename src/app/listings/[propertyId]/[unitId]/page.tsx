@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { ChevronRight, ChevronLeft, X, ImageOff, ShieldCheck } from "lucide-react";
 import { usePublicUnitQuery } from "@/features/public-listings/queries/use-public-unit-query";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
+import { ReviewsSection } from "@/features/public-listings/components/reviews-section";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
 
@@ -172,6 +173,8 @@ export default function UnitDetailPage() {
                             </p>
                         </section>
                     )}
+
+                    <ReviewsSection unitId={unit.id} />
                 </div>
 
                 {/* Sticky reserve panel — desktop only */}

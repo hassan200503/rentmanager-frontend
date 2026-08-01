@@ -13,8 +13,13 @@ import {
     Moon,
     Monitor,
     Check,
+    Smartphone,
+    ShieldCheck,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { BrandingCard } from "@/features/settings/components/branding-card";
+import { EmergencyContactCard } from "@/features/settings/components/emergency-contact-card";
+import { DarajaConfigCard } from "@/features/daraja/components/daraja-config-card";
 import { useRouter } from "next/navigation";
 
 function SectionCard({ icon: Icon, label, children }: { icon: typeof User; label: string; children: React.ReactNode }) {
@@ -63,7 +68,7 @@ function ThemeOption({ value, label, icon: Icon, current, onSelect }: {
 }
 
 export default function SettingsPage() {
-    const { user, isLoading: isUserLoading } = useCurrentUser();
+    const { user, isOwner, isLoading: isUserLoading } = useCurrentUser();
     const { theme, setTheme } = useTheme();
     const { signOut } = useAuth();
     const { user: clerkUser } = useUser();
@@ -146,6 +151,30 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </SectionCard>
+
+            {/* ── Branding (Premium) ─────────────────────────── */}
+            <BrandingCard />
+
+            {/* ── Emergency contact ───────────────────────────── */}
+            <EmergencyContactCard />
+
+            {/* ── M-Pesa (Daraja) ─────────────────────────────── */}
+            {isOwner && user?.tenantId ? (
+                <DarajaConfigCard tenantId={user.tenantId} />
+            ) : (
+                <div className="card animate-fade-in-up">
+                    <h2 className="section-header inline-flex items-center gap-2">
+                        <Smartphone className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                        M-Pesa
+                    </h2>
+                    <div className="mt-4 flex items-center gap-3 rounded-lg bg-border-subtle/50 dark:bg-border-subtle-dark/50 px-4 py-3">
+                        <ShieldCheck className="h-4 w-4 shrink-0 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                        <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
+                            Only account owners can manage M-Pesa credentials. Ask an account owner for access.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* ── Appearance ───────────────────────────────────── */}
             <SectionCard icon={Palette} label="Appearance">

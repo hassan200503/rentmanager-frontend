@@ -11,6 +11,7 @@ export const tenantPortalKeys = {
     paymentReceipt: (transactionId: string) => ["tenant-portal", "receipt", transactionId] as const,
     maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
     autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
+    myReview: () => [...tenantPortalKeys.all, "my-review"] as const,
 };
 
 export const useTenantDashboardQuery = () => {
@@ -69,5 +70,13 @@ export const useTenantAutoPaySettingsQuery = () => {
         queryFn: () => tenantPortalApi.getAutoPaySettings(),
         staleTime: 30 * 1000,
         refetchOnWindowFocus: true,
+    });
+};
+
+export const useMyReviewQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.myReview(),
+        queryFn: () => tenantPortalApi.getMyReview(),
+        staleTime: 30 * 1000,
     });
 };

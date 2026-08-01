@@ -1,11 +1,12 @@
 // components/tenant-landlord.tsx
 "use client";
 
-import { AlertTriangle, BadgeCheck, Building2, CalendarDays, Copy, Home, Mail, MapPin, MessageCircle, Phone, Save, ShieldCheck, Sparkles, User, Landmark } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Building2, CalendarDays, Copy, Home, Mail, MapPin, MessageCircle, Phone, Save, ShieldCheck, Sparkles, User, Landmark, PhoneCall, Clock, BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
-import type { TenantLeaseResponse } from "../api/tenant-portal-api";
+import { isPremiumLandlord, type TenantLeaseResponse } from "../api/tenant-portal-api";
+import { TenantReviewCard } from "./tenant-review-card";
 
 const formatMemberSince = (iso: string | null) => {
     if (!iso) return null;
@@ -183,13 +184,26 @@ export const TenantLandlordPage = () => {
 
     const memberSince = formatMemberSince(landlordSince);
     const waLink = whatsappLink(landlordPhone);
+    const premium = isPremiumLandlord(lease);
+    const hasBranding = Boolean(lease.landlordPrimaryColor) || Boolean(lease.landlordSecondaryColor);
+    const themeVars = hasBranding
+        ? ({
+              "--brand-theme-primary": lease.landlordPrimaryColor || "#059669",
+              "--brand-theme-secondary": lease.landlordSecondaryColor || "#10B981",
+          } as React.CSSProperties)
+        : undefined;
 
     return (
-        <div className="page-container space-y-6 animate-fade-in-up">
+        <div className="page-container space-y-6 animate-fade-in-up" style={themeVars}>
             {/* Hero / identity card */}
             <div className="hero-card relative overflow-hidden">
                 <div
-                    className="absolute inset-0 bg-gradient-to-br from-brand/15 via-brand/5 to-transparent dark:from-brand/25 dark:via-brand/10 dark:to-transparent pointer-events-none"
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage: hasBranding
+                            ? "linear-gradient(135deg, color-mix(in srgb, var(--brand-theme-primary) 18%, transparent), color-mix(in srgb, var(--brand-theme-secondary) 6%, transparent) 60%, transparent)"
+                            : undefined,
+                    }}
                     aria-hidden
                 />
                 <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
@@ -201,7 +215,14 @@ export const TenantLandlordPage = () => {
                             className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/60 dark:ring-white/10 shadow-dropdown bg-surface dark:bg-surface-dark"
                         />
                     ) : (
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-500 text-2xl font-semibold text-white shadow-dropdown">
+                        <div
+                            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold text-white shadow-dropdown"
+                            style={
+                                hasBranding
+                                    ? { backgroundImage: "linear-gradient(135deg, var(--brand-theme-primary), var(--brand-theme-secondary))" }
+                                    : undefined
+                            }
+                        >
                             {initials}
                         </div>
                     )}
@@ -210,10 +231,12 @@ export const TenantLandlordPage = () => {
                             <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">
                                 Your Landlord
                             </p>
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
-                                <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
-                                Premium
-                            </span>
+                            {premium && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
+                                    <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
+                                    Premium
+                                </span>
+                            )}
                         </div>
                         <h1 className="page-title !text-[1.75rem] mt-1 flex flex-wrap items-center gap-2">
                             {landlordName ?? "Your Landlord"}
@@ -340,6 +363,52 @@ export const TenantLandlordPage = () => {
                             </span>
                         }
                     />
+                    {lease.managerName && (
+                        <DetailItem
+                            icon={BriefcaseBusiness}
+                            tone="brand"
+                            label="Property Manager"
+                            value={
+                                <div className="space-y-0.5">
+                                    <p className="font-medium text-fg dark:text-fg-dark">{lease.managerName}</p>
+                                    {lease.managerPhone && (
+                                        <a href={`tel:${lease.managerPhone}`} className="block text-xs text-fg-muted dark:text-fg-muted-dark hover:text-brand dark:hover:text-brand-300 transition-colors">
+                                            {lease.managerPhone}
+                                        </a>
+                                    )}
+                                    {lease.managerEmail && (
+                                        <a href={`mailto:${lease.managerEmail}`} className="block text-xs text-fg-muted dark:text-fg-muted-dark hover:text-brand dark:hover:text-brand-300 transition-colors break-all">
+                                            {lease.managerEmail}
+                                        </a>
+                                    )}
+                                </div>
+                            }
+                        />
+                    )}
+                    {lease.emergencyContactPhone && (
+                        <DetailItem
+                            icon={PhoneCall}
+                            tone="amber"
+                            label="Emergency Contact"
+                            value={
+                                <div className="space-y-1.5">
+                                    <a
+                                        href={`tel:${lease.emergencyContactPhone}`}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-border dark:border-border-dark px-2.5 py-1.5 text-sm font-medium text-fg dark:text-fg-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all"
+                                    >
+                                        <PhoneCall className="h-3.5 w-3.5 text-success-dark dark:text-success" strokeWidth={2} />
+                                        {lease.emergencyContactPhone}
+                                    </a>
+                                    {lease.emergencyContact24h && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-success-dark dark:text-success">
+                                            <Clock className="h-3 w-3" strokeWidth={2} />
+                                            24/7
+                                        </span>
+                                    )}
+                                </div>
+                            }
+                        />
+                    )}
                 </div>
             </div>
 
@@ -368,6 +437,9 @@ export const TenantLandlordPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Landlord review (Phase 4b) */}
+            <TenantReviewCard />
         </div>
     );
 };

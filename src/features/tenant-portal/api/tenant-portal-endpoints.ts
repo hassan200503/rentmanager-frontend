@@ -19,4 +19,6 @@ export const tenantPortalEndpoints = {
     autoPayPhone: () => `${base}/auto-pay/phone`,
     maintenanceList: () => `${base}/maintenance`,
     maintenanceSubmit: () => `${base}/maintenance`,
+    reviewMe: () => `${base}/reviews/me`,
+    submitReview: () => `${base}/reviews`,
 };

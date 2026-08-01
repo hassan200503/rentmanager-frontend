@@ -7,6 +7,7 @@ import { ChevronRight, ChevronLeft, X, ImageOff, AlertTriangle, Home, ArrowLeft,
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
 import { usePropertyUnitsQuery } from "@/features/public-listings/queries/use-property-units-query";
 import { UnitCard } from "@/features/public-listings/components/unit-card";
+import { ReviewsSection } from "@/features/public-listings/components/reviews-section";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
 
@@ -202,6 +203,9 @@ export default function PropertyDetailPage() {
                         </div>
                     )}
                 </section>
+
+                {/* Landlord reviews (Phase 4b) */}
+                <ReviewsSection propertyId={propertyId} />
             </div>
 
             {/* Photo lightbox */}

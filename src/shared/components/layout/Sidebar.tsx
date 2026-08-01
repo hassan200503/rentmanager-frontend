@@ -10,7 +10,7 @@ import {
   Receipt,
   ClipboardList,
   Users,
-  Smartphone,
+  Wrench,
   Send,
   UserCog,
   Settings,
@@ -38,8 +38,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard/payments", label: "Payments", icon: Receipt },
   { href: "/dashboard/rent-ledger", label: "Rent Ledger", icon: ClipboardList },
   { href: "/dashboard/leases", label: "Tenants", icon: Users },
+  { href: "/dashboard/requests", label: "Requests", icon: Wrench },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/daraja/config", label: "M-Pesa", icon: Smartphone },
   { href: "/dashboard/disbursements", label: "Disbursements", icon: Send },
   { href: "/dashboard/team", label: "Team", icon: UserCog },
 ];

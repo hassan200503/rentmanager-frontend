@@ -7,6 +7,12 @@ export const publicEndpoints = {
     unitById: (id: string) =>
         `/public/units/${id}`,
 
+    unitReviews: (unitId: string) =>
+        `/public/units/${unitId}/reviews`,
+
+    propertyReviews: (propertyId: string) =>
+        `/public/properties/${propertyId}/reviews`,
+
     unitsByProperty: (propertyId: string) =>
         `/public/units/property/${propertyId}`,
 

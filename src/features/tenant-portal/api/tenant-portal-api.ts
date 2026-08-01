@@ -1,6 +1,7 @@
 // api/tenant-portal-api.ts
 import { apiClient } from "@/lib/api/client";
 import { tenantPortalEndpoints } from "./tenant-portal-endpoints";
+import { LandlordReviewResponse } from "@/features/reviews/types/review-response";
 
 // Types for tenant portal responses
 export interface TenantDashboardResponse {
@@ -42,6 +43,24 @@ export interface TenantLeaseResponse {
     landlordSince: string | null;
     landlordVerified: boolean;
     terms: string;
+    managerName: string | null;
+    managerPhone: string | null;
+    managerEmail: string | null;
+    emergencyContactPhone: string | null;
+    emergencyContact24h: boolean;
+    landlordPrimaryColor: string | null;
+    landlordSecondaryColor: string | null;
+    billingMode: "COMMISSION" | "PREMIUM_MONTHLY" | null;
+    subscriptionStatus: string | null;
+}
+
+export function isPremiumLandlord(lease: Pick<TenantLeaseResponse, "billingMode" | "subscriptionStatus">): boolean {
+    if (lease.billingMode !== "PREMIUM_MONTHLY") return false;
+    return (
+        lease.subscriptionStatus === "ACTIVE" ||
+        lease.subscriptionStatus === "TRIAL" ||
+        lease.subscriptionStatus === "GRACE_PERIOD"
+    );
 }
 
 export interface TenantPaymentSummaryResponse {
@@ -118,18 +137,18 @@ export interface MaintenanceRequestResponse {
     status: "SUBMITTED" | "IN_REVIEW" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
     scheduledDate: string | null;
     completedAt: string | null;
+    firstLandlordResponseAt: string | null;
     notes: string | null;
     createdBy: string | null;
     assignedTo: string | null;
+    propertyName: string | null;
+    unitNumber: string | null;
+    renterName: string | null;
     createdAt: string;
     updatedAt: string;
 }
 
 export interface CreateMaintenanceRequest {
-    unitId: string;
-    propertyId: string;
-    tenantProfileId: string;
-    leaseId?: string;
     title: string;
     description?: string;
     category: MaintenanceRequestResponse["category"];
@@ -157,10 +176,8 @@ export interface UpdateAutoPayPhoneRequest {
     mpesaPhone: string;
 }
 
-// Maintenance endpoints (separate base — not under /tenant-portal)
-const maintenanceBase = "/maintenance";
-
-// API client
+// Maintenance (renter-scoped — ids are resolved server-side from the
+// authenticated renter's active lease, never sent by the client)
 export const tenantPortalApi = {
     getDashboard: async (): Promise<TenantDashboardResponse> => {
         const { token, tenantId } = await getAuthContext();
@@ -240,7 +257,7 @@ export const tenantPortalApi = {
     getMaintenanceRequests: async (): Promise<MaintenanceRequestResponse[]> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<MaintenanceRequestResponse[]>(
-            maintenanceBase,
+            tenantPortalEndpoints.maintenanceList(),
             token,
             tenantId
         );
@@ -249,7 +266,7 @@ export const tenantPortalApi = {
     submitMaintenanceRequest: async (request: CreateMaintenanceRequest): Promise<MaintenanceRequestResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.post<MaintenanceRequestResponse>(
-            maintenanceBase,
+            tenantPortalEndpoints.maintenanceSubmit(),
             request,
             token,
             tenantId
@@ -281,6 +298,26 @@ export const tenantPortalApi = {
         return apiClient.post<AutoPaySettingsResponse>(
             tenantPortalEndpoints.autoPayPhone(),
             request,
+            token,
+            tenantId
+        );
+    },
+
+    // Reviews
+    getMyReview: async (): Promise<LandlordReviewResponse | null> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<LandlordReviewResponse | null>(
+            tenantPortalEndpoints.reviewMe(),
+            token,
+            tenantId
+        );
+    },
+
+    submitReview: async (rating: number, comment: string): Promise<LandlordReviewResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<LandlordReviewResponse>(
+            tenantPortalEndpoints.submitReview(),
+            { rating, comment },
             token,
             tenantId
         );

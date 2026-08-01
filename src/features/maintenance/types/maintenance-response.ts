@@ -1,0 +1,61 @@
+// types/maintenance-response.ts
+// Mirrors backend MaintenanceRequestResponse (enriched) + MaintenanceSlaSummaryResponse.
+
+export type MaintenanceStatus =
+    | "SUBMITTED"
+    | "IN_REVIEW"
+    | "SCHEDULED"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "CANCELLED";
+
+export type MaintenancePriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+export type MaintenanceCategory =
+    | "PLUMBING"
+    | "ELECTRICAL"
+    | "STRUCTURAL"
+    | "APPLIANCE"
+    | "PEST_CONTROL"
+    | "GENERAL";
+
+export interface MaintenanceRequestResponse {
+    id: string;
+    unitId: string;
+    propertyId: string;
+    tenantProfileId: string;
+    leaseId: string | null;
+    title: string;
+    description: string | null;
+    category: MaintenanceCategory;
+    priority: MaintenancePriority;
+    status: MaintenanceStatus;
+    scheduledDate: string | null;
+    completedAt: string | null;
+    firstLandlordResponseAt: string | null;
+    notes: string | null;
+    createdBy: string | null;
+    assignedTo: string | null;
+    propertyName: string | null;
+    unitNumber: string | null;
+    renterName: string | null;
+    version: number | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MaintenanceSlaSummaryResponse {
+    totalRequests: number;
+    resolvedRequests: number;
+    respondedRequests: number;
+    avgResponseHours: number;
+    resolvedRequirementMet: boolean;
+    responseRatePct: number | null;
+}
+
+export interface MaintenanceListParams {
+    status?: MaintenanceStatus;
+    priority?: MaintenancePriority;
+    sort?: "createdAt" | "priority" | "status" | "title" | "updatedAt";
+    direction?: "ASC" | "DESC";
+}

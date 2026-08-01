@@ -210,9 +210,6 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
         if (!dashboard) return;
 
         mutation.mutate({
-            unitId: "",
-            propertyId: "",
-            tenantProfileId: "",
             title: title.trim(),
             description: description.trim() || undefined,
             category,
