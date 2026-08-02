@@ -12,6 +12,7 @@ import {
     Wrench,
     HelpCircle,
     Building2,
+    Megaphone,
     Sparkles,
     X,
     Sun,
@@ -21,7 +22,7 @@ import {
     Menu as MenuIcon,
 } from "lucide-react";
 import { BrandBadge } from "@/shared/components/brand";
-import { useTenantDashboardQuery, useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
+import { useTenantDashboardQuery, useTenantLeaseQuery, useUnreadAnnouncementCountQuery } from "../hooks/use-tenant-portal-queries";
 import { isPremiumLandlord } from "../api/tenant-portal-api";
 
 interface NavItem {
@@ -32,11 +33,18 @@ interface NavItem {
     badge?: string;
 }
 
+const ANNOUNCEMENTS_HREF = "/portal/announcements";
+
+function formatBadge(count: number): string {
+    return count > 99 ? "99+" : String(count);
+}
+
 const baseNavItems: NavItem[] = [
     { href: "/portal", label: "Dashboard", icon: LayoutDashboard },
     { href: "/portal/payments", label: "Payments", icon: CreditCard },
     { href: "/portal/lease", label: "Lease", icon: FileText },
     { href: "/portal/landlord", label: "Landlord", icon: Building2 },
+    { href: "/portal/announcements", label: "Announcements", icon: Megaphone },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -54,13 +62,16 @@ function NavLink({
     active,
     collapsed,
     onNavigate,
+    countBadge,
 }: {
     item: NavItem;
     active: boolean;
     collapsed: boolean;
     onNavigate?: () => void;
+    countBadge?: number;
 }) {
     const Icon = item.icon;
+    const showCountBadge = countBadge != null && countBadge > 0;
     const base = `group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 ${
         collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2"
     } ${
@@ -82,12 +93,29 @@ function NavLink({
                 }`}
             >
                 <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={active ? 2.5 : 2} />
+
+                {/* Collapsed: count bubble overlaid on the icon */}
+                {collapsed && showCountBadge && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[8px] font-bold leading-none text-white ring-2 ring-surface dark:ring-surface-dark animate-scale-in">
+                        {formatBadge(countBadge!)}
+                    </span>
+                )}
             </span>
-            {!collapsed && <span className="relative flex-1">{item.label}</span>}
-            {!collapsed && item.badge && (
-                <span className="relative inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
-                    {item.badge === "Premium" && <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />}
-                    {item.badge}
+            {!collapsed && (
+                <span className="relative flex min-w-0 flex-1 items-center gap-2">
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && (
+                        <span className="relative inline-flex shrink-0 items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
+                            {item.badge === "Premium" && <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />}
+                            {item.badge}
+                        </span>
+                    )}
+                    {/* Expanded: right-aligned unread count pill */}
+                    {showCountBadge && (
+                        <span className="relative ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-bold leading-none text-white shadow-sm animate-scale-in">
+                            {formatBadge(countBadge!)}
+                        </span>
+                    )}
                 </span>
             )}
         </>
@@ -110,7 +138,8 @@ function NavLink({
             href={item.href}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            title={collapsed ? item.label : undefined}
+            aria-label={showCountBadge ? `${item.label}, ${formatBadge(countBadge!)} unread` : undefined}
+            title={collapsed ? (showCountBadge ? `${item.label} (${formatBadge(countBadge!)})` : item.label) : undefined}
             className={base}
         >
             {inner}
@@ -131,6 +160,7 @@ function TenantSidebarBody({
     const { theme, setTheme } = useTheme();
     const { data } = useTenantDashboardQuery();
     const { data: lease } = useTenantLeaseQuery();
+    const { data: unreadAnnouncements } = useUnreadAnnouncementCountQuery();
 
     const navItems: NavItem[] = baseNavItems.map((item) =>
         item.href === "/portal/landlord"
@@ -209,6 +239,7 @@ function TenantSidebarBody({
                         active={isItemActive(pathname, item.href)}
                         collapsed={collapsed}
                         onNavigate={onNavigate}
+                        countBadge={item.href === ANNOUNCEMENTS_HREF ? unreadAnnouncements?.count : undefined}
                     />
                 ))}
 

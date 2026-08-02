@@ -70,6 +70,27 @@ export const maintenanceApi = {
         );
     },
 
+    unviewedCount: async (): Promise<number> => {
+        const { token, tenantId } = await getAuthContext();
+        const response = await apiClient.get<{ count: number }>(
+            `${endpoints.maintenance}/unviewed-count`,
+            token,
+            tenantId,
+        );
+        return response.count;
+    },
+
+    markAllViewed: async (): Promise<number> => {
+        const { token, tenantId } = await getAuthContext();
+        const response = await apiClient.post<{ count: number }>(
+            `${endpoints.maintenance}/read`,
+            undefined,
+            token,
+            tenantId,
+        );
+        return response.count;
+    },
+
     updateStatus: async (id: string, status: string): Promise<MaintenanceRequestResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.patch<MaintenanceRequestResponse>(

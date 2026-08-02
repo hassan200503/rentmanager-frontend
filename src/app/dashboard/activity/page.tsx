@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Activity as ActivityIcon, History, Filter, X, ChevronRight, RotateCw, Building2, Home, FileText } from "lucide-react";
+import { Activity as ActivityIcon, History, Filter, X, ChevronRight, RotateCw, Building2, Home, FileText, Wrench } from "lucide-react";
 import { activityApi, type ActivityFilters } from "@/features/activity/api/activity-api";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { timeAgo, getActivityHref, describe } from "@/features/activity/utils/activity-display";
 
 const PAGE_SIZE = 20;
 
-const ENTITY_TYPE_OPTIONS = ["", "Property", "Unit", "Lease"] as const;
-const EVENT_TYPE_OPTIONS = ["", "PROPERTY_CREATED", "PROPERTY_UPDATED", "PROPERTY_ACTIVATED", "PROPERTY_ARCHIVED", "PROPERTY_OCCUPANCY_CHANGED", "UNIT_CREATED", "UNIT_UPDATED", "UNIT_ACTIVATED", "UNIT_ARCHIVED", "UNIT_OCCUPANCY_CHANGED", "LEASE_CREATED", "LEASE_TERMINATED"] as const;
+const ENTITY_TYPE_OPTIONS = ["", "Property", "Unit", "Lease", "MaintenanceRequest"] as const;
+const EVENT_TYPE_OPTIONS = ["", "PROPERTY_CREATED", "PROPERTY_UPDATED", "PROPERTY_ACTIVATED", "PROPERTY_ARCHIVED", "PROPERTY_OCCUPANCY_CHANGED", "UNIT_CREATED", "UNIT_UPDATED", "UNIT_ACTIVATED", "UNIT_ARCHIVED", "UNIT_OCCUPANCY_CHANGED", "LEASE_CREATED", "LEASE_TERMINATED", "MAINTENANCE_REQUEST_SUBMITTED"] as const;
 
 function getEventTypeLabel(eventType: string): string {
     return eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -22,6 +22,7 @@ function entityBadgeClass(entityType: string): string {
         case "Property": return "pill-info";
         case "Unit": return "pill-success";
         case "Lease": return "pill-warning";
+        case "MaintenanceRequest": return "pill-danger";
         default: return "pill-neutral";
     }
 }
@@ -31,6 +32,7 @@ function entityIcon(entityType: string) {
         case "Property": return Building2;
         case "Unit": return Home;
         case "Lease": return FileText;
+        case "MaintenanceRequest": return Wrench;
         default: return History;
     }
 }
@@ -40,6 +42,7 @@ function entityIconBg(entityType: string): string {
         case "Property": return "bg-brand-50 dark:bg-brand-800";
         case "Unit": return "bg-success-bg dark:bg-success-bg-dark";
         case "Lease": return "bg-warning-bg dark:bg-warning-bg-dark";
+        case "MaintenanceRequest": return "bg-danger-bg dark:bg-danger-bg-dark";
         default: return "bg-border-subtle dark:bg-border-subtle-dark";
     }
 }
@@ -49,6 +52,7 @@ function entityIconColor(entityType: string): string {
         case "Property": return "text-brand dark:text-brand-300";
         case "Unit": return "text-success-dark dark:text-success";
         case "Lease": return "text-warning-dark dark:text-warning";
+        case "MaintenanceRequest": return "text-danger dark:text-danger";
         default: return "text-fg-muted dark:text-fg-muted-dark";
     }
 }

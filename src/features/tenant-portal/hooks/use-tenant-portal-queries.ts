@@ -12,6 +12,9 @@ export const tenantPortalKeys = {
     maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
     autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
     myReview: () => [...tenantPortalKeys.all, "my-review"] as const,
+    announcements: () => [...tenantPortalKeys.all, "announcements"] as const,
+    unreadAnnouncementCount: () => [...tenantPortalKeys.all, "announcements", "unread-count"] as const,
+    whatsAppOptIn: () => [...tenantPortalKeys.all, "whatsapp-opt-in"] as const,
 };
 
 export const useTenantDashboardQuery = () => {
@@ -78,5 +81,39 @@ export const useMyReviewQuery = () => {
         queryKey: tenantPortalKeys.myReview(),
         queryFn: () => tenantPortalApi.getMyReview(),
         staleTime: 30 * 1000,
+    });
+};
+
+export const useTenantAnnouncementsQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.announcements(),
+        queryFn: () => tenantPortalApi.getAnnouncements(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
+    });
+};
+
+/**
+ * Unread in-app announcements for the sidebar badge. Quiet 60s poll +
+ * window-focus refetch so the badge picks up new broadcasts without a page
+ * reload; the mark-read mutation invalidates it instantly as the renter
+ * opens announcements.
+ */
+export const useUnreadAnnouncementCountQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.unreadAnnouncementCount(),
+        queryFn: () => tenantPortalApi.getUnreadAnnouncementsCount(),
+        staleTime: 30 * 1000,
+        refetchInterval: 60 * 1000,
+        refetchOnWindowFocus: true,
+    });
+};
+
+export const useWhatsAppOptInQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.whatsAppOptIn(),
+        queryFn: () => tenantPortalApi.getWhatsAppOptIn(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
     });
 };

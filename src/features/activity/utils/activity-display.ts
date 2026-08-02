@@ -1,4 +1,4 @@
-import { Building2, Home, FileText } from "lucide-react";
+import { Building2, Home, FileText, Wrench } from "lucide-react";
 import type { Activity } from "@/features/activity/types/activity";
 
 export function timeAgo(dateString?: string): string | null {
@@ -21,6 +21,7 @@ export const ENTITY_ICON: Record<string, typeof Building2> = {
     Property: Building2,
     Unit: Home,
     Lease: FileText,
+    MaintenanceRequest: Wrench,
 };
 
 export function getActivityHref(activity: Activity): string | null {
@@ -46,6 +47,11 @@ export function getActivityHref(activity: Activity): string | null {
         return `/dashboard/leases/${entityId}`;
     }
 
+    // Maintenance-request events: the Requests hub is where they're handled.
+    if (activity.entityType === "MaintenanceRequest") {
+        return "/dashboard/requests";
+    }
+
     return null;
 }
 
@@ -56,6 +62,7 @@ const ACTION_VERB: Record<string, string> = {
     UPDATED: "updated",
     TERMINATED: "terminated",
     OCCUPANCY_CHANGED: "changed the occupancy of",
+    REQUEST_SUBMITTED: "submitted",
 };
 
 export function describe(activity: Activity): string {

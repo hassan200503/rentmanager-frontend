@@ -7,7 +7,7 @@ export interface Activity {
     eventType: string;
     // Will grow beyond these three (see spec §5). Consumers must fall back
     // gracefully for unknown values rather than assume this list is closed.
-    entityType: "Property" | "Unit" | "Lease";
+    entityType: "Property" | "Unit" | "Lease" | "MaintenanceRequest";
     entityId: string;
     entityName: string;
     actorId: string | null;

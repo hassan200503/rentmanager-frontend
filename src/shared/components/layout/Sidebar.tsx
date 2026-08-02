@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Users,
   Wrench,
+  Megaphone,
   Send,
   UserCog,
   Settings,
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { BrandBadge } from "@/shared/components/brand";
+import { useUnviewedRequestsCountQuery } from "@/features/maintenance/hooks/use-maintenance-query";
 
 interface NavItem {
   href: string;
@@ -39,10 +41,17 @@ const navItems: NavItem[] = [
   { href: "/dashboard/rent-ledger", label: "Rent Ledger", icon: ClipboardList },
   { href: "/dashboard/leases", label: "Tenants", icon: Users },
   { href: "/dashboard/requests", label: "Requests", icon: Wrench },
+  { href: "/dashboard/announcements", label: "Announcements", icon: Megaphone },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/disbursements", label: "Disbursements", icon: Send },
   { href: "/dashboard/team", label: "Team", icon: UserCog },
 ];
+
+const REQUESTS_HREF = "/dashboard/requests";
+
+function formatBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
 
 const secondaryNavItems: NavItem[] = [
   { href: "/dashboard/archive", label: "Archived", icon: Archive },
@@ -59,19 +68,26 @@ function NavLink({
   active,
   collapsed,
   onNavigate,
+  badge,
 }: {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
   onNavigate?: () => void;
+  badge?: number;
 }) {
   const Icon = item.icon;
+  const showBadge = badge != null && badge > 0;
+  const ariaLabel = showBadge
+    ? `${item.label}, ${formatBadge(badge!)} unviewed`
+    : undefined;
   return (
     <Link
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      title={collapsed ? item.label : undefined}
+      aria-label={ariaLabel}
+      title={collapsed ? (showBadge ? `${item.label} (${formatBadge(badge!)})` : item.label) : undefined}
       className={`group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 ${
         collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2"
       } ${
@@ -94,10 +110,28 @@ function NavLink({
         }`}
       >
         <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={active ? 2.5 : 2} />
+
+        {/* Collapsed: count bubble overlaid on the icon */}
+        {collapsed && showBadge && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[8px] font-bold leading-none text-white ring-2 ring-surface dark:ring-surface-dark animate-scale-in">
+            {formatBadge(badge!)}
+          </span>
+        )}
       </span>
 
       {/* Label */}
-      {!collapsed && <span className="relative">{item.label}</span>}
+      {!collapsed && (
+        <span className="relative flex items-center gap-2 min-w-0 flex-1">
+          <span className="truncate">{item.label}</span>
+
+          {/* Expanded: right-aligned count pill */}
+          {showBadge && (
+            <span className="relative ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-bold leading-none text-white shadow-sm animate-scale-in">
+              {formatBadge(badge!)}
+            </span>
+          )}
+        </span>
+      )}
     </Link>
   );
 }
@@ -114,6 +148,7 @@ function SidebarBody({
   const pathname = usePathname();
   const { user } = useCurrentUser();
   const { theme, setTheme } = useTheme();
+  const { data: unviewedRequests } = useUnviewedRequestsCountQuery();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -159,6 +194,7 @@ function SidebarBody({
             active={isItemActive(pathname, item.href)}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            badge={item.href === REQUESTS_HREF ? unviewedRequests : undefined}
           />
         ))}
 

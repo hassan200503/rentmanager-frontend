@@ -1,7 +1,7 @@
 // features/maintenance/components/requests-hub.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Wrench,
     AlertTriangle,
@@ -14,6 +14,7 @@ import {
 import {
     useMaintenanceRequestsQuery,
     useMaintenanceSlaQuery,
+    useMarkAllRequestsViewedMutation,
     useUpdateMaintenanceStatusMutation,
 } from "../hooks/use-maintenance-query";
 import {
@@ -108,6 +109,21 @@ export function RequestsHub() {
     const { data: requests, isLoading, isError, refetch } = useMaintenanceRequestsQuery(params);
     const { data: sla } = useMaintenanceSlaQuery();
     const updateStatus = useUpdateMaintenanceStatusMutation();
+    const markAllViewed = useMarkAllRequestsViewedMutation();
+
+    // V54: being on this page means the landlord has seen the requests -
+    // clear the sidebar badge. Re-fires if a new request arrives while the
+    // page is open (SSE-triggered refetch), so the badge only ever counts
+    // requests the landlord hasn't actually laid eyes on.
+    const unviewedCount = useMemo(
+        () => (requests ?? []).filter((r) => r.landlordViewedAt == null).length,
+        [requests],
+    );
+
+    useEffect(() => {
+        if (unviewedCount === 0) return;
+        markAllViewed.mutate();
+    }, [unviewedCount, markAllViewed]);
 
     const openCount = requests?.filter((r) => !["COMPLETED", "CANCELLED"].includes(r.status)).length ?? 0;
 

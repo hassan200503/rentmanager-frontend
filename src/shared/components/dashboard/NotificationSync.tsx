@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useToast } from "@/shared/components/dashboard/ToastProvider";
 import { useOrgStore } from "@/stores/org-store";
+import { maintenanceKeys } from "@/features/maintenance/hooks/use-maintenance-query";
+
+export const MAINTENANCE_REQUEST_SUBMITTED = "MAINTENANCE_REQUEST_SUBMITTED";
 
 function getToastVariant(eventType: string): "success" | "warning" | "info" | "error" {
   const [, ...parts] = eventType.split("_");
@@ -49,6 +53,7 @@ export default function NotificationSync() {
   const { activities, isLoading } = useActivityFeed(tenantId ?? undefined);
   const { setActivities, mergeActivity, unreadCount } = useNotificationStore();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const processedIds = useRef(new Set<string>());
 
   // Request browser notification permission
@@ -75,19 +80,29 @@ export default function NotificationSync() {
     processedIds.current.add(latest.id);
     mergeActivity(latest);
 
+    const isMaintenanceRequest = latest.eventType === MAINTENANCE_REQUEST_SUBMITTED;
+
+    // V54: a fresh maintenance request must move the sidebar badge and the
+    // Requests hub immediately - no waiting for the next poll.
+    if (isMaintenanceRequest) {
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all });
+    }
+
     // Show toast
-    const variant = getToastVariant(latest.eventType);
-    const title = getToastTitle(latest.eventType, latest.entityName);
-    toast({
-      title,
-      description: latest.actorName,
-      variant,
-      duration: 4000,
-    });
+    const unitNumber =
+      typeof latest.metadata?.unitNumber === "string" ? latest.metadata.unitNumber : null;
+    const title = isMaintenanceRequest
+      ? "New maintenance request"
+      : getToastTitle(latest.eventType, latest.entityName);
+    const description = isMaintenanceRequest
+      ? `"${latest.entityName}"${unitNumber ? ` · Unit ${unitNumber}` : ""} · ${latest.actorName}`
+      : latest.actorName;
+    const variant = isMaintenanceRequest ? "warning" : getToastVariant(latest.eventType);
+    toast({ title, description, variant, duration: 4000 });
 
     // Browser notification
-    sendBrowserNotification(title, latest.actorName);
-  }, [activities, mergeActivity, toast]);
+    sendBrowserNotification(title, description);
+  }, [activities, mergeActivity, toast, queryClient]);
 
   // Update document title with unread count
   useEffect(() => {

@@ -33,6 +33,8 @@ export interface MaintenanceRequestResponse {
     scheduledDate: string | null;
     completedAt: string | null;
     firstLandlordResponseAt: string | null;
+    /** Set once when the landlord first saw the request (hub load or status action). Null = unviewed. */
+    landlordViewedAt: string | null;
     notes: string | null;
     createdBy: string | null;
     assignedTo: string | null;

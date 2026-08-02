@@ -59,6 +59,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
   ARCHIVED: "var(--color-fg-muted)",
   TERMINATED: "var(--color-danger)",
   OCCUPANCY_CHANGED: "var(--color-warning)",
+  REQUEST_SUBMITTED: "var(--color-warning)",
 };
 
 function getActivityColor(eventType: string): string {

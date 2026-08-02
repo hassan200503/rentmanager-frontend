@@ -15,6 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
     "/portal/lease": "Lease",
     "/portal/landlord": "Landlord",
     "/portal/maintenance": "Maintenance",
+    "/portal/announcements": "Announcements",
     "/portal/payment-success": "Payment Receipt",
 };
 

@@ -24,6 +24,7 @@ function getNotificationColor(eventType: string): string {
     ARCHIVED: "#6B7280",
     TERMINATED: "#DC2626",
     OCCUPANCY_CHANGED: "#D97706",
+    REQUEST_SUBMITTED: "#D97706",
   };
   return colorMap[action] ?? "#059669";
 }
@@ -49,14 +50,22 @@ function activityToNotification(a: Activity): AppNotification {
     UPDATED: "updated",
     TERMINATED: "terminated",
     OCCUPANCY_CHANGED: "changed occupancy of",
+    REQUEST_SUBMITTED: "submitted",
   };
 
   const verb = verbMap[action] ?? "updated";
 
+  const isMaintenanceRequest = a.eventType === "MAINTENANCE_REQUEST_SUBMITTED";
+  const unitNumber =
+    typeof a.metadata?.unitNumber === "string" ? a.metadata.unitNumber : null;
+  const description = isMaintenanceRequest
+    ? `submitted by ${a.actorName}${unitNumber ? ` · Unit ${unitNumber}` : ""}`
+    : `${verb} by ${a.actorName}`;
+
   return {
     id: a.id,
-    title: `${a.entityName}`,
-    description: `${verb} by ${a.actorName}`,
+    title: a.entityName,
+    description,
     entityType: a.entityType,
     entityId: a.entityId,
     href: null,

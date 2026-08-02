@@ -33,3 +33,37 @@ export const useUpdateAutoPayPhoneMutation = () => {
         },
     });
 };
+
+export const useMarkAnnouncementReadMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => tenantPortalApi.markAnnouncementRead(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: tenantPortalKeys.announcements() });
+            queryClient.invalidateQueries({ queryKey: tenantPortalKeys.unreadAnnouncementCount() });
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || "Failed to mark announcement as read");
+        },
+    });
+};
+
+export const useUpdateWhatsAppOptInMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (enabled: boolean) => tenantPortalApi.updateWhatsAppOptIn(enabled),
+        onSuccess: (data) => {
+            queryClient.setQueryData(tenantPortalKeys.whatsAppOptIn(), data);
+            toast.success(
+                data.enabled
+                    ? "WhatsApp broadcasts enabled - your landlord can message you there"
+                    : "WhatsApp broadcasts disabled",
+            );
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || "Failed to update WhatsApp preference");
+        },
+    });
+};

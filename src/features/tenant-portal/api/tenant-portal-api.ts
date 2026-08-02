@@ -63,6 +63,25 @@ export function isPremiumLandlord(lease: Pick<TenantLeaseResponse, "billingMode"
     );
 }
 
+export type RenterAnnouncementPriority = "INFO" | "URGENT";
+
+export interface RenterAnnouncementResponse {
+    id: string;
+    message: string;
+    priority: RenterAnnouncementPriority;
+    createdAt: string;
+    expiresAt: string | null;
+    read: boolean;
+}
+
+export interface WhatsAppOptInResponse {
+    enabled: boolean;
+}
+
+export interface AnnouncementUnreadCountResponse {
+    count: number;
+}
+
 export interface TenantPaymentSummaryResponse {
     totalPaid: number;
     totalDue: number;
@@ -318,6 +337,54 @@ export const tenantPortalApi = {
         return apiClient.post<LandlordReviewResponse>(
             tenantPortalEndpoints.submitReview(),
             { rating, comment },
+            token,
+            tenantId
+        );
+    },
+
+    // Announcements
+    getAnnouncements: async (): Promise<RenterAnnouncementResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<RenterAnnouncementResponse[]>(
+            tenantPortalEndpoints.announcements(),
+            token,
+            tenantId
+        );
+    },
+
+    getUnreadAnnouncementsCount: async (): Promise<AnnouncementUnreadCountResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<AnnouncementUnreadCountResponse>(
+            tenantPortalEndpoints.announcementsUnreadCount(),
+            token,
+            tenantId
+        );
+    },
+
+    markAnnouncementRead: async (id: string): Promise<RenterAnnouncementResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<RenterAnnouncementResponse>(
+            tenantPortalEndpoints.markAnnouncementRead(id),
+            undefined,
+            token,
+            tenantId
+        );
+    },
+
+    getWhatsAppOptIn: async (): Promise<WhatsAppOptInResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<WhatsAppOptInResponse>(
+            tenantPortalEndpoints.whatsAppOptIn(),
+            token,
+            tenantId
+        );
+    },
+
+    updateWhatsAppOptIn: async (enabled: boolean): Promise<WhatsAppOptInResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<WhatsAppOptInResponse>(
+            tenantPortalEndpoints.whatsAppOptIn(),
+            { enabled },
             token,
             tenantId
         );

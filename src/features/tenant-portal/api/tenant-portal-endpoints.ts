@@ -21,4 +21,8 @@ export const tenantPortalEndpoints = {
     maintenanceSubmit: () => `${base}/maintenance`,
     reviewMe: () => `${base}/reviews/me`,
     submitReview: () => `${base}/reviews`,
+    announcements: () => `${base}/announcements`,
+    announcementsUnreadCount: () => `${base}/announcements/unread-count`,
+    markAnnouncementRead: (id: string) => `${base}/announcements/${id}/read`,
+    whatsAppOptIn: () => `${base}/whatsapp-opt-in`,
 };
