@@ -2,6 +2,7 @@
 
 import { Search, Bell, HelpCircle, Settings, Command } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useOrgStore } from "@/stores/org-store";
 import { useSyncExternalStore } from "react";
 import NotificationPanel from "@/shared/components/dashboard/NotificationPanel";
@@ -9,6 +10,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 
 export default function Topbar() {
   const tenantName = useOrgStore((state) => state.tenantName);
+  const router = useRouter();
 
   const { unreadCount, toggleOpen } = useNotificationStore();
 
@@ -75,16 +77,20 @@ export default function Topbar() {
 
         <button
           type="button"
+          onClick={() => router.push("/dashboard/activity")}
           className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-border-subtle dark:hover:bg-border-subtle-dark transition-all duration-150"
-          aria-label="Help"
+          aria-label="Help and activity"
+          title="Activity log"
         >
           <HelpCircle className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
         </button>
 
         <button
           type="button"
+          onClick={() => router.push("/dashboard/settings")}
           className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-border-subtle dark:hover:bg-border-subtle-dark transition-all duration-150"
           aria-label="Settings"
+          title="Settings"
         >
           <Settings className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
         </button>

@@ -1,5 +1,4 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-import { formatCurrency } from "@/features/tenant-portal/components/tenant-dashboard";
 import type { TenantLeaseResponse } from "@/features/tenant-portal/api/tenant-portal-api";
 
 const styles = StyleSheet.create({

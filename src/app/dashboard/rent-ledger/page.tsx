@@ -15,6 +15,8 @@ import { useRentLedgerByStatusQuery } from "@/features/rentledger/hooks/use-rent
 import { RentLedgerEntryRow } from "@/features/rentledger/components/rent-ledger-entry-row";
 import { RentLedgerTransactions } from "@/features/rentledger/components/rent-ledger-transactions";
 
+import { TaxComplianceNote } from "@/features/settings/components/tax-compliance-note";
+
 function RentLedgerSkeleton() {
     return (
         <div className="page-container">
@@ -90,6 +92,7 @@ function RentLedgerOverviewContent() {
                 <div>
                     <h1 className="page-title">Rent Ledger</h1>
                     <p className="page-subtitle">Collection status and overdue balances across your portfolio.</p>
+                    <TaxComplianceNote />
                 </div>
             </div>
 

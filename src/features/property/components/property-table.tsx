@@ -6,7 +6,7 @@ import { usePropertiesQuery } from "../queries/use-properties-query";
 import { PropertyStatusBadge } from "./property-status-badge";
 import { PropertyFilterState } from "../hooks/use-property-filters";
 import { PropertyResponse } from "../types/property-response";
-import { PropertyStatus } from "../types/property";
+import { PremisesType, PropertyStatus } from "../types/property";
 import { useActivateProperty } from "../hooks/use-activate-property";
 import { useArchiveProperty } from "../hooks/use-archive-property";
 
@@ -159,6 +159,7 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
                     <tr className="text-left text-fg-muted dark:text-fg-muted-dark border-b border-border dark:border-border-dark">
                         <th className="p-3 font-medium text-xs uppercase tracking-wide">Name</th>
                         <th className="p-3 font-medium text-xs uppercase tracking-wide">Type</th>
+                        <th className="p-3 font-medium text-xs uppercase tracking-wide">Premises</th>
                         <th className="p-3 font-medium text-xs uppercase tracking-wide">Status</th>
                         <th className="p-3 font-medium text-xs uppercase tracking-wide">Actions</th>
                     </tr>
@@ -187,6 +188,15 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
                                     </div>
                                 </td>
                                 <td className="p-3 text-sm text-fg-muted dark:text-fg-muted-dark">{p.propertyType}</td>
+                                <td className="p-3">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                                        p.premisesType === PremisesType.COMMERCIAL
+                                            ? "bg-brand-600/10 text-brand-600 dark:bg-brand-600/20 dark:text-brand-300"
+                                            : "bg-border-subtle dark:bg-border-subtle-dark text-fg-muted dark:text-fg-muted-dark"
+                                    }`}>
+                                        {p.premisesType ?? PremisesType.RESIDENTIAL}
+                                    </span>
+                                </td>
                                 <td className="p-3">
                                     <PropertyStatusBadge status={p.status} />
                                 </td>

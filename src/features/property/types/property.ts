@@ -25,6 +25,32 @@ export enum PropertyType {
     AIRBNB = "AIRBNB",
 }
 
+/**
+ * Tax-facing classification of a property (mirrors the backend enum).
+ * The backend derives it from PropertyType when not supplied explicitly:
+ * COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, everything else -> RESIDENTIAL.
+ * Drives the tax pipeline: residential rent is MRI-eligible (7.5% final),
+ * commercial rent is standard-rated 16% VAT for VAT-registered landlords.
+ */
+export enum PremisesType {
+    RESIDENTIAL = "RESIDENTIAL",
+    COMMERCIAL = "COMMERCIAL",
+}
+
+/** PropertyType values whose backend-derived premises classification is COMMERCIAL. */
+export const COMMERCIAL_PROPERTY_TYPES: readonly PropertyType[] = [
+    PropertyType.COMMERCIAL,
+    PropertyType.OFFICE,
+    PropertyType.WAREHOUSE,
+];
+
+/** Backend derivation rule: COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, else RESIDENTIAL. */
+export function derivePremisesType(type: PropertyType): PremisesType {
+    return COMMERCIAL_PROPERTY_TYPES.includes(type)
+        ? PremisesType.COMMERCIAL
+        : PremisesType.RESIDENTIAL;
+}
+
 export interface Address {
     streetAddress: string;
     city: string;
@@ -50,6 +76,7 @@ export interface Property {
 
     name: string;
     propertyType: PropertyType;
+    premisesType: PremisesType;
 
     status: PropertyStatus;
     occupancyStatus: OccupancyStatus;

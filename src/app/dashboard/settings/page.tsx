@@ -19,6 +19,7 @@ import {
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { BrandingCard } from "@/features/settings/components/branding-card";
 import { EmergencyContactCard } from "@/features/settings/components/emergency-contact-card";
+import { TaxComplianceCard } from "@/features/settings/components/tax-compliance-card";
 import { DarajaConfigCard } from "@/features/daraja/components/daraja-config-card";
 import { useRouter } from "next/navigation";
 
@@ -157,6 +158,9 @@ export default function SettingsPage() {
 
             {/* ── Emergency contact ───────────────────────────── */}
             <EmergencyContactCard />
+
+            {/* ── Tax & compliance (KRA) ──────────────────────── */}
+            <TaxComplianceCard />
 
             {/* ── M-Pesa (Daraja) ─────────────────────────────── */}
             {isOwner && user?.tenantId ? (

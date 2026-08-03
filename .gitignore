@@ -52,3 +52,7 @@ next-env.d.ts
 .aider*
 
 session-ses_*.md
+
+
+# Local docs — not tracked
+docs/

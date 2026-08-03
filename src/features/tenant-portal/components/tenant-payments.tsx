@@ -18,7 +18,7 @@ export const TenantPaymentsPage = () => {
     const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
     const { data: dashboardData } = useTenantDashboardQuery();
-    const { data: summary, refetch: refetchSummary } = useTenantPaymentSummaryQuery();
+    const { data: summary } = useTenantPaymentSummaryQuery();
     const { data: history, isLoading, isError, refetch } = useTenantPaymentHistoryQuery(page, PAGE_SIZE);
     const { data: receipt, isLoading: receiptLoading } = useTenantPaymentReceiptQuery(selectedReceiptId ?? "");
 
@@ -59,7 +59,7 @@ export const TenantPaymentsPage = () => {
         } catch {
         }
         return false;
-    }, [refetchSummary, refetch, router]);
+    }, [router]);
 
     const initiatePayment = useCallback(async () => {
         const resolvedAmount = !amountOverridden && currentBalance > 0 ? currentBalance : parseFloat(payAmount);
@@ -86,7 +86,7 @@ export const TenantPaymentsPage = () => {
             setPayState("error");
             setPayMessage(err instanceof Error ? err.message : "Failed to initiate payment");
         }
-    }, [amountOverridden, currentBalance, payAmount, mpesaPhone, checkStatus]);
+    }, [amountOverridden, currentBalance, payAmount, mpesaPhone, checkStatus, dashboardData?.tenantPhone]);
 
     const refreshStatus = useCallback(async () => {
         if (requestId) {

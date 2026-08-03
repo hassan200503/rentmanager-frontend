@@ -1,6 +1,10 @@
 import { Path, useForm } from "react-hook-form";
 import { CreatePropertyRequest } from "../types/property-request";
-import { PropertyType } from "../types/property";
+import {
+    PremisesType,
+    PropertyType,
+    derivePremisesType,
+} from "../types/property";
 import {
   PropertyFormValues,
   propertySchema,
@@ -24,6 +28,7 @@ type PropertyFormProps = {
 const defaultValues: PropertyFormValues = {
   name: "",
   propertyType: PropertyType.APARTMENT,
+  premisesType: undefined,
   description: "",
   address: {
     streetAddress: "",
@@ -82,10 +87,14 @@ export const PropertyForm = ({
     register,
     handleSubmit,
     setError,
+    watch,
     formState: { errors },
   } = useForm<PropertyFormValues>({ defaultValues });
 
-  // eslint-disable-next-line react-hooks/refs
+  const watchedPropertyType = watch("propertyType");
+  const watchedPremisesType = watch("premisesType");
+  const derivedPremises = derivePremisesType(watchedPropertyType);
+
   const submit = handleSubmit(async (values) => {
     const parsed = propertySchema.safeParse(values);
 
@@ -159,6 +168,30 @@ export const PropertyForm = ({
                     </option>
                 ))}
               </select>
+            </label>
+
+            <label className="space-y-1">
+              <span className="form-label">Premises type</span>
+              <select
+                  className="form-input"
+                  {...register("premisesType", { setValueAs: (v: string) => v || undefined })}
+              >
+                <option value="">Auto (based on type)</option>
+                {Object.values(PremisesType).map((premises) => (
+                    <option key={premises} value={premises}>
+                      {premises}
+                    </option>
+                ))}
+              </select>
+              <span className="text-xs text-ink-muted leading-snug">
+                {watchedPremisesType
+                    ? `Tax classification locked: ${watchedPremisesType}`
+                    : `Auto: ${derivedPremises}`}
+                {" — "}
+                {derivedPremises === PremisesType.COMMERCIAL && !watchedPremisesType
+                    ? "commercial rent attracts 16% VAT for VAT-registered landlords"
+                    : "residential rent pays MRI (7.5% final tax)"}
+              </span>
             </label>
 
             <label className="block space-y-1 md:col-span-2">

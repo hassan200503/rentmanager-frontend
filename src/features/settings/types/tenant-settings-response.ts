@@ -18,6 +18,8 @@ export interface TenantSettingsResponse {
     faviconUrl: string | null;
     emergencyContactPhone: string | null;
     emergencyContact24h: boolean;
+    kraPin: string | null;
+    vatRegistered: boolean;
 }
 
 export interface UpdateTenantSettingsRequest {
@@ -30,4 +32,6 @@ export interface UpdateTenantSettingsRequest {
     faviconUrl?: string | null;
     emergencyContactPhone?: string | null;
     emergencyContact24h?: boolean;
+    kraPin?: string | null;
+    vatRegistered?: boolean;
 }

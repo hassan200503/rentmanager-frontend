@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { tenantPortalApi, type CreateMaintenanceRequest } from "../api/tenant-portal-api";
 import { tenantPortalKeys } from "../hooks/tenant-portal-keys";
-import { formatDate, StatusBadge } from "./tenant-dashboard";
+import { formatDate } from "./tenant-dashboard";
 import {
     Wrench,
     Plus,
@@ -48,22 +48,6 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
     PEST_CONTROL: AlertTriangle,
     GENERAL: MessageSquare,
 };
-
-function FormSkeleton() {
-    return (
-        <div className="page-container max-w-2xl mx-auto py-6 sm:py-8 space-y-6">
-            <div className="skeleton h-8 w-48 rounded-lg" />
-            <div className="card-elevated p-6 space-y-5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="space-y-2">
-                        <div className="skeleton h-4 w-24 rounded" />
-                        <div className="skeleton h-10 w-full rounded-lg" />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 function ListSkeleton() {
     return (

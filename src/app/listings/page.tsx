@@ -31,6 +31,9 @@ function ListingsPageContent() {
     const [debouncedLocation, setDebouncedLocation] = useState(location);
     const [page, setPage] = useState(Number(searchParams.get("page") ?? 0));
 
+    // Distinguishes the first paint from later refetches so the heavyweight
+    // loading screen only appears once; subsequent reloads get the lighter
+    // skeleton grid while old content stays in place.
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
     useEffect(() => {
@@ -58,9 +61,11 @@ function ListingsPageContent() {
         size: PAGE_SIZE,
     });
 
-    if (!isLoading && !hasLoadedOnce) {
-        setHasLoadedOnce(true);
-    }
+    useEffect(() => {
+        if (!isLoading) {
+            setHasLoadedOnce(true);
+        }
+    }, [isLoading]);
 
     const hasResults = (data?.content?.length ?? 0) > 0;
     const isSearching = debouncedKeyword.length > 0 || debouncedLocation.length > 0;

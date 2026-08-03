@@ -96,7 +96,7 @@ export const TenantDashboard = () => {
         } catch {
         }
         return false;
-    }, [refetch, router]);
+    }, [router]);
 
     const initiatePayment = useCallback(async () => {
         const amount = parseFloat(payAmount || ((data?.currentBalance ?? 0).toString()));

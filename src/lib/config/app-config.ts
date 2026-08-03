@@ -5,6 +5,11 @@ export const appConfig = {
 
   environment: clientEnv.NEXT_PUBLIC_APP_ENV,
 
+  // Canonical origin for SEO (metadataBase). Optional — falls back to the
+  // public API origin's protocol+host when unset so social previews still
+  // resolve absolute URLs in dev.
+  appUrl: clientEnv.NEXT_PUBLIC_APP_URL || undefined,
+
   api: {
     baseUrl: clientEnv.NEXT_PUBLIC_API_URL.replace(/\/$/, ""),
     version: "v1",

@@ -81,7 +81,7 @@ export const TenantLeasePage = () => {
             setPayState("error");
             setPayMessage(message);
         }
-    }, [payAmount, currentBalance, mpesaPhone, checkStatus]);
+    }, [payAmount, currentBalance, mpesaPhone, checkStatus, dashboardData?.tenantPhone]);
 
     const refreshStatus = useCallback(async () => {
         if (requestId) {

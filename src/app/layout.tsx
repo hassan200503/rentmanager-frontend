@@ -1,6 +1,6 @@
 import "./globals.css";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 import dynamic from "next/dynamic";
 
@@ -8,6 +8,7 @@ import QueryProvider from "@/providers/query-provider";
 import AuthProvider from "@/providers/auth-provider";
 import ThemeProvider from "@/providers/theme-provider";
 import { Toaster } from "sonner";
+import { appConfig } from "@/lib/config/app-config";
 
 const DevPortalSwitcher = dynamic(
     () => import("@/shared/dev/DevPortalSwitcher")
@@ -32,14 +33,44 @@ const instrumentSerif = Instrument_Serif({
     style: ["normal", "italic"],
 });
 
+const defaultMetadata = {
+    title: "RentManager",
+    description: "RentManager — property management for the Kenyan rental market. Collect rent, issue eTIMS-ready receipts, manage maintenance, and stay KRA compliant.",
+};
+
 export const metadata: Metadata = {
-    title: "RentManager — Property Management Platform",
-    description: "Multi-tenant property management system for the Kenyan rental market",
+    metadataBase: appConfig.appUrl
+        ? new URL(appConfig.appUrl)
+        : undefined,
+    title: {
+        default: `${defaultMetadata.title} — Property Management Platform`,
+        template: `%s — ${defaultMetadata.title}`,
+    },
+    description: defaultMetadata.description,
+    applicationName: "RentManager",
+    keywords: ["rent manager", "property management", "kenya", "rental income", "MRI", "eTIMS", "landlord"],
+    openGraph: {
+        type: "website",
+        locale: "en_KE",
+        siteName: "RentManager",
+        title: `${defaultMetadata.title} — Property Management Platform`,
+        description: defaultMetadata.description,
+    },
+    twitter: {
+        card: "summary",
+        title: `${defaultMetadata.title} — Property Management Platform`,
+        description: defaultMetadata.description,
+    },
+    manifest: "/manifest.json",
     icons: {
         icon: [
             { url: "/favicon.svg", type: "image/svg+xml" },
         ],
     },
+};
+
+export const viewport: Viewport = {
+    themeColor: "#0f172a",
 };
 
 import { ToastProvider } from "@/shared/components/dashboard/ToastProvider";

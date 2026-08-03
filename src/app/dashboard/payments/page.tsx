@@ -36,6 +36,7 @@ import { RentTransactionType, RentTransactionSource } from "@/features/rentledge
 import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { useDeleteTransaction } from "@/features/rentledger/hooks/use-delete-transaction";
+import { TaxComplianceBanner } from "@/features/settings/components/tax-compliance-banner";
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
@@ -457,6 +458,9 @@ export default function PaymentsPage() {
                     )}
                 </div>
             </div>
+
+            {/* ── Tax compliance ─────────────────────────────────── */}
+            <TaxComplianceBanner />
 
             {/* ── Filters Card ── */}
             <div className="bg-surface rounded-2xl border border-border/60 shadow-sm animate-fade-in-up">

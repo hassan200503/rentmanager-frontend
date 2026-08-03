@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PropertyType } from "../types/property";
+import { PremisesType, PropertyType } from "../types/property";
 
 const optionalText = z
     .string()
@@ -10,6 +10,10 @@ const optionalText = z
 export const propertySchema = z.object({
     name: z.string().trim().min(2, "Property name must be at least 2 characters"),
     propertyType: z.nativeEnum(PropertyType),
+
+    // Optional override — omitted => backend derives from propertyType
+    // (COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, else RESIDENTIAL).
+    premisesType: z.nativeEnum(PremisesType).optional(),
 
     description: optionalText,
 

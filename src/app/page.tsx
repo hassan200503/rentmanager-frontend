@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -170,30 +171,13 @@ function SkylineBackground({ parallaxOffset = 0 }: { parallaxOffset?: number }) 
   );
 }
 
-/* ─── Live Search Stats ────────────────────────────────── */
+/* ─── Hero trust line ───────────────────────────────── */
 function LiveSearchStats() {
-  const stats = [
-    { icon: "🔥", text: "properties added today", count: 24 },
-    { icon: "●", text: "people searching now", count: 112 },
-    { icon: "✓", text: "units reserved this hour", count: 8 },
-  ];
-  const [index, setIndex] = useState(0);
-  const [show, setShow] = useState(true);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShow(false);
-      setTimeout(() => { setIndex((i) => (i + 1) % stats.length); setShow(true); }, 400);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-  const s = stats[index];
   return (
     <div className="flex items-center justify-center gap-2 text-sm mt-4 min-h-[24px]">
-      <span className={`transition-all duration-400 ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}>
-        <span className={s.icon === "●" ? "text-emerald-400" : s.icon === "🔥" ? "text-orange-400" : "text-blue-400"}>{s.icon}</span>
-        <span className="text-white/60 ml-1.5">
-          <span className="font-semibold text-white">{s.count}</span> {s.text}
-        </span>
+      <span className="inline-flex items-center gap-2 text-white/60">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        Every vacancy is checked before it can be reserved
       </span>
     </div>
   );
@@ -380,7 +364,6 @@ const FEATURES = [
 /* ─── Premium City Video Grid ──────────────────────────── */
 interface CityVideo {
   name: string;
-  count: string;
   desc: string;
   video: string;
   overlay: string;
@@ -389,11 +372,11 @@ interface CityVideo {
 }
 
 const CITY_VIDEOS: CityVideo[] = [
-  { name: "Nairobi", count: "132", desc: "Capital city · 4M+ residents", video: VIDEOS.hero, overlay: "from-emerald-900/80 via-emerald-800/40 to-[#030712]/95", objectPosition: "center 30%", span: "md:col-span-2 md:row-span-2" },
-  { name: "Mombasa", count: "78", desc: "Coastal metropolis", video: VIDEOS.nairobi, overlay: "from-cyan-900/80 via-cyan-800/40 to-[#030712]/95", objectPosition: "center 50%", span: "" },
-  { name: "Kisumu", count: "44", desc: "Lakeside city", video: VIDEOS.apartment, overlay: "from-teal-900/80 via-teal-800/40 to-[#030712]/95", objectPosition: "center 50%", span: "" },
-  { name: "Nakuru", count: "28", desc: "Rift Valley hub", video: VIDEOS.hero, overlay: "from-amber-900/80 via-amber-800/40 to-[#030712]/95", objectPosition: "center 60%", span: "" },
-  { name: "Eldoret", count: "22", desc: "North Rift economic center", video: VIDEOS.nairobi, overlay: "from-violet-900/80 via-violet-800/40 to-[#030712]/95", objectPosition: "center 40%", span: "" },
+  { name: "Nairobi", desc: "Capital city · 4M+ residents", video: VIDEOS.hero, overlay: "from-emerald-900/80 via-emerald-800/40 to-[#030712]/95", objectPosition: "center 30%", span: "md:col-span-2 md:row-span-2" },
+  { name: "Mombasa", desc: "Coastal metropolis", video: VIDEOS.nairobi, overlay: "from-cyan-900/80 via-cyan-800/40 to-[#030712]/95", objectPosition: "center 50%", span: "" },
+  { name: "Kisumu", desc: "Lakeside city", video: VIDEOS.apartment, overlay: "from-teal-900/80 via-teal-800/40 to-[#030712]/95", objectPosition: "center 50%", span: "" },
+  { name: "Nakuru", desc: "Rift Valley hub", video: VIDEOS.hero, overlay: "from-amber-900/80 via-amber-800/40 to-[#030712]/95", objectPosition: "center 60%", span: "" },
+  { name: "Eldoret", desc: "North Rift economic center", video: VIDEOS.nairobi, overlay: "from-violet-900/80 via-violet-800/40 to-[#030712]/95", objectPosition: "center 40%", span: "" },
 ];
 
 function CityVideoCard({ city, index }: { city: CityVideo; index: number }) {
@@ -417,18 +400,12 @@ function CityVideoCard({ city, index }: { city: CityVideo; index: number }) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30" />
       <div className="absolute inset-0 bg-[#030712]/10" />
       <div className="relative h-full flex flex-col justify-end p-5 md:p-7 z-10">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live-pulse" />
-              <span className="text-[9px] font-semibold tracking-[0.15em] text-white/40 uppercase">{city.desc}</span>
-            </div>
-            <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">{city.name}</h3>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-semibold tracking-[0.15em] text-white/40 uppercase">{city.desc}</span>
           </div>
-          <div className="text-right">
-            <p className="text-xl md:text-2xl font-bold text-white tabular-nums">{city.count}</p>
-            <p className="text-[8px] text-white/30 uppercase tracking-widest">listings</p>
-          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">{city.name}</h3>
         </div>
       </div>
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-400 translate-x-2 group-hover:translate-x-0">
@@ -440,11 +417,19 @@ function CityVideoCard({ city, index }: { city: CityVideo; index: number }) {
 }
 
 /* ─── Footer Links ────────────────────────────────────── */
-const FOOTER_LINKS = {
-  Company: ["About", "Careers", "Blog", "Press"],
-  Platform: ["Browse Properties", "List Property", "Pricing", "FAQ"],
-  Resources: ["Help Center", "Guides", "Community", "Status"],
-  Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "Licenses"],
+// Only real destinations. Dead "#" links were removed — shipping a
+// marketing page with non-functional legal/social links is a trust hazard.
+const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
+  Platform: [
+    { label: "Browse Properties", href: "/listings" },
+    { label: "How it works", href: "#how-it-works" },
+    { label: "Sign in", href: "/public/sign-in" },
+    { label: "Create an account", href: "/public/sign-up" },
+  ],
+  "For landlords": [
+    { label: "List a property", href: "/public/sign-up" },
+    { label: "Dashboard", href: "/dashboard" },
+  ],
 };
 
 /* ═══════════════════════════════════════════════════════════
@@ -452,10 +437,12 @@ const FOOTER_LINKS = {
    ═══════════════════════════════════════════════════════════ */
 
 export default function HomePage() {
+  const router = useRouter();
   const scrollY = useScrollY();
   const heroParallax = Math.min(scrollY * 0.5, 300);
   const isScrolled = scrollY > 80;
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [heroQuery, setHeroQuery] = useState("");
 
   const { ref: heroReveal, inView: heroInView } = useInView(0.1);
   const { ref: staggerRef, inView: staggerInView } = useInView(0.1);
@@ -478,10 +465,9 @@ export default function HomePage() {
   const totalUnits = unitsQuery.data?.totalElements ?? 0;
 
   const statsData = [
-    { end: totalProperties || 1200, suffix: "+", label: "Properties Listed" },
-    { end: totalUnits || 5800, suffix: "+", label: "Available Units" },
-    { end: 38, suffix: "", label: "Cities Covered" },
-    { end: Math.round((totalProperties ? Math.min(totalProperties * 0.78, 94) : 94)), suffix: "%", label: "Occupancy Rate" },
+    { end: totalProperties, suffix: "", label: "Properties Listed" },
+    { end: totalUnits, suffix: "", label: "Available Units" },
+    { end: CITY_VIDEOS.length, suffix: "", label: "Regions Showcased" },
   ];
 
   return (
@@ -557,23 +543,32 @@ export default function HomePage() {
 
             {/* Search Panel */}
             <div className="mt-10 max-w-2xl mx-auto">
-              <div className="glass rounded-2xl p-2 flex flex-col sm:flex-row gap-2 animate-pulse-glow shadow-2xl shadow-emerald-500/5">
+              <form
+                className="glass rounded-2xl p-2 flex flex-col sm:flex-row gap-2 animate-pulse-glow shadow-2xl shadow-emerald-500/5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const q = heroQuery.trim();
+                  router.push(q ? `/listings?q=${encodeURIComponent(q)}` : "/listings");
+                }}
+              >
                 <div className="flex-1 relative">
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                  <input type="text" placeholder="Where do you want to live?" className="w-full bg-transparent text-sm text-white placeholder:text-white/30 pl-10 pr-3 py-3.5 rounded-xl border border-white/10 focus:border-emerald-500/50 outline-none transition-colors" />
+                  <input
+                    type="text"
+                    value={heroQuery}
+                    onChange={(e) => setHeroQuery(e.target.value)}
+                    placeholder="City, neighbourhood or property name…"
+                    className="w-full bg-transparent text-sm text-white placeholder:text-white/30 pl-10 pr-3 py-3.5 rounded-xl border border-white/10 focus:border-emerald-500/50 outline-none transition-colors"
+                  />
                 </div>
-                <select className="bg-transparent text-sm text-white/70 px-4 py-3.5 rounded-xl border border-white/10 focus:border-emerald-500/50 outline-none transition-colors appearance-none cursor-pointer">
-                  <option>Any budget</option>
-                  <option>KES 5K — 15K</option>
-                  <option>KES 15K — 30K</option>
-                  <option>KES 30K — 50K</option>
-                  <option>KES 50K+</option>
-                </select>
-                <Link href="/listings" className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/30 flex-shrink-0">
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/30 flex-shrink-0"
+                >
                   <Search className="w-4 h-4" strokeWidth={2.5} />
                   Search
-                </Link>
-              </div>
+                </button>
+              </form>
               <LiveSearchStats />
             </div>
 
@@ -684,7 +679,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-emerald-400">Coverage</span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white mt-3">All across Kenya</h2>
-            <p className="text-white/50 mt-3 max-w-md mx-auto">Live vacancies in major cities, updated in real-time.</p>
+            <p className="text-white/50 mt-3 max-w-md mx-auto">Featured rentals in major cities, with verified vacancies.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[200px] md:auto-rows-[240px]">
             {CITY_VIDEOS.map((city, i) => (
@@ -692,8 +687,8 @@ export default function HomePage() {
             ))}
           </div>
           <div className="flex items-center justify-center gap-2 mt-8 text-xs text-white/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-live-pulse" />
-            Data updates in real-time from live platform listings
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Every unit is verified before it&apos;s listed
           </div>
         </div>
       </section>
@@ -705,7 +700,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-emerald-400">By the numbers</span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white mt-3">RentManager in data</h2>
-            <p className="text-white/50 mt-3 max-w-lg mx-auto">Real platform metrics, updated live from our database.</p>
+            <p className="text-white/50 mt-3 max-w-lg mx-auto">Live counts of what&apos;s currently listed and available on the platform.</p>
           </div>
           <div className={`grid grid-cols-2 md:grid-cols-4 gap-10 ${statsInView ? "" : "opacity-0"} transition-all duration-700`}>
             {statsData.map((stat) => (
@@ -841,19 +836,14 @@ export default function HomePage() {
               <BrandBadge size="md" />
             </Link>
               <p className="text-xs text-white/55 leading-relaxed max-w-xs">The modern way to find and reserve rental properties across Kenya. Verified listings, secure deposits, digital leases.</p>
-              <div className="flex items-center gap-3 mt-4">
-                {["Twitter", "LinkedIn", "Instagram"].map((social) => (
-                  <Link key={social} href="#" className="text-xs text-white/60 hover:text-white/90 transition-colors">{social}</Link>
-                ))}
-              </div>
             </div>
             {Object.entries(FOOTER_LINKS).map(([category, links]) => (
               <div key={category}>
                 <p className="text-[10px] font-semibold tracking-widest uppercase text-white/60 mb-4">{category}</p>
                 <ul className="space-y-2.5">
                   {links.map((link) => (
-                    <li key={link}>
-                      <Link href="#" className="text-sm text-white/60 hover:text-white/90 transition-colors">{link}</Link>
+                    <li key={link.label}>
+                      <Link href={link.href} className="text-sm text-white/60 hover:text-white/90 transition-colors">{link.label}</Link>
                     </li>
                   ))}
                 </ul>
@@ -862,11 +852,6 @@ export default function HomePage() {
           </div>
           <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-white/50">&copy; {new Date().getFullYear()} RentManager. All rights reserved.</p>
-            <div className="flex items-center gap-6 text-xs text-white/55">
-              <Link href="#" className="hover:text-white/85 transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-white/85 transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-white/85 transition-colors">Cookie Policy</Link>
-            </div>
           </div>
         </div>
       </footer>

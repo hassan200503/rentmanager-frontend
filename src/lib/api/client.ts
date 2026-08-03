@@ -5,43 +5,39 @@ import { appConfig } from "@/lib/config/app-config";
 
 const TIMEOUT_MS = 15000;
 
-// Simple in‑memory rate limiter (per client IP)
-// In production replace with Redis or a dedicated service
+// Simple in‑memory rate limiter (per client tab) for MUTATING requests only.
+// GETs are deliberately unlimited: dashboards fire many parallel reads and
+// polling loops, so limiting them would produce false‑positive 429s for
+// legitimately heavy users. This guard is a soft backstop for runaway loops,
+// NOT a security boundary — the backend enforces real throttling.
 const requestCounts: Record<string, { count: number; reset: number }> = {};
 
-function getClientKey(): string {
-    // In a real environment use request IP or user ID
-    return typeof window !== "undefined" ? "browser" : "server";
-}
+// Per HTTP method, per 1‑minute window.
+const MUTATING_LIMITS: Record<string, number> = {
+    POST: 30,
+    PUT: 30,
+    PATCH: 30,
+    DELETE: 30,
+};
 
-/**
- * Rate‑limit is now scoped per HTTP method to avoid GET requests
- * (which are frequent on page load) counting against the PUT/PATCH
- * limit used for updates.
- */
 function checkRateLimit(method: string = "GET"): void {
-    const baseKey = getClientKey();
-    const key = `${baseKey}:${method.toUpperCase()}`; // e.g. "browser:PUT"
-    const now = Date.now();
-    const windowMs = 60 * 1000; // 1 minute window
-    const limit = 60; // 60 requests per minute per method
+    const upper = method.toUpperCase();
+    const limit = MUTATING_LIMITS[upper];
+    if (!limit) return; // GET/HEAD/OPTIONS are not limited
 
-    if (!requestCounts[key]) {
-        requestCounts[key] = { count: 1, reset: now + windowMs };
-        return;
-    }
+    const key = `browser:${upper}`;
+    const now = Date.now();
+    const windowMs = 60 * 1000;
 
     const record = requestCounts[key];
-
-    if (now > record.reset) {
-        record.count = 1;
-        record.reset = now + windowMs;
+    if (!record || now > record.reset) {
+        requestCounts[key] = { count: 1, reset: now + windowMs };
         return;
     }
 
     if (record.count >= limit) {
         throw new ApiError({
-            message: "Rate limit exceeded",
+            message: "Too many update requests. Please slow down and try again.",
             status: 429,
             code: "RATE_LIMIT_EXCEEDED",
             details: { limit, windowMs, method },

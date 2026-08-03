@@ -9,6 +9,11 @@ export const clientEnvSchema = z.object({
     .url()
     .transform((val) => val.replace(/\/$/, "")),
   NEXT_PUBLIC_APP_VERSION: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal("")),
   NEXT_PUBLIC_TENANT_ID: z.string().uuid().optional(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
