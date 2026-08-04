@@ -31,10 +31,17 @@ export enum PropertyType {
  * COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, everything else -> RESIDENTIAL.
  * Drives the tax pipeline: residential rent is MRI-eligible (7.5% final),
  * commercial rent is standard-rated 16% VAT for VAT-registered landlords.
+ *
+ * MIXED_USE is never auto-derived — it can only be chosen explicitly and
+ * always requires an override reason (a building with both residential and
+ * commercial tenants must split its income between the regimes; until
+ * unit-level classification ships, mixed properties are excluded from MRI
+ * and invoiced VAT-exempt).
  */
 export enum PremisesType {
     RESIDENTIAL = "RESIDENTIAL",
     COMMERCIAL = "COMMERCIAL",
+    MIXED_USE = "MIXED_USE",
 }
 
 /** PropertyType values whose backend-derived premises classification is COMMERCIAL. */
@@ -44,11 +51,37 @@ export const COMMERCIAL_PROPERTY_TYPES: readonly PropertyType[] = [
     PropertyType.WAREHOUSE,
 ];
 
-/** Backend derivation rule: COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, else RESIDENTIAL. */
+/**
+ * Backend derivation rule: COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL, else
+ * RESIDENTIAL. Never returns MIXED_USE. Used as a local fallback while the
+ * taxonomy metadata endpoint is loading — the server response is the source
+ * of truth for the form options.
+ */
 export function derivePremisesType(type: PropertyType): PremisesType {
     return COMMERCIAL_PROPERTY_TYPES.includes(type)
         ? PremisesType.COMMERCIAL
         : PremisesType.RESIDENTIAL;
+}
+
+/** True when an explicit premises override contradicts the auto-derivation. */
+export function isPremisesOverrideContradicting(
+    type: PropertyType | undefined,
+    premises: PremisesType | undefined
+): boolean {
+    if (!type || !premises) return false;
+    return derivePremisesType(type) !== premises;
+}
+
+/** Human-readable tax-regime label for a premises classification. */
+export function premisesTypeLabel(premises: PremisesType): string {
+    switch (premises) {
+        case PremisesType.COMMERCIAL:
+            return "Commercial · 16% VAT";
+        case PremisesType.MIXED_USE:
+            return "Mixed use · split regimes";
+        default:
+            return "Residential · MRI";
+    }
 }
 
 export interface Address {
@@ -78,6 +111,11 @@ export interface Property {
     propertyType: PropertyType;
     premisesType: PremisesType;
 
+    /** Free-text justification when premisesType was explicitly overridden; null when auto-derived. */
+    premisesTypeOverrideReason?: string;
+    premisesTypeChangedBy?: string;
+    premisesTypeChangedAt?: string;
+
     status: PropertyStatus;
     occupancyStatus: OccupancyStatus;
 
@@ -86,4 +124,16 @@ export interface Property {
     dimensions: PropertyDimensions | null;
 
     description?: string;
+}
+
+/** Backend GET /properties/types taxonomy descriptor (single source of truth). */
+export interface PropertyTypeDescriptor {
+    propertyType: PropertyType;
+    /** What the backend would classify for the type with no override; never MIXED_USE. */
+    derivedPremisesType: PremisesType;
+}
+
+export interface PropertyTypeMetadataResponse {
+    propertyTypes: PropertyTypeDescriptor[];
+    premisesTypes: PremisesType[];
 }

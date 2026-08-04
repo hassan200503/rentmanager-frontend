@@ -6,7 +6,7 @@ import { usePropertiesQuery } from "../queries/use-properties-query";
 import { PropertyStatusBadge } from "./property-status-badge";
 import { PropertyFilterState } from "../hooks/use-property-filters";
 import { PropertyResponse } from "../types/property-response";
-import { PremisesType, PropertyStatus } from "../types/property";
+import { PremisesType, PropertyStatus, premisesTypeLabel } from "../types/property";
 import { useActivateProperty } from "../hooks/use-activate-property";
 import { useArchiveProperty } from "../hooks/use-archive-property";
 
@@ -192,9 +192,11 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
                                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
                                         p.premisesType === PremisesType.COMMERCIAL
                                             ? "bg-brand-600/10 text-brand-600 dark:bg-brand-600/20 dark:text-brand-300"
-                                            : "bg-border-subtle dark:bg-border-subtle-dark text-fg-muted dark:text-fg-muted-dark"
+                                            : p.premisesType === PremisesType.MIXED_USE
+                                                ? "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300"
+                                                : "bg-border-subtle dark:bg-border-subtle-dark text-fg-muted dark:text-fg-muted-dark"
                                     }`}>
-                                        {p.premisesType ?? PremisesType.RESIDENTIAL}
+                                        {premisesTypeLabel(p.premisesType ?? PremisesType.RESIDENTIAL)}
                                     </span>
                                 </td>
                                 <td className="p-3">

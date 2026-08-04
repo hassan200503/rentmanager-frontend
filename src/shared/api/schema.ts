@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/properties/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPropertyTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/properties/{propertyId}/archive": {
         parameters: {
             query?: never;
@@ -491,6 +507,24 @@ export interface components {
             /** Format: int64 */
             timestamp?: number;
         };
+        PropertyTypeDescriptor: {
+            /** @enum {string} */
+            propertyType?: "APARTMENT" | "BEDSITTER" | "STUDIO" | "MAISONETTE" | "VILLA" | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL" | "AIRBNB";
+            /** @enum {string} */
+            derivedPremisesType?: "RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE";
+        };
+        PropertyTypeMetadataResponse: {
+            propertyTypes?: components["schemas"]["PropertyTypeDescriptor"][];
+            premisesTypes?: ("RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE")[];
+        };
+        ApiResponsePropertyTypeMetadataResponse: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PropertyTypeMetadataResponse"];
+            errorCode?: string;
+            /** Format: int64 */
+            timestamp?: number;
+        };
         GeoLocation: {
             latitude?: number;
             longitude?: number;
@@ -512,6 +546,13 @@ export interface components {
             name?: string;
             /** @enum {string} */
             propertyType?: "APARTMENT" | "BEDSITTER" | "STUDIO" | "MAISONETTE" | "VILLA" | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL" | "AIRBNB";
+            /** @enum {string} */
+            premisesType?: "RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE";
+            premisesTypeOverrideReason?: string;
+            /** Format: uuid */
+            premisesTypeChangedBy?: string;
+            /** Format: date-time */
+            premisesTypeChangedAt?: string;
             /** @enum {string} */
             status?: "DRAFT" | "ACTIVE" | "INACTIVE" | "UNDER_MAINTENANCE" | "ARCHIVED";
             /** @enum {string} */
@@ -620,6 +661,9 @@ export interface components {
             name?: string;
             /** @enum {string} */
             propertyType?: "APARTMENT" | "BEDSITTER" | "STUDIO" | "MAISONETTE" | "VILLA" | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL" | "AIRBNB";
+            /** @enum {string} */
+            premisesType?: "RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE";
+            premisesTypeOverrideReason?: string;
             description?: string;
             address?: components["schemas"]["Address"];
             geoLocation?: components["schemas"]["GeoLocation"];
@@ -1178,6 +1222,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponsePagePropertyResponse"];
+                };
+            };
+        };
+    };
+    getPropertyTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePropertyTypeMetadataResponse"];
                 };
             };
         };

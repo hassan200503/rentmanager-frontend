@@ -6,6 +6,7 @@ import {
     UpdatePropertyRequest,
 } from "../types/property-request";
 import { PropertyPageResponse, PropertyResponse } from "../types/property-response";
+import { PropertyTypeMetadataResponse } from "../types/property";
 import { apiClient } from "@/lib/api/client";
 import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
 import { getTenantIdFromSession } from "@/shared/tenant/get-tenant-id";
@@ -95,6 +96,15 @@ export const propertyApi = {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<PropertyResponse>(
             propertyEndpoints.byId(id),
+            token,
+            tenantId
+        );
+    },
+
+    getTypes: async (): Promise<PropertyTypeMetadataResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<PropertyTypeMetadataResponse>(
+            propertyEndpoints.types,
             token,
             tenantId
         );

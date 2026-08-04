@@ -32,7 +32,7 @@ import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
 import { PropertyMediaManager } from "@/features/property/components/upload-gallery";
-import { PremisesType, PropertyStatus } from "@/features/property/types/property";
+import { PremisesType, PropertyStatus, premisesTypeLabel } from "@/features/property/types/property";
 
 const formatEnumLabel = (value: string) =>
     value
@@ -214,10 +214,12 @@ export default function PropertyDetailPage() {
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 property.premisesType === PremisesType.COMMERCIAL
                                     ? "bg-brand-600/10 text-brand-600"
-                                    : "bg-brand-50 text-brand dark:bg-brand-800 dark:text-brand-300"
+                                    : property.premisesType === PremisesType.MIXED_USE
+                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                        : "bg-brand-50 text-brand dark:bg-brand-800 dark:text-brand-300"
                             }`}>
                                 <Landmark className="w-3 h-3" strokeWidth={1.5} />
-                                {property.premisesType === PremisesType.COMMERCIAL ? "Commercial · 16% VAT" : "Residential · MRI"}
+                                {premisesTypeLabel(property.premisesType)}
                             </span>
                             {!isActive && !isArchived && (
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning-bg border border-warning/20 text-xs font-medium text-warning-dark">

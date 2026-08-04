@@ -4,10 +4,17 @@ export interface CreatePropertyRequest {
     name: string;
     propertyType: PropertyType;
     /**
-     * Optional RESIDENTIAL/COMMERCIAL override. When omitted the backend
-     * derives it from propertyType (COMMERCIAL/OFFICE/WAREHOUSE -> COMMERCIAL).
+     * Optional RESIDENTIAL/COMMERCIAL/MIXED_USE override. When omitted the
+     * backend derives it from propertyType (COMMERCIAL/OFFICE/WAREHOUSE ->
+     * COMMERCIAL). MIXED_USE is only reachable through this override.
      */
     premisesType?: PremisesType;
+    /**
+     * Mandatory whenever premisesType is provided. Recorded in the audit
+     * trail (with the authenticated user) because the classification drives
+     * the MRI/VAT tax pipeline.
+     */
+    premisesTypeOverrideReason?: string;
     address: Address;
     geoLocation: GeoLocation;
     dimensions: PropertyDimensions;

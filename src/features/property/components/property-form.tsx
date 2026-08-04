@@ -1,14 +1,16 @@
 import { Path, useForm } from "react-hook-form";
 import { CreatePropertyRequest } from "../types/property-request";
 import {
-    PremisesType,
-    PropertyType,
-    derivePremisesType,
+  PremisesType,
+  PropertyType,
+  derivePremisesType,
+  isPremisesOverrideContradicting,
 } from "../types/property";
 import {
   PropertyFormValues,
   propertySchema,
 } from "../validations/property-schema";
+import { usePropertyTypesQuery } from "../queries/use-property-types-query";
 import { useEffect, useRef, useState } from "react";
 import {
   Building2,
@@ -17,6 +19,7 @@ import {
   ImagePlus,
   X,
   Loader2,
+  TriangleAlert,
 } from "lucide-react";
 
 type PropertyFormProps = {
@@ -29,6 +32,7 @@ const defaultValues: PropertyFormValues = {
   name: "",
   propertyType: PropertyType.APARTMENT,
   premisesType: undefined,
+  premisesTypeOverrideReason: "",
   description: "",
   address: {
     streetAddress: "",
@@ -94,6 +98,23 @@ export const PropertyForm = ({
   const watchedPropertyType = watch("propertyType");
   const watchedPremisesType = watch("premisesType");
   const derivedPremises = derivePremisesType(watchedPropertyType);
+  const overrideContradicts = isPremisesOverrideContradicting(
+      watchedPropertyType,
+      watchedPremisesType
+  );
+
+  // Backend taxonomy metadata is the single source of truth for the
+  // type -> premises derivation; local constants are only a loading fallback.
+  const { data: taxonomy } = usePropertyTypesQuery();
+  const typeOptions = taxonomy?.propertyTypes?.length
+      ? taxonomy.propertyTypes
+      : Object.values(PropertyType).map((type) => ({
+          propertyType: type,
+          derivedPremisesType: derivePremisesType(type),
+        }));
+  const premisesOptions = taxonomy?.premisesTypes?.length
+      ? taxonomy.premisesTypes
+      : Object.values(PremisesType);
 
   const submit = handleSubmit(async (values) => {
     const parsed = propertySchema.safeParse(values);
@@ -162,9 +183,9 @@ export const PropertyForm = ({
             <label className="space-y-1">
               <span className="form-label">Type</span>
               <select className="form-input" {...register("propertyType")}>
-                {Object.values(PropertyType).map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                {typeOptions.map(({ propertyType }) => (
+                    <option key={propertyType} value={propertyType}>
+                      {propertyType}
                     </option>
                 ))}
               </select>
@@ -177,22 +198,57 @@ export const PropertyForm = ({
                   {...register("premisesType", { setValueAs: (v: string) => v || undefined })}
               >
                 <option value="">Auto (based on type)</option>
-                {Object.values(PremisesType).map((premises) => (
+                {premisesOptions.map((premises) => (
                     <option key={premises} value={premises}>
                       {premises}
                     </option>
                 ))}
               </select>
-              <span className="text-xs text-ink-muted leading-snug">
-                {watchedPremisesType
-                    ? `Tax classification locked: ${watchedPremisesType}`
-                    : `Auto: ${derivedPremises}`}
-                {" — "}
-                {derivedPremises === PremisesType.COMMERCIAL && !watchedPremisesType
-                    ? "commercial rent attracts 16% VAT for VAT-registered landlords"
-                    : "residential rent pays MRI (7.5% final tax)"}
-              </span>
+              <div className="text-xs text-ink-muted leading-snug space-y-1.5">
+                <p>
+                  {watchedPremisesType
+                      ? `Tax classification locked: ${watchedPremisesType}`
+                      : `Auto: ${derivedPremises}`}
+                  {" — "}
+                  {watchedPremisesType === PremisesType.MIXED_USE
+                      ? "residential portion pays MRI; commercial portion follows standard income tax. Income must be split between regimes."
+                      : derivedPremises === PremisesType.COMMERCIAL && !watchedPremisesType
+                          ? "commercial rent attracts 16% VAT for VAT-registered landlords"
+                          : "residential rent pays MRI (7.5% final tax)"}
+                </p>
+                {overrideContradicts && (
+                    <p className="flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
+                      <TriangleAlert className="h-3.5 w-3.5 mt-0.5 shrink-0" strokeWidth={2} />
+                      Warning: this overrides the auto-classification ({derivedPremises}) and
+                      changes the tax regime the platform files under. Confirm with your tax
+                      agent before saving.
+                    </p>
+                )}
+              </div>
             </label>
+
+            {watchedPremisesType && (
+                <label className="block space-y-1 md:col-span-2">
+                  <span className="form-label">Override reason (required)</span>
+                  <textarea
+                      className="form-input min-h-[72px]"
+                      placeholder={
+                        watchedPremisesType === PremisesType.MIXED_USE
+                            ? "e.g. Ground floor shops, residential flats above — income must be split between MRI and standard income tax."
+                            : "Why does this property deviate from the automatic tax classification?"
+                      }
+                      {...register("premisesTypeOverrideReason")}
+                  />
+                  <span className="text-xs text-ink-muted leading-snug">
+                    Recorded in the audit trail — a legal/tax classification change.
+                  </span>
+                  {errors.premisesTypeOverrideReason && (
+                      <span className="text-xs text-danger">
+                        {errors.premisesTypeOverrideReason.message}
+                      </span>
+                  )}
+                </label>
+            )}
 
             <label className="block space-y-1 md:col-span-2">
               <span className="form-label">Description</span>

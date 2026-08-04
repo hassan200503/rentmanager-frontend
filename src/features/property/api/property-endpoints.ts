@@ -10,4 +10,6 @@ export const propertyEndpoints = {
     activate: (id: string) => `${base}/${id}/activate`,
     archive: (id: string) => `${base}/${id}/archive`,
     remove: (id: string) => `${base}/${id}`,
+    // Taxonomy metadata (single source of truth for type -> premises derivation)
+    types: `${base}/types`,
 };
