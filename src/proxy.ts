@@ -1,70 +1,119 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { resolveRoutePolicy } from "@/lib/rbac/route-policy";
+import { extractRouteClaims, type RouteClaims } from "@/lib/auth/session-claims";
+import { auditRouteDecision, auditUnclassified } from "@/lib/auth/audit";
 
-const isPublicRoute = createRouteMatcher([
-    "/",
-    "/listings(.*)",
-    "/public/forgot-password",
-    "/public/sign-in(.*)",
-    "/public/sign-up(.*)",
-    "/tenant-required",
-    "/reserve(.*)",
-]);
-
-// Pages a signed-in, tenant-less (pending onboarding/verification) user
-// is still allowed to reach. Add more here as you build them.
-const isAllowedWhilePending = createRouteMatcher([
-    "/onboarding",
-    "/pending-review",
-    "/account(.*)",
-    "/support",
-]);
-
+/**
+ * Route-level RBAC proxy (Next.js 16 — formerly "middleware").
+ *
+ * The decision logic lives in src/lib/rbac/route-policy.ts (pure and
+ * unit-tested). This file bridges Clerk's auth context to the policy,
+ * runs the resulting action, and emits structured audit logs.
+ *
+ * Personas and their route trees (see lib/auth/clerk-metadata.ts):
+ *   - admin            → /admin/*   (AdminShell)
+ *   - landlord         → /dashboard/* (AppShell)
+ *   - renter           → /portal/*   (TenantShell)
+ *   - landlord_pending → /onboarding
+ *
+ * Claim sourcing:
+ *   - `tenant_id` + `userType` come from the DEFAULT session token claims
+ *     (userType appears once the Clerk JWT template is configured; until
+ *     then it is absent and the policy falls back to legacy signals).
+ *   - `platformRole` lives in the "backend" template — decoded lazily, and
+ *     only when the request concerns the admin tree or routing needs it.
+ *
+ * Defense in depth: this proxy is the FIRST layer (blocks before render).
+ * The backend is the authority — @PreAuthorize on /api/v1/admin/** plus
+ * JWT org_id verification against X-Tenant-Id on every tenant-scoped call.
+ * AMBIGUOUS claims never grant access (fail closed).
+ */
 export default clerkMiddleware(async (auth, req) => {
-    if (isPublicRoute(req)) return NextResponse.next();
+    const { userId, sessionClaims, redirectToSignIn, getToken } = await auth();
 
-    const { userId, sessionClaims, redirectToSignIn } = await auth();
-
-    if (!userId) {
+    // Parse/validate claims up front. Structural failures fail closed to
+    // sign-in rather than silently proceeding.
+    let claims: RouteClaims;
+    try {
+        claims = extractRouteClaims(sessionClaims ?? null);
+    } catch {
+        console.warn(
+            JSON.stringify({ event: "auth.invalid_claims", pathname: req.nextUrl.pathname })
+        );
         return redirectToSignIn();
     }
 
-    // Tenant portal route: any authenticated user may access /portal.
-    // Landlords (with tenant_id claim) are redirected to /dashboard instead.
-    // In development mode, setting cookie _dev_portal=renter bypasses this
-    // so the same user can preview both landlord and renter portals.
-    if (req.nextUrl.pathname.startsWith("/portal")) {
-        const tenantId = sessionClaims?.tenant_id;
-        if (tenantId) {
-            if (
-                process.env.NODE_ENV === "development" &&
-                req.cookies.get("_dev_portal")?.value === "renter"
-            ) {
-                return NextResponse.next();
+    const pathname = req.nextUrl.pathname;
+    const needsRoleBoost =
+        pathname === "/admin" || pathname.startsWith("/admin/") || !claims.userType;
+
+    // platformRole is not on the default session token — decode the backend
+    // template lazily. This doubles as the migration-window fallback for
+    // admin detection until the userType claim is configured.
+    if (userId && needsRoleBoost) {
+        try {
+            const token = await getToken({ template: "backend" });
+            if (token) {
+                const payload = JSON.parse(
+                    Buffer.from(token.split(".")[1], "base64").toString()
+                );
+                const role = payload.platformRole as string | undefined;
+                if (
+                    (claims.platformRole === null || claims.platformRole === undefined) &&
+                    typeof role === "string"
+                ) {
+                    claims = { ...claims, platformRole: role === "OWNER" || role === "ADMIN" ? role : undefined };
+                }
             }
-            return NextResponse.redirect(new URL("/dashboard", req.url));
+        } catch (error) {
+            console.error(
+                JSON.stringify({ event: "auth.backend_template_decode_failed", pathname }),
+                error
+            );
         }
-        return NextResponse.next();
     }
 
-    const tenantId = sessionClaims?.tenant_id;
+    if (!claims.userType) {
+        auditUnclassified({
+            userId: claims.userId,
+            pathname,
+            source: "proxy",
+        });
+    }
 
-    // NOTE: once the real KYC review step exists, this should also check
-    // something like sessionClaims?.tenant_status === "active", not just
-    // tenantId presence — for now, form submission = active immediately.
-    if (!tenantId) {
-        if (isAllowedWhilePending(req)) {
+    const decision = resolveRoutePolicy({
+        pathname,
+        userId: claims.userId,
+        tenantId: claims.tenantId,
+        platformRole: claims.platformRole,
+        userType: claims.userType,
+        // Dev-only preview switch for testing the renter portal as a
+        // landlord. Never set in production.
+        devPortalOverride:
+            process.env.NODE_ENV === "development" &&
+            req.cookies.get("_dev_portal")?.value === "renter",
+    });
+
+    if (decision.action !== "next") {
+        auditRouteDecision({
+            userId: claims.userId,
+            pathname,
+            persona: claims.userType ?? undefined,
+            tenantId: claims.tenantId,
+            decision: decision.action,
+            reason: decision.action === "redirect" ? `redirect ${decision.to}` : "sign-in required",
+        });
+    }
+
+    switch (decision.action) {
+        case "next":
             return NextResponse.next();
-        }
-        return NextResponse.redirect(new URL("/onboarding", req.url));
+        case "sign-in":
+            return redirectToSignIn();
+        case "redirect":
+            return NextResponse.redirect(new URL(decision.to, req.url));
     }
-
-    // Tenant is set — this user is done onboarding, so keep them out of it.
-    if (req.nextUrl.pathname.startsWith("/onboarding")) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
-    return NextResponse.next();
 });
 
 export const config = {

@@ -35,6 +35,7 @@ function ListingsPageContent() {
     // loading screen only appears once; subsequent reloads get the lighter
     // skeleton grid while old content stays in place.
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+    const [prevIsLoading, setPrevIsLoading] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -61,11 +62,12 @@ function ListingsPageContent() {
         size: PAGE_SIZE,
     });
 
-    useEffect(() => {
+    if (prevIsLoading !== isLoading) {
+        setPrevIsLoading(isLoading);
         if (!isLoading) {
             setHasLoadedOnce(true);
         }
-    }, [isLoading]);
+    }
 
     const hasResults = (data?.content?.length ?? 0) > 0;
     const isSearching = debouncedKeyword.length > 0 || debouncedLocation.length > 0;

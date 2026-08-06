@@ -1,6 +1,47 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
+import { type SignupIntent } from "@/lib/auth/clerk-metadata";
+
+/**
+ * Sign-up page with persona intent capture.
+ *
+ * CTA flow: landing page "List property" / "Get started" links carry
+ * `?intent=landlord` (see lib/auth/signup-links.ts). The intent is stored
+ * in Clerk unsafeMetadata (`signupIntent`), then the user.created webhook
+ * seeds publicMetadata.userType:
+ *   - intent=landlord → landlord_pending (must complete onboarding)
+ *   - no intent       → renter (default; portal)
+ *
+ * unsafeMetadata is client-writable by design and NEVER used for
+ * authorization — it only picks the initial persona, which the backend
+ * re-classifies from database truth at the first real transition.
+ */
+
+function SignUpForm() {
+    const searchParams = useSearchParams();
+    const rawIntent = searchParams.get("intent");
+    const intent: SignupIntent | undefined =
+        rawIntent === "landlord" || rawIntent === "renter" ? rawIntent : undefined;
+
+    return (
+        <div className="card-elevated !p-6">
+            <SignUp
+                routing="path"
+                path="/public/sign-up"
+                // A brand-new account never has a tenant yet — onboarding is
+                // the only correct destination. Tenants are bounced to the
+                // dashboard by the proxy regardless.
+                forceRedirectUrl="/onboarding"
+                unsafeMetadata={{
+                    signupIntent: intent,
+                }}
+            />
+        </div>
+    );
+}
 
 export default function SignUpPage() {
     return (
@@ -27,13 +68,9 @@ export default function SignUpPage() {
                     </p>
                 </div>
 
-                <div className="card-elevated !p-6">
-                    <SignUp
-                        routing="path"
-                        path="/public/sign-up"
-                        forceRedirectUrl="/dashboard/properties"
-                    />
-                </div>
+                <Suspense fallback={<div className="card-elevated !p-6 min-h-40" aria-busy="true" />}>
+                    <SignUpForm />
+                </Suspense>
 
                 <p className="text-center text-xs text-fg-subtle dark:text-fg-subtle-dark mt-6">
                     RentManager — Property Management Platform

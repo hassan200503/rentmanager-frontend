@@ -26,6 +26,7 @@ export const clientEnvSchema = z.object({
 
 export const serverEnvSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
+  CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   ENABLE_PREMIUM_FEATURES: z

@@ -28,6 +28,7 @@ import { BrandBadge } from "@/shared/components/brand";
 import { publicPropertyApi } from "@/features/public-listings/api/public-property-api";
 import { publicUnitApi } from "@/features/public-listings/api/public-unit-api";
 import type { PublicPropertyResponse } from "@/features/public-listings/types/public-property";
+import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
 /* ─── Video Sources ─────────────────────────────────────── */
 const VIDEOS = {
@@ -427,7 +428,7 @@ const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
     { label: "Create an account", href: "/public/sign-up" },
   ],
   "For landlords": [
-    { label: "List a property", href: "/public/sign-up" },
+    { label: "List a property", href: SIGNUP_LANDLORD_HREF },
     { label: "Dashboard", href: "/dashboard" },
   ],
 };
@@ -482,13 +483,17 @@ export default function HomePage() {
 
             <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
               <Link href="/listings" className="text-white/60 hover:text-white transition-colors">Browse</Link>
-              <Link href="/public/sign-up" className="text-white/60 hover:text-white transition-colors">List property</Link>
+              <Link href={SIGNUP_LANDLORD_HREF} className="text-white/60 hover:text-white transition-colors">List property</Link>
               <Link href="#how-it-works" className="text-white/60 hover:text-white transition-colors">How it works</Link>
             </nav>
 
             <div className="hidden md:flex items-center gap-3">
+              <Link href="/admin" className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all duration-200 border border-white/10 hover:border-white/20">
+                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
+                <span>Admin</span>
+              </Link>
               <Link href="/public/sign-in" className="text-sm font-medium text-white/70 hover:text-white transition-colors px-4 py-2">Sign in</Link>
-              <Link href="/public/sign-up" className="text-sm font-semibold px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-600/25">
+              <Link href={SIGNUP_LANDLORD_HREF} className="text-sm font-semibold px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-600/25">
                 Get started
               </Link>
             </div>
@@ -503,11 +508,15 @@ export default function HomePage() {
           <div className="md:hidden border-t border-white/5 bg-[#030712]/95 backdrop-blur-xl">
             <div className="px-4 py-4 space-y-2">
               <Link href="/listings" onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">Browse</Link>
-              <Link href="/public/sign-up" onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">List property</Link>
+              <Link href={SIGNUP_LANDLORD_HREF} onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">List property</Link>
               <Link href="#how-it-works" onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">How it works</Link>
               <div className="pt-3 space-y-2">
+                <Link href="/admin" onClick={() => setMobileMenu(false)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-medium text-white/60 border border-white/10 hover:text-white hover:border-white/20 transition-colors">
+                  <ShieldCheck className="h-4 w-4" strokeWidth={2} />
+                  <span>Admin Login</span>
+                </Link>
                 <Link href="/public/sign-in" onClick={() => setMobileMenu(false)} className="block w-full text-center px-4 py-3 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:text-white hover:border-white/20 transition-colors">Sign in</Link>
-                <Link href="/public/sign-up" onClick={() => setMobileMenu(false)} className="block w-full text-center px-4 py-3 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all">Get started</Link>
+                <Link href={SIGNUP_LANDLORD_HREF} onClick={() => setMobileMenu(false)} className="block w-full text-center px-4 py-3 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all">Get started</Link>
               </div>
             </div>
           </div>
@@ -795,7 +804,7 @@ export default function HomePage() {
           </div>
           <DashboardPreview />
           <div className="text-center mt-10">
-            <Link href="/public/sign-up" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/25">
+            <Link href={SIGNUP_LANDLORD_HREF} className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/25">
               Create a free account
               <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             </Link>
@@ -819,7 +828,7 @@ export default function HomePage() {
               Browse Properties
               <Search className="w-4 h-4" strokeWidth={2.5} />
             </Link>
-            <Link href="/public/sign-up" className="px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/25 flex items-center gap-2">
+            <Link href={SIGNUP_LANDLORD_HREF} className="px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white transition-all shadow-lg shadow-emerald-600/25 flex items-center gap-2">
               List Property
               <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} />
             </Link>

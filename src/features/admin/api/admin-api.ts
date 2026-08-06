@@ -1,0 +1,126 @@
+import { adminEndpoints } from "./admin-endpoints";
+import type {
+    AdminOverviewResponse,
+    DisbursementItem,
+    LandlordCommission,
+    LandlordDetailResponse,
+    LandlordSummary,
+    PlatformAdminInfo,
+    SetLandlordCommissionRequest,
+    SpringPage,
+} from "../types/admin-types";
+import { apiClient } from "@/lib/api/client";
+import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
+
+type ClerkWindow = Window & {
+    Clerk?: {
+        session?: {
+            getToken?: (options?: { template?: string }) => Promise<string | null>;
+        };
+    };
+};
+
+// Admin endpoints are unscoped — they work across all tenants. The backend
+// derives the platform role from the JWT and ignores X-Tenant-Id. Return
+// token only, no tenantId.
+const getAuthContext = async () => {
+    if (typeof window === "undefined") {
+        return {};
+    }
+    const token =
+        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
+            template: BACKEND_JWT_TEMPLATE,
+        })) ?? undefined;
+    return { token };
+};
+
+export const adminApi = {
+    getInfo: async (): Promise<PlatformAdminInfo> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<PlatformAdminInfo>(adminEndpoints.info(), token);
+    },
+    getOverview: async (): Promise<AdminOverviewResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<AdminOverviewResponse>(adminEndpoints.overview(), token);
+    },
+    getLandlords: async (params?: { search?: string; page?: number; size?: number; sort?: string }): Promise<SpringPage<LandlordSummary>> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams();
+        if (params?.search) qs.set("search", params.search);
+        if (params?.page !== undefined) qs.set("page", String(params.page));
+        if (params?.size !== undefined) qs.set("size", String(params.size));
+        if (params?.sort) qs.set("sort", params.sort);
+        const q = qs.toString();
+        return apiClient.get<SpringPage<LandlordSummary>>(adminEndpoints.landlords(q || undefined), token);
+    },
+    getLandlordDetail: async (landlordId: string): Promise<LandlordDetailResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<LandlordDetailResponse>(adminEndpoints.landlord(landlordId), token);
+    },
+    getDefaultCommission: async (): Promise<LandlordCommission> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<LandlordCommission>(adminEndpoints.defaultCommission(), token);
+    },
+    setDefaultCommission: async (request: SetLandlordCommissionRequest): Promise<LandlordCommission> => {
+        const { token } = await getAuthContext();
+        return apiClient.put<LandlordCommission>(adminEndpoints.defaultCommission(), request, token);
+    },
+    getLandlordCommission: async (landlordId: string): Promise<LandlordCommission> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<LandlordCommission>(adminEndpoints.landlordCommission(landlordId), token);
+    },
+    setLandlordCommission: async (landlordId: string, request: SetLandlordCommissionRequest): Promise<LandlordCommission> => {
+        const { token } = await getAuthContext();
+        return apiClient.put<LandlordCommission>(adminEndpoints.landlordCommission(landlordId), request, token);
+    },
+    clearLandlordCommission: async (landlordId: string): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.delete<void>(adminEndpoints.landlordCommission(landlordId), token);
+    },
+    updateLandlordStatus: async (landlordId: string, status: "ACTIVE" | "SUSPENDED"): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.patch<void>(adminEndpoints.landlordStatus(landlordId), { status }, token);
+    },
+    getDisbursements: async (params?: {
+        landlordId?: string;
+        status?: string;
+        requiresManualAttention?: boolean;
+        page?: number;
+        size?: number;
+    }): Promise<SpringPage<DisbursementItem>> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams();
+        if (params?.landlordId) qs.set("landlordId", params.landlordId);
+        if (params?.status) qs.set("status", params.status);
+        if (params?.requiresManualAttention !== undefined) qs.set("requiresManualAttention", String(params.requiresManualAttention));
+        if (params?.page !== undefined) qs.set("page", String(params.page));
+        if (params?.size !== undefined) qs.set("size", String(params.size));
+        const q = qs.toString();
+        return apiClient.get<SpringPage<DisbursementItem>>(adminEndpoints.disbursements(q || undefined), token);
+    },
+    retryDisbursement: async (disbursementId: string): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.post<void>(adminEndpoints.disbursementRetry(disbursementId), undefined, token);
+    },
+    getProperties: async (params?: { search?: string; landlordId?: string; page?: number; size?: number; sort?: string }): Promise<SpringPage<import("../types/admin-types").PropertySummary>> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams();
+        if (params?.search) qs.set("search", params.search);
+        if (params?.landlordId) qs.set("landlordId", params.landlordId);
+        if (params?.page !== undefined) qs.set("page", String(params.page));
+        if (params?.size !== undefined) qs.set("size", String(params.size));
+        if (params?.sort) qs.set("sort", params.sort);
+        const q = qs.toString();
+        return apiClient.get<SpringPage<import("../types/admin-types").PropertySummary>>(adminEndpoints.properties(q || undefined), token);
+    },
+    getRenters: async (params?: { search?: string; landlordId?: string; page?: number; size?: number }): Promise<SpringPage<import("../types/admin-types").RenterSummary>> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams();
+        if (params?.search) qs.set("search", params.search);
+        if (params?.landlordId) qs.set("landlordId", params.landlordId);
+        if (params?.page !== undefined) qs.set("page", String(params.page));
+        if (params?.size !== undefined) qs.set("size", String(params.size));
+        const q = qs.toString();
+        return apiClient.get<SpringPage<import("../types/admin-types").RenterSummary>>(adminEndpoints.renters(q || undefined), token);
+    },
+};

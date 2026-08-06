@@ -34,6 +34,7 @@ export function getServerEnv() {
     }
     const parsed = serverEnvSchema.safeParse({
         CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+        CLERK_WEBHOOK_SIGNING_SECRET: process.env.CLERK_WEBHOOK_SIGNING_SECRET,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
         ENABLE_PREMIUM_FEATURES: process.env.ENABLE_PREMIUM_FEATURES,
