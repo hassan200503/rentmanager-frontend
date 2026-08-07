@@ -29,6 +29,7 @@ import { publicPropertyApi } from "@/features/public-listings/api/public-propert
 import { publicUnitApi } from "@/features/public-listings/api/public-unit-api";
 import type { PublicPropertyResponse } from "@/features/public-listings/types/public-property";
 import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
+import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
 
 /* ─── Video Sources ─────────────────────────────────────── */
 const VIDEOS = {
@@ -424,11 +425,13 @@ const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
   Platform: [
     { label: "Browse Properties", href: "/listings" },
     { label: "How it works", href: "#how-it-works" },
-    { label: "Sign in", href: "/public/sign-in" },
+    { label: "Landlord sign in", href: SIGNIN_LANDLORD_HREF },
+    { label: "Tenant or renter sign in", href: SIGNIN_RENTER_HREF },
     { label: "Create an account", href: "/public/sign-up" },
   ],
   "For landlords": [
     { label: "List a property", href: SIGNUP_LANDLORD_HREF },
+    { label: "Landlord sign in", href: SIGNIN_LANDLORD_HREF },
     { label: "Dashboard", href: "/dashboard" },
   ],
 };
@@ -481,24 +484,28 @@ export default function HomePage() {
               <BrandBadge size="lg" />
             </Link>
 
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+            <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
               <Link href="/listings" className="text-white/60 hover:text-white transition-colors">Browse</Link>
               <Link href={SIGNUP_LANDLORD_HREF} className="text-white/60 hover:text-white transition-colors">List property</Link>
               <Link href="#how-it-works" className="text-white/60 hover:text-white transition-colors">How it works</Link>
             </nav>
 
-            <div className="hidden md:flex items-center gap-3">
-              <Link href="/admin" className="group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all duration-200 border border-white/10 hover:border-white/20">
-                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
-                <span>Admin</span>
+            <div className="hidden md:flex items-center gap-2.5">
+              <Link href={SIGNIN_LANDLORD_HREF} className="inline-flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors px-2.5 py-2">
+                <Building2 className="h-4 w-4 text-white/40" strokeWidth={1.75} />
+                Sign in as a landlord
               </Link>
-              <Link href="/public/sign-in" className="text-sm font-medium text-white/70 hover:text-white transition-colors px-4 py-2">Sign in</Link>
+              <span className="h-4 w-px bg-white/10" aria-hidden="true" />
+              <Link href={SIGNIN_RENTER_HREF} className="inline-flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors px-2.5 py-2">
+                <Home className="h-4 w-4 text-white/40" strokeWidth={1.75} />
+                Sign in as a renter or tenant
+              </Link>
               <Link href={SIGNUP_LANDLORD_HREF} className="text-sm font-semibold px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-600/25">
                 Get started
               </Link>
             </div>
 
-            <button type="button" onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors" aria-label="Menu">
+            <button type="button" onClick={() => setMobileMenu(!mobileMenu)} className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors" aria-label="Menu">
               {mobileMenu ? <X className="w-5 h-5" strokeWidth={2} /> : <Menu className="w-5 h-5" strokeWidth={2} />}
             </button>
           </div>
@@ -511,11 +518,14 @@ export default function HomePage() {
               <Link href={SIGNUP_LANDLORD_HREF} onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">List property</Link>
               <Link href="#how-it-works" onClick={() => setMobileMenu(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">How it works</Link>
               <div className="pt-3 space-y-2">
-                <Link href="/admin" onClick={() => setMobileMenu(false)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-medium text-white/60 border border-white/10 hover:text-white hover:border-white/20 transition-colors">
-                  <ShieldCheck className="h-4 w-4" strokeWidth={2} />
-                  <span>Admin Login</span>
+                <Link href={SIGNIN_LANDLORD_HREF} onClick={() => setMobileMenu(false)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:text-white hover:border-white/20 transition-colors">
+                  <Building2 className="h-4 w-4" strokeWidth={1.75} />
+                  Sign in as a landlord
                 </Link>
-                <Link href="/public/sign-in" onClick={() => setMobileMenu(false)} className="block w-full text-center px-4 py-3 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:text-white hover:border-white/20 transition-colors">Sign in</Link>
+                <Link href={SIGNIN_RENTER_HREF} onClick={() => setMobileMenu(false)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:text-white hover:border-white/20 transition-colors">
+                  <Home className="h-4 w-4" strokeWidth={1.75} />
+                  Sign in as a tenant or renter
+                </Link>
                 <Link href={SIGNUP_LANDLORD_HREF} onClick={() => setMobileMenu(false)} className="block w-full text-center px-4 py-3 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all">Get started</Link>
               </div>
             </div>
@@ -579,6 +589,26 @@ export default function HomePage() {
                 </button>
               </form>
               <LiveSearchStats />
+            </div>
+
+            {/* Persona sign-in strip — both flows, one click each */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 text-xs text-white/40">
+              <span>Already have an account?</span>
+              <Link
+                href={SIGNIN_LANDLORD_HREF}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 font-medium text-white/70 transition-all hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                <Building2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Sign in as a landlord
+              </Link>
+              <span className="opacity-40" aria-hidden="true">·</span>
+              <Link
+                href={SIGNIN_RENTER_HREF}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 font-medium text-white/70 transition-all hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                <Home className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Sign in as a tenant or renter
+              </Link>
             </div>
 
             {/* Trust indicators */}
@@ -861,6 +891,14 @@ export default function HomePage() {
           </div>
           <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-white/50">&copy; {new Date().getFullYear()} RentManager. All rights reserved.</p>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/20 hover:text-white/80"
+              aria-label="Platform admin console"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Admin
+            </Link>
           </div>
         </div>
       </footer>

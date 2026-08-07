@@ -141,6 +141,7 @@ export default function DevPortalSwitcher() {
                         : "bg-brand text-white hover:bg-brand/90"}
                 `}
                 title={isRenter ? "Switch to Landlord view" : "Switch to Renter view"}
+                aria-label="Dev-only persona preview toggle — has no effect in production"
             >
                 <ArrowLeftRight className="h-3 w-3" strokeWidth={2} />
                 {isRenter ? (
@@ -148,6 +149,9 @@ export default function DevPortalSwitcher() {
                 ) : (
                     <><User className="h-3 w-3" strokeWidth={2} /> Renter</>
                 )}
+                <span className="ml-0.5 rounded bg-black/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                    Dev
+                </span>
             </button>
         </div>
     );

@@ -14,7 +14,20 @@ import { useOrgStore } from "@/stores/org-store";
  *     app reads tenant context from one place (the store), not from Clerk
  *     hooks scattered everywhere.
  *
- * tenantId === Clerk orgId. See architecture decision log if this changes.
+ *  tenantId === Clerk orgId. See architecture decision log if this changes.
+ *
+ * ── Post-auth redirect contract ────────────────────────────────────────────
+ *   - /public/sign-in may carry `?intent=landlord|renter` (see
+ *     lib/auth/signin-links.ts); the page then hands Clerk a
+ *     `forceRedirectUrl` pointing at that persona's home tree
+ *     (/dashboard | /portal). That value is a hardcoded, same-origin path —
+ *     never derived from user input.
+ *   - signInFallbackRedirectUrl="/portal" applies ONLY when no redirect was
+ *     forced or provided. It is a starting point, not a grant: the proxy
+ *     (lib/rbac/route-policy.ts) re-evaluates verified claims on every
+ *     navigation and corrects any persona mismatch (landlord → /dashboard,
+ *     admin → /admin, pending → /onboarding). Persona intent can never
+ *     widen what a session may reach.
  */
 
 function OrgStoreSync({ children }: { children: ReactNode }) {
