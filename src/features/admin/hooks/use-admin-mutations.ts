@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "../api/admin-api";
 import { adminKeys } from "./admin-keys";
-import type { SetLandlordCommissionRequest } from "../types/admin-types";
+import type { SetLandlordCommissionRequest, UpdatePlatformSettingsRequest } from "../types/admin-types";
 
 export const useSetDefaultCommissionMutation = () => {
     const queryClient = useQueryClient();
@@ -16,12 +16,24 @@ export const useSetDefaultCommissionMutation = () => {
     });
 };
 
-export const useSetLandlordCommissionMutation = (landlordId: string) => {
+export const useSetLandlordCommissionMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (request: SetLandlordCommissionRequest) =>
-            adminApi.setLandlordCommission(landlordId, request),
-        onSuccess: () => {
+        mutationFn: (input: { landlordId: string; ratePercent: number }) =>
+            adminApi.setLandlordCommission(input.landlordId, { ratePercent: input.ratePercent }),
+        onSuccess: (_data, input) => {
+            queryClient.invalidateQueries({ queryKey: adminKeys.landlordCommission(input.landlordId) });
+            queryClient.invalidateQueries({ queryKey: adminKeys.landlord(input.landlordId) });
+            queryClient.invalidateQueries({ queryKey: adminKeys.landlords() });
+        },
+    });
+};
+
+export const useClearLandlordCommissionMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (landlordId: string) => adminApi.clearLandlordCommission(landlordId),
+        onSuccess: (_data, landlordId) => {
             queryClient.invalidateQueries({ queryKey: adminKeys.landlordCommission(landlordId) });
             queryClient.invalidateQueries({ queryKey: adminKeys.landlord(landlordId) });
             queryClient.invalidateQueries({ queryKey: adminKeys.landlords() });
@@ -29,25 +41,13 @@ export const useSetLandlordCommissionMutation = (landlordId: string) => {
     });
 };
 
-export const useClearLandlordCommissionMutation = (landlordId: string) => {
+export const useUpdateLandlordStatusMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: () => adminApi.clearLandlordCommission(landlordId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: adminKeys.landlordCommission(landlordId) });
-            queryClient.invalidateQueries({ queryKey: adminKeys.landlord(landlordId) });
-            queryClient.invalidateQueries({ queryKey: adminKeys.landlords() });
-        },
-    });
-};
-
-export const useUpdateLandlordStatusMutation = (landlordId: string) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (status: "ACTIVE" | "SUSPENDED") =>
-            adminApi.updateLandlordStatus(landlordId, status),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: adminKeys.landlord(landlordId) });
+        mutationFn: (input: { landlordId: string; status: "ACTIVE" | "SUSPENDED" }) =>
+            adminApi.updateLandlordStatus(input.landlordId, input.status),
+        onSuccess: (_data, input) => {
+            queryClient.invalidateQueries({ queryKey: adminKeys.landlord(input.landlordId) });
             queryClient.invalidateQueries({ queryKey: adminKeys.landlords() });
             queryClient.invalidateQueries({ queryKey: adminKeys.overview() });
         },
@@ -62,6 +62,17 @@ export const useRetryDisbursementMutation = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: adminKeys.disbursements() });
             queryClient.invalidateQueries({ queryKey: adminKeys.overview() });
+        },
+    });
+};
+
+export const useUpdatePlatformSettingsMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (request: UpdatePlatformSettingsRequest) =>
+            adminApi.updateSettings(request),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: adminKeys.settings() });
         },
     });
 };

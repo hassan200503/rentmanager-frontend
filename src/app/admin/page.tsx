@@ -278,12 +278,12 @@ function OverviewContent() {
             <div>
                 <h3 className="text-sm font-semibold text-fg dark:text-fg-dark mb-3">Platform management</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <ModuleCard title="Landlords" description="Oversee tenant orgs, billing mode and status" icon={Building2} tone="brand" href="/admin/landlords" disabled />
-                    <ModuleCard title="Renters" description="Directory of all renters across the platform" icon={Users} tone="emerald" href="/admin/renters" disabled />
-                    <ModuleCard title="Properties" description="Platform-wide property and unit inventory" icon={Home} tone="violet" href="/admin/properties" disabled />
-                    <ModuleCard title="Disbursements" description="Monitor and retry MPESA payout batches" icon={Send} tone="blue" href="/admin/disbursements" disabled />
-                    <ModuleCard title="Commission policy" description="Default and per-landlord commission rates" icon={Wallet} tone="amber" href="/admin/commission" disabled />
-                    <ModuleCard title="Platform settings" description="Environment, billing and configuration" icon={Settings} tone="rose" href="/admin/settings" disabled />
+                    <ModuleCard title="Landlords" description="Oversee tenant orgs, billing mode and status" icon={Building2} tone="brand" href="/admin/landlords" />
+                    <ModuleCard title="Renters" description="Directory of all renters across the platform" icon={Users} tone="emerald" href="/admin/renters" />
+                    <ModuleCard title="Properties" description="Platform-wide property and unit inventory" icon={Home} tone="violet" href="/admin/properties" />
+                    <ModuleCard title="Disbursements" description="Monitor and retry MPESA payout batches" icon={Send} tone="blue" href="/admin/disbursements" />
+                    <ModuleCard title="Commission policy" description="Default and per-landlord commission rates" icon={Wallet} tone="amber" href="/admin/commission" />
+                    <ModuleCard title="Platform settings" description="Environment, billing and configuration" icon={Settings} tone="rose" href="/admin/settings" />
                 </div>
             </div>
         </div>

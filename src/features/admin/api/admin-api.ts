@@ -6,8 +6,14 @@ import type {
     LandlordDetailResponse,
     LandlordSummary,
     PlatformAdminInfo,
+    PlatformSettingsResponse,
+    PropertyDetailResponse,
+    PropertySummary,
+    RenterSummary,
     SetLandlordCommissionRequest,
     SpringPage,
+    UpdatePlatformSettingsRequest,
+    DisbursementQueryParams,
 } from "../types/admin-types";
 import { apiClient } from "@/lib/api/client";
 import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
@@ -42,6 +48,18 @@ export const adminApi = {
     getOverview: async (): Promise<AdminOverviewResponse> => {
         const { token } = await getAuthContext();
         return apiClient.get<AdminOverviewResponse>(adminEndpoints.overview(), token);
+    },
+    getSettings: async (): Promise<PlatformSettingsResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<PlatformSettingsResponse>(adminEndpoints.settings(), token);
+    },
+    updateSettings: async (request: UpdatePlatformSettingsRequest): Promise<PlatformSettingsResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.put<PlatformSettingsResponse>(adminEndpoints.settings(), request, token);
+    },
+    getPropertyDetail: async (propertyId: string): Promise<PropertyDetailResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<PropertyDetailResponse>(adminEndpoints.property(propertyId), token);
     },
     getLandlords: async (params?: { search?: string; page?: number; size?: number; sort?: string }): Promise<SpringPage<LandlordSummary>> => {
         const { token } = await getAuthContext();
@@ -81,13 +99,7 @@ export const adminApi = {
         const { token } = await getAuthContext();
         await apiClient.patch<void>(adminEndpoints.landlordStatus(landlordId), { status }, token);
     },
-    getDisbursements: async (params?: {
-        landlordId?: string;
-        status?: string;
-        requiresManualAttention?: boolean;
-        page?: number;
-        size?: number;
-    }): Promise<SpringPage<DisbursementItem>> => {
+    getDisbursements: async (params?: DisbursementQueryParams): Promise<SpringPage<DisbursementItem>> => {
         const { token } = await getAuthContext();
         const qs = new URLSearchParams();
         if (params?.landlordId) qs.set("landlordId", params.landlordId);
@@ -102,7 +114,7 @@ export const adminApi = {
         const { token } = await getAuthContext();
         await apiClient.post<void>(adminEndpoints.disbursementRetry(disbursementId), undefined, token);
     },
-    getProperties: async (params?: { search?: string; landlordId?: string; page?: number; size?: number; sort?: string }): Promise<SpringPage<import("../types/admin-types").PropertySummary>> => {
+    getProperties: async (params?: { search?: string; landlordId?: string; page?: number; size?: number; sort?: string }): Promise<SpringPage<PropertySummary>> => {
         const { token } = await getAuthContext();
         const qs = new URLSearchParams();
         if (params?.search) qs.set("search", params.search);
@@ -111,9 +123,9 @@ export const adminApi = {
         if (params?.size !== undefined) qs.set("size", String(params.size));
         if (params?.sort) qs.set("sort", params.sort);
         const q = qs.toString();
-        return apiClient.get<SpringPage<import("../types/admin-types").PropertySummary>>(adminEndpoints.properties(q || undefined), token);
+        return apiClient.get<SpringPage<PropertySummary>>(adminEndpoints.properties(q || undefined), token);
     },
-    getRenters: async (params?: { search?: string; landlordId?: string; page?: number; size?: number }): Promise<SpringPage<import("../types/admin-types").RenterSummary>> => {
+    getRenters: async (params?: { search?: string; landlordId?: string; page?: number; size?: number }): Promise<SpringPage<RenterSummary>> => {
         const { token } = await getAuthContext();
         const qs = new URLSearchParams();
         if (params?.search) qs.set("search", params.search);
@@ -121,6 +133,6 @@ export const adminApi = {
         if (params?.page !== undefined) qs.set("page", String(params.page));
         if (params?.size !== undefined) qs.set("size", String(params.size));
         const q = qs.toString();
-        return apiClient.get<SpringPage<import("../types/admin-types").RenterSummary>>(adminEndpoints.renters(q || undefined), token);
+        return apiClient.get<SpringPage<RenterSummary>>(adminEndpoints.renters(q || undefined), token);
     },
 };

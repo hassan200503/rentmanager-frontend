@@ -29,12 +29,12 @@ const PRIMARY_NAV: AdminNavItem[] = [
 ];
 
 const WORKSPACE_NAV: AdminNavItem[] = [
-    { label: "Landlords", href: "/admin/landlords", icon: Building2, disabled: true },
-    { label: "Renters", href: "/admin/renters", icon: Users, disabled: true },
-    { label: "Properties", href: "/admin/properties", icon: Home, disabled: true },
-    { label: "Disbursements", href: "/admin/disbursements", icon: Send, disabled: true },
-    { label: "Commission policy", href: "/admin/commission", icon: Wallet, disabled: true },
-    { label: "Platform settings", href: "/admin/settings", icon: Settings, disabled: true },
+    { label: "Landlords", href: "/admin/landlords", icon: Building2 },
+    { label: "Renters", href: "/admin/renters", icon: Users },
+    { label: "Properties", href: "/admin/properties", icon: Home },
+    { label: "Disbursements", href: "/admin/disbursements", icon: Send },
+    { label: "Commission policy", href: "/admin/commission", icon: Wallet },
+    { label: "Platform settings", href: "/admin/settings", icon: Settings },
 ];
 
 function AdminNavLink({

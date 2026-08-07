@@ -4,6 +4,7 @@ export const adminEndpoints = {
     info: () => base + "/info",
     defaultCommission: () => base + "/commission/default",
     overview: () => base + "/overview",
+    settings: () => base + "/settings",
     landlords: (params?: string) => base + "/landlords" + (params ? `?${params}` : ""),
     landlord: (landlordId: string) => `${base}/landlords/${landlordId}`,
     landlordStatus: (landlordId: string) => `${base}/landlords/${landlordId}/status`,

@@ -189,19 +189,30 @@ export interface SetLandlordCommissionRequest {
 export interface DisbursementItem {
   id: string;
   tenantId: string;
+  leaseId: string | null;
+  ledgerEntryId: string | null;
   amount: number;
   recipientPhone: string;
   recipientName: string | null;
-  status: DisbursementStatus;
   commandId: string;
-  originatorConversationId: string | null;
-  conversationId: string | null;
-  transactionId: string | null;
+  status: DisbursementStatus;
+  mpesaTransactionId: string | null;
+  mpesaConversationId: string | null;
+  mpesaOriginatorConversationId: string | null;
+  failureReason: string | null;
   retryCount: number;
   requiresManualAttention: boolean;
-  failureReason: string | null;
   createdAt: string;
   updatedAt: string;
+  version: number | null;
+}
+
+export interface DisbursementQueryParams {
+  landlordId?: string;
+  status?: string;
+  requiresManualAttention?: boolean;
+  page?: number;
+  size?: number;
 }
 
 export interface PropertySummary {
@@ -230,4 +241,122 @@ export interface RenterSummary {
   landlordSlug: string;
   activeLeaseId: string | null;
   activeLeaseStatus: LeaseStatus | null;
+}
+
+export type UnitStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE" | "ARCHIVED" | "VACANT" | "OCCUPIED";
+export type UnitOccupancyStatus = "VACANT" | "PENDING_PAYMENT" | "RESERVED" | "OCCUPIED";
+export type OccupancyStatus = "VACANT" | "PARTIALLY_OCCUPIED" | "FULLY_OCCUPIED";
+
+export interface PropertyDetailAddress {
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+}
+
+export interface PropertyDetailLandlord {
+  id: string;
+  name: string;
+  slug: string;
+  email: string;
+  status: TenantStatus;
+  billingMode: BillingMode;
+}
+
+export interface PropertyDetailUnit {
+  id: string;
+  unitNumber: string;
+  label: string;
+  status: UnitStatus;
+  occupancyStatus: UnitOccupancyStatus;
+  rentAmount: number;
+  depositAmount: number;
+  floor: string | null;
+}
+
+export interface PropertyDetailLease {
+  id: string;
+  leaseNumber: string;
+  status: LeaseStatus;
+  unitId: string;
+  unitNumber: string;
+  tenantProfileId: string;
+  renterName: string;
+  renterEmail: string;
+  startDate: string;
+  endDate: string;
+  rentAmount: number;
+  createdAt: string;
+}
+
+export interface PropertyDetailResponse {
+  id: string;
+  referenceCode: string;
+  name: string;
+  description: string | null;
+  status: PropertyStatus;
+  propertyType: PropertyType;
+  premisesType: PremisesType;
+  premisesTypeOverrideReason: string | null;
+  occupancyStatus: OccupancyStatus;
+  createdAt: string;
+  updatedAt: string;
+  address: PropertyDetailAddress;
+  landlord: PropertyDetailLandlord;
+  totalUnits: number;
+  occupiedUnits: number;
+  units: PropertyDetailUnit[];
+  activeLeases: PropertyDetailLease[];
+  pastLeases: PropertyDetailLease[];
+}
+
+// ---------- Platform settings ----------
+
+export type PlatformEnvironment = "SANDBOX" | "PRODUCTION";
+
+export interface PlatformSettingsBilling {
+  premiumGraceDays: number;
+  subscriptionPaymentExpiryMinutes: number;
+}
+
+export interface PlatformSettingsDisbursement {
+  maxRetryAttempts: number;
+}
+
+export interface PlatformSettingsRevenue {
+  businessShortcode: string | null;
+  paybill: string | null;
+  till: string | null;
+  b2cShortcode: string | null;
+  mpesaPhone: string | null;
+}
+
+export interface PlatformSettingsInfo {
+  environment: PlatformEnvironment;
+  sandbox: boolean;
+  supportEmail: string | null;
+  supportPhone: string | null;
+  updatedBy: string | null;
+  updatedAt: string | null;
+}
+
+export interface PlatformSettingsResponse {
+  billing: PlatformSettingsBilling;
+  disbursement: PlatformSettingsDisbursement;
+  revenue: PlatformSettingsRevenue;
+  platform: PlatformSettingsInfo;
+}
+
+export interface UpdatePlatformSettingsRequest {
+  premiumGraceDays: number;
+  subscriptionPaymentExpiryMinutes: number;
+  disbursementMaxRetryAttempts: number;
+  revenueBusinessShortcode?: string | null;
+  revenuePaybill?: string | null;
+  revenueTill?: string | null;
+  revenueB2CShortcode?: string | null;
+  revenueMpesaPhone?: string | null;
+  supportEmail?: string | null;
+  supportPhone?: string | null;
 }

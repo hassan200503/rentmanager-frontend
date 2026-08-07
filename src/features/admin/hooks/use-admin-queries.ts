@@ -27,6 +27,21 @@ export const useAdminOverviewQuery = () => {
     });
 };
 
+export const useAdminSettingsQuery = () => {
+    return useQuery({
+        queryKey: adminKeys.settings(),
+        queryFn: () => adminApi.getSettings(),
+    });
+};
+
+export const useAdminPropertyDetailQuery = (propertyId: string) => {
+    return useQuery({
+        queryKey: adminKeys.property(propertyId),
+        queryFn: () => adminApi.getPropertyDetail(propertyId),
+        enabled: !!propertyId,
+    });
+};
+
 export const useAdminDefaultCommissionQuery = () => {
     return useQuery({
         queryKey: adminKeys.defaultCommission(),

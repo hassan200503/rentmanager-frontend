@@ -203,6 +203,76 @@ export function EmptyState({
     );
 }
 
+export function PageHeader({
+    title,
+    subtitle,
+    icon: Icon,
+    iconTone = "from-blue-500 to-blue-600",
+    actions,
+}: {
+    title: string;
+    subtitle?: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    iconTone?: string;
+    actions?: React.ReactNode;
+}) {
+    return (
+        <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${iconTone} shadow-lg`}>
+                    <Icon className="h-5 w-5 text-white" strokeWidth={2} />
+                </div>
+                <div>
+                    <h1 className="text-lg font-bold text-fg dark:text-fg-dark">{title}</h1>
+                    {subtitle && (
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{subtitle}</p>
+                    )}
+                </div>
+            </div>
+            {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
+    );
+}
+
+export function Pagination({
+    page,
+    pageCount,
+    totalElements,
+    onPageChange,
+}: {
+    page: number;
+    pageCount: number;
+    totalElements: number;
+    onPageChange: (page: number) => void;
+}) {
+    if (pageCount <= 0) return null;
+    return (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-sm">
+            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                {totalElements.toLocaleString()} result{totalElements === 1 ? "" : "s"} · page {page + 1} of {pageCount}
+            </p>
+            <div className="flex items-center gap-1.5">
+                <button
+                    type="button"
+                    disabled={page <= 0}
+                    onClick={() => onPageChange(page - 1)}
+                    className="px-3 py-1.5 rounded-lg border border-border dark:border-border-dark text-xs font-medium text-fg dark:text-fg-dark hover:bg-border-subtle dark:hover:bg-border-subtle-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    Previous
+                </button>
+                <button
+                    type="button"
+                    disabled={page >= pageCount - 1}
+                    onClick={() => onPageChange(page + 1)}
+                    className="px-3 py-1.5 rounded-lg border border-border dark:border-border-dark text-xs font-medium text-fg dark:text-fg-dark hover:bg-border-subtle dark:hover:bg-border-subtle-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    Next
+                </button>
+            </div>
+        </div>
+    );
+}
+
 // ---------- Loading Skeletons ----------
 
 export function TableSkeleton({ rows = 5, columns = 5 }: { rows?: number; columns?: number }) {
