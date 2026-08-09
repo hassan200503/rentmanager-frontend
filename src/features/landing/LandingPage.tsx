@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { Navbar } from "./components/Navbar";
 import { HeroSection } from "./components/HeroSection";
 import { TrustBar } from "./components/TrustBar";
@@ -8,10 +9,9 @@ import { ProblemSolutionSection } from "./components/ProblemSolutionSection";
 import { HowItWorksSection } from "./components/HowItWorksSection";
 import { FeaturedPropertiesSection } from "./components/FeaturedPropertiesSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
-import { CityGridSection } from "./components/CityGridSection";
 import { StatsSection } from "./components/StatsSection";
 import { WhyRentManagerSection } from "./components/WhyRentManagerSection";
-import { DashboardPreviewSection } from "./components/DashboardPreviewSection";
+import { Premium3DDashboardSection } from "./components/Premium3DDashboardSection";
 import { PricingSection } from "./components/PricingSection";
 import { FAQSection } from "./components/FAQSection";
 import { FinalCTASection } from "./components/FinalCTASection";
@@ -19,6 +19,31 @@ import { Footer } from "./components/Footer";
 import { CITIES } from "./data/content";
 import { publicPropertyApi } from "@/features/public-listings/api/public-property-api";
 import { publicUnitApi } from "@/features/public-listings/api/public-unit-api";
+
+/** Three.js scene is client-only: skip SSR, lazy-load on scroll (keep first paint fast). */
+const Premium3DKenyaMapSection = dynamic(
+  () =>
+    import("./components/Premium3DKenyaMapSection").then(
+      (m) => m.Premium3DKenyaMapSection
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <section className="relative py-24 md:py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="aspect-square rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse skeleton-3d" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="h-16 rounded-lg skeleton-3d" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    ),
+  }
+);
 
 export function LandingPage() {
   const propertiesQuery = useQuery({
@@ -57,10 +82,10 @@ export function LandingPage() {
           onRetry={() => void propertiesQuery.refetch()}
         />
         <TestimonialsSection />
-        <CityGridSection />
+        <Premium3DKenyaMapSection />
         <StatsSection totalProperties={totalProperties} totalUnits={totalUnits} cityCount={CITIES.length} />
         <WhyRentManagerSection />
-        <DashboardPreviewSection />
+        <Premium3DDashboardSection />
         <PricingSection />
         <FAQSection />
       </main>

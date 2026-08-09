@@ -18,7 +18,7 @@ export const formatDate = (iso: string) =>
 export const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const KpiCard = ({ icon: Icon, label, value, trend, iconColor, iconBg, className = "" }: {
+const KpiCard = ({ icon, label, value, trend, iconColor, iconBg, className = "" }: {
     icon: React.ElementType;
     label: string;
     value: string | number;
@@ -26,25 +26,29 @@ const KpiCard = ({ icon: Icon, label, value, trend, iconColor, iconBg, className
     iconColor?: string;
     iconBg?: string;
     className?: string;
-}) => (
-    <div className={`card-elevated transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown ${className}`}>
-        <div className="flex items-start justify-between mb-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" }}>
-                <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+}) => {
+    const Icon = icon as React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    
+    return (
+        <div className={`card-elevated transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown ${className}`}>
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" }}>
+                    <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
+                </div>
             </div>
+            <p className="kpi-label mb-1">{label}</p>
+            <p className="kpi-value mb-1.5" aria-live="polite">{value}</p>
+            {trend && (
+                <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${trend.positive ? "text-success" : "text-danger"}`}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d={trend.positive ? "M5 1.5L8.5 6H1.5L5 1.5Z" : "M5 7L1.5 2H8.5L5 7Z"} fill="currentColor" />
+                    </svg>
+                    {trend.value}%
+                </span>
+            )}
         </div>
-        <p className="kpi-label mb-1">{label}</p>
-        <p className="kpi-value mb-1.5" aria-live="polite">{value}</p>
-        {trend && (
-            <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${trend.positive ? "text-success" : "text-danger"}`}>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-                    <path d={trend.positive ? "M5 1.5L8.5 6H1.5L5 1.5Z" : "M5 7L1.5 2H8.5L5 7Z"} fill="currentColor" />
-                </svg>
-                {trend.value}%
-            </span>
-        )}
-    </div>
-);
+    );
+};
 
 export const StatusBadge = ({ status }: { status: string }) => {
     const statusMap: Record<string, string> = {
@@ -464,7 +468,7 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
         <div className="space-y-2">
             {payments.slice(0, 5).map((tx) => {
                 const meta = TYPE_META[tx.type] ?? { icon: Receipt, color: "var(--color-fg-muted)", bg: "var(--color-border-subtle)" };
-                const MetaIcon = meta.icon;
+                const MetaIcon = meta.icon as React.ComponentType<{ className?: string; strokeWidth?: number }>;
                 return (
                     <div key={tx.id} className="card-sm flex items-center gap-3 p-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: meta.bg, color: meta.color }}>

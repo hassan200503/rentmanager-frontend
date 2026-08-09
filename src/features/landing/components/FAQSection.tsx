@@ -25,7 +25,7 @@ export function FAQSection() {
                 key={item.question}
                 className={`rounded-2xl border transition-all duration-300 ${
                   isOpen
-                    ? "border-emerald-500/25 bg-emerald-500/[0.03]"
+                    ? "border-jade-500/25 bg-jade-500/[0.03]"
                     : "border-white/10 bg-white/[0.02] hover:border-white/20"
                 }`}
               >
@@ -35,11 +35,11 @@ export function FAQSection() {
                   aria-expanded={isOpen}
                   aria-controls={`faq-panel-${i}`}
                   id={`faq-button-${i}`}
-                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-2xl"
+                  className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 rounded-2xl"
                 >
                   <span className="text-[15px]">{item.question}</span>
                   <ChevronDown
-                    className={`w-4 h-4 shrink-0 text-emerald-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                    className={`w-4 h-4 shrink-0 text-jade-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />

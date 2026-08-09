@@ -55,7 +55,7 @@ export function TestimonialsSection() {
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div
-        className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/[0.04] to-transparent pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-transparent via-jade-500/[0.04] to-transparent pointer-events-none"
         aria-hidden="true"
       />
       <div className="relative">
@@ -68,7 +68,7 @@ export function TestimonialsSection() {
             />
             {liveAverage !== null && (
               <div className="flex items-center gap-3 md:pb-2 shrink-0">
-                <div className="flex text-amber-400" aria-hidden="true">
+                <div className="flex text-jade-400" aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-current" strokeWidth={0} />
                   ))}
@@ -103,7 +103,7 @@ export function TestimonialsSection() {
         ) : isError ? (
           <div className="max-w-6xl mx-auto px-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-8 text-center">
-              <Sparkles className="w-6 h-6 text-amber-400 mx-auto mb-3" strokeWidth={1.5} />
+              <Sparkles className="w-6 h-6 text-jade-400 mx-auto mb-3" strokeWidth={1.5} />
               <p className="text-sm text-white/75">Couldn&rsquo;t load testimonials right now.</p>
               <button
                 type="button"
@@ -118,7 +118,7 @@ export function TestimonialsSection() {
         ) : items.length === 0 ? (
           <div className="max-w-6xl mx-auto px-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-8 text-center">
-              <Sparkles className="w-6 h-6 text-amber-400 mx-auto mb-3" strokeWidth={1.5} />
+              <Sparkles className="w-6 h-6 text-jade-400 mx-auto mb-3" strokeWidth={1.5} />
               <p className="text-sm text-white/75">
                 No verified testimonials yet — the first reviews go live here after platform
                 moderation. Rate your experience from your dashboard.
@@ -126,15 +126,26 @@ export function TestimonialsSection() {
             </div>
           </div>
         ) : (
-          <div className="overflow-hidden" role="region" aria-label="Customer testimonials">
-            <div className="animate-scroll flex gap-6 w-max">
+          <div
+            className="overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 rounded-2xl"
+            role="region"
+            aria-label="Customer testimonials"
+            tabIndex={0}
+          >
+            <div
+              className="animate-scroll flex gap-6 w-max"
+              onMouseEnter={(e) => (e.currentTarget.style.animationPlayState = "paused")}
+              onMouseLeave={(e) => (e.currentTarget.style.animationPlayState = "running")}
+              onFocus={(e) => (e.currentTarget.style.animationPlayState = "paused")}
+              onBlur={(e) => (e.currentTarget.style.animationPlayState = "running")}
+            >
               {duplicated.map((t, i) => (
                 <div
                   key={`${t.name}-${i}`}
                   className="relative rounded-2xl w-80 flex-shrink-0 overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6"
                   aria-hidden={i >= items.length}
                 >
-                  <div className="flex text-amber-400 text-sm mb-4" aria-hidden="true">
+                  <div className="flex text-jade-400 text-sm mb-4" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((_, j) => (
                       <Star
                         key={j}
@@ -145,12 +156,12 @@ export function TestimonialsSection() {
                   </div>
                   <p className="text-sm text-white/75 leading-relaxed mb-5">&ldquo;{t.text}&rdquo;</p>
                   <div className="flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 flex items-center justify-center text-sm font-bold text-emerald-300 border border-emerald-500/20" aria-hidden="true">
+                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-jade-500/30 to-jade-600/20 flex items-center justify-center text-sm font-bold text-jade-300 border border-jade-500/20" aria-hidden="true">
                       {t.name[0]}
                     </span>
                     <p className="text-sm font-semibold text-white flex items-center gap-1.5">
                       {t.name}
-                      <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2} aria-label="Verified user" />
+                      <BadgeCheck className="w-3.5 h-3.5 text-jade-400" strokeWidth={2} aria-label="Verified user" />
                     </p>
                   </div>
                 </div>

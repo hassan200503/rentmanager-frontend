@@ -22,7 +22,7 @@ export function StatsSection({
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div
-        className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.05] via-transparent to-emerald-500/[0.05] pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-jade-500/[0.05] via-transparent to-jade-500/[0.05] pointer-events-none"
         aria-hidden="true"
       />
       <div className="relative max-w-6xl mx-auto px-6">

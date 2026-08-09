@@ -123,7 +123,7 @@ interface ModuleCardProps {
 }
 
 function ModuleCard(props: ModuleCardProps) {
-  const Icon = props.icon;
+  const Icon = props.icon as React.ComponentType<{ className?: string; strokeWidth?: number }>;
   const isAvailable = Boolean(props.href);
 
   const content = (

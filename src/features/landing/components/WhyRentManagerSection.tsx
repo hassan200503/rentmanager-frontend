@@ -34,8 +34,8 @@ export function WhyRentManagerSection() {
                 className="hover:-translate-y-1"
                 style={staggerStyle(i)}
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/25 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center mb-5">
-                  <Icon className="w-5 h-5 text-emerald-300" strokeWidth={1.5} aria-hidden="true" />
+                <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-jade-500/25 to-jade-600/10 border border-jade-500/20 flex items-center justify-center mb-5 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-jade-500/25 group-hover:scale-110 group-hover:border-jade-400/40">
+                  <Icon className="w-5 h-5 text-jade-300 group-hover:text-jade-200 transition-colors duration-300" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-sm text-white/50 leading-relaxed">{feature.desc}</p>

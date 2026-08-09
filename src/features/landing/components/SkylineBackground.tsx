@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
+
 /**
  * Optimized skyline: a single dusk scene with twinkling windows.
  * Replaces the original 3-scene crossfade (~1300 animated SVG nodes) with
@@ -88,6 +91,16 @@ function buildScene(seed: number) {
 const SCENE: SkylineBuilding[] = buildScene(1337);
 
 export function SkylineBackground({ className = "" }: { className?: string }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const animated = !prefersReducedMotion;
+
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none select-none ${className}`} aria-hidden="true">
       <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0A0F1C 0%, #101A31 55%, #16213D 100%)" }} />
@@ -96,7 +109,7 @@ export function SkylineBackground({ className = "" }: { className?: string }) {
         style={{ background: "linear-gradient(180deg, rgba(5,150,105,0) 0%, rgba(5,150,105,0.12) 100%)" }}
       />
       <svg className="absolute bottom-0 left-0 w-full h-full" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice">
-        {SCENE.map((b) => (
+        {SCENE.map((b, bIdx) => (
           <g key={b.id}>
             <rect
               x={b.x}
@@ -106,19 +119,31 @@ export function SkylineBackground({ className = "" }: { className?: string }) {
               fill={b.depth === "back" ? "#182647" : "#0A0F1C"}
               opacity={b.depth === "back" ? 0.75 : 1}
             />
-            {b.windows.map((w, wi) => (
-              <rect
-                key={`${b.id}-w${wi}`}
-                x={w.cx}
-                y={w.cy}
-                width={5}
-                height={7}
-                rx={0.5}
-                className={`sky-window sky-window--${w.variant}`}
-                style={{ animationDelay: `${w.delay}s`, animationDuration: `${w.duration}s` }}
-                fill="#F2C879"
-              />
-            ))}
+            {b.windows.map((w, wi) => {
+              const entranceDelay = Math.min(bIdx * 0.06 + wi * 0.004, 1.4);
+              return (
+                <rect
+                  key={`${b.id}-w${wi}`}
+                  x={w.cx}
+                  y={w.cy}
+                  width={5}
+                  height={7}
+                  rx={0.5}
+                  className={animated ? `sky-window sky-window--${w.variant}` : ""}
+                  style={
+                    animated
+                      ? {
+                          animationDelay: isLoaded ? `${w.delay}s` : "999s",
+                          animationDuration: `${w.duration}s`,
+                          opacity: isLoaded ? undefined : 0,
+                          transition: `opacity 0.6s ease ${entranceDelay}s`,
+                          fill: "#F2C879",
+                        }
+                      : { opacity: 0.4, fill: "#F2C879" }
+                  }
+                />
+              );
+            })}
           </g>
         ))}
       </svg>

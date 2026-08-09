@@ -80,6 +80,7 @@ export const viewport: Viewport = {
 };
 
 import { ToastProvider } from "@/shared/components/dashboard/ToastProvider";
+import { LenisProvider } from "@/shared/components/motion/LenisProvider";
 
 export default function RootLayout({
                                        children,
@@ -93,11 +94,13 @@ export default function RootLayout({
         <QueryProvider>
             <AuthProvider>
                 <ThemeProvider>
-                    <ToastProvider>
-                        <Toaster position="top-right" richColors />
-                        {children}
-                        <DevPortalSwitcher />
-                    </ToastProvider>
+                    <LenisProvider>
+                        <ToastProvider>
+                            <Toaster position="top-right" richColors />
+                            {children}
+                            <DevPortalSwitcher />
+                        </ToastProvider>
+                    </LenisProvider>
                 </ThemeProvider>
             </AuthProvider>
         </QueryProvider>

@@ -38,7 +38,7 @@ export function ProblemSolutionSection() {
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div
-        className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/[0.03] to-transparent pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-transparent via-jade-500/[0.03] to-transparent pointer-events-none"
         aria-hidden="true"
       />
       <div className="relative max-w-6xl mx-auto px-6">
@@ -61,20 +61,20 @@ export function ProblemSolutionSection() {
         </div>
 
         <div className="flex items-center justify-center gap-4 my-4" aria-hidden="true">
-          <span className="h-px flex-1 max-w-28 bg-gradient-to-r from-transparent to-emerald-500/40" />
-          <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-emerald-400">
+          <span className="h-px flex-1 max-w-28 bg-gradient-to-r from-transparent to-jade-500/40" />
+          <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-jade-400">
             RentManager fixes this
           </span>
-          <span className="h-px flex-1 max-w-28 bg-gradient-to-l from-transparent to-emerald-500/40" />
+          <span className="h-px flex-1 max-w-28 bg-gradient-to-l from-transparent to-jade-500/40" />
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {SOLUTIONS.map((s) => {
             const Icon = s.icon;
             return (
-              <div key={s.title} className="rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.03] p-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
-                  <Icon className="w-5 h-5 text-emerald-400" strokeWidth={1.75} aria-hidden="true" />
+              <div key={s.title} className="rounded-2xl border border-jade-500/15 bg-jade-500/[0.03] p-6">
+                <div className="w-10 h-10 rounded-xl bg-jade-500/10 border border-jade-500/20 flex items-center justify-center mb-4">
+                  <Icon className="w-5 h-5 text-jade-400" strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <h3 className="text-base font-semibold text-white">{s.title}</h3>
                 <p className="text-sm text-white/50 mt-2 leading-relaxed">{s.desc}</p>

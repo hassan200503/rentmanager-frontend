@@ -21,14 +21,14 @@ export function FeaturedPropertiesSection({
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div
-        className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.04] via-transparent to-transparent pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-jade-500/[0.04] via-transparent to-transparent pointer-events-none"
         aria-hidden="true"
       />
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
           <div className="max-w-xl">
-            <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-emerald-400">
-              <span className="w-8 h-px bg-gradient-to-r from-transparent to-emerald-500/60" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-jade-400">
+              <span className="w-8 h-px bg-gradient-to-r from-transparent to-jade-500/60" aria-hidden="true" />
               Featured
             </span>
             <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white mt-4 [text-wrap:balance]">
@@ -38,7 +38,7 @@ export function FeaturedPropertiesSection({
           </div>
           <Link
             href="/listings"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors group shrink-0"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-jade-400 hover:text-jade-300 transition-colors group shrink-0"
           >
             View all properties
             <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} aria-hidden="true" />
@@ -70,7 +70,7 @@ export function FeaturedPropertiesSection({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 min-h-11 rounded-xl bg-jade-600 hover:bg-jade-500 text-sm font-semibold text-white transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400"
             >
               <RefreshCw className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
               Try again

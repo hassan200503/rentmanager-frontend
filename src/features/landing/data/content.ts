@@ -22,7 +22,7 @@ export const STEP_ITEMS = [
     title: "Reserve",
     desc: "Pay a small, fully refundable deposit to secure your unit instantly.",
     icon: ShieldCheck,
-    color: "from-emerald-500/30 to-emerald-600/10",
+    color: "from-jade-500/30 to-jade-600/10",
   },
   {
     step: "03",
@@ -77,7 +77,7 @@ export const CITIES = [
   {
     name: "Nairobi",
     desc: "Capital city · 4M+ residents",
-    gradient: "from-emerald-950/90 via-emerald-900/40 to-[#030712]/95",
+    gradient: "from-jade-950/90 via-jade-900/40 to-[#030712]/95",
     objectPosition: "center 30%",
     span: "md:col-span-2 md:row-span-2",
   },
@@ -157,6 +157,64 @@ export const PRICING_PLANS = [
       "Late payment automation",
       "Priority 24/7 support",
     ],
+  },
+] as const;
+
+/**
+ * Static copy keyed by the backend plan code (the platform pricing catalog
+ * owns prices + names; features/taglines live here because the catalog has
+ * no features column). Anything unlisted degrades to a safe generic tier.
+ */
+export const LANDLORD_PLAN_META: Record<
+  string,
+  { tagline: string; features: string[] }
+> = {
+  STARTER: {
+    tagline: "For single properties and small portfolios",
+    features: [
+      "Unlimited property listings",
+      "M-Pesa rent collection & reminders",
+      "Digital lease agreements",
+      "Tenant & occupancy tracking",
+      "eTIMS-ready digital receipts",
+      "Landlord dashboard",
+    ],
+  },
+  GROWTH: {
+    tagline: "For portfolios that run themselves",
+    features: [
+      "Everything in Starter",
+      "Maintenance request management",
+      "Revenue & occupancy insights",
+      "Late payment automation",
+      "Priority 24/7 support",
+    ],
+  },
+  PORTFOLIO: {
+    tagline: "For full-time professional landlords",
+    features: [
+      "Everything in Growth",
+      "Multi-property portfolio analytics",
+      "Dedicated account manager",
+      "Custom branding on leases & receipts",
+      "Concierge move-in support",
+    ],
+  },
+};
+
+/** Offline/error fallback for the landlord cards (never shows stale claims). */
+export const FALLBACK_LANDLORD_PLANS = [
+  {
+    code: "STARTER",
+    name: "Landlord Standard",
+    monthlyPrice: 999,
+    maxUnits: null as number | null,
+  },
+  {
+    code: "GROWTH",
+    name: "Landlord Pro",
+    monthlyPrice: 2499,
+    maxUnits: null as number | null,
   },
 ] as const;
 

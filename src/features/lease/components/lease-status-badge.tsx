@@ -72,7 +72,7 @@ const statusLabelMap: Record<LeaseStatus, string> = {
 };
 
 export const LeaseStatusBadge = ({ status }: { status: LeaseStatus }) => {
-    const Icon = statusIconMap[status] ?? Clock;
+    const Icon = (statusIconMap[status] ?? Clock) as React.ComponentType<{ className?: string; strokeWidth?: number }>;
     const label = statusLabelMap[status] ?? status.replaceAll("_", " ");
 
     return (

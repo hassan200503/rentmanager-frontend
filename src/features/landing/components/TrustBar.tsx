@@ -16,7 +16,7 @@ export function TrustBar() {
             const Icon = item.icon;
             return (
               <li key={item.label} className="flex items-center gap-2 text-[13px] font-medium text-white/60">
-                <Icon className="w-4 h-4 text-emerald-400" strokeWidth={1.75} aria-hidden="true" />
+                <Icon className="w-4 h-4 text-jade-400" strokeWidth={1.75} aria-hidden="true" />
                 {item.label}
               </li>
             );

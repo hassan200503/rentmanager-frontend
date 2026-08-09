@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { ChevronRight, ChevronLeft, X, ImageOff, AlertTriangle, Home, ArrowLeft, Building2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, X, ImageOff, AlertTriangle, Home, ArrowLeft, Building2, MapPin } from "lucide-react";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
 import { usePropertyUnitsQuery } from "@/features/public-listings/queries/use-property-units-query";
 import { UnitCard } from "@/features/public-listings/components/unit-card";
@@ -64,43 +64,63 @@ export default function PropertyDetailPage() {
     return (
         <div className="min-h-screen bg-canvas">
             {/* Header */}
-            <div className="bg-surface border-b border-border">
-                <div className="container mx-auto px-6 py-10 max-w-5xl">
-                    <nav className="flex items-center gap-2 text-sm text-ink-muted mb-6">
-                        <Link href="/listings" className="inline-flex items-center gap-1.5 hover:text-ink transition-colors">
+            <div className="relative bg-surface border-b border-border">
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-brand-50/70 via-transparent to-transparent dark:from-brand-900/10" />
+                <div className="relative container mx-auto px-6 py-12 max-w-5xl">
+                    <nav className="flex items-center gap-2 text-xs text-ink-muted mb-8" aria-label="Breadcrumb">
+                        <Link
+                            href="/listings"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -ml-2 hover:bg-ink/[0.05] hover:text-ink transition-colors"
+                        >
                             <ArrowLeft className="w-3.5 h-3.5" />
                             Listings
                         </Link>
                         <ChevronRight className="w-3 h-3 text-ink-muted/40" />
-                        <span className="text-ink font-medium truncate max-w-[200px]">
+                        <span className="text-ink font-medium truncate max-w-[220px]">
                             {property.name}
                         </span>
                     </nav>
 
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                        <span className="pill pill-neutral inline-flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="pill pill-neutral inline-flex items-center gap-1.5 bg-ink/[0.05] dark:bg-white/[0.06]">
                             <Building2 className="w-3 h-3" strokeWidth={1.5} />
                             {property.propertyType}
                         </span>
                         {!unitsLoading && !unitsError && units && (
                             <span className={`pill ${units.empty ? "pill-neutral" : "pill-success"} inline-flex items-center gap-1.5`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${units.empty ? "bg-ink-muted/40" : "bg-success"}`} />
+                                <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                        units.empty ? "bg-ink-muted/40" : "bg-success"
+                                    } ${units.empty ? "" : "status-dot-live"}`}
+                                />
                                 {units.empty ? "No vacancies" : `${units.content.length} vacant`}
                             </span>
                         )}
                     </div>
 
-                    <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink tracking-tight">
+                    <h1 className="mt-4 font-display text-4xl md:text-5xl font-semibold text-ink tracking-tight leading-[1.08]">
                         {property.name}
                     </h1>
-                    {property.address?.city && (
-                        <p className="mt-2 text-sm text-ink-muted">
-                            {property.address.city}
-                            {property.address.state ? `, ${property.address.state}` : ""}
-                        </p>
-                    )}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+                        {property.address?.city && (
+                            <p className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
+                                <MapPin className="w-4 h-4 text-brand" strokeWidth={1.5} />
+                                {property.address.city}
+                                {property.address.state ? `, ${property.address.state}` : ""}
+                                {property.address.country ? `, ${property.address.country}` : ""}
+                            </p>
+                        )}
+                        {!unitsLoading && !unitsError && units && !units.empty && (
+                            <p className="text-sm text-ink-muted">
+                                {units.content.length} available unit
+                                {units.content.length !== 1 ? "s" : ""}
+                            </p>
+                        )}
+                    </div>
+
                     {property.description && (
-                        <p className="mt-4 max-w-2xl text-ink-muted text-sm leading-relaxed">
+                        <p className="mt-5 max-w-2xl text-ink-muted text-sm leading-relaxed">
                             {property.description}
                         </p>
                     )}
@@ -115,7 +135,7 @@ export default function PropertyDetailPage() {
                             <button
                                 type="button"
                                 onClick={() => setLightboxIndex(0)}
-                                className="col-span-4 row-span-2 md:col-span-2 md:row-span-2 relative overflow-hidden rounded-2xl shadow-sm group"
+                                className="col-span-4 row-span-2 md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl shadow-card transition-all duration-300 group hover:shadow-elevated hover:ring-2 hover:ring-brand/30"
                             >
                                 <Image
                                     src={heroImage}
@@ -134,7 +154,7 @@ export default function PropertyDetailPage() {
                                         key={index}
                                         type="button"
                                         onClick={() => setLightboxIndex(index + 1)}
-                                        className="hidden md:block relative overflow-hidden rounded-xl shadow-sm group"
+                                        className="hidden md:block relative overflow-hidden rounded-2xl shadow-sm group hover:ring-2 hover:ring-brand/30 transition-all duration-300"
                                     >
                                         <Image
                                             src={url}
@@ -165,18 +185,19 @@ export default function PropertyDetailPage() {
                 <section>
                     <div className="flex items-baseline justify-between pb-5 mb-8 border-b border-border">
                         <div>
-                            <h2 className="text-xl font-semibold text-ink">Vacant units</h2>
+                            <h2 className="section-title flex items-center gap-2.5">
+                                Available units
+                                <span className="pill-success !gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                                    {units && !units.empty ? units.content.length : 0}
+                                </span>
+                            </h2>
                             <p className="text-sm text-ink-muted mt-1">
                                 {units && !units.empty && !unitsLoading
                                     ? `Available rental units at ${property.name}`
                                     : "No vacancies at this time"}
                             </p>
                         </div>
-                        {units && !units.empty && !unitsLoading && (
-                            <span className="text-sm font-medium text-ink-muted bg-ink/[0.04] px-3 py-1 rounded-full">
-                                {units.content.length} unit{units.content.length !== 1 ? "s" : ""}
-                            </span>
-                        )}
                     </div>
 
                     {unitsLoading ? (
