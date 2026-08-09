@@ -5,29 +5,8 @@
 // files produces a namespaced UUID that never matches the backend's
 // TenantContext, which would 403 on the path-tenant equality check.
 import { apiClient } from "@/lib/api/client";
-import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
+import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { TenantSettingsResponse, UpdateTenantSettingsRequest } from "../types/tenant-settings-response";
-
-type ClerkWindow = Window & {
-    Clerk?: {
-        session?: {
-            getToken?: (options?: { template?: string }) => Promise<string | null>;
-        };
-    };
-};
-
-const getAuthContext = async () => {
-    if (typeof window === "undefined") {
-        return { token: undefined };
-    }
-
-    const token =
-        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-            template: BACKEND_JWT_TEMPLATE,
-        })) ?? undefined;
-
-    return { token };
-};
 
 // Path is relative — apiClient prepends appConfig.api.baseUrl (which
 // already ends in /api/v1), so no base/version prefix belongs here.

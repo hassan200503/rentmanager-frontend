@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ChevronRight, ChevronLeft, X, ImageOff, AlertTriangle, Home, ArrowLeft, Building2 } from "lucide-react";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
@@ -116,10 +117,12 @@ export default function PropertyDetailPage() {
                                 onClick={() => setLightboxIndex(0)}
                                 className="col-span-4 row-span-2 md:col-span-2 md:row-span-2 relative overflow-hidden rounded-2xl shadow-sm group"
                             >
-                                <img
+                                <Image
                                     src={heroImage}
                                     alt={`${property.name} main photo`}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                                 />
                                 <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/10 transition-colors duration-300" />
                             </button>
@@ -133,10 +136,12 @@ export default function PropertyDetailPage() {
                                         onClick={() => setLightboxIndex(index + 1)}
                                         className="hidden md:block relative overflow-hidden rounded-xl shadow-sm group"
                                     >
-                                        <img
+                                        <Image
                                             src={url}
                                             alt={`${property.name} photo ${index + 2}`}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                            fill
+                                            sizes="25vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                                         />
                                         <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/10 transition-colors duration-300" />
                                         {isLastVisible && remainingCount > 0 && (
@@ -255,9 +260,12 @@ export default function PropertyDetailPage() {
                         </>
                     )}
 
-                    <img
+                    <Image
                         src={images[lightboxIndex]}
                         alt={`${property.name} photo ${lightboxIndex + 1}`}
+                        width={1600}
+                        height={1200}
+                        sizes="100vw"
                         className="max-h-[85vh] max-w-full object-contain rounded-xl"
                         onClick={(e) => e.stopPropagation()}
                     />

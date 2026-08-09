@@ -7,6 +7,7 @@ import { BadgeCheck, Loader2, MessageSquareHeart, Quote, Star } from "lucide-rea
 import { toast } from "sonner";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { tenantPortalKeys, useMyReviewQuery } from "../hooks/use-tenant-portal-queries";
+import { ReviewStatusBadge } from "@/features/reviews/components/review-status-badge";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -94,8 +95,9 @@ export function TenantReviewCard() {
                 <div className="mt-5 relative rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-4 sm:p-5 overflow-hidden">
                     <Quote className="absolute -top-1 -right-1 h-14 w-14 text-brand/10 dark:text-brand/15 rotate-180 pointer-events-none" strokeWidth={1.5} aria-hidden />
                     <div className="relative flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-fg dark:text-fg-dark">
+                        <p className="flex items-center gap-2 text-sm font-semibold text-fg dark:text-fg-dark">
                             Your review
+                            <ReviewStatusBadge status={myReview.status} />
                         </p>
                         <StarRow value={myReview.rating} />
                     </div>

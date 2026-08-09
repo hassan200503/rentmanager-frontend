@@ -6,6 +6,9 @@ import type {
     LandlordDetailResponse,
     LandlordSummary,
     PlatformAdminInfo,
+    PlatformReviewResponse,
+    PlatformReviewStats,
+    PlatformReviewType,
     PlatformSettingsResponse,
     PropertyDetailResponse,
     PropertySummary,
@@ -16,29 +19,11 @@ import type {
     DisbursementQueryParams,
 } from "../types/admin-types";
 import { apiClient } from "@/lib/api/client";
-import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
-
-type ClerkWindow = Window & {
-    Clerk?: {
-        session?: {
-            getToken?: (options?: { template?: string }) => Promise<string | null>;
-        };
-    };
-};
+import { getAuthContext } from "@/lib/auth/get-auth-context";
 
 // Admin endpoints are unscoped — they work across all tenants. The backend
 // derives the platform role from the JWT and ignores X-Tenant-Id. Return
 // token only, no tenantId.
-const getAuthContext = async () => {
-    if (typeof window === "undefined") {
-        return {};
-    }
-    const token =
-        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-            template: BACKEND_JWT_TEMPLATE,
-        })) ?? undefined;
-    return { token };
-};
 
 export const adminApi = {
     getInfo: async (): Promise<PlatformAdminInfo> => {
@@ -134,5 +119,22 @@ export const adminApi = {
         if (params?.size !== undefined) qs.set("size", String(params.size));
         const q = qs.toString();
         return apiClient.get<SpringPage<RenterSummary>>(adminEndpoints.renters(q || undefined), token);
+    },
+    getReviews: async (status: "PENDING" | "APPROVED" | "HIDDEN" = "PENDING", limit = 30): Promise<PlatformReviewResponse[]> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams({ status, limit: String(limit) });
+        return apiClient.get<PlatformReviewResponse[]>(adminEndpoints.reviews(qs.toString()), token);
+    },
+    getReviewStats: async (): Promise<PlatformReviewStats> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<PlatformReviewStats>(adminEndpoints.reviewStats(), token);
+    },
+    reviewApprove: async (type: PlatformReviewType, reviewId: string): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.patch<void>(adminEndpoints.reviewDecision(type, reviewId, "approve"), {}, token);
+    },
+    reviewHide: async (type: PlatformReviewType, reviewId: string): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.patch<void>(adminEndpoints.reviewDecision(type, reviewId, "hide"), {}, token);
     },
 };

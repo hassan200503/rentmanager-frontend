@@ -14,4 +14,8 @@ export const adminEndpoints = {
     renters: (params?: string) => base + "/renters" + (params ? `?${params}` : ""),
     disbursements: (params?: string) => base + "/disbursements" + (params ? `?${params}` : ""),
     disbursementRetry: (disbursementId: string) => `${base}/disbursements/${disbursementId}/retry`,
+    reviews: (params?: string) => base + "/reviews" + (params ? `?${params}` : ""),
+    reviewStats: () => base + "/reviews/stats",
+    reviewDecision: (type: string, reviewId: string, action: "approve" | "hide") =>
+        `${base}/reviews/${type}/${reviewId}/${action}`,
 };

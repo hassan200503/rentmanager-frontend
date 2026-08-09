@@ -46,6 +46,7 @@ import FinancialOverview from "@/shared/components/dashboard/FinancialOverview";
 import InsightsEngine from "@/shared/components/dashboard/InsightsEngine";
 import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
 import { useOrgStore } from "@/stores/org-store";
+import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
 
 function DashboardSkeleton() {
   return (
@@ -728,6 +729,13 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
           </div>
           <QuickActions />
         </div>
+      </ScrollReveal>
+
+      {/* ═══════════════════════════════════════════════════════════
+         LEVEL 5: Rate RentManager
+         ═══════════════════════════════════════════════════════════ */}
+      <ScrollReveal>
+        <PlatformReviewCard />
       </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════

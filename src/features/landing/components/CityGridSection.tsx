@@ -1,0 +1,95 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowUpRight, MapPin } from "lucide-react";
+import { CITIES } from "@/features/landing/data/content";
+import { SectionHeader } from "./SectionHeader";
+import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
+
+const CITY_VIDEO: Record<string, string> = {
+  Nairobi: "/videos/hero.mp4",
+  Mombasa: "/videos/sunset.mp4",
+  Kisumu: "/videos/apartment.mp4",
+  Nakuru: "/videos/hero.mp4",
+  Eldoret: "/videos/sunset.mp4",
+};
+
+function CityCard({ city }: { city: (typeof CITIES)[number] }) {
+  const [hovered, setHovered] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+
+  return (
+    <Link
+      href={`/listings?q=${encodeURIComponent(city.name)}`}
+      className={`relative group overflow-hidden rounded-2xl border border-white/[0.06] transition-all duration-700 hover:border-white/20 hover:shadow-2xl hover:shadow-emerald-500/10 ${city.span} min-h-[200px] md:min-h-[240px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      aria-label={`${city.name} — ${city.desc}`}
+    >
+      {hovered && !reducedMotion && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] group-hover:scale-110"
+          style={{ objectPosition: city.objectPosition }}
+        >
+          <source src={CITY_VIDEO[city.name]} type="video/mp4" />
+        </video>
+      )}
+
+      <div className={`absolute inset-0 bg-gradient-to-t ${city.gradient} transition-opacity duration-500 ${hovered && !reducedMotion ? "opacity-60" : "opacity-100"}`} aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40 pointer-events-none" aria-hidden="true" />
+
+      <div className="relative h-full min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-5 md:p-7 z-10">
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-2 text-[9px] font-semibold tracking-[0.15em] uppercase text-white/55">
+            <MapPin className="w-3 h-3 text-emerald-400" strokeWidth={2} aria-hidden="true" />
+            {city.desc}
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">{city.name}</h3>
+            <ArrowUpRight className="w-4 h-4 text-white/40 transition-all duration-300 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 max-md:opacity-100" strokeWidth={1.5} aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center"
+        aria-hidden="true"
+      />
+    </Link>
+  );
+}
+
+export function CityGridSection() {
+  return (
+    <section className="relative py-24 md:py-32 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px]" />
+      </div>
+      <div className="relative max-w-6xl mx-auto px-6">
+        <SectionHeader
+          eyebrow="Coverage"
+          title="All across Kenya"
+          description="Featured rentals in major cities, with verified vacancies."
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[200px] md:auto-rows-[240px]">
+          {CITIES.map((city) => (
+            <CityCard key={city.name} city={city} />
+          ))}
+        </div>
+        <p className="flex items-center justify-center gap-2 mt-8 text-xs text-white/50">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+          Every unit is verified before it&apos;s listed
+        </p>
+      </div>
+    </section>
+  );
+}

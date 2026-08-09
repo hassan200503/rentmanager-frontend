@@ -236,6 +236,21 @@ body {
   z-index: 1;
 }
 
+/* ── Landing page (always-dark canvas) ─────────────────────────
+   .card-hover follows the OS theme (white surface in light mode),
+   which would put white text on a white card. The landing page is a
+   dark-only design, so scope a dark card surface to its wrapper. */
+.landing-root .card-hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.landing-root .card-hover:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
 .card-sm {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -1341,6 +1356,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Anchored sections clear the fixed navbar */
+section[id], div[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+/* Global focus fallback: interactive elements that don't define their own
+   focus ring still get a visible one (WCAG 2.4.7). */
+:is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-brand-400, #34d399);
+  outline-offset: 2px;
+}
+
 /* Grid pattern background */
 .bg-grid-white {
   background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
@@ -1453,6 +1480,8 @@ html {
   .animate-ken-burns { animation: none; }
   .animate-particle { animation: none; }
   .animate-gradient-drift { animation: none; }
+  .animate-live-pulse { animation: none; }
+  .animate-aurora { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

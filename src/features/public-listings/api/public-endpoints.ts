@@ -13,6 +13,9 @@ export const publicEndpoints = {
     propertyReviews: (propertyId: string) =>
         `/public/properties/${propertyId}/reviews`,
 
+    testimonials: (limit: number = 8) =>
+        `/public/testimonials?limit=${limit}`,
+
     unitsByProperty: (propertyId: string) =>
         `/public/units/property/${propertyId}`,
 

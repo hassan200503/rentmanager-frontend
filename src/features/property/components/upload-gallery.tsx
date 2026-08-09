@@ -10,6 +10,7 @@ import {
     useSetPrimaryPropertyMedia,
 } from "@/features/property/queries/use-property-media-mutations";
 import { Upload, Trash2, Star, ImagePlus, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export function PropertyMediaManager({ propertyId }: { propertyId: string }) {
     const { data: media, isLoading } = usePropertyMedia(propertyId);
@@ -128,10 +129,12 @@ export function PropertyMediaManager({ propertyId }: { propertyId: string }) {
                             key={item.id}
                             className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-ink/[0.02] shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200"
                         >
-                            <img
+                            <Image
                                 src={item.fileUrl}
                                 alt={item.caption ?? item.fileName}
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
                             />
                             {item.primaryMedia && (
                                 <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-lg bg-brand/90 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm shadow-sm">

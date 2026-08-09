@@ -5,6 +5,7 @@ import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tenantPortalApi } from "../api/tenant-portal-api";
+import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
 import { Loader2, AlertTriangle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone, ArrowDownLeft, ArrowUpRight, Receipt, Wallet, Wrench } from "lucide-react";
 import Link from "next/link";
 
@@ -412,6 +413,9 @@ export const TenantDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Rate the platform */}
+            <PlatformReviewCard />
         </div>
     );
 };

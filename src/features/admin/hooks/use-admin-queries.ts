@@ -119,3 +119,21 @@ export const useAdminRentersQuery = (params: AdminRentersParams) => {
         placeholderData: (prev) => prev,
     });
 };
+
+export const useAdminReviewsQuery = (
+    status: "PENDING" | "APPROVED" | "HIDDEN" = "PENDING",
+    limit = 30
+) => {
+    return useQuery({
+        queryKey: adminKeys.reviews({ status, limit }),
+        queryFn: () => adminApi.getReviews(status, limit),
+        placeholderData: (prev) => prev,
+    });
+};
+
+export const useAdminReviewStatsQuery = () => {
+    return useQuery({
+        queryKey: adminKeys.reviewStats(),
+        queryFn: () => adminApi.getReviewStats(),
+    });
+};

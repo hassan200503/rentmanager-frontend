@@ -9,6 +9,7 @@ import AuthProvider from "@/providers/auth-provider";
 import ThemeProvider from "@/providers/theme-provider";
 import { Toaster } from "sonner";
 import { appConfig } from "@/lib/config/app-config";
+import { SkipLink } from "@/shared/components/SkipLink";
 
 const DevPortalSwitcher = dynamic(
     () => import("@/shared/dev/DevPortalSwitcher")
@@ -49,17 +50,22 @@ export const metadata: Metadata = {
     description: defaultMetadata.description,
     applicationName: "RentManager",
     keywords: ["rent manager", "property management", "kenya", "rental income", "MRI", "eTIMS", "landlord"],
+    alternates: {
+        canonical: "/",
+    },
     openGraph: {
         type: "website",
         locale: "en_KE",
         siteName: "RentManager",
         title: `${defaultMetadata.title} — Property Management Platform`,
         description: defaultMetadata.description,
+        images: ["/og.png"],
     },
     twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: `${defaultMetadata.title} — Property Management Platform`,
         description: defaultMetadata.description,
+        images: ["/og.png"],
     },
     manifest: "/manifest.json",
     icons: {
@@ -83,6 +89,7 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
         <body className="antialiased">
+        <SkipLink />
         <QueryProvider>
             <AuthProvider>
                 <ThemeProvider>

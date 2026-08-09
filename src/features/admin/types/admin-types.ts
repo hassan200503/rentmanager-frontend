@@ -360,3 +360,30 @@ export interface UpdatePlatformSettingsRequest {
   supportEmail?: string | null;
   supportPhone?: string | null;
 }
+
+export type PlatformReviewType = "LANDLORD" | "RENTER" | "PLATFORM";
+
+export interface PlatformReviewResponse {
+  type: PlatformReviewType;
+  reviewId: string;
+  reviewerName: string | null;
+  rating: number;
+  comment: string | null;
+  status: "PENDING" | "APPROVED" | "HIDDEN";
+  createdAt: string;
+}
+
+export interface PlatformReviewStats {
+  landlordApproved: number;
+  landlordPending: number;
+  landlordHidden: number;
+  landlordAverageRating: number;
+  renterApproved: number;
+  renterPending: number;
+  renterHidden: number;
+  renterAverageRating: number;
+  platformApproved: number;
+  platformPending: number;
+  platformHidden: number;
+  platformAverageRating: number;
+}

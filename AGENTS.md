@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Backend test command
 - Run specific test: `mvn test -f "C:\JavaProjects\rentmanager-backend" -Dtest="ClassName" -pl .`
 - Run full suite: `mvn test -f "C:\JavaProjects\rentmanager-backend" -pl .`
-- Note: 5 failures + 18 errors are pre-existing integration test failures (IllegalArgument: propertyType is required), not caused by changes.
+- Status (2026-08-09): full suite is green — 990 tests, 0 failures, 0 errors (was previously 5 failures + 18 errors pre-existing; they no longer reproduce). Treat any new failure as caused by your change.
 
 # Test conventions for new tests
 - Do NOT use `@Mock`/`@InjectMocks`/`@ExtendWith(MockitoExtension.class)` or `@Nested` — Mockito's strict stubbing causes `UnnecessaryStubbingException` when tests override shared `@BeforeEach` stubs.

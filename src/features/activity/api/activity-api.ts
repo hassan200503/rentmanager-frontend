@@ -3,15 +3,7 @@ import { Activity } from "../types/activity";
 import { ApiError } from "@/lib/api/errors";
 import { buildHeaders } from "@/lib/api/interceptor";
 import { appConfig } from "@/lib/config/app-config";
-import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
-
-type ClerkWindow = Window & {
-    Clerk?: {
-        session?: {
-            getToken?: (options?: { template?: string }) => Promise<string | null>;
-        };
-    };
-};
+import { getAuthContext } from "@/lib/auth/get-auth-context";
 
 // Bounds how long getRecent will wait on the backend before failing. Without
 // this, a backend that never responds leaves React Query's
@@ -20,46 +12,6 @@ type ClerkWindow = Window & {
 // surface an error. 10s is generous for a "recent activity" list read; tune
 // against real p99s if this ever false-positives.
 const RECENT_REQUEST_TIMEOUT_MS = 10000;
-
-/**
- * tenantId is passed in by the caller (useActivityFeed, sourced from
- * useCurrentUser) and used as-is — it's already the real backend tenant
- * UUID, confirmed by inserting a row directly under that UUID and seeing it
- * render. No uuidv5 namespace hashing here: an earlier version of this file
- * hashed it (mirroring property-api's Clerk-org-id path), which produced a
- * different, non-matching UUID and silently returned an empty activity
- * list. Backend logs also independently confirmed this UUID is what
- * server-side code already uses for tenant-scoped storage paths, so this
- * request's x-tenant-id header is likely redundant with whatever the
- * backend derives from the JWT itself — but it's cheap to send and kept for
- * parity with the rest of the app's request shape.
- */
-const getAuthContext = async (tenantId?: string) => {
-    if (typeof window === "undefined") {
-        return {};
-    }
-
-    // getToken() talking to Clerk is an external network call outside our
-    // control. If it rejects (expired session, template misconfigured,
-    // Clerk-side hiccup) uncaught, that rejection propagates out of
-    // getAuthContext and getRecent never reaches fetch() — React Query sees
-    // a promise that never resolves into either data or a caught error in
-    // some SDK failure modes, which reads as a permanently stuck spinner.
-    // Falling back to no token here is safe: the backend request still goes
-    // out, and an absent/invalid token becomes a clean 401 that getRecent
-    // already turns into a proper ApiError.
-    let token: string | undefined;
-    try {
-        token =
-            (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-                template: BACKEND_JWT_TEMPLATE,
-            })) ?? undefined;
-    } catch {
-        token = undefined;
-    }
-
-    return { token, tenantId };
-};
 
 /**
  * ActivityLogController#recent returns a bare List<ActivityLog> — confirmed
@@ -91,7 +43,7 @@ export interface ActivityFilters {
 }
 
 const getRecent = async (limit: number, tenantId?: string): Promise<Activity[]> => {
-    const { token, tenantId: resolvedTenantId } = await getAuthContext(tenantId);
+    const { token, tenantId: resolvedTenantId } = await getAuthContext({ tenantId });
     const query = new URLSearchParams({ limit: String(limit) }).toString();
     const url = `${appConfig.api.baseUrl}${activityEndpoints.base}?${query}`;
 
@@ -147,7 +99,7 @@ const getAll = async (
     filters?: ActivityFilters,
     tenantId?: string
 ): Promise<ActivityPage> => {
-    const { token, tenantId: resolvedTenantId } = await getAuthContext(tenantId);
+    const { token, tenantId: resolvedTenantId } = await getAuthContext({ tenantId });
     const query = new URLSearchParams({ page: String(page), size: String(size) });
     if (filters?.entityType) query.set("entityType", filters.entityType);
     if (filters?.eventType) query.set("eventType", filters.eventType);
@@ -183,7 +135,7 @@ const connectToStream = async (
     onOpen?: () => void,
     tenantId?: string
 ): Promise<void> => {
-    const { token, tenantId: resolvedTenantId } = await getAuthContext(tenantId);
+    const { token, tenantId: resolvedTenantId } = await getAuthContext({ tenantId });
 
     const res = await fetch(`${appConfig.api.baseUrl}${activityEndpoints.stream}`, {
         headers: { ...buildHeaders(token, resolvedTenantId), Accept: "text/event-stream" },

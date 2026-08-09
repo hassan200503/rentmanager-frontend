@@ -12,6 +12,8 @@ export const tenantPortalKeys = {
     maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
     autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
     myReview: () => [...tenantPortalKeys.all, "my-review"] as const,
+    reviewsAboutMe: () => [...tenantPortalKeys.all, "reviews-about-me"] as const,
+    reviewsAboutMeSummary: () => [...tenantPortalKeys.all, "reviews-about-me", "summary"] as const,
     announcements: () => [...tenantPortalKeys.all, "announcements"] as const,
     unreadAnnouncementCount: () => [...tenantPortalKeys.all, "announcements", "unread-count"] as const,
     whatsAppOptIn: () => [...tenantPortalKeys.all, "whatsapp-opt-in"] as const,
@@ -81,6 +83,24 @@ export const useMyReviewQuery = () => {
         queryKey: tenantPortalKeys.myReview(),
         queryFn: () => tenantPortalApi.getMyReview(),
         staleTime: 30 * 1000,
+    });
+};
+
+export const useReviewsAboutMeQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.reviewsAboutMe(),
+        queryFn: () => tenantPortalApi.getReviewsAboutMe(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
+    });
+};
+
+export const useReviewsAboutMeSummaryQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.reviewsAboutMeSummary(),
+        queryFn: () => tenantPortalApi.getReviewsAboutMeSummary(),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: true,
     });
 };
 

@@ -15,4 +15,7 @@ export const adminKeys = {
     property: (propertyId: string) => [...adminKeys.all, "property", propertyId] as const,
     renters: (params?: object) =>
         [...adminKeys.all, "renters", params ?? {}] as const,
+    reviews: (params?: object) =>
+        [...adminKeys.all, "reviews", params ?? {}] as const,
+    reviewStats: () => [...adminKeys.all, "reviews", "stats"] as const,
 };

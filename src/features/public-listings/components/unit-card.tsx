@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { PublicUnitResponse } from "../types/public-unit";
 import { VerifiedBadge } from "./verified-badge";
@@ -24,10 +25,12 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
         <div className="group bg-surface rounded-2xl border border-border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-brand/5 hover:border-brand-200 hover:-translate-y-0.5 overflow-hidden">
             {unit.images?.[0] ? (
                 <div className="relative overflow-hidden h-44">
-                    <img
+                    <Image
                         src={unit.images[0]}
                         alt={`Unit ${unit.unitNumber}`}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>

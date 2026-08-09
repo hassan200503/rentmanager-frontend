@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "../api/admin-api";
 import { adminKeys } from "./admin-keys";
-import type { SetLandlordCommissionRequest, UpdatePlatformSettingsRequest } from "../types/admin-types";
+import type { PlatformReviewType, SetLandlordCommissionRequest, UpdatePlatformSettingsRequest } from "../types/admin-types";
 
 export const useSetDefaultCommissionMutation = () => {
     const queryClient = useQueryClient();
@@ -75,4 +75,23 @@ export const useUpdatePlatformSettingsMutation = () => {
             queryClient.invalidateQueries({ queryKey: adminKeys.settings() });
         },
     });
+};
+
+export const useReviewModerationMutation = () => {
+    const queryClient = useQueryClient();
+    const invalidate = () => {
+        queryClient.invalidateQueries({ queryKey: adminKeys.reviews() });
+        queryClient.invalidateQueries({ queryKey: adminKeys.reviewStats() });
+    };
+    const approve = useMutation({
+        mutationFn: (input: { type: PlatformReviewType; reviewId: string }) =>
+            adminApi.reviewApprove(input.type, input.reviewId),
+        onSuccess: invalidate,
+    });
+    const hide = useMutation({
+        mutationFn: (input: { type: PlatformReviewType; reviewId: string }) =>
+            adminApi.reviewHide(input.type, input.reviewId),
+        onSuccess: invalidate,
+    });
+    return { approve, hide };
 };

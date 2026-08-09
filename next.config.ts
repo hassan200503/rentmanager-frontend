@@ -14,6 +14,18 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
 
+  images: {
+    // Property photos are stored on Cloudinary (secure_url returned by the
+    // backend media upload service).
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+    ],
+  },
+
   async rewrites() {
     return [
       {

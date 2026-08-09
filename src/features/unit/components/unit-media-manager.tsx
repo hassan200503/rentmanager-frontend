@@ -6,6 +6,7 @@ import {
     useSetPrimaryUnitMedia,
 } from "@/features/unit/queries/use-unit-media-mutations";
 import { Upload, Trash2, Star, ImagePlus, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export function UnitMediaManager({ unitId }: { unitId: string }) {
     const { data: media, isLoading } = useUnitMedia(unitId);
@@ -126,10 +127,12 @@ export function UnitMediaManager({ unitId }: { unitId: string }) {
                             key={item.id}
                             className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-ink/[0.02] shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200"
                         >
-                            <img
+                            <Image
                                 src={item.url}
                                 alt={item.caption ?? "Unit media"}
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
                             />
                             {item.primary && (
                                 <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-lg bg-brand/90 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm shadow-sm">

@@ -80,6 +80,7 @@ export interface LeaseSummaryResponse {
     startDate: string;
     endDate: string;
     rentAmount: number;
+    tenantProfileId: string | null;
     tenantFullName: string | null;
     tenantPhone: string | null;
 }

@@ -1,7 +1,9 @@
 // api/tenant-portal-api.ts
+import { appConfig } from "@/lib/config/app-config";
 import { apiClient } from "@/lib/api/client";
+import { getAuthContext as sharedGetAuthContext } from "@/lib/auth/get-auth-context";
 import { tenantPortalEndpoints } from "./tenant-portal-endpoints";
-import { LandlordReviewResponse } from "@/features/reviews/types/review-response";
+import { LandlordReviewResponse, RenterReviewResponse, ReviewSummaryResponse } from "@/features/reviews/types/review-response";
 
 // Types for tenant portal responses
 export interface TenantDashboardResponse {
@@ -342,6 +344,25 @@ export const tenantPortalApi = {
         );
     },
 
+    // Ratings received (V65): landlord -> renter, approved only
+    getReviewsAboutMe: async (): Promise<RenterReviewResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<RenterReviewResponse[]>(
+            tenantPortalEndpoints.reviewsAboutMe(),
+            token,
+            tenantId
+        );
+    },
+
+    getReviewsAboutMeSummary: async (): Promise<ReviewSummaryResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<ReviewSummaryResponse>(
+            tenantPortalEndpoints.reviewsAboutMeSummary(),
+            token,
+            tenantId
+        );
+    },
+
     // Announcements
     getAnnouncements: async (): Promise<RenterAnnouncementResponse[]> => {
         const { token, tenantId } = await getAuthContext();
@@ -391,45 +412,20 @@ export const tenantPortalApi = {
     },
 };
 
-// Auth context helper (same pattern as other features)
+// Auth context helper — shared resolver from lib/auth/get-auth-context,
+// with the dev-only renter simulation: when the _dev_portal=renter cookie
+// is set, suppress tenantId so the API does not send X-Tenant-Id (renter
+// context).
 async function getAuthContext(): Promise<{ token: string | undefined; tenantId: string | undefined }> {
     if (typeof window === "undefined") {
         return { token: undefined, tenantId: undefined };
     }
 
-    const { useOrgStore } = await import("@/stores/org-store");
-    const { getTenantIdFromSession } = await import("@/shared/tenant/get-tenant-id");
-    const { v5: uuidv5 } = await import("uuid");
-
-    const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
-    const { BACKEND_JWT_TEMPLATE } = await import("@/lib/auth/token");
-
-    // Dev-mode override: when _dev_portal=renter cookie is set, suppress
-    // tenantId so the API does not send X-Tenant-Id (renter context).
-    const isDevRenter =
-        typeof window !== "undefined" &&
+    // Dev-mode override honored only outside production — the switcher UI
+    // already gates on the same flag, and prod must never inherit a dev cookie.
+    const suppressTenantOverride =
+        appConfig.flags.isDevelopment &&
         document.cookie.split("; ").some((c) => c === "_dev_portal=renter");
 
-    const rawTenantId = !isDevRenter
-        ? (useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined)
-        : undefined;
-
-    const tenantId = rawTenantId
-        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
-        : undefined;
-
-    type ClerkWindow = Window & {
-        Clerk?: {
-            session?: {
-                getToken?: (options?: { template?: string }) => Promise<string | null>;
-            };
-        };
-    };
-
-    const token =
-        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-            template: BACKEND_JWT_TEMPLATE,
-        })) ?? undefined;
-
-    return { token, tenantId };
+    return sharedGetAuthContext({ suppressTenantOverride });
 }

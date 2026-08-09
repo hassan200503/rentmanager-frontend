@@ -2,42 +2,11 @@
 // Landlord-facing review endpoints (GET /reviews, GET /reviews/summary).
 // Paths are relative — apiClient prepends appConfig.api.baseUrl (which
 // already ends in /api/v1), so no version prefix belongs here.
-import { v5 as uuidv5 } from "uuid";
 import { apiClient } from "@/lib/api/client";
-import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
-import { getTenantIdFromSession } from "@/shared/tenant/get-tenant-id";
-import { useOrgStore } from "@/stores/org-store";
-import { LandlordReviewResponse, ReviewSummaryResponse } from "../types/review-response";
+import { getAuthContext } from "@/lib/auth/get-auth-context";
+import { LandlordReviewResponse, PlatformReviewResponse, RenterReviewResponse, ReviewStatusCountsResponse, ReviewSummaryResponse, SubmitPlatformReviewRequest, SubmitRenterReviewRequest } from "../types/review-response";
 
-type ClerkWindow = Window & {
-    Clerk?: {
-        session?: {
-            getToken?: (options?: { template?: string }) => Promise<string | null>;
-        };
-    };
-};
-
-const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 const REVIEWS_BASE = "/reviews";
-
-const getAuthContext = async () => {
-    if (typeof window === "undefined") {
-        return {};
-    }
-
-    const rawTenantId = useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
-
-    const tenantId = rawTenantId
-        ? uuidv5(rawTenantId, TENANT_NAMESPACE)
-        : undefined;
-
-    const token =
-        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-            template: BACKEND_JWT_TEMPLATE,
-        })) ?? undefined;
-
-    return { token, tenantId };
-};
 
 export const reviewApi = {
     list: async (): Promise<LandlordReviewResponse[]> => {
@@ -48,5 +17,32 @@ export const reviewApi = {
     summary: async (): Promise<ReviewSummaryResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<ReviewSummaryResponse>(`${REVIEWS_BASE}/summary`, token, tenantId);
+    },
+
+    counts: async (): Promise<ReviewStatusCountsResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<ReviewStatusCountsResponse>(`${REVIEWS_BASE}/counts`, token, tenantId);
+    },
+
+    renterReviews: async (): Promise<RenterReviewResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<RenterReviewResponse[]>(`${REVIEWS_BASE}/renter`, token, tenantId);
+    },
+
+    submitRenterReview: async (request: SubmitRenterReviewRequest): Promise<RenterReviewResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<RenterReviewResponse>(REVIEWS_BASE, request, token, tenantId);
+    },
+
+    // V66 — platform reviews (users rating the platform). Same auth
+    // context; the backend resolves the reviewer from the token.
+    getMyPlatformReview: async (): Promise<PlatformReviewResponse | null> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<PlatformReviewResponse | null>("/platform-reviews/me", token, tenantId);
+    },
+
+    submitPlatformReview: async (request: SubmitPlatformReviewRequest): Promise<PlatformReviewResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<PlatformReviewResponse>("/platform-reviews", request, token, tenantId);
     },
 };

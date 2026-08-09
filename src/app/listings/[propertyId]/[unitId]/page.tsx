@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ChevronRight, ChevronLeft, X, ImageOff, ShieldCheck } from "lucide-react";
 import { usePublicUnitQuery } from "@/features/public-listings/queries/use-public-unit-query";
@@ -126,10 +127,12 @@ export default function UnitDetailPage() {
                                     onClick={() => setLightboxIndex(0)}
                                     className="col-span-3 row-span-2 md:col-span-2 md:row-span-2 relative overflow-hidden rounded-2xl shadow-sm group"
                                 >
-                                    <img
+                                    <Image
                                         src={heroImage}
                                         alt={`Unit ${unit.unitNumber} main photo`}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                                     />
                                 </button>
                                 {visibleThumbs.map((url, index) => {
@@ -141,10 +144,12 @@ export default function UnitDetailPage() {
                                             onClick={() => setLightboxIndex(index + 1)}
                                             className="hidden md:block relative overflow-hidden rounded-2xl shadow-sm group"
                                         >
-                                            <img
+                                            <Image
                                                 src={url}
                                                 alt={`Unit ${unit.unitNumber} photo ${index + 2}`}
-                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                                fill
+                                                sizes="25vw"
+                                                className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                                             />
                                             {isLastVisible && remainingCount > 0 && (
                                                 <span className="absolute inset-0 bg-ink/60 flex items-center justify-center text-white text-sm font-semibold">
@@ -288,9 +293,12 @@ export default function UnitDetailPage() {
                         </>
                     )}
 
-                    <img
+                    <Image
                         src={images[lightboxIndex]}
                         alt={`Unit ${unit.unitNumber} photo ${lightboxIndex + 1}`}
+                        width={1600}
+                        height={1200}
+                        sizes="100vw"
                         className="max-h-[85vh] max-w-full object-contain rounded-lg"
                         onClick={(e) => e.stopPropagation()}
                     />

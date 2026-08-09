@@ -1,4 +1,3 @@
-import { v5 as uuidv5 } from "uuid";
 import { subscriptionEndpoints } from "./subscription-endpoints";
 import {
     RatibaSetupResponse,
@@ -8,44 +7,7 @@ import {
     SwitchToPremiumRequest,
 } from "../types/subscription-types";
 import { apiClient } from "@/lib/api/client";
-import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
-import { getTenantIdFromSession } from "@/shared/tenant/get-tenant-id";
-import { useOrgStore } from "@/stores/org-store";
-
-// Same auth-context pattern as user-api.ts / daraja-api.ts. The
-// X-Tenant-Id header is advisory only (tenant isolation is enforced
-// server-side from the verified JWT via TenantContext).
-type ClerkWindow = Window & {
-    Clerk?: {
-        session?: {
-            getToken?: (options?: { template?: string }) => Promise<string | null>;
-        };
-    };
-};
-
-const TENANT_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
-
-const getTenantId = (): string | undefined => {
-    const rawTenantId =
-        useOrgStore.getState().tenantId ?? getTenantIdFromSession() ?? undefined;
-
-    return rawTenantId ? uuidv5(rawTenantId, TENANT_NAMESPACE) : undefined;
-};
-
-const getAuthContext = async () => {
-    if (typeof window === "undefined") {
-        return {};
-    }
-
-    const tenantId = getTenantId();
-
-    const token =
-        (await (window as ClerkWindow).Clerk?.session?.getToken?.({
-            template: BACKEND_JWT_TEMPLATE,
-        })) ?? undefined;
-
-    return { token, tenantId };
-};
+import { getAuthContext } from "@/lib/auth/get-auth-context";
 
 export const subscriptionApi = {
     getStatus: async (): Promise<SubscriptionStatusResponse> => {
