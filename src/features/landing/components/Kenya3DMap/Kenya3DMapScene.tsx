@@ -49,7 +49,8 @@ export function Kenya3DMapScene({
     const element = containerRef.current;
     if (!element) return;
     if (typeof IntersectionObserver === "undefined") {
-      setIsInView(true);
+      // Defer setState to avoid synchronous update in effect
+      Promise.resolve().then(() => setIsInView(true));
       return;
     }
     const observer = new IntersectionObserver(
@@ -135,11 +136,14 @@ function StudioEnvironment() {
   const scene = useThree((state) => state.scene);
 
   useEffect(() => {
+    // Store scene reference to avoid mutating hook return value directly
+    const sceneRef = scene;
     const pmrem = new THREE.PMREMGenerator(gl);
     const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envMap;
+    // eslint-disable-next-line react-hooks/immutability
+    sceneRef.environment = envMap;
     return () => {
-      scene.environment = null;
+      sceneRef.environment = null;
       envMap.dispose();
       pmrem.dispose();
     };

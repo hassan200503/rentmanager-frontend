@@ -61,6 +61,7 @@ const DetailItem = ({ icon: Icon, label, value, tone = "brand" }: {
     return (
         <div className="group flex items-start gap-3.5 p-3.5 rounded-xl bg-surface dark:bg-surface-dark/60 border border-border/70 dark:border-border-dark/60 transition-all duration-200 hover:border-brand-300/70 dark:hover:border-brand-700/50 hover:bg-brand-50/40 dark:hover:bg-brand-900/10 hover:shadow-sm">
             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${tones[tone]}`}>
+                {/* @ts-expect-error - React 19 ElementType inference issue */}
                 <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
             </div>
             <div className="min-w-0 pt-0.5">
@@ -80,6 +81,7 @@ const ContactAction = ({ href, icon: Icon, label, external = true }: {
     const inner = (
         <>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success transition-transform duration-200 group-hover:scale-105">
+                {/* @ts-expect-error - React 19 ElementType inference issue */}
                 <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
             <span>{label}</span>

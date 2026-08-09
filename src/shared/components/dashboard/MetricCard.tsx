@@ -45,6 +45,7 @@ export default function MetricCard({
                 </div>
                 {Icon && (
                     <div className={`shrink-0 rounded-xl p-2.5 ${iconToneClasses[tone]}`}>
+                        {/* @ts-expect-error - React 19 ElementType inference issue */}
                         <Icon className="h-5 w-5" strokeWidth={1.75} />
                     </div>
                 )}

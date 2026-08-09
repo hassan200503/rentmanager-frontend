@@ -142,6 +142,7 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                                 className="card-elevated w-full text-left p-4 flex items-center gap-4 hover:-translate-y-0.5 transition-all duration-200 group"
                             >
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-400">
+                                    {/* @ts-expect-error - React 19 ElementType inference issue */}
                                     <CatIcon className="h-5 w-5" strokeWidth={1.75} />
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -153,6 +154,7 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                                 <div className="flex items-center gap-2 shrink-0">
                                     <span className={priorityMeta.className}>{priorityMeta.label}</span>
                                     <span className={`inline-flex items-center gap-1 ${statusMeta.className}`}>
+                                        {/* @ts-expect-error - React 19 ElementType inference issue */}
                                         <StatusIcon className="h-3 w-3" strokeWidth={2} />
                                         {statusMeta.label}
                                     </span>
@@ -323,6 +325,7 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
             <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 ${statusMeta.className}`}>
+                    {/* @ts-expect-error - React 19 ElementType inference issue */}
                     <StatusIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
                     {statusMeta.label}
                 </span>
@@ -342,6 +345,7 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-1">Category</p>
                         <div className="flex items-center gap-2 text-sm text-fg dark:text-fg-dark">
+                            {/* @ts-expect-error - React 19 ElementType inference issue */}
                             <CatIcon className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
                             {request.category.replace("_", " ").toLowerCase()}
                         </div>

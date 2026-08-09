@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import type { ElementType } from "react";
+import type { ElementType, CSSProperties } from "react";
 
 interface KpiCardProps {
   icon: ElementType;
@@ -110,8 +110,9 @@ export default function KpiCard({
       <div className="flex items-start justify-between mb-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
-          style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" }}
+          style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" } as CSSProperties}
         >
+          {/* @ts-expect-error - React 19 ElementType inference issue */}
           <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
         </div>
         <div className="flex items-center gap-2">

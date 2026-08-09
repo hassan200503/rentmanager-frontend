@@ -441,6 +441,7 @@ export const TenantLeasePage = () => {
 const LeaseDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (
     <div className="text-center">
         <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-800 mb-2">
+            {/* @ts-expect-error - React 19 ElementType inference issue */}
             <Icon className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
         </div>
         <p className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-0.5">{label}</p>
@@ -451,6 +452,7 @@ const LeaseDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType
 const DateCard = ({ icon: Icon, label, date, custom }: { icon: React.ElementType; label: string; date: string | null; custom?: string }) => (
     <div className="text-center p-4 rounded-xl bg-surface border border-border/60">
         <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-800 mb-2">
+            {/* @ts-expect-error - React 19 ElementType inference issue */}
             <Icon className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
         </div>
         <p className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1">{label}</p>
