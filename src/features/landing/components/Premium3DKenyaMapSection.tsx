@@ -80,7 +80,7 @@ export function Premium3DKenyaMapSection() {
                   </p>
                 </div>
                 <p className="absolute top-3 right-4 text-[9px] text-white/35 font-medium pointer-events-none select-none">
-                  NASA satellite · Natural Earth borders
+                  Real satellite imagery · Relief terrain
                 </p>
               </div>
 
@@ -189,7 +189,7 @@ function CityInfoCard({
             >
               <MapPin
                 className={`w-5 h-5 ${
-city.name === "Nairobi" ? "text-jade-300" : "text-jade-400"
+                  city.name === "Nairobi" ? "text-jade-300" : "text-jade-400"
                 }`}
               />
             </div>

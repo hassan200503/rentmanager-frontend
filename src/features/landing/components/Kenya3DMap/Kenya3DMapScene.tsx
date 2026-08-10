@@ -11,6 +11,7 @@ import { CityMarker } from "./CityMarker";
 import { MapLighting } from "./MapLighting";
 import { AnimatedParticles } from "./AnimatedParticles";
 import { MercedesCar } from "./MercedesCar";
+import { CloudShadows } from "./CloudShadows";
 import { CITIES, type CityDef } from "./kenya-geo";
 import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
 
@@ -81,6 +82,8 @@ export function Kenya3DMapScene({
           {!isMobile && <StudioEnvironment />}
 
           <KenyaTerrain simplified={isMobile} />
+
+          {!isMobile && <CloudShadows />}
 
           {CITIES.map((city) => (
             <CityMarker

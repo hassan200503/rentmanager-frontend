@@ -5,8 +5,10 @@ import * as THREE from "three";
 import { Line } from "@react-three/drei";
 import {
   buildBorderPoints,
+  buildBorderPointsOnTerrain,
   buildCountryPlateauGeometry,
   buildCountryTopGeometry,
+  buildReliefGeometry,
   PLATEAU_DEPTH,
 } from "./kenya-geo";
 
@@ -15,12 +17,9 @@ interface KenyaTerrainProps {
 }
 
 /**
- * Real Kenya satellite terrain.
- *
- * A NASA Blue Marble orthophoto (public domain, equirectangular crop) is draped
- * over an extruded country silhouette built from Natural Earth border data, so
- * the photo lines up perfectly with the real national boundary. A cyan border
- * ring and a deep gradient "ocean" complete the premium map aesthetic.
+ * Kenya terrain: the real satellite orthophoto is draped over a displaced
+ * relief mesh (mobile keeps the flat slab for performance). A border ring
+ * and deep gradient "ocean" complete the premium map aesthetic.
  */
 export function KenyaTerrain({ simplified = false }: KenyaTerrainProps) {
   const texture = useMemo(() => {
@@ -30,15 +29,25 @@ export function KenyaTerrain({ simplified = false }: KenyaTerrainProps) {
     return t;
   }, []);
   const oceanTexture = useMemo(() => buildOceanTexture(), []);
-  const topGeo = useMemo(() => buildCountryTopGeometry(), []);
-  const plateauGeo = useMemo(() => buildCountryPlateauGeometry(), []);
+  const relief = useMemo(() => (!simplified ? buildReliefGeometry() : null), [simplified]);
+  const topGeo = useMemo(() => (simplified ? buildCountryTopGeometry() : null), [simplified]);
+  const plateauGeo = useMemo(
+    () => (simplified ? buildCountryPlateauGeometry() : null),
+    [simplified]
+  );
   const border = useMemo(() => {
-    const y = 0.045;
+    if (simplified) {
+      const y = 0.045;
+      return {
+        crisp: buildBorderPoints(y),
+        soft: buildBorderPoints(y - 0.012),
+      };
+    }
     return {
-      crisp: buildBorderPoints(y),
-      soft: buildBorderPoints(y - 0.012),
+      crisp: buildBorderPointsOnTerrain(0.03),
+      soft: buildBorderPointsOnTerrain(0.008),
     };
-  }, []);
+  }, [simplified]);
 
   return (
     <group>
@@ -48,15 +57,40 @@ export function KenyaTerrain({ simplified = false }: KenyaTerrainProps) {
         <meshBasicMaterial map={oceanTexture} />
       </mesh>
 
-      {/* Country silhouette plateau */}
-      <mesh geometry={plateauGeo} receiveShadow={!simplified} castShadow={!simplified}>
-        <meshStandardMaterial color="#0c1611" roughness={0.85} metalness={0.12} emissive="#123a2a" emissiveIntensity={simplified ? 0.2 : 0.45} />
-      </mesh>
+      {simplified ? (
+        <>
+          {/* Country silhouette plateau */}
+          <mesh geometry={plateauGeo ?? undefined} receiveShadow castShadow>
+            <meshStandardMaterial color="#0c1611" roughness={0.85} metalness={0.12} emissive="#123a2a" emissiveIntensity={0.2} />
+          </mesh>
 
-      {/* Satellite photo on top */}
-      <mesh geometry={topGeo}>
-        <meshStandardMaterial map={texture} roughness={0.94} metalness={0.03} />
-      </mesh>
+          {/* Flat satellite photo on top */}
+          <mesh geometry={topGeo ?? undefined}>
+            <meshStandardMaterial map={texture} roughness={0.94} metalness={0.03} />
+          </mesh>
+        </>
+      ) : (
+        <>
+          {/* Displaced relief surface (satellite photo with real hills) */}
+          <mesh geometry={relief?.surface ?? undefined} receiveShadow>
+            <meshStandardMaterial map={texture} roughness={0.96} metalness={0.02} envMapIntensity={0.15} />
+          </mesh>
+
+          {/* Water-tight slab sides */}
+          <mesh geometry={relief?.skirt ?? undefined}>
+            <meshStandardMaterial
+              color="#0a120d"
+              roughness={0.9}
+              metalness={0.1}
+              emissive="#0d2b1d"
+              emissiveIntensity={0.35}
+              polygonOffset
+              polygonOffsetFactor={-1}
+              polygonOffsetUnits={-1}
+            />
+          </mesh>
+        </>
+      )}
 
       {/* Soft glow directly under the country */}
       {!simplified && (
@@ -66,9 +100,9 @@ export function KenyaTerrain({ simplified = false }: KenyaTerrainProps) {
         </mesh>
       )}
 
-      {/* Cyan border highlights */}
-      <Line points={border.soft} color="#0d9488" lineWidth={simplified ? 2 : 4} transparent opacity={simplified ? 0.12 : 0.22} />
-      <Line points={border.crisp} color={simplified ? "#34d399" : "#6ee7b7"} lineWidth={simplified ? 0.8 : 1.3} transparent opacity={simplified ? 0.5 : 0.9} />
+      {/* Border highlights — lifted onto the ridges on desktop */}
+      <Line points={border.soft} color="#0d9488" lineWidth={simplified ? 2 : 4} transparent opacity={simplified ? 0.12 : 0.2} />
+      <Line points={border.crisp} color={simplified ? "#34d399" : "#6ee7b7"} lineWidth={simplified ? 0.8 : 1.3} transparent opacity={simplified ? 0.5 : 0.85} />
     </group>
   );
 }

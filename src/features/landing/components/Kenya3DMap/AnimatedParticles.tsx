@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { CITIES, lonLatToWorld, PLATEAU_TOP } from "./kenya-geo";
+import { CITIES, lonLatToWorld, terrainHeightAt } from "./kenya-geo";
 
 interface AnimatedParticlesProps {
   citiesCount?: number;
@@ -11,7 +11,8 @@ interface AnimatedParticlesProps {
 
 /**
  * Slow aurora-like particle flow through Kenya's main cities, following the
- * same real corridor as the Mercedes. Cheap: one Points buffer, additive.
+ * same real corridor as the Mercedes. Rides the relief terrain (with a gently
+ * arced flight path). Cheap: one Points buffer, additive.
  */
 export function AnimatedParticles({ citiesCount = CITIES.length }: AnimatedParticlesProps) {
   const pointsRef = useRef<THREE.Points>(null);
@@ -19,13 +20,15 @@ export function AnimatedParticles({ citiesCount = CITIES.length }: AnimatedParti
   const { positions, colors } = useMemo(() => {
     const cities = CITIES.slice(0, citiesCount);
     // A circular route: each city to its predecessor (the great corridor)
-    const route = cities.map((c) => lonLatToWorld(c.lon, c.lat, PLATEAU_TOP + 0.15));
+    const route = cities.map((c) =>
+      lonLatToWorld(c.lon, c.lat, terrainHeightAt(c.lon, c.lat) + 0.15)
+    );
     const pos: number[] = [];
     const col: number[] = [];
     const px = new THREE.Color("#34d399");
     const gold = new THREE.Color("#6ee7b7");
 
-for (let i = 0; i < route.length; i++) {
+    for (let i = 0; i < route.length; i++) {
       const a = route[i];
       const b = route[(i + 1) % route.length];
       const c = i === 0 ? gold : px;

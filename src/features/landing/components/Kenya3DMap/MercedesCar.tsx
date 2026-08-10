@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PLATEAU_TOP, getBorderCurve } from "./kenya-geo";
+import { getBorderCurve, terrainHeightAtWorld } from "./kenya-geo";
 
 interface MercedesCarProps {
   simplified?: boolean;
@@ -11,23 +11,20 @@ interface MercedesCarProps {
 }
 
 const WHEEL_RADIUS = 0.052;
-const CAR_Y = PLATEAU_TOP + 0.1;
-const TRAIL_COUNT = 10;
-
-/** Wheel positions (group X = across car, group Z = front -0.16 / rear +0.16). */
 const WHEEL_POSITIONS: ReadonlyArray<{ x: number; z: number }> = [
   { x: -0.145, z: -0.16 },
   { x: 0.145, z: -0.16 },
   { x: -0.145, z: 0.16 },
   { x: 0.145, z: 0.16 },
 ];
+const TRAIL_COUNT = 10;
 
 /**
- * Executive sedan (Mercedes-Benz S-Class silhouette) tracing Kenya's national
- * border. Follows the same closed spline as the glowing country outline, with
- * spinning wheels, banked corners, clearcoat paint, a fading light trail and
- * warm headlight glow. No external 3D models: keeps the bundle small, offline
- * safe and stable on mobile.
+ * Executive sedan tracing Kenya's national border. Follows the closed spline
+ * of the country outline, rides the relief terrain, hugs corners (banked
+ * turns, curvature-paced speed), and throws real headlight pools onto the
+ * road. No external 3D models: keeps the bundle small, offline safe and
+ * stable on mobile.
  */
 export function MercedesCar({ simplified = false, reducedMotion = false }: MercedesCarProps) {
   const groupRef = useRef<THREE.Group>(null);
@@ -41,6 +38,9 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
 
   const bodyGeo = useMemo(() => buildBodyGeometry(simplified), [simplified]);
   const glassGeo = useMemo(() => buildGlassGeometry(), []);
+
+  const leftBeamTarget = useMemo(() => new THREE.Object3D(), []);
+  const rightBeamTarget = useMemo(() => new THREE.Object3D(), []);
 
   useFrame((frame, rawDelta) => {
     const group = groupRef.current;
@@ -57,8 +57,10 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
     const dt = Math.min(rawDelta, 0.05);
     const curveLen = curve.getLength();
 
-    // Constant ground speed (arc-length uniform) — like a slow cinematic loop
-    const speed = 0.46;
+    // Curvature-paced speed: glide on straights, ease through corners
+    const steer = cornerSteer(curve, sim.current.t);
+    const pace = 0.52 + 0.48 * (1 - THREE.MathUtils.clamp(Math.abs(steer) * 16, 0, 1));
+    const speed = 0.46 * pace;
     sim.current.t = (sim.current.t + (dt * speed) / curveLen) % 1;
     sim.current.distance += dt * speed;
 
@@ -73,7 +75,12 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
     // Fading ghost trail (world space, independent of car transform)
     const p = curve.getPointAt(sim.current.t);
     const tangent = curve.getTangentAt(sim.current.t);
-    const ghost = new THREE.Vector3(p.x - tangent.x * 0.16, CAR_Y - 0.02, p.z - tangent.z * 0.16);
+    const groundY = terrainHeightAtWorld(p.x, p.z);
+    const ghost = new THREE.Vector3(
+      p.x - tangent.x * 0.16,
+      groundY + 0.012,
+      p.z - tangent.z * 0.16
+    );
     const trail = trailWorldRef.current;
     trail.pop();
     trail.unshift(ghost);
@@ -81,7 +88,7 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
       if (!mesh) return;
       mesh.position.copy(trail[i]);
       const k = 1 - i / TRAIL_COUNT;
-      (mesh.material as THREE.MeshBasicMaterial).opacity = k * 0.2;
+      (mesh.material as THREE.MeshBasicMaterial).opacity = k * 0.18;
       mesh.scale.setScalar(0.03 * (2 - k));
     });
   });
@@ -105,7 +112,7 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
         </group>
       )}
 
-      <group ref={groupRef} position={[0, CAR_Y, 0]}>
+      <group ref={groupRef} position={[0, 0, 0]}>
         {/* Painted body shell (extruded side profile, wheel arches) */}
         <mesh geometry={bodyGeo} rotation={[0, -Math.PI / 2, 0]} castShadow={!simplified}>
           {simplified ? (
@@ -114,10 +121,10 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
             <meshPhysicalMaterial
               color="#e3e6ea"
               metalness={0.85}
-              roughness={0.22}
+              roughness={0.2}
               clearcoat={1}
-              clearcoatRoughness={0.06}
-              envMapIntensity={1.4}
+              clearcoatRoughness={0.05}
+              envMapIntensity={1.6}
             />
           )}
         </mesh>
@@ -212,12 +219,64 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
           </mesh>
         </group>
 
-        {/* Warm driving light + subtle underglow */}
-        <pointLight position={[0, 0.02, 0.4]} intensity={simplified ? 0 : 5} distance={5.5} decay={2} color="#fff3c9" />
-        {!simplified && <pointLight position={[0, 0.015, -0.2]} intensity={0.8} distance={3} decay={2} color="#ff6b4a" />}
+        {/* Headlight projectors — real light pools on the terrain */}
+        {!simplified && (
+          <>
+            <spotLight
+              position={[-0.085, 0.07, 0.34]}
+              angle={0.5}
+              penumbra={0.65}
+              intensity={16}
+              distance={9}
+              decay={1.6}
+              color="#fff3cd"
+              target={leftBeamTarget}
+            />
+            <spotLight
+              position={[0.085, 0.07, 0.34]}
+              angle={0.5}
+              penumbra={0.65}
+              intensity={16}
+              distance={9}
+              decay={1.6}
+              color="#fff3cd"
+              target={rightBeamTarget}
+            />
+            <primitive object={leftBeamTarget} position={[-0.085, -0.5, 2.4]} />
+            <primitive object={rightBeamTarget} position={[0.085, -0.5, 2.4]} />
+          </>
+        )}
+
+        {/* Additive light shafts spilling forward */}
+        {!simplified &&
+          [-0.09, 0.09].map((xx) => (
+            <mesh key={`beam-${xx}`} position={[xx, 0.045, 0.42]} rotation={[Math.PI / 2, 0, 0]}>
+              <coneGeometry args={[0.06, 0.9, 16, 1, true]} />
+              <meshBasicMaterial
+                color="#fff3cd"
+                transparent
+                opacity={0.07}
+                side={THREE.DoubleSide}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          ))}
+
+        {/* Subtle rear underglow */}
+        {!simplified && <pointLight position={[0, 0.015, -0.2]} intensity={0.9} distance={3} decay={2} color="#ff6b4a" />}
       </group>
     </>
   );
+}
+
+/** Signed steering angle (radians) at spline param t, from adjacent tangents. */
+function cornerSteer(curve: THREE.CatmullRomCurve3, t: number): number {
+  const tA = (t - 0.002 + 1) % 1;
+  const tB = (t + 0.002) % 1;
+  const dirA = curve.getTangentAt(tA);
+  const dirB = curve.getTangentAt(tB);
+  return Math.atan2(dirA.x * dirB.z - dirA.z * dirB.x, dirA.x * dirB.x + dirA.z * dirB.z);
 }
 
 /** Move the car to a spline pose (position + yaw + bank). */
@@ -232,16 +291,13 @@ function applyPose(
   const yaw = Math.atan2(tangent.x, tangent.z);
 
   // Bank into corners (derived from adjacent tangents)
-  const tA = (t - 0.002 + 1) % 1;
-  const tB = (t + 0.002) % 1;
-  const dirA = curve.getTangentAt(tA);
-  const dirB = curve.getTangentAt(tB);
-  const steer = Math.atan2(dirA.x * dirB.z - dirA.z * dirB.x, dirA.x * dirB.x + dirA.z * dirB.z);
+  const steer = cornerSteer(curve, t);
   const targetBank = THREE.MathUtils.clamp(-steer * 5, -0.16, 0.16);
   sim.bank = THREE.MathUtils.damp(sim.bank, targetBank, 6, 0.05);
 
   const bob = Math.abs(Math.sin(t * 220)) * 0.008;
-  group.position.set(p.x, CAR_Y + bob, p.z);
+  const groundY = terrainHeightAtWorld(p.x, p.z);
+  group.position.set(p.x, groundY + bob, p.z);
   group.rotation.set(0, yaw, sim.bank);
 }
 

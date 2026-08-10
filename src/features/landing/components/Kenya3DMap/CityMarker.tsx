@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import { lonLatToWorld, PLATEAU_TOP, type CityDef } from "./kenya-geo";
+import { lonLatToWorld, terrainHeightAt, type CityDef } from "./kenya-geo";
 
 interface CityMarkerProps {
   city: CityDef;
@@ -16,17 +16,20 @@ interface CityMarkerProps {
 }
 
 /**
- * Interactive 3D city marker anchored to real geography, with a floating
- * beacon, pulsing ground glow and a billboarded HTML label.
+ * Interactive 3D city marker anchored to real geography (rides the relief
+ * terrain on desktop), with a floating beacon, pulsing ground glow, a soft
+ * city halo and a billboarded HTML label.
  */
 export function CityMarker({ city, isHovered, onHover, onHoverEnd, onClick, simplified = false }: CityMarkerProps) {
   const groupRef = useRef<THREE.Group>(null);
   const pulseRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const active = hovered || isHovered;
 
-  const base = lonLatToWorld(city.lon, city.lat, PLATEAU_TOP);
+  const base = lonLatToWorld(city.lon, city.lat, terrainHeightAt(city.lon, city.lat));
   const beamHeight = 0.16 + city.importance * 0.34;
+  const haloRadius = 0.32 + city.importance * 0.28;
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
@@ -40,6 +43,11 @@ export function CityMarker({ city, isHovered, onHover, onHoverEnd, onClick, simp
       pulseRef.current.scale.setScalar(active ? 1.6 : p);
       const mat = pulseRef.current.material as THREE.MeshBasicMaterial;
       mat.opacity = (active ? 0.75 : p * 0.45) * (simplified ? 0.6 : 1);
+    }
+    if (haloRef.current) {
+      haloRef.current.lookAt(state.camera.position);
+      const mat = haloRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = (active ? 0.34 : 0.16) * (simplified ? 0.7 : 1) + Math.sin(t * 1.3 + city.importance * 2) * 0.03;
     }
   });
 
@@ -56,6 +64,19 @@ export function CityMarker({ city, isHovered, onHover, onHoverEnd, onClick, simp
 
   return (
     <group ref={groupRef} position={[base.x, base.y, base.z]}>
+      {/* City halo — additive glow breathing at ground level */}
+      <mesh ref={haloRef} position={[0, 0.02, 0]}>
+        <circleGeometry args={[haloRadius, 32]} />
+        <meshBasicMaterial
+          color={city.color}
+          transparent
+          opacity={0.16}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
       {/* Ground pulse */}
       <mesh ref={pulseRef} position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.09, 0.17, 32]} />

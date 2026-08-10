@@ -1,98 +1,58 @@
 "use client";
 
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-
 interface MapLightingProps {
   simplified?: boolean;
 }
 
 /**
- * Professional lighting setup for 3D map scene
- * Combines ambient, directional, and rim lighting
- * Simplified version for mobile devices
+ * Cinematic daylight rig: a warm sun key with soft shadows, cool atmospheric
+ * fill, and a whisper of brand-green rim so the terrain reads as real
+ * geography shot at golden hour — not a green-tinted toy.
  */
 export function MapLighting({ simplified = false }: MapLightingProps) {
-  const spotlightRef = useRef<THREE.SpotLight>(null);
-
-  // Subtle spotlight movement (disabled on mobile)
-  useFrame((state) => {
-    if (spotlightRef.current && !simplified) {
-      const t = state.clock.elapsedTime;
-      spotlightRef.current.position.x = Math.sin(t * 0.3) * 2;
-      spotlightRef.current.position.z = Math.cos(t * 0.3) * 2;
-    }
-  });
-
   if (simplified) {
-    // Mobile: Simple 2-light setup
+    // Mobile: simple 2-light setup
     return (
       <>
-        <ambientLight intensity={0.5} color="#6B7280" />
-        <directionalLight
-          position={[5, 8, 5]}
-          intensity={1.5}
-          color="#FFFFFF"
-        />
+        <ambientLight intensity={0.55} color="#8b98ab" />
+        <directionalLight position={[5, 8, 5]} intensity={1.6} color="#fff3e0" />
       </>
     );
   }
 
-  // Desktop: Full 5-light setup
+  // Desktop: cinematic 5-light setup
   return (
     <>
-      {/* Ambient light for base visibility */}
-      <ambientLight intensity={0.3} color="#4A5568" />
+      {/* Cool base ambient + sky bounce */}
+      <ambientLight intensity={0.28} color="#7d8faa" />
+      <hemisphereLight color="#a3b8d4" groundColor="#0b1017" intensity={0.55} />
 
-      {/* Main directional light (key light) */}
+      {/* Warm sun key — soft, realistic shadows */}
       <directionalLight
-        position={[5, 8, 5]}
-        intensity={1.2}
-        color="#FFFFFF"
+        position={[7.5, 9.5, 4.5]}
+        intensity={2.1}
+        color="#fff2dc"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={12}
+        shadow-camera-bottom={-12}
+        shadow-bias={-0.0004}
       />
 
-      {/* Fill light from opposite side */}
-      <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.4}
-        color="#6EE7B7"
-      />
+      {/* Cool atmospheric fill from the shadow side */}
+      <directionalLight position={[-6.5, 4.5, -6]} intensity={0.45} color="#5b7db8" />
 
-      {/* Top light for glow on markers */}
-      <pointLight
-        position={[0, 10, 0]}
-        intensity={0.6}
-        color="#10B981"
-        distance={15}
-        decay={2}
-      />
+      {/* Subtle jade rim — brand accent on silhouettes */}
+      <directionalLight position={[0.5, 6, -8]} intensity={0.5} color="#3fae8f" />
 
-      {/* Rim light from behind */}
-      <spotLight
-        ref={spotlightRef}
-        position={[0, 8, -8]}
-        intensity={0.8}
-        angle={Math.PI / 6}
-        penumbra={0.5}
-        color="#6EE7B7"
-        castShadow
-      />
+      {/* Soft overhead bounce for marker pops */}
+      <pointLight position={[0, 10, 0]} intensity={0.35} color="#10B981" distance={16} decay={2} />
 
-      {/* Subtle hemisphere light for natural sky effect */}
-      <hemisphereLight
-        color="#6EE7B7"
-        groundColor="#030712"
-        intensity={0.3}
-      />
+      <hemisphereLight color="#6ee7b7" groundColor="#030712" intensity={0.12} />
     </>
   );
 }
