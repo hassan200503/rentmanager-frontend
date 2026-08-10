@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
 
 interface VideoBackgroundProps {
@@ -11,6 +12,12 @@ interface VideoBackgroundProps {
   environmental?: boolean;
   children?: React.ReactNode;
   className?: string;
+  /** Static poster frame: shown as the video's poster and (for
+      prefers-reduced-motion users) as a fixed backdrop in place of video. */
+  poster?: string;
+  /** How eagerly the browser fetches the video. Defaults to "metadata";
+      pass "auto" when the hero is the LCP element. */
+  preload?: "none" | "metadata" | "auto";
 }
 
 const overlayMap = {
@@ -28,6 +35,8 @@ export default function VideoBackground({
   environmental = false,
   children,
   className = "",
+  poster,
+  preload = "metadata",
 }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -68,6 +77,7 @@ export default function VideoBackground({
   }, []);
 
   const showVideo = videoSrc && !reducedMotion;
+  const hideGradient = (showVideo && loaded) || (reducedMotion && Boolean(poster));
 
   return (
     <div className={`relative overflow-hidden ${className}`} aria-hidden="true">
@@ -78,7 +88,8 @@ export default function VideoBackground({
           loop
           muted
           playsInline
-          preload="metadata"
+          preload={preload}
+          poster={poster}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
             loaded ? "opacity-100" : "opacity-0"
           } ${zoom ? "animate-ken-burns" : ""}`}
@@ -87,7 +98,18 @@ export default function VideoBackground({
         </video>
       )}
 
-      <div className={`absolute inset-0 ${posterGradient} ${loaded && showVideo ? "opacity-0" : "opacity-100"} transition-opacity duration-1000`}>
+      {reducedMotion && poster && (
+        <Image
+          src={poster}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      )}
+
+      <div className={`absolute inset-0 ${posterGradient} ${hideGradient ? "opacity-0" : "opacity-100"} transition-opacity duration-1000`}>
         <div className="absolute inset-0 bg-[length:200%_200%] animate-gradient-drift" />
       </div>
 
