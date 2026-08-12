@@ -4,6 +4,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getBorderCurve, terrainHeightAtWorld } from "./kenya-geo";
+import { KenyaCarFlag } from "./KenyaCarFlag";
 
 interface MercedesCarProps {
   simplified?: boolean;
@@ -265,6 +266,11 @@ export function MercedesCar({ simplified = false, reducedMotion = false }: Merce
 
         {/* Subtle rear underglow */}
         {!simplified && <pointLight position={[0, 0.015, -0.2]} intensity={0.9} distance={3} decay={2} color="#ff6b4a" />}
+
+        {/* Kenyan flag on a chrome pole, flying from the rear deck */}
+        <group position={[0.1, 0.112, -0.26]}>
+          <KenyaCarFlag waving={!reducedMotion} />
+        </group>
       </group>
     </>
   );

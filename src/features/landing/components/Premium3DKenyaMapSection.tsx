@@ -72,15 +72,30 @@ export function Premium3DKenyaMapSection() {
                   />
                 </Suspense>
 
+                {/* Live-feed finish: film grain + vignette */}
+                <div className="absolute inset-0 pointer-events-none z-20" aria-hidden="true">
+                  <div className="absolute inset-0 film-grain opacity-[0.07] mix-blend-overlay" />
+                  <div className="absolute inset-0 map-vignette" />
+                </div>
+
+                {/* LIVE badge */}
+                <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 rounded-md bg-black/55 backdrop-blur-sm px-2 py-1 pointer-events-none select-none">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" aria-hidden="true" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
+                  </span>
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/90">LIVE</span>
+                </div>
+
                 {/* Instructions overlay - mobile optimized */}
-                <div className="absolute bottom-4 left-4 right-4 glass-premium rounded-lg px-3 py-2 text-center pointer-events-none">
+                <div className="absolute bottom-4 left-4 right-4 z-30 glass-premium rounded-lg px-3 py-2 text-center pointer-events-none">
                   <p className="text-[10px] text-white/60 font-medium">
                     <span className="hidden md:inline">Drag to rotate · Scroll to zoom · Click markers for details</span>
                     <span className="md:hidden">Swipe to rotate · Pinch to zoom · Tap cities</span>
                   </p>
                 </div>
-                <p className="absolute top-3 right-4 text-[9px] text-white/35 font-medium pointer-events-none select-none">
-                  Real satellite imagery · Relief terrain
+                <p className="absolute top-3 right-4 z-30 text-[9px] text-white/35 font-medium pointer-events-none select-none">
+                  Real satellite · LIVE terrain
                 </p>
               </div>
 
@@ -168,12 +183,12 @@ function CityInfoCard({
       onMouseLeave={onHoverEnd}
     >
       <Link
-        href={`/listings?q=${encodeURIComponent(city.name)}`}
+        href={`/listings?location=${encodeURIComponent(city.name)}`}
         onClick={(e) => {
           e.preventDefault();
           onClick();
         }}
-        className={`block activity-item-3d transition-all duration-300 ${
+        className={`block city-card-3d transition-all duration-300 ${
           isHovered || isSelected ? "transform scale-105" : ""
         }`}
       >
@@ -264,7 +279,7 @@ function CityDetailModal({ city, onClose }: CityDetailModalProps) {
           </div>
 
           <Link
-            href={`/listings?q=${encodeURIComponent(city.name)}`}
+            href={`/listings?location=${encodeURIComponent(city.name)}`}
             className="btn-3d w-full mt-4 inline-flex items-center justify-center gap-2"
           >
             View Properties in {city.name}

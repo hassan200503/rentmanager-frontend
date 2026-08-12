@@ -81,7 +81,7 @@ function CityCard({
 
   return (
     <Link
-      href={`/listings?q=${encodeURIComponent(city.name)}`}
+      href={`/listings?location=${encodeURIComponent(city.name)}`}
       className={`relative group overflow-hidden rounded-2xl border border-white/[0.06] transition-all duration-700 hover:border-white/20 hover:shadow-2xl hover:shadow-jade-500/10 ${city.span} min-h-[200px] md:min-h-[240px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 ${
         hovered ? "scale-[1.02] border-jade-400/40" : ""
       }`}

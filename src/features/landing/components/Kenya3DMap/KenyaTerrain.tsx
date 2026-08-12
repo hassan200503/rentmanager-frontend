@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { Line } from "@react-three/drei";
+import { Line, useTexture } from "@react-three/drei";
 import {
   buildBorderPoints,
   buildBorderPointsOnTerrain,
@@ -20,14 +20,15 @@ interface KenyaTerrainProps {
  * Kenya terrain: the real satellite orthophoto is draped over a displaced
  * relief mesh (mobile keeps the flat slab for performance). A border ring
  * and deep gradient "ocean" complete the premium map aesthetic.
+ * The satellite photo is loaded via drei's suspendable loader so the first
+ * rendered frame is never untextured.
  */
 export function KenyaTerrain({ simplified = false }: KenyaTerrainProps) {
-  const texture = useMemo(() => {
-    const t = new THREE.TextureLoader().load("/images/kenya/blue-marble-kenya.jpg");
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 8;
-    return t;
-  }, []);
+  const texture = useTexture("/images/kenya/blue-marble-kenya.jpg");
+  // eslint-disable-next-line react-hooks/immutability
+  texture.colorSpace = THREE.SRGBColorSpace;
+  // eslint-disable-next-line react-hooks/immutability
+  texture.anisotropy = 8;
   const oceanTexture = useMemo(() => buildOceanTexture(), []);
   const relief = useMemo(() => (!simplified ? buildReliefGeometry() : null), [simplified]);
   const topGeo = useMemo(() => (simplified ? buildCountryTopGeometry() : null), [simplified]);

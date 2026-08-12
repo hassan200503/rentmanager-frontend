@@ -70,6 +70,19 @@
   --color-canvas: var(--color-bg);
   --color-canvas-dark: var(--color-bg-dark);
 
+  /* ── Platform console sidebar (theme-aware, replaces hard slate) ── */
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-muted: #F1F5F9;
+  --color-sidebar-active: #ECFDF5;
+  --color-sidebar-fg: #334155;
+  --color-sidebar-fg-muted: #94A3B8;
+  --color-sidebar-border: #E2E8F0;
+
+  /* ── Console chrome dimensions ─────────────────────────────── */
+  --console-topbar-height: 3.5rem;
+  --console-sidebar-width: 16rem;
+  --console-sidebar-width-collapsed: 4.25rem;
+
   /* ── Status ────────────────────────────────────────────────── */
   --color-success: #16A34A;
   --color-success-dark: #047857;
@@ -160,6 +173,14 @@ body {
 .dark {
   --color-ink: var(--color-fg-dark);
   --color-ink-muted: var(--color-fg-muted-dark);
+
+  /* Console sidebar — deep navy surface */
+  --color-sidebar: #0B1221;
+  --color-sidebar-muted: rgba(148, 163, 184, 0.08);
+  --color-sidebar-active: rgba(16, 185, 129, 0.11);
+  --color-sidebar-fg: #E2E8F0;
+  --color-sidebar-fg-muted: #64748B;
+  --color-sidebar-border: rgba(255, 255, 255, 0.07);
 }
 
 /* ── Selection ─────────────────────────────────────────────── */
@@ -1471,19 +1492,8 @@ section[id], div[id] {
     0 60px 120px -24px rgba(0, 0, 0, 0.75);
 }
 
-/* Slow "someone is scrolling the app" scrubbing used by the demo screens */
-.demo-screen-autoscroll {
-  animation: demoAutoScroll 11s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-  will-change: transform;
-}
-
-@keyframes demoAutoScroll {
-  0% { transform: translateY(0); }
-  40% { transform: translateY(var(--demo-scroll-y, -32%)); }
-  68% { transform: translateY(var(--demo-scroll-y, -32%)); }
-  84% { transform: translateY(0); }
-  100% { transform: translateY(0); }
-}
+/* Demo screen content swipes once per screen (framer-motion drives the
+   transform; the contact glow below is CSS-keyed to the same 5s cycle) */
 
 /* Story-style progress segment that fills over the demo duration */
 @keyframes demoProgressFill {
@@ -1499,9 +1509,57 @@ section[id], div[id] {
 
 .demo-float { animation: demoFloat 7s ease-in-out infinite; }
 
+/* ── Brand boot "video" — first demo replays the real app splash ───── */
+/* Breathing brand glow behind the logo mark */
+@keyframes demoBootGlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+.demo-boot-glow { animation: demoBootGlow 4.5s ease-in-out infinite; }
+
+/* Logo springs in — one shot, replays on remount */
+@keyframes demoBootMark {
+  0% { opacity: 0; transform: scale(0.86) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.demo-boot-mark { animation: demoBootMark 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Loading bar fills across the demo dwell — feels like a real splash */
+@keyframes demoBootFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.demo-boot-fill {
+  animation: demoBootFill 4.6s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  transform-origin: left;
+}
+
+/* ── Real hand driving the swipe ───────────────────────────────────── */
+/* The hand itself is animated in JS, locked 1:1 to the content scroll.
+   This glow is CSS-keyed to the same 5s dwell: it only exists while the
+   finger is dragging (~4s), and dies when the screen rests — exactly
+   like live activity. */
+@keyframes demoContactCycle {
+  0% { opacity: 0; transform: scale(0.7); }
+  7% { opacity: 1; transform: scale(1); }
+  86% { opacity: 1; transform: scale(1.08); }
+  92% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 0; transform: scale(0.7); }
+}
+
+.demo-contact-glow {
+  animation: demoContactCycle 5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .demo-screen-autoscroll,
-  .demo-float {
+  .demo-float,
+  .demo-boot-glow,
+  .demo-boot-mark,
+  .demo-boot-fill,
+  .demo-contact-glow {
     animation: none !important;
   }
 }
@@ -2648,6 +2706,68 @@ section[id], div[id] {
   opacity: 1;
 }
 
+/* ── City Coverage Cards (jade) ─────────────────────────────── */
+
+.city-card-3d {
+  background: var(--glass-white-5);
+  border: 1px solid var(--glass-white-8);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: all 300ms var(--ease-settle);
+  position: relative;
+  transform: translateZ(0);
+}
+
+.city-card-3d:hover {
+  background: var(--glass-white-8);
+  border-color: rgba(16, 185, 129, 0.35);
+  transform: translateX(4px) translateZ(10px);
+  box-shadow: -4px 0 16px rgba(16, 185, 129, 0.18);
+}
+
+.city-card-3d::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #34d399, #059669);
+  border-radius: 3px 0 0 3px;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.city-card-3d:hover::before {
+  opacity: 1;
+}
+
+/* ── Live-feed Film Grain & Vignette ────────────────────────── */
+
+.film-grain {
+  position: absolute;
+  inset: -20%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+  animation: grainShift 0.9s steps(6) infinite;
+  will-change: transform;
+}
+
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -5%); }
+  60% { transform: translate(-3%, -3%); }
+  80% { transform: translate(4%, 4%); }
+}
+
+.map-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(3, 7, 18, 0.5) 100%);
+}
+
 /* ── Map Pin 3D Styles ───────────────────────────────────────── */
 
 .map-pin-3d {
@@ -2756,6 +2876,7 @@ section[id], div[id] {
   .lift-on-hover,
   .metric-card-3d,
   .activity-item-3d,
+  .city-card-3d,
   .tilt-3d {
     transition: none !important;
   }
@@ -2763,8 +2884,13 @@ section[id], div[id] {
   .glass-premium-hover:hover,
   .lift-on-hover:hover,
   .metric-card-3d:hover,
-  .activity-item-3d:hover {
+  .activity-item-3d:hover,
+  .city-card-3d:hover {
     transform: none !important;
+  }
+
+  .film-grain {
+    animation: none !important;
   }
   
   .floating-orb,
@@ -2785,3 +2911,170 @@ section[id], div[id] {
 /* ══════════════════════════════════════════════════════════════
    END PREMIUM 3D DESIGN SYSTEM
    ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM ADMIN CONSOLE DESIGN SYSTEM
+   ══════════════════════════════════════════════════════════════ */
+
+/* Sidebar surface — theme-aware (deep navy in dark mode) */
+.console-sidebar {
+  background-color: var(--color-sidebar);
+  border-color: var(--color-sidebar-border);
+  color: var(--color-sidebar-fg);
+}
+
+/* Active nav item — brand tint + left accent rail */
+.console-nav-active {
+  background-color: var(--color-sidebar-active);
+  color: var(--color-brand-700);
+  box-shadow: inset 2px 0 0 0 var(--color-brand);
+}
+
+.dark .console-nav-active {
+  color: #6EE7B7;
+}
+
+/* Delta pill — KPI change indicators (tabular numerals) */
+.delta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25rem;
+}
+
+.delta-pill-positive {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-dark);
+  border: 1px solid color-mix(in srgb, var(--color-success) 15%, transparent);
+}
+
+.dark .delta-pill-positive {
+  background-color: var(--color-success-bg-dark);
+  color: #6EE7B7;
+}
+
+.delta-pill-negative {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-dark);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 15%, transparent);
+}
+
+.dark .delta-pill-negative {
+  background-color: var(--color-danger-bg-dark);
+  color: #FCA5A5;
+}
+
+.delta-pill-neutral {
+  background-color: var(--color-border-subtle);
+  color: var(--color-fg-muted);
+  border: 1px solid var(--color-border);
+}
+
+.dark .delta-pill-neutral {
+  background-color: var(--color-border-subtle-dark);
+  color: var(--color-fg-muted-dark);
+  border-color: var(--color-border-dark);
+}
+
+/* Fine grid texture for hero canvases */
+.bg-grid-fine {
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dark .bg-grid-fine {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Brand pill chip — console ownership badge */
+.pill-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-700);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 20%, transparent);
+}
+
+.dark .pill-brand {
+  background-color: var(--color-brand-900);
+  color: var(--color-brand-200);
+  border-color: color-mix(in srgb, var(--color-brand) 30%, transparent);
+}
+
+/* Stat tile — premium overview KPI card */
+.stat-tile {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: 1.25rem 1.375rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.dark .stat-tile {
+  background-color: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+}
+
+.stat-tile:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: color-mix(in srgb, var(--color-brand) 25%, var(--color-border));
+  transform: translateY(-1px);
+}
+
+.dark .stat-tile:hover {
+  border-color: color-mix(in srgb, var(--color-brand) 20%, var(--color-border-dark));
+}
+
+/* Sticky section header inside scrollable console pages */
+.console-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-muted);
+}
+
+.dark .console-section-title {
+  color: var(--color-fg-muted-dark);
+}
+
+/* Logo avatar shell — brand mark/logo container used across chrome */
+.logo-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-600));
+  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--color-brand) 40%, transparent);
+}
+
+.logo-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Console breadcrumb separator */
+.crumb-sep {
+  color: var(--color-fg-subtle);
+  opacity: 0.7;
+}

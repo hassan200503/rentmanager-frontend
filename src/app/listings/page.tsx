@@ -146,7 +146,7 @@ function ListingsPageContent() {
                                     type="text"
                                     value={keyword}
                                     onChange={(e) => setKeyword(e.target.value)}
-                                    placeholder="Search by name or type..."
+                                    placeholder="Search by name, city or street..."
                                     className="form-input w-full !pl-10 text-sm shadow-sm transition-all duration-200 focus:shadow-md focus:shadow-brand/10 focus:border-brand-300"
                                 />
                             </div>
