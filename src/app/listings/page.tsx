@@ -118,99 +118,160 @@ function ListingsPageContent() {
     }
 
     return (
-        <div className="min-h-screen bg-canvas">
-            {/* Hero banner */}
-            <div className="relative bg-gradient-to-b from-brand-50/60 via-surface to-surface border-b border-border">
-                <div className="container mx-auto px-6 py-20 max-w-5xl">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold tracking-wide mb-5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                            Rental Listings
+        <div className="min-h-screen bg-gradient-to-b from-canvas via-canvas to-brand-50/10 dark:to-brand-900/5">
+            {/* ═══════════ PREMIUM HERO SECTION ═══════════ */}
+            <div className="relative bg-gradient-to-b from-white via-brand-50/20 to-white dark:from-surface-dark dark:via-brand-900/10 dark:to-surface-dark border-b-2 border-border/40 overflow-hidden">
+                {/* Luxury background effects */}
+                <div className="absolute inset-0 opacity-30 dark:opacity-20" aria-hidden="true">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(16,185,129,0.08)_0%,transparent_60%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(94,234,212,0.06)_0%,transparent_60%)]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(16,185,129,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(16,185,129,0.02)_1px,transparent_1px)] bg-[size:80px_80px]" />
+                </div>
+
+                <div className="relative container mx-auto px-6 pt-16 pb-20 max-w-6xl">
+                    <div className="max-w-3xl">
+                        {/* Premium category badge */}
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-br from-brand-100 via-brand-50 to-emerald-50 dark:from-brand-900/40 dark:to-emerald-900/20 border-2 border-brand-200/60 dark:border-brand-700/60 shadow-[0_2px_12px_rgba(5,150,105,0.15)] mb-8 backdrop-blur-sm animate-fade-in-up">
+                            <div className="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(5,150,105,0.6)] animate-pulse" />
+                            <span className="text-xs font-extrabold text-brand-900 dark:text-brand-300 uppercase tracking-widest">
+                                Rental Listings
+                            </span>
                         </div>
-                        <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink leading-[1.1] tracking-tight">
+                        
+                        {/* Hero heading with gradient */}
+                        <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-ink via-ink to-ink/70 dark:from-white dark:via-white dark:to-white/80 leading-[1.05] tracking-[-0.02em] animate-fade-in-up drop-shadow-[0_2px_12px_rgba(0,0,0,0.05)]"
+                            style={{ animationDelay: '100ms' }}
+                        >
                             Available Properties
                         </h1>
-                        <p className="mt-3 text-ink-muted max-w-xl leading-relaxed">
-                            Browse verified rental properties across Kenya and find your next home —
-                            with real vacancies, not stale listings.
+                        
+                        {/* Enhanced description */}
+                        <p className="mt-6 text-base md:text-lg text-ink-muted dark:text-white/70 max-w-2xl leading-relaxed font-medium animate-fade-in-up"
+                            style={{ animationDelay: '200ms' }}
+                        >
+                            Browse verified rental properties across Kenya and find your next home — with real vacancies, not stale listings.
                         </p>
                     </div>
 
-                    <div className="mt-10 flex flex-col sm:flex-row gap-3 max-w-2xl">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                                    <Search className="w-4 h-4 text-ink-muted" strokeWidth={1.5} />
+                    {/* ──── Premium Search Interface ──── */}
+                    <div className="mt-12 max-w-4xl animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Search input - refined */}
+                            <div className="group relative">
+                                <label htmlFor="keyword-search" className="block text-xs font-bold text-ink-muted dark:text-white/70 uppercase tracking-widest mb-2 ml-1">
+                                    Property Search
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <Search className="w-5 h-5 text-ink-muted/60 dark:text-white/40 transition-colors group-focus-within:text-brand" strokeWidth={2} />
+                                    </div>
+                                    <input
+                                        id="keyword-search"
+                                        type="text"
+                                        value={keyword}
+                                        onChange={(e) => setKeyword(e.target.value)}
+                                        placeholder="Search by name, city or street..."
+                                        className="w-full h-14 pl-12 pr-4 text-base font-medium bg-white dark:bg-white/[0.08] border-2 border-border/60 dark:border-white/[0.12] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 placeholder:text-ink-muted/50 dark:placeholder:text-white/40 focus:outline-none focus:border-brand-400 dark:focus:border-brand-500 focus:shadow-[0_4px_20px_-4px_rgba(5,150,105,0.25),0_0_0_4px_rgba(5,150,105,0.08)] focus:ring-0 hover:border-border dark:hover:border-white/[0.18] backdrop-blur-sm"
+                                    />
                                 </div>
-                                <input
-                                    type="text"
-                                    value={keyword}
-                                    onChange={(e) => setKeyword(e.target.value)}
-                                    placeholder="Search by name, city or street..."
-                                    className="form-input w-full !pl-10 text-sm shadow-sm transition-all duration-200 focus:shadow-md focus:shadow-brand/10 focus:border-brand-300"
-                                />
                             </div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                                    <MapPin className="w-4 h-4 text-ink-muted" strokeWidth={1.5} />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={location}
-                                    onChange={(e) => setLocation(e.target.value)}
-                                    placeholder="Location — city or neighborhood"
-                                    className="form-input w-full !pl-10 text-sm shadow-sm transition-all duration-200 focus:shadow-md focus:shadow-brand/10 focus:border-brand-300"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Sticky results toolbar */}
-            <div className="sticky top-0 z-20 bg-canvas/80 backdrop-blur-xl border-b border-border">
-                <div className="container mx-auto px-6 max-w-5xl">
-                    <div className="flex items-center justify-between gap-4 py-4">
-                        <p className="text-sm text-ink-muted" aria-live="polite">
-                            {isLoading ? (
-                                <span className="inline-flex items-center gap-2">
-                                    <span className="w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-                                    Searching…
+                            {/* Location input - refined */}
+                            <div className="group relative">
+                                <label htmlFor="location-search" className="block text-xs font-bold text-ink-muted dark:text-white/70 uppercase tracking-widest mb-2 ml-1">
+                                    Location Filter
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <MapPin className="w-5 h-5 text-ink-muted/60 dark:text-white/40 transition-colors group-focus-within:text-brand" strokeWidth={2} />
+                                    </div>
+                                    <input
+                                        id="location-search"
+                                        type="text"
+                                        value={location}
+                                        onChange={(e) => setLocation(e.target.value)}
+                                        placeholder="Enter city or neighborhood..."
+                                        className="w-full h-14 pl-12 pr-4 text-base font-medium bg-white dark:bg-white/[0.08] border-2 border-border/60 dark:border-white/[0.12] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 placeholder:text-ink-muted/50 dark:placeholder:text-white/40 focus:outline-none focus:border-brand-400 dark:focus:border-brand-500 focus:shadow-[0_4px_20px_-4px_rgba(5,150,105,0.25),0_0_0_4px_rgba(5,150,105,0.08)] focus:ring-0 hover:border-border dark:hover:border-white/[0.18] backdrop-blur-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Active filters display */}
+                        {isSearching && (
+                            <div className="mt-4 flex flex-wrap items-center gap-2 animate-fade-in-up">
+                                <span className="text-xs font-bold text-ink-muted/70 dark:text-white/60 uppercase tracking-wider">
+                                    Active Filters:
                                 </span>
-                            ) : (
-                                <>
-                                    <span className="text-ink font-semibold">
-                                        {data?.totalElements ?? 0}
-                                    </span>{" "}
-                                    {data?.totalElements === 1 ? "property" : "properties"} found
-                                    {isSearching && (
-                                        <span className="text-ink-muted/60">
-                                            {" "}for {searchDescription}
-                                        </span>
-                                    )}
-                                </>
-                            )}
-                        </p>
-
-                        <div className="flex items-center gap-3">
-                            {isSearching && (
+                                {debouncedKeyword && (
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
+                                        Search: "{debouncedKeyword}"
+                                    </span>
+                                )}
+                                {debouncedLocation && (
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
+                                        <MapPin className="w-3 h-3" strokeWidth={2.5} />
+                                        {debouncedLocation}
+                                    </span>
+                                )}
                                 <button
                                     onClick={clearSearch}
-                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors shrink-0"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ink/[0.06] dark:bg-white/[0.08] hover:bg-ink/[0.1] dark:hover:bg-white/[0.12] border border-ink/[0.08] dark:border-white/[0.1] text-xs font-bold text-ink-muted hover:text-ink dark:text-white/70 dark:hover:text-white transition-all duration-200"
                                 >
-                                    <X className="w-3.5 h-3.5" />
-                                    Clear
+                                    <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                    Clear All
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="container mx-auto px-6 py-12 max-w-5xl space-y-8">
+            {/* ═══════════ STICKY RESULTS TOOLBAR ═══════════ */}
+            <div className="sticky top-0 z-20 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-2xl border-b-2 border-border/40 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)]">
+                <div className="container mx-auto px-6 max-w-6xl">
+                    <div className="flex items-center justify-between gap-4 py-4">
+                        <div className="flex items-center gap-3" aria-live="polite">
+                            {isLoading ? (
+                                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800">
+                                    <div className="w-4 h-4 border-3 border-brand-400 border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-sm font-bold text-brand-900 dark:text-brand-300">
+                                        Searching…
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="inline-flex items-baseline gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-brand-50 to-emerald-50/50 dark:from-brand-900/30 dark:to-emerald-900/20 border border-brand-200/60 dark:border-brand-700/60 shadow-sm">
+                                    <span className="text-2xl font-black text-ink dark:text-white tabular-nums">
+                                        {data?.totalElements ?? 0}
+                                    </span>
+                                    <span className="text-sm font-bold text-ink-muted dark:text-white/70">
+                                        {data?.totalElements === 1 ? "property" : "properties"}
+                                    </span>
+                                </div>
+                            )}
+                            {isSearching && !isLoading && (
+                                <p className="text-sm font-medium text-ink-muted dark:text-white/60">
+                                    matching {searchDescription}
+                                </p>
+                            )}
+                        </div>
+
+                        {isSearching && (
+                            <button
+                                onClick={clearSearch}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border/60 dark:border-white/[0.12] bg-white dark:bg-white/[0.06] hover:border-brand-300 dark:hover:border-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-sm font-bold text-ink-muted hover:text-brand dark:text-white/70 dark:hover:text-brand-400 transition-all duration-200 shadow-sm hover:shadow-md shrink-0"
+                            >
+                                <X className="w-4 h-4" strokeWidth={2.5} />
+                                <span className="hidden sm:inline">Clear Search</span>
+                                <span className="sm:hidden">Clear</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* ═══════════ CONTENT SECTION ═══════════ */}
+            <div className="container mx-auto px-6 py-16 max-w-6xl space-y-8">
                 {isLoading && hasLoadedOnce ? (
                     <SkeletonGrid />
                 ) : !hasResults ? (
@@ -261,18 +322,24 @@ function ListingsPageContent() {
 
 function SkeletonGrid() {
     return (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-surface rounded-2xl border border-border overflow-hidden">
-                    <div className="skeleton aspect-[4/3] w-full rounded-none" />
-                    <div className="p-5 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="skeleton h-5 w-3/4" />
-                            <div className="skeleton h-5 w-16 rounded-full shrink-0" />
+                <div
+                    key={i}
+                    className="bg-gradient-to-br from-white to-brand-50/10 dark:from-surface-dark dark:to-brand-900/5 rounded-3xl border-2 border-border/50 dark:border-border-dark/50 overflow-hidden animate-fade-in-up shadow-sm"
+                    style={{ animationDelay: `${i * 100}ms` }}
+                >
+                    <div className="skeleton aspect-[16/11] w-full rounded-none" />
+                    <div className="p-6 space-y-4">
+                        <div className="space-y-2">
+                            <div className="skeleton h-6 w-3/4 rounded-lg" />
+                            <div className="skeleton h-4 w-1/2 rounded-lg" />
                         </div>
-                        <div className="skeleton h-4 w-1/2" />
-                        <div className="skeleton h-3 w-full" />
-                        <div className="skeleton h-3 w-2/3" />
+                        <div className="skeleton h-4 w-full rounded-lg" />
+                        <div className="skeleton h-4 w-5/6 rounded-lg" />
+                        <div className="pt-3 border-t border-border/40">
+                            <div className="skeleton h-5 w-32 rounded-lg" />
+                        </div>
                     </div>
                 </div>
             ))}

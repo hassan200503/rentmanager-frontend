@@ -29,20 +29,30 @@ import { auditRouteDecision, auditUnclassified } from "@/lib/auth/audit";
  * JWT org_id verification against X-Tenant-Id on every tenant-scoped call.
  * AMBIGUOUS claims never grant access (fail closed).
  */
-export default clerkMiddleware(async (auth, req) => {
-    const { userId, sessionClaims, redirectToSignIn, getToken } = await auth();
+export default clerkMiddleware(
+    async (auth, req) => {
+        const { userId, sessionClaims, redirectToSignIn, getToken } = await auth();
 
-    // Parse/validate claims up front. Structural failures fail closed to
-    // sign-in rather than silently proceeding.
-    let claims: RouteClaims;
-    try {
-        claims = extractRouteClaims(sessionClaims ?? null);
-    } catch {
-        console.warn(
-            JSON.stringify({ event: "auth.invalid_claims", pathname: req.nextUrl.pathname })
-        );
-        return redirectToSignIn();
-    }
+        // Parse/validate claims up front. Structural failures are EXPECTED
+        // for unauthenticated visitors (there is no session token to parse).
+        // They must never hijack public pages: collapse to the
+        // unauthenticated shape and let the policy engine decide — public
+        // paths render, protected paths send the user to the real sign-in
+        // page (see signInUrl below).
+        let claims: RouteClaims;
+        try {
+            claims = extractRouteClaims(sessionClaims ?? null);
+        } catch {
+            claims = {
+                userId: null,
+                tenantId: undefined,
+                userType: undefined,
+                platformRole: undefined,
+            };
+            console.warn(
+                JSON.stringify({ event: "auth.invalid_claims", pathname: req.nextUrl.pathname })
+            );
+        }
 
     const pathname = req.nextUrl.pathname;
     const needsRoleBoost =
