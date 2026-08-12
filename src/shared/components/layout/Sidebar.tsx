@@ -26,7 +26,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
-import { BrandBadge } from "@/shared/components/brand";
+import { PlatformBrand, PlatformLogoMark } from "@/shared/components/brand";
 import { useUnviewedRequestsCountQuery } from "@/features/maintenance/hooks/use-maintenance-query";
 
 interface NavItem {
@@ -174,10 +174,10 @@ function SidebarBody({
           collapsed ? "justify-center px-2" : "gap-3 px-4"
         }`}
       >
-        {!collapsed && <BrandBadge size="md" />}
+        {!collapsed && <PlatformBrand size="md" />}
         {collapsed && (
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30">
-            <BrandBadge size="sm" />
+            <PlatformLogoMark size={16} />
           </div>
         )}
       </div>

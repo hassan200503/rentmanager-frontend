@@ -21,7 +21,7 @@ import {
     ChevronRight,
     Menu as MenuIcon,
 } from "lucide-react";
-import { BrandBadge } from "@/shared/components/brand";
+import { PlatformBrand, PlatformLogoMark } from "@/shared/components/brand";
 import { useTenantDashboardQuery, useTenantLeaseQuery, useUnreadAnnouncementCountQuery } from "../hooks/use-tenant-portal-queries";
 import { isPremiumLandlord } from "../api/tenant-portal-api";
 
@@ -213,14 +213,14 @@ function TenantSidebarBody({
             >
                 {!collapsed ? (
                     <span className="inline-flex items-center gap-2.5">
-                        <BrandBadge size="md" />
+                        <PlatformBrand size="md" />
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-brand dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-700">
                             Tenant
                         </span>
                     </span>
                 ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30">
-                        <BrandBadge size="sm" />
+                        <PlatformLogoMark size={16} />
                     </div>
                 )}
             </div>

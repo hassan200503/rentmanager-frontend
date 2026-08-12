@@ -12,6 +12,8 @@ import {
     Send,
     Wallet,
     Headset,
+    Palette,
+    CheckCircle2,
 } from "lucide-react";
 import { AdminErrorBoundary } from "@/features/admin/components/AdminErrorBoundary";
 import {
@@ -21,10 +23,21 @@ import {
 import { useAdminSettingsQuery } from "@/features/admin/hooks/use-admin-queries";
 import { useUpdatePlatformSettingsMutation } from "@/features/admin/hooks/use-admin-mutations";
 import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
+import { BrandingCard } from "@/features/admin/components/branding-card";
 import type {
     PlatformSettingsResponse,
     UpdatePlatformSettingsRequest,
 } from "@/features/admin/types/admin-types";
+
+type SettingsTab = "branding" | "billing" | "disbursements" | "revenue" | "support";
+
+const TABS: { id: SettingsTab; label: string; icon: ReactNode }[] = [
+    { id: "branding", label: "Branding & appearance", icon: <Palette className="h-4 w-4" strokeWidth={2} /> },
+    { id: "billing", label: "Billing", icon: <Clock className="h-4 w-4" strokeWidth={2} /> },
+    { id: "disbursements", label: "Disbursements", icon: <Send className="h-4 w-4" strokeWidth={2} /> },
+    { id: "revenue", label: "Revenue", icon: <Wallet className="h-4 w-4" strokeWidth={2} /> },
+    { id: "support", label: "Support", icon: <Headset className="h-4 w-4" strokeWidth={2} /> },
+];
 
 function Field({
     label,
@@ -62,9 +75,197 @@ function toForm(initial: PlatformSettingsResponse): UpdatePlatformSettingsReques
     };
 }
 
+function SectionCard({
+    icon,
+    title,
+    hint,
+    children,
+}: {
+    icon: ReactNode;
+    title: string;
+    hint?: string;
+    children: ReactNode;
+}) {
+    return (
+        <div className="card p-5 space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+                {icon}
+                <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">{title}</h3>
+                {hint && <span className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark">{hint}</span>}
+            </div>
+            {children}
+        </div>
+    );
+}
+
+interface FormPanelProps {
+    form: UpdatePlatformSettingsRequest;
+    set: (patch: Partial<UpdatePlatformSettingsRequest>) => void;
+    disabled: boolean;
+}
+
+function BillingPanel({ form, set, disabled }: FormPanelProps) {
+    return (
+        <SectionCard
+            icon={<Clock className="h-4 w-4 text-brand-600 dark:text-brand-400" strokeWidth={2} />}
+            title="Billing & subscription"
+        >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field
+                    label="Premium grace period (days)"
+                    hint="Days a landlord keeps premium benefits after the paid period ends, before reverting to per-payment commission."
+                >
+                    <input
+                        type="number"
+                        min={1}
+                        max={60}
+                        disabled={disabled}
+                        value={form.premiumGraceDays}
+                        onChange={(e) => set({ premiumGraceDays: Number(e.target.value) })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field
+                    label="Subscription payment expiry (minutes)"
+                    hint="How long a pending Pay-Now M-Pesa request stays valid before it is expired and, for renewals, the grace window opens."
+                >
+                    <input
+                        type="number"
+                        min={5}
+                        max={1440}
+                        disabled={disabled}
+                        value={form.subscriptionPaymentExpiryMinutes}
+                        onChange={(e) => set({ subscriptionPaymentExpiryMinutes: Number(e.target.value) })}
+                        className={inputCls}
+                    />
+                </Field>
+            </div>
+        </SectionCard>
+    );
+}
+
+function DisbursementsPanel({ form, set, disabled }: FormPanelProps) {
+    return (
+        <SectionCard
+            icon={<Send className="h-4 w-4 text-blue-500 dark:text-blue-400" strokeWidth={2} />}
+            title="Disbursement retries"
+        >
+            <Field
+                label="Maximum retry attempts"
+                hint="How many times a failed payout is auto-retried before it is flagged for manual attention."
+            >
+                <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    disabled={disabled}
+                    value={form.disbursementMaxRetryAttempts}
+                    onChange={(e) => set({ disbursementMaxRetryAttempts: Number(e.target.value) })}
+                    className={inputCls + " sm:max-w-xs"}
+                />
+            </Field>
+        </SectionCard>
+    );
+}
+
+function RevenuePanel({ form, set, disabled }: FormPanelProps) {
+    return (
+        <SectionCard
+            icon={<Wallet className="h-4 w-4 text-emerald-500 dark:text-emerald-400" strokeWidth={2} />}
+            title="Platform revenue collection"
+            hint="M-Pesa shortcodes used to collect the platform commission revenue share."
+        >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Business shortcode" hint="STK push shortcode (e.g. 174379).">
+                    <input
+                        type="text"
+                        maxLength={20}
+                        disabled={disabled}
+                        value={form.revenueBusinessShortcode ?? ""}
+                        onChange={(e) => set({ revenueBusinessShortcode: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field label="Paybill number">
+                    <input
+                        type="text"
+                        maxLength={20}
+                        disabled={disabled}
+                        value={form.revenuePaybill ?? ""}
+                        onChange={(e) => set({ revenuePaybill: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field label="Till number">
+                    <input
+                        type="text"
+                        maxLength={20}
+                        disabled={disabled}
+                        value={form.revenueTill ?? ""}
+                        onChange={(e) => set({ revenueTill: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field label="B2C shortcode" hint="Used when disbursing payouts to landlords.">
+                    <input
+                        type="text"
+                        maxLength={20}
+                        disabled={disabled}
+                        value={form.revenueB2CShortcode ?? ""}
+                        onChange={(e) => set({ revenueB2CShortcode: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field label="M-Pesa phone (revenue account)" hint="e.g. +254712345678">
+                    <input
+                        type="tel"
+                        disabled={disabled}
+                        value={form.revenueMpesaPhone ?? ""}
+                        onChange={(e) => set({ revenueMpesaPhone: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+            </div>
+        </SectionCard>
+    );
+}
+
+function SupportPanel({ form, set, disabled }: FormPanelProps) {
+    return (
+        <SectionCard
+            icon={<Headset className="h-4 w-4 text-violet-500 dark:text-violet-400" strokeWidth={2} />}
+            title="Support contact"
+            hint="Shown on the platform housing-keeping pages."
+        >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Support email">
+                    <input
+                        type="email"
+                        maxLength={150}
+                        disabled={disabled}
+                        value={form.supportEmail ?? ""}
+                        onChange={(e) => set({ supportEmail: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field label="Support phone">
+                    <input
+                        type="tel"
+                        disabled={disabled}
+                        value={form.supportPhone ?? ""}
+                        onChange={(e) => set({ supportPhone: e.target.value })}
+                        className={inputCls}
+                    />
+                </Field>
+            </div>
+        </SectionCard>
+    );
+}
+
 function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
     const { isPlatformOwner } = usePlatformRole();
     const updateSettings = useUpdatePlatformSettingsMutation();
+    const [tab, setTab] = useState<SettingsTab>("branding");
     const [form, setForm] = useState<UpdatePlatformSettingsRequest>(() => toForm(initial));
     const [saved, setSaved] = useState(false);
 
@@ -83,6 +284,8 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
             },
         });
     };
+
+    const panelProps: FormPanelProps = { form, set, disabled: !isPlatformOwner };
 
     return (
         <div className="space-y-6">
@@ -116,169 +319,43 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
                 <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-xs text-info-dark dark:text-info">
                     <Lock className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={2} />
                     <p>
-                        You have read access to platform settings. Only the platform owner can modify commission,
-                        grace periods, disbursement retries or revenue collection details.
+                        You have read access to platform settings. Only the platform owner can modify
+                        branding, commission, grace periods, disbursement retries or revenue collection details.
                     </p>
                 </div>
             )}
 
-            {/* Billing */}
-            <div className="card p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-brand-600 dark:text-brand-400" strokeWidth={2} />
-                    <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Billing & subscription</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field
-                        label="Premium grace period (days)"
-                        hint="Days a landlord keeps premium benefits after the paid period ends, before reverting to per-payment commission."
+            {/* Tabs */}
+            <div className="flex gap-1 overflow-x-auto rounded-xl border border-border dark:border-border-dark bg-white dark:bg-surface-dark p-1.5">
+                {TABS.map((t) => (
+                    <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setTab(t.id)}
+                        className={`flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
+                            tab === t.id
+                                ? "bg-brand/10 text-brand-700 dark:text-brand-300 shadow-sm ring-1 ring-brand/20"
+                                : "text-fg-muted dark:text-fg-muted-dark hover:bg-border-subtle dark:hover:bg-border-subtle-dark"
+                        }`}
+                        aria-selected={tab === t.id}
+                        role="tab"
                     >
-                        <input
-                            type="number"
-                            min={1}
-                            max={60}
-                            disabled={!isPlatformOwner}
-                            value={form.premiumGraceDays}
-                            onChange={(e) => set({ premiumGraceDays: Number(e.target.value) })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field
-                        label="Subscription payment expiry (minutes)"
-                        hint="How long a pending Pay-Now M-Pesa request stays valid before it is expired and, for renewals, the grace window opens."
-                    >
-                        <input
-                            type="number"
-                            min={5}
-                            max={1440}
-                            disabled={!isPlatformOwner}
-                            value={form.subscriptionPaymentExpiryMinutes}
-                            onChange={(e) => set({ subscriptionPaymentExpiryMinutes: Number(e.target.value) })}
-                            className={inputCls}
-                        />
-                    </Field>
-                </div>
+                        {t.icon}
+                        {t.label}
+                    </button>
+                ))}
             </div>
 
-            {/* Disbursements */}
-            <div className="card p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                    <Send className="h-4 w-4 text-blue-500 dark:text-blue-400" strokeWidth={2} />
-                    <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Disbursement retries</h3>
-                </div>
-                <Field
-                    label="Maximum retry attempts"
-                    hint="How many times a failed payout is auto-retried before it is flagged for manual attention."
-                >
-                    <input
-                        type="number"
-                        min={0}
-                        max={10}
-                        disabled={!isPlatformOwner}
-                        value={form.disbursementMaxRetryAttempts}
-                        onChange={(e) => set({ disbursementMaxRetryAttempts: Number(e.target.value) })}
-                        className={inputCls + " sm:max-w-xs"}
-                    />
-                </Field>
-            </div>
+            {/* Panels */}
+            {tab === "branding" && <BrandingCard disabled={!isPlatformOwner} />}
+            {tab === "billing" && <BillingPanel {...panelProps} />}
+            {tab === "disbursements" && <DisbursementsPanel {...panelProps} />}
+            {tab === "revenue" && <RevenuePanel {...panelProps} />}
+            {tab === "support" && <SupportPanel {...panelProps} />}
 
-            {/* Revenue */}
-            <div className="card p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-emerald-500 dark:text-emerald-400" strokeWidth={2} />
-                    <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Platform revenue collection</h3>
-                    <span className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
-                        M-Pesa shortcodes used to collect the platform commission revenue share.
-                    </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Business shortcode" hint="STK push shortcode (e.g. 174379).">
-                        <input
-                            type="text"
-                            maxLength={20}
-                            disabled={!isPlatformOwner}
-                            value={form.revenueBusinessShortcode ?? ""}
-                            onChange={(e) => set({ revenueBusinessShortcode: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field label="Paybill number">
-                        <input
-                            type="text"
-                            maxLength={20}
-                            disabled={!isPlatformOwner}
-                            value={form.revenuePaybill ?? ""}
-                            onChange={(e) => set({ revenuePaybill: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field label="Till number">
-                        <input
-                            type="text"
-                            maxLength={20}
-                            disabled={!isPlatformOwner}
-                            value={form.revenueTill ?? ""}
-                            onChange={(e) => set({ revenueTill: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field label="B2C shortcode" hint="Used when disbursing payouts to landlords.">
-                        <input
-                            type="text"
-                            maxLength={20}
-                            disabled={!isPlatformOwner}
-                            value={form.revenueB2CShortcode ?? ""}
-                            onChange={(e) => set({ revenueB2CShortcode: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field label="M-Pesa phone (revenue account)" hint="e.g. +254712345678">
-                        <input
-                            type="tel"
-                            disabled={!isPlatformOwner}
-                            value={form.revenueMpesaPhone ?? ""}
-                            onChange={(e) => set({ revenueMpesaPhone: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                </div>
-            </div>
-
-            {/* Support */}
-            <div className="card p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                    <Headset className="h-4 w-4 text-violet-500 dark:text-violet-400" strokeWidth={2} />
-                    <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Support contact</h3>
-                    <span className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
-                        Shown on the platform housing-keeping pages.
-                    </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Support email">
-                        <input
-                            type="email"
-                            maxLength={150}
-                            disabled={!isPlatformOwner}
-                            value={form.supportEmail ?? ""}
-                            onChange={(e) => set({ supportEmail: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                    <Field label="Support phone">
-                        <input
-                            type="tel"
-                            disabled={!isPlatformOwner}
-                            value={form.supportPhone ?? ""}
-                            onChange={(e) => set({ supportPhone: e.target.value })}
-                            className={inputCls}
-                        />
-                    </Field>
-                </div>
-            </div>
-
-            {/* Actions */}
-            {isPlatformOwner ? (
-                <div className="flex items-center gap-3">
+            {/* Sticky save bar (form tabs only) */}
+            {isPlatformOwner && tab !== "branding" && (
+                <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-border dark:border-border-dark bg-white/90 px-5 py-3.5 shadow-xl shadow-slate-900/5 backdrop-blur dark:bg-surface-dark/90">
                     <button
                         onClick={onSave}
                         disabled={updateSettings.isPending}
@@ -292,8 +369,9 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
                         Save & apply platform-wide
                     </button>
                     {saved && (
-                        <span className="text-sm font-medium text-success-dark dark:text-success">
-                            Settings saved — schedulers pick these up on the next pass.
+                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-success-dark dark:text-success">
+                            <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
+                            Saved — schedulers pick these up on the next pass.
                         </span>
                     )}
                     {updateSettings.isError && (
@@ -302,7 +380,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
                         </span>
                     )}
                 </div>
-            ) : null}
+            )}
         </div>
     );
 }
@@ -341,7 +419,7 @@ export default function AdminSettingsPage() {
                 <div className="max-w-4xl mx-auto p-6 space-y-6">
                     <PageHeader
                         title="Platform settings"
-                        subtitle="Owner-configurable platform policy — grace, expiry, retries, revenue collection and support"
+                        subtitle="Owner-configurable platform policy — branding, grace, expiry, retries, revenue collection and support"
                         icon={Settings}
                         iconTone="from-rose-500 to-rose-600"
                     />

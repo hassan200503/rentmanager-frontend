@@ -90,17 +90,27 @@ export function HeroSection({
           <span>Already have an account?</span>
           <a
             href={SIGNIN_LANDLORD_HREF}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 min-h-10 font-medium text-white/75 transition-all hover:border-jade-500/40 hover:text-jade-300"
+            className="group inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 min-h-10 font-medium text-white/75 transition-all hover:border-jade-500/40 hover:text-jade-300"
           >
-            <Building2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-white/[0.12] to-white/[0.03] ring-1 ring-inset ring-white/[0.12] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40"
+            >
+              <Building2 className="h-3.5 w-3.5 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+            </span>
             Sign in as a landlord
           </a>
           <span className="opacity-50" aria-hidden="true">·</span>
           <a
             href={SIGNIN_RENTER_HREF}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 min-h-10 font-medium text-white/75 transition-all hover:border-jade-500/40 hover:text-jade-300"
+            className="group inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 min-h-10 font-medium text-white/75 transition-all hover:border-jade-500/40 hover:text-jade-300"
           >
-            <Home className="h-3.5 w-3.5" strokeWidth={1.75} />
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-white/[0.12] to-white/[0.03] ring-1 ring-inset ring-white/[0.12] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40"
+            >
+              <Home className="h-3.5 w-3.5 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+            </span>
             Sign in as a tenant or renter
           </a>
         </div>

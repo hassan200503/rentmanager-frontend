@@ -26,7 +26,7 @@ export default function ClerkAuthProvider({ children }: { children: ReactNode })
                 },
                 elements: {
                     logoImage: {
-                        backgroundImage: "url('/logo.svg')",
+                        backgroundImage: "url('/favicon.svg')",
                         backgroundSize: "contain",
                         backgroundRepeat: "no-repeat",
                         backgroundPosition: "center",

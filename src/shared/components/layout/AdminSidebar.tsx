@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import {
     LayoutDashboard,
     Building2,
@@ -11,18 +12,21 @@ import {
     Wallet,
     Settings,
     Star,
-    ArrowLeftRight,
     ShieldCheck,
+    ChevronsLeft,
+    ChevronsRight,
+    Sun,
+    Moon,
     type LucideIcon,
 } from "lucide-react";
-import { BrandBadge } from "@/shared/components/brand";
+import { useTheme } from "next-themes";
+import { PlatformBrand, PlatformLogoMark } from "@/shared/components/brand";
 
 interface AdminNavItem {
     label: string;
     href: string;
     icon: LucideIcon;
     disabled?: boolean;
-    active?: boolean;
 }
 
 const PRIMARY_NAV: AdminNavItem[] = [
@@ -42,101 +46,226 @@ const WORKSPACE_NAV: AdminNavItem[] = [
 function AdminNavLink({
     item,
     isActive,
+    collapsed,
+    onNavigate,
 }: {
     item: AdminNavItem;
     isActive: boolean;
+    collapsed: boolean;
+    onNavigate?: () => void;
 }) {
     const Icon = item.icon;
+    const base =
+        "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150";
+    const title = item.label;
+
     if (item.disabled) {
         return (
             <div
-                className="group flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-400/60"
+                className={`${base} cursor-not-allowed text-sidebar-fg-muted/60 ${collapsed ? "justify-center px-0" : ""}`}
                 aria-disabled="true"
+                title={collapsed ? title : undefined}
             >
                 <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-                <span className="flex-1">{item.label}</span>
-                <span className="rounded-full border border-slate-700/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-                    Soon
-                </span>
+                {!collapsed && (
+                    <>
+                        <span className="flex-1 truncate">{item.label}</span>
+                        <span className="rounded-full border border-border dark:border-border-dark px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-sidebar-fg-muted/70">
+                            Soon
+                        </span>
+                    </>
+                )}
             </div>
         );
     }
+
     return (
         <Link
             href={item.href}
-            className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            title={collapsed ? title : undefined}
+            onClick={onNavigate}
+            aria-current={isActive ? "page" : undefined}
+            className={`${base} ${
                 isActive
-                    ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-inset ring-emerald-500/20"
-                    : "text-slate-300 hover:bg-white/5 hover:text-white"
-            }`}
+                    ? "console-nav-active"
+                    : "text-sidebar-fg-muted hover:bg-sidebar-muted hover:text-sidebar-fg"
+            } ${collapsed ? "justify-center px-0" : ""}`}
         >
-            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-            {item.label}
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={isActive ? 2.1 : 1.75} />
+            {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+            {!collapsed && isActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-brand animate-scale-in" />
+            )}
         </Link>
     );
 }
 
-function AdminSidebar() {
+function NavGroup({
+    label,
+    items,
+    pathname,
+    collapsed,
+    onNavigate,
+}: {
+    label: string;
+    items: AdminNavItem[];
+    pathname: string;
+    collapsed: boolean;
+    onNavigate?: () => void;
+}) {
+    return (
+        <div>
+            {!collapsed && (
+                <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-fg-muted">
+                    {label}
+                </p>
+            )}
+            <div className="space-y-0.5">
+                {items.map((item) => (
+                    <AdminNavLink
+                        key={item.href}
+                        item={item}
+                        collapsed={collapsed}
+                        onNavigate={onNavigate}
+                        isActive={
+                            item.href === "/admin"
+                                ? pathname === "/admin"
+                                : pathname.startsWith(item.href)
+                        }
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function AdminSidebar({
+    collapsed,
+    onToggleCollapse,
+    onNavigate,
+}: {
+    collapsed: boolean;
+    onToggleCollapse?: () => void;
+    onNavigate?: () => void;
+}) {
     const pathname = usePathname();
+    const { theme, setTheme } = useTheme();
+    const hasMounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
     return (
-        <aside className="flex h-full w-64 shrink-0 flex-col bg-slate-900 text-slate-200">
-            {/* Brand */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/20">
-                    <ShieldCheck className="h-4 w-4 text-white" strokeWidth={2} />
+        <aside
+            className={`console-sidebar relative flex h-full flex-col border-r border-sidebar-border transition-[width] duration-200 ease-[var(--ease-settle)] ${
+                collapsed
+                    ? "w-[var(--console-sidebar-width-collapsed)]"
+                    : "w-[var(--console-sidebar-width)]"
+            }`}
+        >
+            {/* Brand lockup */}
+            <div
+                className={`flex h-16 shrink-0 items-center border-b border-sidebar-border ${
+                    collapsed ? "justify-center" : "gap-3 px-5"
+                }`}
+            >
+                <div className="relative shrink-0">
+                    <div className="logo-tile h-9 w-9">
+                        <PlatformLogoMark size={20} />
+                    </div>
+                    <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full border-2 border-white dark:border-sidebar" />
+                    </span>
                 </div>
-                <div className="min-w-0">
-                    <BrandBadge size="sm" />
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-300/90">
-                        Platform Console
-                    </p>
-                </div>
+                {!collapsed && (
+                    <div className="min-w-0">
+                        <PlatformBrand size="sm" />
+                        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-brand-600 dark:text-emerald-300">
+                            Platform Console
+                        </p>
+                    </div>
+                )}
             </div>
 
-            {/* Nav */}
-            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4 custom-scrollbar">
-                <div>
-                    <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                        Console
-                    </p>
-                    <div className="space-y-0.5">
-                        {PRIMARY_NAV.map((item) => (
-                            <AdminNavLink
-                                key={item.href}
-                                item={item}
-                                isActive={pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href))}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                <div>
-                    <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                        Management
-                    </p>
-                    <div className="space-y-0.5">
-                        {WORKSPACE_NAV.map((item) => (
-                            <AdminNavLink
-                                key={item.href}
-                                item={item}
-                                isActive={pathname.startsWith(item.href)}
-                            />
-                        ))}
-                    </div>
-                </div>
+            {/* Navigation */}
+            <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4 custom-scrollbar">
+                <NavGroup
+                    label="Console"
+                    items={PRIMARY_NAV}
+                    pathname={pathname}
+                    collapsed={collapsed}
+                    onNavigate={onNavigate}
+                />
+                <NavGroup
+                    label="Management"
+                    items={WORKSPACE_NAV}
+                    pathname={pathname}
+                    collapsed={collapsed}
+                    onNavigate={onNavigate}
+                />
             </nav>
 
-            {/* Footer */}
-            <div className="border-t border-white/10 px-3 py-3 space-y-1">
-                <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
-                >
-                    <ArrowLeftRight className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-                    Landlord workspace
-                </Link>
+            {/* Footer actions */}
+            <div className="shrink-0 space-y-1 border-t border-sidebar-border px-3 py-3">
+                <div className={`flex ${collapsed ? "flex-col" : "items-center"} gap-1`}>
+                    {/* Theme toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        aria-label="Toggle theme"
+                        title={collapsed ? "Toggle theme" : undefined}
+                        className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-sidebar-fg-muted transition-colors hover:bg-sidebar-muted hover:text-sidebar-fg ${
+                            collapsed ? "justify-center px-0" : "flex-1 justify-center"
+                        }`}
+                    >
+                        {hasMounted && theme === "dark" ? (
+                            <Sun className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        ) : (
+                            <Moon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        )}
+                        {!collapsed && <span>Theme</span>}
+                    </button>
+
+                    {/* Collapse toggle (expanded state) */}
+                    {!collapsed && onToggleCollapse && (
+                        <button
+                            type="button"
+                            onClick={onToggleCollapse}
+                            aria-label="Collapse sidebar"
+                            title="Collapse sidebar"
+                            className="flex h-9 flex-1 items-center justify-center gap-2.5 rounded-lg px-3 text-sm font-medium text-sidebar-fg-muted transition-colors hover:bg-sidebar-muted hover:text-sidebar-fg"
+                        >
+                            <ChevronsLeft className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                            <span>Collapse</span>
+                        </button>
+                    )}
+                </div>
+
+                {/* Identity chip */}
+                {!collapsed && (
+                    <div className="flex items-center gap-2 rounded-lg bg-sidebar-muted px-3 py-2">
+                        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-brand" strokeWidth={2} />
+                        <span className="text-[11px] font-medium text-sidebar-fg-muted">
+                            Platform-wide scope
+                        </span>
+                    </div>
+                )}
             </div>
+
+            {/* Expand tab — pinned to the rail edge while collapsed */}
+            {collapsed && onToggleCollapse && (
+                <button
+                    type="button"
+                    onClick={onToggleCollapse}
+                    aria-label="Expand sidebar"
+                    title="Expand sidebar"
+                    className="absolute -right-3 bottom-16 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-fg-muted shadow-lg transition-colors hover:border-brand/40 hover:text-brand"
+                >
+                    <ChevronsRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </button>
+            )}
         </aside>
     );
 }

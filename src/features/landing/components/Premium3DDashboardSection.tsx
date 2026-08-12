@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -32,8 +32,9 @@ import {
   Sparkles,
   ShieldCheck,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedGradient } from "@/shared/components/premium-3d";
+import { PlatformLogoMark } from "@/shared/components/brand";
 import { SectionHeader } from "./SectionHeader";
 import { Button } from "@/shared/components/ui/Button";
 import { useInView } from "@/features/landing/hooks/use-in-view";
@@ -43,12 +44,21 @@ const AUTOPLAY_MS = 5000;
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
+type DemoScreenProps = { reduced: boolean; scrollY: number };
+type DemoScreen = ComponentType<DemoScreenProps>;
+
 const DEMO_STEPS: Array<{
   tag: string;
   title: string;
   caption: string;
   icon: IconType;
 }> = [
+  {
+    tag: "RentManager · Platform",
+    title: "The whole system, one app",
+    caption: "The real product splash — your entire rental business loads here.",
+    icon: Sparkles,
+  },
   {
     tag: "Landlord · Portfolio",
     title: "Overview at a glance",
@@ -140,9 +150,43 @@ function KpiTile({ label, value, sub, tone = "text-slate-900" }: { label: string
   );
 }
 
-/* ── Screen 1: Landlord portfolio overview ─────────────────────────── */
+/* ── Screen 1 (boot): the real product splash ──────────────────────── */
 
-function LandlordOverviewScreen({ reduced }: { reduced: boolean }) {
+function BrandIntroScreen({ reduced }: DemoScreenProps) {
+  return (
+    <div className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-white">
+      {/* Ambient boot backdrop — matches the real app's splash feel */}
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-slate-50" aria-hidden="true" />
+      <div className="demo-boot-glow absolute left-1/2 top-[38%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/15 blur-3xl" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-1/2 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_62%)]" aria-hidden="true" />
+
+      <div className="demo-boot-mark relative flex flex-col items-center px-8 text-center">
+        {/* App-icon tile renders the owner-configured system logo — the same
+            mark the product ships today, not a stale placeholder */}
+        <div className="flex h-24 w-24 items-center justify-center rounded-[1.75rem] bg-white shadow-xl shadow-emerald-900/10 ring-1 ring-slate-900/5">
+          <PlatformLogoMark size={58} />
+        </div>
+        <p className="mt-5 font-display text-[26px] font-semibold tracking-tight text-slate-900">RentManager</p>
+        <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-slate-400">Property management · Kenya</p>
+      </div>
+
+      {/* Splash loading bar */}
+      <div className="relative mt-10 w-40">
+        <div className="h-[3px] w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="demo-boot-fill h-full w-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400"
+            style={reduced ? { animation: "none", transform: "scaleX(1)" } : undefined}
+          />
+        </div>
+        <p className="mt-3 text-center text-[8px] font-medium text-slate-400">Loading your workspace…</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Screen 2: Landlord portfolio overview ─────────────────────────── */
+
+function LandlordOverviewScreen({ reduced, scrollY }: DemoScreenProps) {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="bg-white border-b border-slate-200 px-3 pb-2.5 pt-1 shadow-sm">
@@ -169,7 +213,12 @@ function LandlordOverviewScreen({ reduced }: { reduced: boolean }) {
       </div>
 
       <div className="relative flex-1 overflow-hidden px-3 pt-3">
-        <div className={`demo-screen-autoscroll pb-6`} style={{ "--demo-scroll-y": reduced ? "0%" : "-30%" } as CSSProperties}>
+        <motion.div
+          className="pb-6"
+          initial={false}
+          animate={reduced ? { y: 0 } : { y: [0, 0, -scrollY, -scrollY] }}
+          transition={{ duration: 5, times: [0, 0.09, 0.86, 1], ease: ["linear", "easeInOut", "linear"] }}
+        >
         <div className="rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-3.5 text-white shadow-lg shadow-emerald-900/20">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold">Portfolio Overview</p>
@@ -268,7 +317,7 @@ function LandlordOverviewScreen({ reduced }: { reduced: boolean }) {
           </div>
         </div>
 
-        </div>
+        </motion.div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-50 to-transparent" aria-hidden="true" />
       </div>
@@ -287,7 +336,7 @@ function LandlordOverviewScreen({ reduced }: { reduced: boolean }) {
   );
 }
 
-/* ── Screen 2: Landlord properties + quick actions ─────────────────── */
+/* ── Screen 3: Landlord properties + quick actions ─────────────────── */
 
 const PROPERTY_ROWS = [
   { initials: "GR", name: "Green land Apartments", type: "hostel", status: "active", occupancy: "partially occupied", tone: "emerald" as const },
@@ -295,7 +344,7 @@ const PROPERTY_ROWS = [
   { initials: "WH", name: "Whitney's & Hassan", type: "apartment", status: "active", occupancy: "vacant", tone: "amber" as const },
 ];
 
-function LandlordPropertiesScreen({ reduced }: { reduced: boolean }) {
+function LandlordPropertiesScreen({ reduced, scrollY }: DemoScreenProps) {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="bg-white border-b border-slate-200 px-3 pb-2.5 pt-1 shadow-sm">
@@ -317,7 +366,12 @@ function LandlordPropertiesScreen({ reduced }: { reduced: boolean }) {
       </div>
 
       <div className="relative flex-1 overflow-hidden px-3 pt-3">
-        <div className={`demo-screen-autoscroll pb-6`} style={{ "--demo-scroll-y": reduced ? "0%" : "-30%" } as CSSProperties}>
+        <motion.div
+          className="pb-6"
+          initial={false}
+          animate={reduced ? { y: 0 } : { y: [0, 0, -scrollY, -scrollY] }}
+          transition={{ duration: 5, times: [0, 0.09, 0.86, 1], ease: ["linear", "easeInOut", "linear"] }}
+        >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-900">Properties</p>
@@ -397,7 +451,7 @@ function LandlordPropertiesScreen({ reduced }: { reduced: boolean }) {
           </div>
         </div>
 
-        </div>
+        </motion.div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-50 to-transparent" aria-hidden="true" />
       </div>
@@ -416,7 +470,7 @@ function LandlordPropertiesScreen({ reduced }: { reduced: boolean }) {
   );
 }
 
-/* ── Screen 3: Analytics, composition, M-Pesa ───────────────────────── */
+/* ── Screen 4: Analytics, composition, M-Pesa ───────────────────────── */
 
 function GrowthLine({ points, height = 56 }: { points: number[]; height?: number }) {
   const max = 100;
@@ -442,7 +496,7 @@ function GrowthLine({ points, height = 56 }: { points: number[]; height?: number
 
 const GROWTH_POINTS = [12, 22, 34, 30, 46, 52, 58, 66, 74, 82, 90, 100];
 
-function LandlordAnalyticsScreen({ reduced }: { reduced: boolean }) {
+function LandlordAnalyticsScreen({ reduced, scrollY }: DemoScreenProps) {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="bg-white border-b border-slate-200 px-3 pb-2.5 pt-1 shadow-sm">
@@ -464,7 +518,12 @@ function LandlordAnalyticsScreen({ reduced }: { reduced: boolean }) {
       </div>
 
       <div className="relative flex-1 overflow-hidden px-3 pt-3">
-        <div className={`demo-screen-autoscroll pb-6`} style={{ "--demo-scroll-y": reduced ? "0%" : "-32%" } as CSSProperties}>
+        <motion.div
+          className="pb-6"
+          initial={false}
+          animate={reduced ? { y: 0 } : { y: [0, 0, -scrollY, -scrollY] }}
+          transition={{ duration: 5, times: [0, 0.09, 0.86, 1], ease: ["linear", "easeInOut", "linear"] }}
+        >
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -586,7 +645,7 @@ function LandlordAnalyticsScreen({ reduced }: { reduced: boolean }) {
           </p>
         </div>
 
-        </div>
+        </motion.div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-50 to-transparent" aria-hidden="true" />
       </div>
@@ -605,9 +664,9 @@ function LandlordAnalyticsScreen({ reduced }: { reduced: boolean }) {
   );
 }
 
-/* ── Screen 4: Tenant portal ───────────────────────────────────────── */
+/* ── Screen 5: Tenant portal ───────────────────────────────────────── */
 
-function TenantPortalScreen({ reduced }: { reduced: boolean }) {
+function TenantPortalScreen({ reduced, scrollY }: DemoScreenProps) {
   const nav = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
     { label: "Payments", icon: CreditCard },
@@ -651,7 +710,12 @@ function TenantPortalScreen({ reduced }: { reduced: boolean }) {
         {/* Main column */}
         <div className="relative flex-1 min-w-0 bg-slate-50">
           <div className="relative h-full overflow-hidden bg-slate-50">
-            <div className={`demo-screen-autoscroll h-full pb-6`} style={{ "--demo-scroll-y": reduced ? "0%" : "-26%" } as CSSProperties}>
+            <motion.div
+              className="h-full pb-6"
+              initial={false}
+              animate={reduced ? { y: 0 } : { y: [0, 0, -scrollY, -scrollY] }}
+              transition={{ duration: 5, times: [0, 0.09, 0.86, 1], ease: ["linear", "easeInOut", "linear"] }}
+            >
             <div className="rounded-b-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-3 pb-4 pt-3 text-white shadow-lg shadow-emerald-900/20">
               <p className="text-[6.5px] font-semibold uppercase tracking-widest text-emerald-100/70">Welcome back</p>
               <div className="mt-0.5 flex items-center justify-between">
@@ -751,7 +815,7 @@ function TenantPortalScreen({ reduced }: { reduced: boolean }) {
               </div>
             </div>
 
-            </div>
+            </motion.div>
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-50 to-transparent" aria-hidden="true" />
           </div>
@@ -774,7 +838,16 @@ function TenantPortalScreen({ reduced }: { reduced: boolean }) {
 
 /* ── Phone frame + section ──────────────────────────────────────────── */
 
-const SCREENS = [LandlordOverviewScreen, LandlordPropertiesScreen, LandlordAnalyticsScreen, TenantPortalScreen];
+/* scroll = how far the hand drags the content (px), locked 1:1 so the
+   fingertip stays glued to the row it starts on. Screens with more
+   content travel further in the same 4s scroll. */
+const SCREENS: Array<{ render: DemoScreen; scroll: number; scrollable: boolean }> = [
+  { render: BrandIntroScreen, scroll: 0, scrollable: false },
+  { render: LandlordOverviewScreen, scroll: 220, scrollable: true },
+  { render: LandlordPropertiesScreen, scroll: 220, scrollable: true },
+  { render: LandlordAnalyticsScreen, scroll: 200, scrollable: true },
+  { render: TenantPortalScreen, scroll: 140, scrollable: true },
+];
 
 export function Premium3DDashboardSection() {
   const { ref, inView } = useInView<HTMLDivElement>(0.15);
@@ -782,7 +855,7 @@ export function Premium3DDashboardSection() {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
 
-  const autoplay = playing && !prefersReducedMotion;
+  const autoplay = playing && !prefersReducedMotion && inView;
 
   useEffect(() => {
     if (!autoplay) return;
@@ -808,7 +881,7 @@ export function Premium3DDashboardSection() {
         />
 
         <div ref={ref} className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-          <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-20">
+          <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-20">
             {/* ── Phone demo ── */}
             <div className="relative mx-auto w-fit">
               {/* Floating chips */}
@@ -821,7 +894,7 @@ export function Premium3DDashboardSection() {
                   <p className="text-[9px] text-white/40">Rent collected · receipt issued</p>
                 </div>
               </div>
-              <div className="absolute -right-6 bottom-20 hidden xl:flex items-center gap-2 rounded-2xl border border-white/10 bg-[#0b111f]/90 backdrop-blur px-3 py-2.5 shadow-2xl shadow-black/50 demo-float" style={{ animationDelay: "1.4s" }}>
+              <div className="absolute -right-6 bottom-64 hidden xl:flex items-center gap-2 rounded-2xl border border-white/10 bg-[#0b111f]/90 backdrop-blur px-3 py-2.5 shadow-2xl shadow-black/50 demo-float" style={{ animationDelay: "1.4s" }}>
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-jade-500/15 text-jade-400">
                   <FileText className="h-4 w-4" strokeWidth={1.75} />
                 </div>
@@ -831,12 +904,12 @@ export function Premium3DDashboardSection() {
                 </div>
               </div>
 
-              <div className="lg:-rotate-2 hover:rotate-0 transition-transform duration-700">
-                <div className="phone-bezel demo-float relative w-[290px] sm:w-[320px] rounded-[2.9rem] p-[10px]">
+              <div className="lg:-rotate-2 hover:rotate-0 transition-transform duration-700 relative">
+                <div className="phone-bezel demo-float relative w-[250px] sm:w-[272px] rounded-[2.9rem] p-[10px]">
                   {/* Side buttons */}
-                  <div className="absolute -left-[3px] top-28 h-10 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
-                  <div className="absolute -left-[3px] top-40 h-14 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
-                  <div className="absolute -right-[3px] top-32 h-16 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
+                  <div className="absolute -left-[3px] top-24 h-10 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
+                  <div className="absolute -left-[3px] top-36 h-14 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
+                  <div className="absolute -right-[3px] top-28 h-16 w-[3px] rounded-full bg-white/25" aria-hidden="true" />
 
                   <div className="relative overflow-hidden rounded-[2.3rem] bg-white shadow-inner">
                     {/* Story-style progress segments */}
@@ -877,15 +950,53 @@ export function Premium3DDashboardSection() {
                       initial={{ opacity: 0, scale: 0.985 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                      className="relative h-[600px] sm:h-[620px]"
+                      className="relative h-[530px] sm:h-[572px]"
                     >
-                      <ScreenWithStatusBar step={SCREENS[active]} reduced={prefersReducedMotion} />
+                      <ScreenWithStatusBar step={SCREENS[active].render} scroll={SCREENS[active].scroll} reduced={prefersReducedMotion} />
                     </motion.div>
+
+                    {/* Glass reflection — makes the device read as real filmed glass */}
+                    <div className="pointer-events-none absolute inset-0 z-30 bg-gradient-to-br from-white/[0.13] via-white/[0.02] to-transparent" aria-hidden="true" />
+                    <div className="pointer-events-none absolute -left-1/3 top-0 h-full w-1/2 -skew-x-[18deg] bg-gradient-to-r from-white/[0.09] via-white/[0.04] to-transparent" aria-hidden="true" />
+                    <div className="pointer-events-none absolute inset-0 z-30 rounded-[2.3rem] shadow-[inset_0_0_26px_rgba(0,0,0,0.09)] ring-1 ring-inset ring-black/[0.05]" aria-hidden="true" />
                   </div>
 
                   {/* Speaker */}
                   <div className="absolute left-1/2 top-[18px] z-40 hidden h-[3px] w-14 -translate-x-1/2 rounded-full bg-white/30 sm:block" aria-hidden="true" />
                 </div>
+
+                {/* Real hand driving the swipe — it enters, scrolls the content
+                    for ~4s with the fingertip locked to the row it started on,
+                    then lifts off and disappears until the next screen, like
+                    live activity. */}
+                <AnimatePresence>
+                  {autoplay && SCREENS[active].scrollable && (
+                    <motion.div
+                      key={`demo-hand-${active}`}
+                      initial={{ opacity: 0, y: 26, scale: 0.95 }}
+                      animate={{
+                        opacity: [0, 1, 1, 1, 0],
+                        y: [26, 0, 0, -SCREENS[active].scroll, -SCREENS[active].scroll - 12],
+                        scale: [0.95, 1, 1, 1, 0.98],
+                      }}
+                      transition={{ duration: 5, times: [0, 0.07, 0.09, 0.86, 0.94], ease: ["easeOut", "linear", "easeInOut", "easeIn"] }}
+                      exit={{ opacity: 0, y: -16, transition: { duration: 0.35, ease: "easeIn" } }}
+                      className="absolute right-[-70px] bottom-[-40px] z-40 w-[230px] pointer-events-none select-none"
+                      aria-hidden="true"
+                    >
+                      <div className="relative">
+                        {/* Fingertip contact light on the glass — synced to the swipe */}
+                        <span className="demo-contact-glow absolute left-[9%] top-[2%] h-5 w-5 rounded-full bg-emerald-500/35 blur-[6px]" aria-hidden="true" />
+                        <img
+                          src="/images/demo-hand-african.png"
+                          alt=""
+                          draggable={false}
+                          className="w-full drop-shadow-[0_22px_30px_rgba(0,0,0,0.45)]"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -982,14 +1093,14 @@ export function Premium3DDashboardSection() {
   );
 }
 
-function ScreenWithStatusBar({ step: Screen, reduced }: { step: ComponentType<{ reduced: boolean }>; reduced: boolean }) {
+function ScreenWithStatusBar({ step: Screen, scroll, reduced }: { step: DemoScreen; scroll: number; reduced: boolean }) {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <div className="relative z-10 shrink-0 bg-white">
         <StatusBar />
       </div>
       <div className="relative min-h-0 flex-1">
-        <Screen reduced={reduced} />
+        <Screen reduced={reduced} scrollY={scroll} />
       </div>
     </div>
   );

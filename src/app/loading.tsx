@@ -1,11 +1,10 @@
-import { AppLogo } from "@/shared/components/brand";
+import { PlatformLogoMark } from "@/shared/components/brand";
 
 export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-bg dark:bg-bg-dark px-6">
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand/25">
-        <AppLogo size={26} className="text-white" />
-        <span className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/20" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5 dark:bg-slate-100">
+        <PlatformLogoMark size={26} />
       </div>
       <div className="flex flex-col items-center gap-3">
         <span className="font-display text-sm font-semibold tracking-tight text-fg dark:text-fg-dark">

@@ -6,6 +6,7 @@ import type {
     LandlordDetailResponse,
     LandlordSummary,
     PlatformAdminInfo,
+    PlatformBrandingResponse,
     PlatformReviewResponse,
     PlatformReviewStats,
     PlatformReviewType,
@@ -41,6 +42,19 @@ export const adminApi = {
     updateSettings: async (request: UpdatePlatformSettingsRequest): Promise<PlatformSettingsResponse> => {
         const { token } = await getAuthContext();
         return apiClient.put<PlatformSettingsResponse>(adminEndpoints.settings(), request, token);
+    },
+    uploadLogo: async (file: File): Promise<PlatformSettingsResponse> => {
+        const { token } = await getAuthContext();
+        const form = new FormData();
+        form.append("file", file);
+        return apiClient.post<PlatformSettingsResponse>(adminEndpoints.settingsLogo(), form, token);
+    },
+    removeLogo: async (): Promise<PlatformSettingsResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.delete<PlatformSettingsResponse>(adminEndpoints.settingsLogo(), token);
+    },
+    getPublicBranding: async (): Promise<PlatformBrandingResponse> => {
+        return apiClient.get<PlatformBrandingResponse>(adminEndpoints.publicBranding());
     },
     getPropertyDetail: async (propertyId: string): Promise<PropertyDetailResponse> => {
         const { token } = await getAuthContext();

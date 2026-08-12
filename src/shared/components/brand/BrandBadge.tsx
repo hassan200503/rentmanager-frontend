@@ -2,6 +2,9 @@
 interface BrandBadgeProps {
   size?: "sm" | "md" | "lg";
   showTag?: boolean;
+  /** Render an always-light, premium wordmark for dark surfaces
+      (landing hero/nav) where theme tokens would turn near-invisible. */
+  onDark?: boolean;
 }
 
 const sizes = {
@@ -10,7 +13,12 @@ const sizes = {
   lg: { logoSize: 24, textSize: "text-base", gap: "gap-3" },
 };
 
-function BadgeMark({ size = 20 }: { size?: number }) {
+/* Gradient wordmark for dark surfaces — white melting into jade with a
+   soft glow so it stays legible over video/photos while reading premium. */
+const ON_DARK_WORDMARK =
+  "bg-gradient-to-r from-white via-white to-jade-300 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(16,185,129,0.35)]";
+
+export function BadgeMark({ size = 20 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -36,12 +44,16 @@ function BadgeMark({ size = 20 }: { size?: number }) {
   );
 }
 
-export function BrandBadge({ size = "md", showTag }: BrandBadgeProps) {
+export function BrandBadge({ size = "md", showTag, onDark }: BrandBadgeProps) {
   const s = sizes[size];
   return (
     <span className={`inline-flex items-center ${s.gap}`}>
       <BadgeMark size={s.logoSize} />
-      <span className={`font-display font-semibold tracking-tight text-fg dark:text-fg-dark ${s.textSize}`}>
+      <span
+        className={`font-display font-semibold tracking-tight ${s.textSize} ${
+          onDark ? ON_DARK_WORDMARK : "text-fg dark:text-fg-dark"
+        }`}
+      >
         RentManager
       </span>
       {showTag && (

@@ -337,6 +337,7 @@ export interface PlatformSettingsInfo {
   sandbox: boolean;
   supportEmail: string | null;
   supportPhone: string | null;
+  logoUrl: string | null;
   updatedBy: string | null;
   updatedAt: string | null;
 }
@@ -362,6 +363,20 @@ export interface UpdatePlatformSettingsRequest {
 }
 
 export type PlatformReviewType = "LANDLORD" | "RENTER" | "PLATFORM";
+
+/**
+ * Minimal, unauthenticated platform identity — served to the landing page,
+ * auth surfaces, favicon resolver and any chrome that renders before login.
+ * Deliberately contains NO operational configuration.
+ */
+export interface PlatformBrandingResponse {
+  platformName: string;
+  logoUrl: string | null;
+  environment: PlatformEnvironment;
+  supportEmail: string | null;
+  supportPhone: string | null;
+  updatedAt: string | null;
+}
 
 export interface PlatformReviewResponse {
   type: PlatformReviewType;

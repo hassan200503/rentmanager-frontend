@@ -70,6 +70,7 @@ export const metadata: Metadata = {
     manifest: "/manifest.json",
     icons: {
         icon: [
+            { url: "/icon", type: "image/x-icon" },
             { url: "/favicon.svg", type: "image/svg+xml" },
         ],
     },

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Building2, Home, Menu, X } from "lucide-react";
-import { BrandBadge } from "@/shared/components/brand";
+import { PlatformBrand } from "@/shared/components/brand";
 import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
 import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 import { Button } from "@/shared/components/ui/Button";
@@ -69,7 +69,7 @@ export function Navbar() {
             className="flex items-center gap-3 shrink-0 transition-transform hover:scale-105 duration-200" 
             aria-label="RentManager home"
           >
-            <BrandBadge size="lg" />
+            <PlatformBrand size="lg" onDark />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-7 text-sm font-medium" aria-label="Primary">
@@ -87,16 +87,26 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-2.5">
             <Link
               href={SIGNIN_LANDLORD_HREF}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-all duration-200 px-3 py-2 min-h-11 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 hover:bg-white/5"
+              className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/70 hover:text-white transition-all duration-200 px-2.5 py-2 min-h-11 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 hover:bg-white/5"
             >
-              <Building2 className="h-4 w-4 text-white/40" strokeWidth={1.75} />
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-white/[0.14] to-white/[0.04] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40 group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_16px_rgba(41,147,106,0.35)]"
+              >
+                <Building2 className="h-4 w-4 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+              </span>
               Landlord sign in
             </Link>
             <Link
               href={SIGNIN_RENTER_HREF}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-all duration-200 px-3 py-2 min-h-11 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 hover:bg-white/5"
+              className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/70 hover:text-white transition-all duration-200 px-2.5 py-2 min-h-11 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-400 hover:bg-white/5"
             >
-              <Home className="h-4 w-4 text-white/40" strokeWidth={1.75} />
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-white/[0.14] to-white/[0.04] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40 group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_16px_rgba(41,147,106,0.35)]"
+              >
+                <Home className="h-4 w-4 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+              </span>
               Renter sign in
             </Link>
             <Button 
@@ -139,17 +149,27 @@ export function Navbar() {
               <Link
                 href={SIGNIN_LANDLORD_HREF}
                 onClick={close}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-white/80 border border-white/10 hover:text-white hover:border-jade-500/30 transition-colors"
+                className="group flex items-center justify-center gap-2.5 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-white/80 border border-white/10 hover:text-white hover:border-jade-500/30 transition-colors"
               >
-                <Building2 className="h-4 w-4" strokeWidth={1.75} />
+                <span
+                  aria-hidden="true"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-white/[0.14] to-white/[0.04] ring-1 ring-inset ring-white/[0.12] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+                </span>
                 Sign in as a landlord
               </Link>
               <Link
                 href={SIGNIN_RENTER_HREF}
                 onClick={close}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-white/80 border border-white/10 hover:text-white hover:border-jade-500/30 transition-colors"
+                className="group flex items-center justify-center gap-2.5 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-white/80 border border-white/10 hover:text-white hover:border-jade-500/30 transition-colors"
               >
-                <Home className="h-4 w-4" strokeWidth={1.75} />
+                <span
+                  aria-hidden="true"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-white/[0.14] to-white/[0.04] ring-1 ring-inset ring-white/[0.12] transition-all duration-300 group-hover:from-jade-500/25 group-hover:to-jade-500/5 group-hover:ring-jade-400/40"
+                >
+                  <Home className="h-3.5 w-3.5 text-jade-300 transition-colors duration-300 group-hover:text-jade-200" strokeWidth={1.75} />
+                </span>
                 Sign in as a tenant or renter
               </Link>
               <Button href={SIGNUP_LANDLORD_HREF} variant="primary" size="lg" fullWidth onClick={close}>

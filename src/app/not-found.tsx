@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandBadge } from "@/shared/components/brand";
+import { PlatformBrand } from "@/shared/components/brand";
 import { ArrowLeft, Home } from "lucide-react";
 
 export default function NotFound() {
@@ -11,7 +11,7 @@ export default function NotFound() {
                 className="pointer-events-none absolute left-1/2 top-1/3 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/10 blur-3xl"
             />
             <div className="relative flex w-full max-w-md flex-col items-center text-center">
-                <BrandBadge size="md" />
+                <PlatformBrand size="md" />
 
                 <p className="mt-10 font-display text-[5rem] font-bold leading-none tracking-tight text-fg dark:text-fg-dark sm:text-[6rem]">
                     404

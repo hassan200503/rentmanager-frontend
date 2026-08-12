@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+    Search,
     Building2,
-    Loader2,
     Ban,
     UserCheck,
     AlertTriangle,
@@ -110,7 +110,7 @@ function LandlordsContent() {
                         placeholder="Search by name, slug or email…"
                         className="w-full rounded-lg border border-border dark:border-border-dark bg-white dark:bg-surface-dark px-3 py-2 pl-9 text-sm text-fg dark:text-fg-dark placeholder:text-fg-subtle dark:placeholder:text-fg-subtle-dark focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
-                    <Loader2 className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={2} />
+                    <Search className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={2} />
                 </div>
             </div>
 

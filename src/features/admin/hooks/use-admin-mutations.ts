@@ -77,6 +77,28 @@ export const useUpdatePlatformSettingsMutation = () => {
     });
 };
 
+export const useUploadPlatformLogoMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => adminApi.uploadLogo(file),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: adminKeys.settings() });
+            queryClient.invalidateQueries({ queryKey: adminKeys.branding() });
+        },
+    });
+};
+
+export const useRemovePlatformLogoMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => adminApi.removeLogo(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: adminKeys.settings() });
+            queryClient.invalidateQueries({ queryKey: adminKeys.branding() });
+        },
+    });
+};
+
 export const useReviewModerationMutation = () => {
     const queryClient = useQueryClient();
     const invalidate = () => {

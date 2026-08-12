@@ -1,2 +1,3 @@
 export { AppLogo } from "./AppLogo";
-export { BrandBadge } from "./BrandBadge";
+export { BrandBadge, BadgeMark } from "./BrandBadge";
+export { PlatformBrand, PlatformLogoMark } from "./PlatformBrand";

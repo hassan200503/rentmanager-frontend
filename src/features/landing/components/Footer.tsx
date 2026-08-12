@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandBadge } from "@/shared/components/brand";
+import { PlatformBrand } from "@/shared/components/brand";
 import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
 import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
@@ -29,7 +29,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-10">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4" aria-label="RentManager home">
-              <BrandBadge size="md" />
+              <PlatformBrand size="md" onDark />
             </Link>
             <p className="text-xs text-white/55 leading-relaxed max-w-xs">
               The modern way to find and reserve rental properties across Kenya. Verified listings,

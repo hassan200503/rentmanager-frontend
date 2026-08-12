@@ -207,7 +207,7 @@ export function PageHeader({
     title,
     subtitle,
     icon: Icon,
-    iconTone = "from-blue-500 to-blue-600",
+    iconTone = "from-emerald-500 to-emerald-600",
     actions,
 }: {
     title: string;

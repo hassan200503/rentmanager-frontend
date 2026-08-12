@@ -225,7 +225,7 @@ export default function AdminDisbursementsPage() {
                         title="Disbursements"
                         subtitle="Monitor and retry M-Pesa payout batches across the platform"
                         icon={Send}
-                        iconTone="from-blue-500 to-blue-600"
+                        iconTone="from-sky-500 to-sky-600"
                     />
                     <DisbursementsContent />
                 </div>

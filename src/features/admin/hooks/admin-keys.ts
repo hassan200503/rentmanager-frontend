@@ -3,6 +3,7 @@ export const adminKeys = {
     info: () => [...adminKeys.all, "info"] as const,
     overview: () => [...adminKeys.all, "overview"] as const,
     settings: () => [...adminKeys.all, "settings"] as const,
+    branding: () => [...adminKeys.all, "branding"] as const,
     defaultCommission: () => [...adminKeys.all, "default-commission"] as const,
     landlords: (params?: object) =>
         [...adminKeys.all, "landlords", params ?? {}] as const,
