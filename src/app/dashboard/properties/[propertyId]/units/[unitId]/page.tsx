@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { ArrowLeft, AlertTriangle, DoorOpen } from "lucide-react";
 import { useUnit } from "@/features/unit/hooks/use-unit";
 import { UnitDetails } from "@/features/unit/components/unit-details";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import Loading from "@/app/loading";
 
 export default function UnitDetailsPage() {
@@ -38,7 +39,9 @@ export default function UnitDetailsPage() {
                         <AlertTriangle className="h-6 w-6 text-danger" strokeWidth={1.5} />
                     </div>
                     <p className="text-base font-semibold text-ink mb-1">Couldn&#39;t load this unit</p>
-                    <p className="text-sm text-ink-muted">{error.message}</p>
+                    <p className="text-sm text-ink-muted">
+                        {getProcessErrorMessage(error, "It could not be loaded right now. Please try again.")}
+                    </p>
                 </div>
             </div>
         );

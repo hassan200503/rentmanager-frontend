@@ -202,7 +202,7 @@ function ResendSignInLink() {
         try {
             await apiClient.post<{ sent: boolean }>(
                 publicEndpoints.resendSignInLink(reservationId.trim()),
-                { reservationId: reservationId.trim(), phone: phone.trim() }
+                { phone: phone.trim() }
             );
             setResent(true);
         } catch (err: unknown) {

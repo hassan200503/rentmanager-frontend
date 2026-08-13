@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Send, X } from "lucide-react";
 import { useInitiateDisbursementMutation } from "../hooks/use-disbursement-queries";
 import type { InitiateDisbursementRequest } from "../types/disbursement-types";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 interface FormValues {
     leaseId: string;
@@ -160,7 +161,12 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
 
                     {mutation.error && (
                         <div className="rounded-xl bg-danger-bg dark:bg-danger-bg-dark border border-danger/20 dark:border-danger-dark/20 p-3">
-                            <p className="text-xs text-danger dark:text-danger-dark">{mutation.error.message}</p>
+                            <p className="text-xs text-danger dark:text-danger-dark">
+                                {getProcessErrorMessage(
+                                    mutation.error,
+                                    "Could not initiate the payment. Please try again."
+                                )}
+                            </p>
                         </div>
                     )}
 

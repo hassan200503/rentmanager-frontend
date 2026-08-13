@@ -3,6 +3,16 @@
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
+// Stable short reference for support triage without exposing error internals
+// (paths, stack frames, server messages) to the browser.
+function digest(input: string): string {
+    let hash = 0;
+    for (let i = 0; i < input.length; i += 1) {
+        hash = (hash * 31 + input.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0).toString(36).toUpperCase();
+}
+
 interface Props {
     children: React.ReactNode;
 }
@@ -41,16 +51,12 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
                             An error occurred in the admin console. Please try refreshing the page.
                         </p>
                         {this.state.error && (
-                            <details className="text-left mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
-                                <summary className="text-xs font-medium text-red-700 dark:text-red-400 cursor-pointer mb-2">
-                                    Error details
-                                </summary>
-                                <pre className="text-[10px] text-red-600 dark:text-red-300 overflow-auto max-h-40">
-                                    {this.state.error.message}
-                                    {"\n\n"}
-                                    {this.state.error.stack}
-                                </pre>
-                            </details>
+                            <p className="text-left mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-[11px] text-fg-muted dark:text-fg-muted-dark">
+                                Error reference{" "}
+                                <span className="font-mono text-red-700 dark:text-red-400">
+                                    {digest(this.state.error.message)}
+                                </span>
+                            </p>
                         )}
                         <div className="flex items-center justify-center gap-3">
                             <button

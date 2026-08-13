@@ -13,7 +13,6 @@ import {
   Users,
   ShieldCheck,
   ArrowUpRight,
-  Smartphone,
   ArrowLeftRight,
   TrendingUp,
   Home,
@@ -32,12 +31,13 @@ import { PropertyStatus } from "@/features/property/types/property";
 import { usePropertyDashboardMetrics } from "@/features/property/hooks/use-property-dashboard-metrics";
 import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
 import { useDarajaStatusQuery } from "@/features/daraja/queries/use-daraja-status-query";
+import { MPesaIcon } from "@/shared/components/icons/MPesaIcon";
+import { typeStyle, typeLabel } from "@/shared/components/dashboard/property-type-meta";
 import PortfolioBar from "@/shared/components/dashboard/PortfolioBar";
 import KpiCard, { KpiCardSkeleton } from "@/shared/components/dashboard/KpiCard";
 import HealthScore from "@/shared/components/dashboard/HealthScore";
-import PortfolioGrowthChart from "@/shared/components/dashboard/PortfolioGrowthChart";
-import OccupancyTrendChart from "@/shared/components/dashboard/OccupancyTrendChart";
 import PropertyDistributionChart from "@/shared/components/dashboard/PropertyDistributionChart";
+import OccupancyMixChart from "@/shared/components/dashboard/OccupancyMixChart";
 import PropertyRanking, { PropertyRankingSkeleton } from "@/shared/components/dashboard/PropertyRanking";
 import ActivityTimeline from "@/shared/components/dashboard/ActivityTimeline";
 import PortfolioAlerts from "@/shared/components/dashboard/PortfolioAlerts";
@@ -46,7 +46,6 @@ import FinancialOverview from "@/shared/components/dashboard/FinancialOverview";
 import InsightsEngine from "@/shared/components/dashboard/InsightsEngine";
 import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
 import { useOrgStore } from "@/stores/org-store";
-import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
 
 function DashboardSkeleton() {
   return (
@@ -127,24 +126,23 @@ function ModuleCard(props: ModuleCardProps) {
   const isAvailable = Boolean(props.href);
 
   const content = (
-    <div className={`relative h-full rounded-2xl border transition-all duration-200 ${
+    <div className={`module-card ${
       isAvailable
-        ? "border-border/70 dark:border-border-dark/70 bg-surface dark:bg-surface-dark hover:border-brand-200 dark:hover:border-brand-700/40 hover:shadow-card-hover hover:-translate-y-0.5"
+        ? "border-border/70 bg-surface shadow-sm hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover dark:border-border-dark/70 dark:bg-surface-dark dark:hover:border-brand-700/40"
         : "border-dashed border-border dark:border-border-dark bg-transparent"
     }`}>
-      {/* Subtle brand accent at top */}
       {isAvailable && (
-        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-brand/20 to-transparent" />
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-brand/25 to-transparent" />
       )}
-      <div className="p-4">
+      <div className="module-card-content p-4">
         <div className="flex items-start justify-between mb-3">
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 ${
             isAvailable ? "bg-brand-50 dark:bg-brand-800" : "bg-border-subtle dark:bg-border-subtle-dark"
           }`}>
             <Icon className={`h-4 w-4 ${isAvailable ? "text-brand dark:text-brand-300" : "text-fg-subtle dark:text-fg-subtle-dark"}`} strokeWidth={2} />
           </div>
           {isAvailable ? (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 text-[10px] font-semibold text-brand-700 dark:text-brand-300 border border-brand-200/50 dark:border-brand-700/30">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 text-[10px] font-semibold text-brand-700 dark:text-brand-300 border border-brand-200/50 dark:border-brand-700/30 shadow-sm">
               Open
               <ArrowUpRight className="h-2.5 w-2.5" strokeWidth={3} />
             </span>
@@ -172,14 +170,53 @@ function StatusBadge({ status }: { status: string }) {
     UNDER_MAINTENANCE: "badge-warning",
     MAINTENANCE: "badge-warning",
     DRAFT: "badge-neutral",
+    INACTIVE: "badge-neutral",
     ARCHIVED: "badge-neutral",
-    VACANT: "badge-warning",
-    PARTIALLY_OCCUPIED: "badge-info",
-    FULLY_OCCUPIED: "badge-emerald",
     PENDING_PAYMENT: "badge-warning",
   };
   const cls = badgeMap[normalized] ?? "badge-neutral";
-  return <span className={`${cls} !text-[10px]`}>{status?.toLowerCase()}</span>;
+  const label = status?.replace(/_/g, " ").toLowerCase();
+  const isLive = normalized === "ACTIVE";
+  return (
+    <span className={`${cls} !text-[9px] !px-1.5 !py-px`}>
+      <span className={`status-badge-dot ${isLive ? "status-dot-live" : ""}`} />
+      {label}
+    </span>
+  );
+}
+
+const OCCUPANCY_BADGE: Record<string, { label: string; cls: string; dot: string }> = {
+  FULLY_OCCUPIED: {
+    label: "Fully occupied",
+    cls: "bg-success/10 text-success-dark ring-success/25 dark:bg-success-bg-dark dark:text-success dark:ring-success/25",
+    dot: "bg-success",
+  },
+  PARTIALLY_OCCUPIED: {
+    label: "Partially occupied",
+    cls: "bg-warning/10 text-warning-dark ring-warning/25 dark:bg-warning-bg-dark dark:text-warning dark:ring-warning/25",
+    dot: "bg-warning",
+  },
+  VACANT: {
+    label: "Vacant",
+    cls: "bg-danger/10 text-danger-dark ring-danger/25 dark:bg-danger-bg-dark dark:text-danger dark:ring-danger/25",
+    dot: "bg-danger",
+  },
+};
+
+const OCCUPANCY_DEFAULT = {
+  label: "Unknown",
+  cls: "bg-border-subtle text-fg-muted ring-black/10 dark:bg-border-subtle-dark dark:text-fg-muted-dark dark:ring-white/10",
+  dot: "bg-fg-subtle dark:bg-fg-subtle-dark",
+};
+
+function OccupancyBadge({ status }: { status: string }) {
+  const meta = OCCUPANCY_BADGE[status?.toUpperCase?.() ?? ""] ?? OCCUPANCY_DEFAULT;
+  return (
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-transparent px-1.5 py-px text-[9px] font-semibold ring-1 ${meta.cls}`}>
+      <span className={`status-badge-dot ${meta.dot}`} />
+      {meta.label}
+    </span>
+  );
 }
 
 export default function DashboardPage() {
@@ -212,6 +249,13 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
       ),
     enabled: Boolean(tenantId),
   });
+
+  const portfolioQuery = useQuery({
+    queryKey: ["properties", "portfolio-analysis", tenantId],
+    queryFn: () => propertyApi.list({ page: 0, size: 100 }),
+    enabled: Boolean(tenantId),
+  });
+  const portfolioProperties = portfolioQuery.data?.content ?? [];
 
   const {
     activities,
@@ -285,16 +329,19 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
       >
         <div className="flex flex-col lg:flex-row items-start justify-between gap-6 relative z-10">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <p className="text-base font-semibold text-fg dark:text-fg-dark">
                 {greeting}{tenantName ? `, ${tenantName}` : ""}
               </p>
-              <span className="status-dot-success status-dot-live" title="Live" />
+              <span className="executive-chip px-2.5 py-1 text-[11px] font-semibold">
+                <span className="status-dot-success status-dot-live" title="Live" />
+                Live portfolio
+              </span>
             </div>
-            <h1 className="page-title !text-[2rem] mb-1">Portfolio Overview</h1>
-            <p className="page-subtitle !text-sm">
+            <h1 className="page-title !text-[2.25rem] mb-1">Portfolio Overview</h1>
+            <p className="page-subtitle !text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
               Your rental business at a glance.
-              <span className="text-fg-muted dark:text-fg-muted-dark ml-2 text-xs">
+              <span className="rounded-full border border-border/70 bg-surface/70 px-2 py-0.5 text-xs text-fg-muted shadow-sm dark:border-border-dark/70 dark:bg-surface-dark/70 dark:text-fg-muted-dark">
                 Updated {lastUpdated}
               </span>
             </p>
@@ -304,7 +351,19 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               <Plus className="h-4 w-4" strokeWidth={2} />
               Add Property
             </Link>
-            <button type="button" className="btn-ghost btn-sm">
+            <button
+              type="button"
+onClick={() => {
+                refetchMetrics();
+                propertiesQuery.refetch();
+                portfolioQuery.refetch();
+                refetchActivities();
+                darajaStatus.refetch();
+              }}
+              className="btn-ghost btn-sm !h-9 !w-9 !rounded-xl !p-0"
+              aria-label="Refresh dashboard"
+              title="Refresh dashboard"
+            >
               <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
           </div>
@@ -456,33 +515,17 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
         <div>
           <h2 className="section-title mb-4">Analytics</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Portfolio Growth */}
-          <div className="card-elevated lg:col-span-1">
-            <h3 className="section-header !text-sm !mb-0">Portfolio Growth</h3>
-            <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">12-month trend</p>
-            <PortfolioGrowthChart currentProperties={metrics.activeProperties} />
-          </div>
-
-          {/* Occupancy Trend */}
-          <div className="card-elevated lg:col-span-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="section-header !text-sm !mb-0">Occupancy Trend</h3>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Last 12 months</p>
-              </div>
-              {occupancyRate != null && (
-                <span className={`badge ${occupancyRate >= 80 ? "badge-emerald" : "badge-warning"} !text-[10px]`}>
-                  {occupancyRate}%
-                </span>
-              )}
-            </div>
-            <OccupancyTrendChart currentRate={occupancyRate} />
-          </div>
-
           {/* Portfolio Composition */}
-          <div className="card-elevated lg:col-span-1">
-            <h3 className="section-header !text-sm !mb-0">Portfolio Composition</h3>
-            <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Active vs draft vs archived</p>
+          <div className="card-elevated">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="section-header !text-sm !mb-0">Portfolio Composition</h3>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Active vs draft vs archived</p>
+              </div>
+              <span className="badge badge-neutral !text-[10px] font-mono-nums">
+                {metrics.totalProperties} total
+              </span>
+            </div>
             <PortfolioBar
               active={metrics.activeProperties}
               underMaintenance={metrics.underMaintenance}
@@ -490,16 +533,40 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               archived={metrics.archived}
             />
           </div>
-        </div>
 
-        {/* Second row: Property Distribution + Top Properties + M-Pesa */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          {/* Property Distribution */}
           <div className="card-elevated">
-            <h3 className="section-header !text-sm !mb-0">Property Distribution</h3>
-            <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">By type</p>
-            <PropertyDistributionChart />
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="section-header !text-sm !mb-0">Property Distribution</h3>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">By type &middot; live portfolio</p>
+              </div>
+              <span className="badge badge-neutral !text-[10px] font-mono-nums">
+                {portfolioProperties.filter((p) => p.status !== PropertyStatus.DRAFT && p.status !== PropertyStatus.ARCHIVED).length} live
+              </span>
+            </div>
+            <PropertyDistributionChart properties={portfolioProperties} isLoading={portfolioQuery.isLoading} />
           </div>
 
+          {/* Occupancy Mix */}
+          <div className="card-elevated">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="section-header !text-sm !mb-0">Occupancy Mix</h3>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Across active properties</p>
+              </div>
+              {occupancyRate != null && (
+                <span className={`badge ${occupancyRate >= 80 ? "badge-emerald" : "badge-warning"} !text-[10px]`}>
+                  {occupancyRate}%
+                </span>
+              )}
+            </div>
+            <OccupancyMixChart properties={portfolioProperties} isLoading={portfolioQuery.isLoading} />
+          </div>
+        </div>
+
+        {/* Second row: Top Properties + Portfolio Growth */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
           <div className="card-elevated">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -511,42 +578,47 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             {propertiesQuery.isLoading ? <PropertyRankingSkeleton /> : <PropertyRanking properties={properties} />}
           </div>
 
-          <div className="card-elevated">
-            <h3 className="section-header !text-sm !mb-0">M-Pesa</h3>
-            <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Payment gateway</p>
-            {darajaStatus.isLoading ? (
-              <div className="skeleton h-6 w-32" />
-            ) : isDarajaConnected ? (
-              <Link href="/daraja/config" className="flex items-start gap-3 group">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-800">
-                  <Smartphone className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
-                </div>
-                <div>
-                  <span className="badge badge-emerald !text-[11px]">
-                    <span className="status-dot-success status-dot-live" />
-                    Connected
-                  </span>
-                  <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1 group-hover:text-brand transition-colors">
-                    Manage configuration
-                  </p>
-                </div>
-              </Link>
-            ) : (
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-border-subtle dark:bg-border-subtle-dark">
-                  <Smartphone className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
-                </div>
-                <div>
-                  <span className="badge badge-neutral !text-[11px]">Not connected</span>
-                  <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1 mb-2">
-                    Link your till or paybill to collect rent via M-Pesa.
-                  </p>
-                  <Link href="/daraja/config" className="btn-primary !text-xs !py-1.5 !px-3 inline-flex">
-                    Set up M-Pesa
-                  </Link>
-                </div>
+          {/* Portfolio Growth */}
+          <div className="card-elevated lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="section-header !text-sm !mb-0">Portfolio Growth</h3>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">12-month trend</p>
               </div>
-            )}
+              <span className="executive-chip px-2.5 py-1 text-[10px] font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                Coming soon
+              </span>
+            </div>
+            <div className="relative h-64 overflow-hidden rounded-2xl border border-dashed border-border/70 bg-gradient-to-br from-surface via-border-subtle/40 to-surface dark:border-border-dark/60 dark:from-surface-dark dark:via-border-subtle-dark/30 dark:to-surface-dark">
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, var(--color-border) 1px, transparent 1px), linear-gradient(to bottom, var(--color-border) 1px, transparent 1px)",
+                  backgroundSize: "3rem 3rem",
+                  maskImage: "radial-gradient(ellipse at center, black 25%, transparent 75%)",
+                  WebkitMaskImage: "radial-gradient(ellipse at center, black 25%, transparent 75%)",
+                }}
+                aria-hidden
+              />
+              <div className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+              <div className="relative flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 shadow-sm ring-1 ring-brand/15 dark:bg-brand-900/25 dark:ring-brand-300/15">
+                  <TrendingUp className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-fg dark:text-fg-dark">Trends unlock with your data</p>
+                  <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-fg-muted dark:text-fg-muted-dark">
+                    Growth and occupancy trends appear after your first month of activity &mdash; built from your real portfolio history.
+                  </p>
+                </div>
+                <Link href="/dashboard/rent-ledger" className="btn-secondary inline-flex items-center gap-1.5 !text-xs !py-2 !px-3.5">
+                  <ArrowLeftRight className="h-3.5 w-3.5" strokeWidth={2} />
+                  Explore rent ledger
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
         </div>
@@ -556,7 +628,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
          LEVEL 3: Insights + Alerts
          ═══════════════════════════════════════════════════════════ */}
       <ScrollReveal>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="card-elevated">
           <div className="flex items-center gap-2 mb-4">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
@@ -590,6 +662,66 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
             activeProperties={metrics.activeProperties}
           />
         </div>
+        <div className="card-elevated">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white p-1 shadow-sm ring-1 ring-black/10 dark:ring-white/15">
+              <MPesaIcon className="h-5 w-5" />
+            </div>
+            <h3 className="section-header !text-sm !mb-0">Payment Gateway</h3>
+          </div>
+          {darajaStatus.isLoading ? (
+            <div className="space-y-3">
+              <div className="skeleton h-20 w-full rounded-2xl" />
+            </div>
+          ) : isDarajaConnected ? (
+            <div className="group">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#4FC136] via-[#43B02A] to-[#2E8B1F] p-4 shadow-[0_10px_28px_-12px_rgba(67,176,42,0.55)]">
+                <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" aria-hidden />
+                <div className="absolute -bottom-12 -left-8 h-24 w-24 rounded-full bg-black/10 blur-2xl" aria-hidden />
+                <div className="relative flex items-center gap-3.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-md ring-1 ring-white/50">
+                    <MPesaIcon className="h-11 w-11" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold tracking-tight text-white">M-Pesa</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-px text-[9px] font-bold uppercase tracking-wide text-white ring-1 ring-white/25">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                        Connected
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] font-medium text-white/85">
+                      Collect rent payments straight to your M-Pesa
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" strokeWidth={2.25} />
+                </div>
+              </div>
+              <Link
+                href="/daraja/config"
+                className="group/manage mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-brand dark:text-brand-300 transition-colors hover:text-brand-700 dark:hover:text-brand-200"
+              >
+                Payment settings
+                <ArrowUpRight className="h-3 w-3 transition-transform group-hover/manage:translate-x-0.5 group-hover/manage:-translate-y-0.5" strokeWidth={2} />
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface/60 p-3.5 dark:border-border-dark/60 dark:bg-surface-dark/60">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-black/10 dark:ring-white/15">
+                <MPesaIcon className="h-9 w-9" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="badge badge-neutral !text-[9px] !px-1.5 !py-px">Not connected</span>
+                <p className="mt-1 text-[11px] leading-snug text-fg-muted dark:text-fg-muted-dark">
+                  Link your till or paybill to collect rent via M-Pesa.
+                </p>
+                <Link href="/daraja/config" className="btn-primary mt-2.5 inline-flex !text-xs !py-1.5 !px-3">
+                  Set up M-Pesa
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </ScrollReveal>
 
@@ -610,8 +742,8 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
         </div>
 
         {/* Properties Table */}
-        <div className="card-elevated lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+<div className="card-elevated lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
               <h3 className="section-header !text-sm !mb-0">Properties</h3>
               <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
@@ -619,15 +751,15 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 rounded-xl bg-border-subtle dark:bg-border-subtle-dark p-0.5">
+              <div className="flex items-center gap-0.5 rounded-lg border border-border/60 bg-border-subtle/80 p-0.5 shadow-inner dark:border-border-dark/60 dark:bg-border-subtle-dark/80">
                 <button
                   type="button"
                   onClick={() => setPropertyFilter("active")}
                   aria-pressed={propertyFilter === "active"}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                     propertyFilter === "active"
-                      ? "bg-surface dark:bg-surface-dark text-fg shadow-sm"
-                      : "text-fg-muted hover:text-fg"
+                      ? "bg-surface dark:bg-surface-dark text-fg dark:text-fg-dark shadow-sm"
+                      : "text-fg-muted hover:text-fg dark:text-fg-muted-dark dark:hover:text-fg-dark"
                   }`}
                 >
                   Active
@@ -636,10 +768,10 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                   type="button"
                   onClick={() => setPropertyFilter("all")}
                   aria-pressed={propertyFilter === "all"}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                     propertyFilter === "all"
-                      ? "bg-surface dark:bg-surface-dark text-fg shadow-sm"
-                      : "text-fg-muted hover:text-fg"
+                      ? "bg-surface dark:bg-surface-dark text-fg dark:text-fg-dark shadow-sm"
+                      : "text-fg-muted hover:text-fg dark:text-fg-muted-dark dark:hover:text-fg-dark"
                   }`}
                 >
                   All
@@ -648,7 +780,7 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
               {properties.length > 0 && (
                 <Link
                   href="/dashboard/properties"
-                  className="link-brand inline-flex items-center gap-1 text-xs hover:underline"
+                  className="link-brand inline-flex items-center gap-1 text-[11px] hover:underline"
                 >
                   View all
                   <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
@@ -688,29 +820,43 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
                 </tr>
                 </thead>
                 <tbody>
-                {properties.map((p) => (
-                  <tr key={p.propertyId} className="table-row-hover transition-colors">
-                    <td>
-                      <Link href={`/dashboard/properties/${p.propertyId}`} className="flex items-center gap-3 group">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-800 text-[12px] font-bold text-brand-dark dark:text-brand-200 transition-all group-hover:scale-105 group-hover:shadow-sm">
-                          {p.name?.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-fg group-hover:text-brand transition-colors">{p.name}</span>
-                          <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark capitalize">{p.propertyType?.toLowerCase()}</p>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="text-fg-muted dark:text-fg-muted-dark text-xs capitalize">{p.propertyType?.toLowerCase()}</td>
-                    <td><StatusBadge status={p.status} /></td>
-                    <td>
-                      <StatusBadge status={p.occupancyStatus ?? "VACANT"} />
-                    </td>
-                    <td className="text-right">
-                      <ChevronRight className="h-4 w-4 inline-block text-fg-subtle dark:text-fg-subtle-dark opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={1.5} />
-                    </td>
-                  </tr>
-                ))}
+{properties.map((p) => {
+                  const typeKey = String(p.propertyType ?? "UNKNOWN").toUpperCase();
+                  const { icon: TypeIcon, color } = typeStyle(typeKey);
+                  const typeName = typeLabel(typeKey);
+                  return (
+                    <tr key={p.propertyId} className="group/property-row table-row-hover transition-colors">
+                      <td>
+                        <Link href={`/dashboard/properties/${p.propertyId}`} className="flex items-center gap-2.5 group">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800 text-[11px] font-bold text-brand-dark dark:text-brand-200 ring-1 ring-brand/10 transition-all group-hover:scale-105 group-hover:shadow-sm">
+                            {p.name?.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="truncate text-[13px] font-semibold text-fg group-hover:text-brand transition-colors">
+                            {p.name}
+                          </span>
+                        </Link>
+                      </td>
+                      <td>
+                        <span className="inline-flex items-center gap-1.5 text-[11px]">
+                          <span
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ring-black/5 dark:ring-white/10"
+                            style={{ backgroundColor: `${color}14`, color }}
+                          >
+                            <TypeIcon className="h-2.5 w-2.5" strokeWidth={2} />
+                          </span>
+                          <span className="capitalize text-fg-muted dark:text-fg-muted-dark">{typeName}</span>
+                        </span>
+                      </td>
+                      <td><StatusBadge status={p.status} /></td>
+                      <td>
+                        <OccupancyBadge status={p.occupancyStatus ?? "VACANT"} />
+                      </td>
+                      <td className="text-right">
+                        <ChevronRight className="h-3.5 w-3.5 inline-block text-fg-subtle opacity-0 transition-all group-hover/property-row:translate-x-0.5 group-hover/property-row:opacity-100 dark:text-fg-subtle-dark" strokeWidth={1.5} />
+                      </td>
+                    </tr>
+                  );
+                })}
                 </tbody>
               </table>
             </div>
@@ -729,13 +875,6 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
           </div>
           <QuickActions />
         </div>
-      </ScrollReveal>
-
-      {/* ═══════════════════════════════════════════════════════════
-         LEVEL 5: Rate RentManager
-         ═══════════════════════════════════════════════════════════ */}
-      <ScrollReveal>
-        <PlatformReviewCard />
       </ScrollReveal>
 
       {/* ═══════════════════════════════════════════════════════════

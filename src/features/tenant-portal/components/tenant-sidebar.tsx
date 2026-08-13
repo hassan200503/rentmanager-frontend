@@ -72,9 +72,9 @@ function NavLink({
 }) {
     const Icon = item.icon;
     const showCountBadge = countBadge != null && countBadge > 0;
-    const base = `group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+    const base = `tenant-nav-link group relative flex items-center gap-3 text-sm font-medium ${
         collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2"
-    } ${
+    } ${active ? "is-active" : ""} ${
         active
             ? "text-brand-800 dark:text-brand-300"
             : "text-fg-muted hover:text-fg dark:text-fg-muted-dark dark:hover:text-fg-dark"
@@ -83,7 +83,7 @@ function NavLink({
     const inner = (
         <>
             {active && (
-                <span className="absolute inset-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 shadow-sm" />
+                <span className="tenant-nav-active-bg absolute inset-0" />
             )}
             <span
                 className={`relative shrink-0 transition-all duration-150 ${
@@ -105,7 +105,7 @@ function NavLink({
                 <span className="relative flex min-w-0 flex-1 items-center gap-2">
                     <span className="truncate">{item.label}</span>
                     {item.badge && (
-                        <span className="relative inline-flex shrink-0 items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
+                        <span className="relative inline-flex shrink-0 items-center gap-0.5 text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand to-brand-500 text-white dark:from-brand-400 dark:to-brand-500 dark:text-brand-950 shadow-sm">
                             {item.badge === "Premium" && <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />}
                             {item.badge}
                         </span>
@@ -207,14 +207,14 @@ function TenantSidebarBody({
         <>
             {/* Logo / brand */}
             <div
-                className={`h-14 flex items-center shrink-0 border-b border-border dark:border-border-dark ${
+                className={`tenant-sidebar-brand h-14 flex items-center shrink-0 ${
                     collapsed ? "justify-center px-2" : "gap-3 px-4"
                 }`}
             >
                 {!collapsed ? (
                     <span className="inline-flex items-center gap-2.5">
                         <PlatformBrand size="md" />
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-brand dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-700">
+                        <span className="text-[10px] font-semibold uppercase text-brand dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-700">
                             Tenant
                         </span>
                     </span>
@@ -226,9 +226,9 @@ function TenantSidebarBody({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5 custom-scrollbar">
+            <nav className="tenant-sidebar-nav flex-1 overflow-y-auto px-2 py-4 space-y-0.5 custom-scrollbar">
                 {!collapsed && (
-                    <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-fg-subtle dark:text-fg-subtle-dark">
+                    <p className="tenant-sidebar-section-label px-3 pb-1 text-[11px] font-semibold uppercase">
                         Main
                     </p>
                 )}
@@ -243,10 +243,10 @@ function TenantSidebarBody({
                     />
                 ))}
 
-                <div className={`my-3 h-px bg-border dark:bg-border-dark ${collapsed ? "mx-2" : ""}`} aria-hidden />
+                <div className={`tenant-sidebar-divider my-3 h-px ${collapsed ? "mx-2" : ""}`} aria-hidden />
 
                 {!collapsed && (
-                    <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-fg-subtle dark:text-fg-subtle-dark">
+                    <p className="tenant-sidebar-section-label px-3 pb-1 text-[11px] font-semibold uppercase">
                         More
                     </p>
                 )}
@@ -266,7 +266,7 @@ function TenantSidebarBody({
                 <button
                     type="button"
                     onClick={onToggle}
-                    className="flex w-full items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-fg-subtle dark:text-fg-subtle-dark hover:text-fg-muted dark:hover:text-fg-muted-dark hover:bg-border-subtle dark:hover:bg-border-subtle-dark transition-colors"
+                    className="tenant-sidebar-collapse flex w-full items-center justify-center gap-2 px-3 py-2 text-xs font-medium"
                     aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
                     {collapsed ? (
@@ -282,16 +282,16 @@ function TenantSidebarBody({
 
             {/* User section */}
             <div
-                className={`border-t border-border dark:border-border-dark shrink-0 p-3 ${
+                className={`tenant-sidebar-user-wrap shrink-0 p-3 ${
                     collapsed ? "space-y-2" : "space-y-3"
                 }`}
             >
                 <div
-                    className={`flex items-center rounded-xl bg-brand-50/50 dark:bg-brand-900/15 border border-brand-100/50 dark:border-brand-800/30 ${
+                    className={`tenant-sidebar-user flex items-center ${
                         collapsed ? "justify-center p-2" : "gap-3 px-2 py-2"
                     }`}
                 >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-800 text-[13px] font-semibold text-brand-700 dark:text-brand-300 ring-2 ring-brand-50 dark:ring-brand-900/20">
+                    <div className="tenant-sidebar-avatar flex h-9 w-9 shrink-0 items-center justify-center text-[13px] font-semibold">
                         {initials}
                     </div>
                     {!collapsed && (
@@ -316,7 +316,7 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
     const pathname = usePathname();
 
     return (
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-border dark:border-border-dark safe-area-bottom">
+        <nav className="tenant-mobile-tabs md:hidden fixed bottom-0 inset-x-0 z-40 safe-area-bottom">
             <div className="flex items-center justify-around h-16 px-2">
                 {baseNavItems.map((item) => {
                     const active = isItemActive(pathname, item.href);
@@ -325,9 +325,9 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[3.5rem] ${
+                            className={`tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] ${
                                 active ? "text-brand dark:text-brand-400" : "text-fg-subtle dark:text-fg-subtle-dark"
-                            }`}
+                            } ${active ? "is-active" : ""}`}
                         >
                             <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.75} />
                             <span className={`text-[10px] leading-tight ${active ? "font-semibold" : "font-medium"}`}>
@@ -339,7 +339,7 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
                 <button
                     type="button"
                     onClick={onOpenMore}
-                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[3.5rem] text-fg-subtle dark:text-fg-subtle-dark"
+                    className="tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] text-fg-subtle dark:text-fg-subtle-dark"
                     aria-label="Open more"
                 >
                     <MenuIcon className="h-5 w-5" strokeWidth={1.75} />
@@ -364,7 +364,7 @@ export default function TenantSidebar({
         <>
             {/* Desktop sidebar */}
             <aside
-                className="hidden md:flex flex-col bg-surface dark:bg-surface-dark border-r border-border dark:border-border-dark shrink-0 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                className="tenant-sidebar-frame hidden md:flex flex-col shrink-0 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
                 style={{ width: collapsed ? "4.5rem" : "16rem" }}
             >
                 <TenantSidebarBody collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
@@ -378,7 +378,7 @@ export default function TenantSidebar({
                         onClick={() => onOpenChange(false)}
                         aria-hidden
                     />
-                    <aside className="relative w-64 flex flex-col bg-surface dark:bg-surface-dark border-r border-border dark:border-border-dark shadow-dropdown">
+                    <aside className="tenant-sidebar-frame relative w-64 flex flex-col shadow-dropdown">
                         <button
                             type="button"
                             onClick={() => onOpenChange(false)}
@@ -401,4 +401,3 @@ export default function TenantSidebar({
         </>
     );
 }
-

@@ -421,9 +421,12 @@ async function getAuthContext(): Promise<{ token: string | undefined; tenantId: 
         return { token: undefined, tenantId: undefined };
     }
 
-    // Dev-mode override honored only outside production — the switcher UI
-    // already gates on the same flag, and prod must never inherit a dev cookie.
+    // Dev-mode override honored only when the app is running in a local
+    // development build (NODE_ENV, not the runtime flag) — a _dev_portal
+    // cookie must never affect a production deployment, where this branch
+    // is compiled out.
     const suppressTenantOverride =
+        process.env.NODE_ENV !== "production" &&
         appConfig.flags.isDevelopment &&
         document.cookie.split("; ").some((c) => c === "_dev_portal=renter");
 

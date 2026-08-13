@@ -13,7 +13,8 @@ export default function DashboardReviewsPage() {
                 <div className="space-y-1">
                     <h1 className="font-display text-2xl font-bold tracking-tight text-ink md:text-3xl">Reviews</h1>
                     <p className="text-sm text-ink-muted/80">
-                        Ratings from your renters — and yours of them. Every review is moderated before going public.
+                        Ratings from your renters, the ones you give back — and your feedback on RentManager
+                        itself. Every review is moderated before going public.
                     </p>
                 </div>
             </div>

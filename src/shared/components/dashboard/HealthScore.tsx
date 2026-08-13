@@ -14,10 +14,10 @@ function ProgressSegment({ label, value, color }: { label: string; value: number
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark">{label}</span>
+        <span className="text-xs font-semibold text-fg-muted dark:text-fg-muted-dark">{label}</span>
         <span className="text-xs font-semibold font-mono-nums" style={{ color }}>{value}%</span>
       </div>
-      <div className="progress-bar-sm">
+      <div className="progress-bar-sm ring-1 ring-black/5 dark:ring-white/10">
         <div className="progress-bar-fill" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -39,9 +39,11 @@ export default function HealthScore({ score, breakdown }: HealthScoreProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-3">
         <div className="relative">
-          <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden>
+          <div className="absolute inset-4 rounded-full bg-gradient-to-br from-white to-border-subtle shadow-inner dark:from-white/5 dark:to-border-subtle-dark" />
+          <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden className="relative drop-shadow-sm">
             <circle cx="64" cy="64" r={radius} fill="none" stroke="var(--color-border-subtle)" strokeWidth="8" />
             <circle
+              className="animate-donut-fill"
               cx="64"
               cy="64"
               r={radius}
@@ -59,9 +61,12 @@ export default function HealthScore({ score, breakdown }: HealthScoreProps) {
             <span className="font-mono-nums text-2xl font-bold tracking-tight" style={{ color }}>
               {s}%
             </span>
+            <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
+              Score
+            </span>
           </div>
         </div>
-        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${bgClass}`} style={{ color }}>
+        <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${bgClass} border-current/15`} style={{ color }}>
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
           {label}
         </div>

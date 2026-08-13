@@ -98,22 +98,22 @@ function NavLink({
           : "text-fg-muted hover:text-fg dark:text-fg-muted-dark dark:hover:text-fg-dark"
       }`}
     >
-      {/* Active pill background */}
       {active && (
-        <span className="absolute inset-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 shadow-sm" />
+        <>
+          <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-50 via-brand-50/80 to-transparent dark:from-brand-900/40 dark:via-brand-900/20 dark:to-transparent shadow-sm" />
+          <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-brand shadow-[0_0_14px_rgba(5,150,105,0.55)]" />
+        </>
       )}
 
-      {/* Icon */}
       <span
-        className={`relative shrink-0 transition-all duration-150 ${
+        className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-150 ${
           active
-            ? "text-brand dark:text-brand-400"
-            : "text-fg-subtle dark:text-fg-subtle-dark group-hover:text-fg-muted dark:group-hover:text-fg-muted-dark"
+            ? "bg-white/75 text-brand shadow-sm ring-1 ring-brand/20 dark:bg-brand-400/10 dark:text-brand-300 dark:ring-brand-300/20"
+            : "text-fg-subtle dark:text-fg-subtle-dark group-hover:bg-border-subtle/80 group-hover:text-fg-muted dark:group-hover:bg-border-subtle-dark/80 dark:group-hover:text-fg-muted-dark"
         }`}
       >
         <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={active ? 2.5 : 2} />
 
-        {/* Collapsed: count bubble overlaid on the icon */}
         {collapsed && showBadge && (
           <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[8px] font-bold leading-none text-white ring-2 ring-surface dark:ring-surface-dark animate-scale-in">
             {formatBadge(badge!)}
@@ -121,12 +121,10 @@ function NavLink({
         )}
       </span>
 
-      {/* Label */}
       {!collapsed && (
         <span className="relative flex items-center gap-2 min-w-0 flex-1">
           <span className="truncate">{item.label}</span>
 
-          {/* Expanded: right-aligned count pill */}
           {showBadge && (
             <span className="relative ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-bold leading-none text-white shadow-sm animate-scale-in">
               {formatBadge(badge!)}
@@ -170,7 +168,7 @@ function SidebarBody({
     <>
       {/* Logo / brand */}
       <div
-        className={`h-14 flex items-center shrink-0 border-b border-border dark:border-border-dark ${
+        className={`h-14 flex items-center shrink-0 border-b border-border/70 bg-surface/90 dark:border-border-dark/70 dark:bg-surface-dark/90 ${
           collapsed ? "justify-center px-2" : "gap-3 px-4"
         }`}
       >
@@ -183,7 +181,7 @@ function SidebarBody({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1 custom-scrollbar">
         {!collapsed && (
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-fg-subtle dark:text-fg-subtle-dark">
             Main
@@ -200,7 +198,7 @@ function SidebarBody({
           />
         ))}
 
-        <div className={`my-3 h-px bg-border dark:bg-border-dark ${collapsed ? "mx-2" : ""}`} aria-hidden />
+        <div className={`my-4 h-px bg-gradient-to-r from-transparent via-border to-transparent dark:via-border-dark ${collapsed ? "mx-2" : ""}`} aria-hidden />
 
         {!collapsed && (
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-fg-subtle dark:text-fg-subtle-dark">
@@ -244,11 +242,11 @@ function SidebarBody({
         }`}
       >
         <div
-          className={`flex items-center rounded-xl bg-brand-50/50 dark:bg-brand-900/15 border border-brand-100/50 dark:border-brand-800/30 ${
+          className={`flex items-center rounded-2xl bg-gradient-to-br from-brand-50/80 to-surface dark:from-brand-900/20 dark:to-surface-dark border border-brand-100/70 dark:border-brand-800/40 shadow-sm ${
             collapsed ? "justify-center p-2" : "gap-3 px-2 py-2"
           }`}
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-800 text-[13px] font-semibold text-brand-700 dark:text-brand-300 ring-2 ring-brand-50 dark:ring-brand-900/20">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-800 text-[13px] font-semibold text-brand-700 dark:text-brand-300 ring-2 ring-white/80 dark:ring-brand-900/25 shadow-sm">
             {initials}
           </div>
           {!collapsed && (
@@ -297,7 +295,7 @@ function MobileTabBar() {
   const primaryTabs = navItems.slice(0, 5);
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-border dark:border-border-dark safe-area-bottom">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/95 dark:bg-surface-dark/95 backdrop-blur-xl border-t border-border/70 dark:border-border-dark/70 safe-area-bottom shadow-[0_-12px_30px_-24px_rgba(15,23,42,0.45)]">
       <div className="flex items-center justify-around h-16 px-2">
         {primaryTabs.map((item) => {
           const active = isItemActive(pathname, item.href);
@@ -306,9 +304,9 @@ function MobileTabBar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[3.5rem] ${
+              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all min-w-[3.5rem] ${
                 active
-                  ? "text-brand dark:text-brand-400"
+                  ? "bg-brand-50 text-brand shadow-sm dark:bg-brand-900/30 dark:text-brand-300"
                   : "text-fg-subtle dark:text-fg-subtle-dark"
               }`}
             >
@@ -333,7 +331,7 @@ export default function Sidebar() {
     <>
       {/* Desktop sidebar */}
       <aside
-        className="hidden md:flex flex-col bg-surface dark:bg-surface-dark border-r border-border dark:border-border-dark shrink-0 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        className="hidden md:flex flex-col bg-surface/95 dark:bg-surface-dark/95 backdrop-blur-xl border-r border-border/70 dark:border-border-dark/70 shrink-0 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-[12px_0_36px_-32px_rgba(15,23,42,0.45)]"
         style={{ width: collapsed ? "4.5rem" : "15rem" }}
       >
         <SidebarBody collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />

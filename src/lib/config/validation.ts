@@ -14,7 +14,6 @@ export const clientEnvSchema = z.object({
     .url()
     .optional()
     .or(z.literal("")),
-  NEXT_PUBLIC_TENANT_ID: z.string().uuid().optional(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z

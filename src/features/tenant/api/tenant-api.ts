@@ -16,12 +16,12 @@ export const tenantApi = {
 
     suspend: async (id: string, payload: SuspendTenantRequest): Promise<TenantResponse> => {
         const { token, tenantId } = await getAuthContext();
-        return apiClient.post<TenantResponse>(tenantEndpoints.suspend(id), payload, token, tenantId);
+        return apiClient.put<TenantResponse>(tenantEndpoints.suspend(id), payload, token, tenantId);
     },
 
     activate: async (id: string): Promise<TenantResponse> => {
         const { token, tenantId } = await getAuthContext();
-        return apiClient.post<TenantResponse>(tenantEndpoints.activate(id), undefined, token, tenantId);
+        return apiClient.put<TenantResponse>(tenantEndpoints.activate(id), undefined, token, tenantId);
     },
 
     // Onboarding: at call time the user has no Tenant yet, so `tenantId` here

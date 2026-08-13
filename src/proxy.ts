@@ -49,9 +49,14 @@ export default clerkMiddleware(
                 userType: undefined,
                 platformRole: undefined,
             };
-            console.warn(
-                JSON.stringify({ event: "auth.invalid_claims", pathname: req.nextUrl.pathname })
-            );
+            // Only meaningful when a session token actually existed —
+            // anonymous visitors have nothing to parse and log on every
+            // public request.
+            if (userId) {
+                console.warn(
+                    JSON.stringify({ event: "auth.invalid_claims", pathname: req.nextUrl.pathname })
+                );
+            }
         }
 
     const pathname = req.nextUrl.pathname;
@@ -84,7 +89,7 @@ export default clerkMiddleware(
         }
     }
 
-    if (!claims.userType) {
+    if (!claims.userType && claims.userId) {
         auditUnclassified({
             userId: claims.userId,
             pathname,
@@ -127,7 +132,11 @@ export default clerkMiddleware(
 });
 
 export const config = {
+    // Run the RBAC proxy on app routes only. Static assets served from
+    // public/ (images/, videos/, favicon, og.png, manifest, icon, robots,
+    // sitemap) must bypass auth entirely — blocking them 302s the browser's
+    // asset requests to sign-in and breaks hero media / 3D textures.
     matcher: [
-        "/((?!_next/static|_next/image|favicon.ico|api|public/sign-in|public/sign-up).*)",
+        "/((?!_next/static|_next/image|api|public/sign-in|public/sign-up|images/|videos/|favicon\\.svg|file\\.svg|globe\\.svg|next\\.svg|vercel\\.svg|window\\.svg|og\\.png|manifest\\.json|icon|robots\\.txt|sitemap\\.xml).*)",
     ],
 };

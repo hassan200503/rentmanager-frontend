@@ -13,6 +13,7 @@ import {
     Settings,
     Star,
     ShieldCheck,
+    Plug,
     ChevronsLeft,
     ChevronsRight,
     Sun,
@@ -39,6 +40,7 @@ const WORKSPACE_NAV: AdminNavItem[] = [
     { label: "Properties", href: "/admin/properties", icon: Home },
     { label: "Reviews", href: "/admin/reviews", icon: Star },
     { label: "Disbursements", href: "/admin/disbursements", icon: Send },
+    { label: "Integrations", href: "/admin/integrations", icon: Plug },
     { label: "Commission policy", href: "/admin/commission", icon: Wallet },
     { label: "Platform settings", href: "/admin/settings", icon: Settings },
 ];

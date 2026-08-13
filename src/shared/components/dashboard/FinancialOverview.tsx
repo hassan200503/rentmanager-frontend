@@ -96,11 +96,12 @@ export default function FinancialOverview() {
           <motion.div
             key={card.label}
             variants={item}
-            className={`card-elevated !p-4 group cursor-default ${isEmpty ? "opacity-80" : ""}`}
+            className={`card-elevated financial-card !p-4 group cursor-default ${isEmpty ? "opacity-85" : ""}`}
           >
-            <div className="flex items-center justify-between mb-3">
+            <span className="financial-card-accent" style={{ backgroundColor: card.color }} />
+            <div className="relative z-10 flex items-center justify-between mb-3">
               <div
-                className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
+                className="flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-black/5 transition-all duration-200 group-hover:shadow-sm group-hover:scale-105 dark:ring-white/10"
                 style={{ backgroundColor: card.bg }}
               >
                 <Icon className="h-4 w-4" strokeWidth={1.75} style={{ color: card.color }} />
@@ -109,18 +110,20 @@ export default function FinancialOverview() {
                 <MiniTrend value={card.trend.value} positive={card.trend.positive} />
               )}
             </div>
-            <p className="kpi-label !text-[10px] mb-0.5">{card.label}</p>
-            <p className={`text-sm font-bold font-mono-nums tracking-tight mb-0.5 ${isEmpty ? "text-fg-subtle dark:text-fg-subtle-dark" : "text-fg dark:text-fg-dark"}`}>
-              {isEmpty ? (
-                <span className="flex items-center gap-1">
-                  <span className="opacity-50">{card.value}</span>
-                  <span className="text-[10px] font-normal text-fg-subtle dark:text-fg-subtle-dark">(no data)</span>
-                </span>
-              ) : (
-                card.value
-              )}
-            </p>
-            <p className="text-[10px] text-fg-muted dark:text-fg-muted-dark">{card.subtitle}</p>
+            <div className="relative z-10">
+              <p className="kpi-label !text-[10px] mb-1">{card.label}</p>
+              <p className={`text-base font-extrabold font-mono-nums tracking-tight mb-1 ${isEmpty ? "text-fg-subtle dark:text-fg-subtle-dark" : "text-fg dark:text-fg-dark"}`}>
+                {isEmpty ? (
+                  <span className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5">
+                    <span className="opacity-55">{card.value}</span>
+                    <span className="text-[10px] font-normal text-fg-subtle dark:text-fg-subtle-dark">(no data)</span>
+                  </span>
+                ) : (
+                  card.value
+                )}
+              </p>
+              <p className="text-[10px] text-fg-muted dark:text-fg-muted-dark">{card.subtitle}</p>
+            </div>
           </motion.div>
         );
       })}

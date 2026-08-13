@@ -8,9 +8,10 @@ interface PropertyRankingProps {
 }
 
 function getOccupancyPercent(p: Property): number {
-  if (p.occupancyStatus === "FULLY_OCCUPIED") return 95 + Math.floor(Math.random() * 5);
-  if (p.occupancyStatus === "PARTIALLY_OCCUPIED") return 40 + Math.floor(Math.random() * 35);
-  if (p.occupancyStatus === "VACANT") return Math.floor(Math.random() * 10);
+  const seed = Array.from(`${p.propertyId ?? p.name ?? ""}`).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  if (p.occupancyStatus === "FULLY_OCCUPIED") return 95 + (seed % 5);
+  if (p.occupancyStatus === "PARTIALLY_OCCUPIED") return 40 + (seed % 35);
+  if (p.occupancyStatus === "VACANT") return seed % 10;
   return 0;
 }
 
@@ -38,12 +39,9 @@ export function PropertyRankingSkeleton() {
 }
 
 export default function PropertyRanking({ properties }: PropertyRankingProps) {
-  const sorted = [...properties]
-    .sort((a, b) => {
-      const aPct = getOccupancyPercent(a);
-      const bPct = getOccupancyPercent(b);
-      return bPct - aPct;
-    })
+  const sorted = properties
+    .map((property) => ({ property, pct: getOccupancyPercent(property) }))
+    .sort((a, b) => b.pct - a.pct)
     .slice(0, 5);
 
   if (sorted.length === 0) {
@@ -59,12 +57,11 @@ export default function PropertyRanking({ properties }: PropertyRankingProps) {
 
   return (
     <div className="space-y-3">
-      {sorted.map((p, i) => {
-        const pct = getOccupancyPercent(p);
+      {sorted.map(({ property: p, pct }, i) => {
         const color = getOccupancyColor(pct);
         return (
-          <div key={p.propertyId} className="flex items-center gap-3 group">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+          <div key={p.propertyId} className="group flex items-center gap-3 rounded-xl border border-transparent px-2 py-2 transition-all duration-150 hover:border-brand/10 hover:bg-brand-50/50 hover:shadow-sm dark:hover:bg-brand-900/10">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/5 transition-transform group-hover:scale-105 dark:ring-white/10"
               style={{
                 backgroundColor: i === 0 ? "var(--color-brand-50)" : "var(--color-border-subtle)",
                 color: i === 0 ? "var(--color-brand)" : "var(--color-fg-muted)",
@@ -77,7 +74,7 @@ export default function PropertyRanking({ properties }: PropertyRankingProps) {
                 <span className="text-xs font-medium text-fg dark:text-fg-dark truncate">{p.name}</span>
                 <span className="text-xs font-mono-nums font-semibold ml-2 shrink-0" style={{ color }}>{pct}%</span>
               </div>
-              <div className="progress-bar">
+              <div className="progress-bar !h-1.5">
                 <div
                   className="progress-bar-fill"
                   style={{ width: `${pct}%`, backgroundColor: color }}

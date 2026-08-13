@@ -6,64 +6,138 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
-import { Loader2, AlertTriangle, Home, CreditCard, AlertCircle as AlertCircleIcon, TrendingUp, ChevronRight, Smartphone, ArrowDownLeft, ArrowUpRight, Receipt, Wallet, Wrench } from "lucide-react";
+import {
+    AlertCircle as AlertCircleIcon,
+    AlertTriangle,
+    ArrowDownLeft,
+    ArrowUpRight,
+    CalendarDays,
+    CheckCircle2,
+    ChevronRight,
+    CreditCard,
+    FileText,
+    Home,
+    Loader2,
+    Receipt,
+    ShieldCheck,
+    Smartphone,
+    TrendingUp,
+    Wallet,
+    Wrench,
+    type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 export const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0 }).format(amount);
+    new Intl.NumberFormat("en-KE", {
+        style: "currency",
+        currency: "KES",
+        maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0,
+    }).format(amount);
 
 export const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
 
 export const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleString("en-KE", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
-const KpiCard = ({ icon, label, value, trend, iconColor, iconBg, className = "" }: {
-    icon: React.ElementType;
+const titleCaseStatus = (status: string) =>
+    status
+        ?.toLowerCase()
+        .split("_")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ") || "Unknown";
+
+const dueSummary = (iso: string | null) => {
+    if (!iso) return "No due date scheduled";
+
+    const due = new Date(iso);
+    const today = new Date();
+    due.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((due.getTime() - today.getTime()) / 86_400_000);
+    if (diffDays < 0) return `${Math.abs(diffDays)} day${diffDays === -1 ? "" : "s"} overdue`;
+    if (diffDays === 0) return "Due today";
+    if (diffDays === 1) return "Due tomorrow";
+    return `Due in ${diffDays} days`;
+};
+
+const statusTone = (status: string) => {
+    const normalized = status?.toUpperCase?.() ?? "";
+    if (["ACTIVE", "PAID", "COMPLETED", "OVERPAID", "APPROVED"].includes(normalized)) return "success";
+    if (["OVERDUE", "TERMINATED", "FAILED", "REJECTED"].includes(normalized)) return "danger";
+    if (["PENDING", "DUE", "PARTIALLY_PAID", "PARTIAL"].includes(normalized)) return "warning";
+    return "neutral";
+};
+
+export const StatusBadge = ({ status }: { status: string }) => (
+    <span className={`tenant-status-chip tenant-status-chip-${statusTone(status)} inline-flex`}>
+        {titleCaseStatus(status)}
+    </span>
+);
+
+const KpiCard = ({
+    icon,
+    label,
+    value,
+    hint,
+    tone = "neutral",
+}: {
+    icon: LucideIcon;
     label: string;
     value: string | number;
-    trend?: { value: number; positive: boolean };
-    iconColor?: string;
-    iconBg?: string;
-    className?: string;
+    hint?: string;
+    tone?: "brand" | "success" | "warning" | "danger" | "neutral";
 }) => {
-    const Icon = icon as React.ComponentType<{ className?: string; strokeWidth?: number }>;
-    
+    const Icon = icon;
+
     return (
-        <div className={`card-elevated transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown ${className}`}>
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" }}>
-                    <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
-                </div>
+        <div className={`tenant-kpi-card tenant-kpi-${tone}`}>
+            <div className="tenant-kpi-icon">
+                <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={1.9} />
             </div>
-            <p className="kpi-label mb-1">{label}</p>
-            <p className="kpi-value mb-1.5" aria-live="polite">{value}</p>
-            {trend && (
-                <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${trend.positive ? "text-success" : "text-danger"}`}>
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-                        <path d={trend.positive ? "M5 1.5L8.5 6H1.5L5 1.5Z" : "M5 7L1.5 2H8.5L5 7Z"} fill="currentColor" />
-                    </svg>
-                    {trend.value}%
-                </span>
-            )}
+            <div className="min-w-0">
+                <p className="tenant-kpi-label">{label}</p>
+                <p className="tenant-kpi-value" aria-live="polite">{value}</p>
+                {hint && <p className="tenant-kpi-hint">{hint}</p>}
+            </div>
         </div>
     );
 };
 
-export const StatusBadge = ({ status }: { status: string }) => {
-    const statusMap: Record<string, string> = {
-        ACTIVE: "badge-emerald",
-        EXPIRED: "badge-neutral",
-        TERMINATED: "badge-danger",
-        PENDING: "badge-warning",
-        DUE: "badge-warning",
-        PARTIALLY_PAID: "badge-info",
-        OVERDUE: "badge-danger",
-        PAID: "badge-emerald",
-        OVERPAID: "badge-brand",
-    };
-    const cls = statusMap[status?.toUpperCase?.()] ?? "badge-neutral";
-    return <span className={`${cls} !text-[10px]`}>{status?.toLowerCase()}</span>;
+const ActionLink = ({
+    href,
+    icon,
+    title,
+    description,
+}: {
+    href: string;
+    icon: LucideIcon;
+    title: string;
+    description: string;
+}) => {
+    const Icon = icon;
+
+    return (
+        <Link href={href} className="tenant-action-row group">
+            <span className="tenant-action-icon">
+                <Icon className="h-4 w-4" strokeWidth={1.9} />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="tenant-action-title">{title}</span>
+                <span className="tenant-action-description">{description}</span>
+            </span>
+            <ChevronRight className="tenant-action-chevron h-4 w-4" strokeWidth={2.2} />
+        </Link>
+    );
 };
 
 export const TenantDashboard = () => {
@@ -88,17 +162,24 @@ export const TenantDashboard = () => {
         try {
             const status = await tenantPortalApi.getPaymentRequestStatus(rid);
             if (status.status === "PAID") {
-                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                if (pollRef.current) {
+                    clearInterval(pollRef.current);
+                    pollRef.current = null;
+                }
                 router.push(`/portal/payment-success?requestId=${rid}`);
                 return true;
             }
             if (status.status === "FAILED") {
-                if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+                if (pollRef.current) {
+                    clearInterval(pollRef.current);
+                    pollRef.current = null;
+                }
                 setPayState("error");
                 setPayMessage("Payment failed. Please try again.");
                 return true;
             }
         } catch {
+            // Polling should stay quiet; the user can manually check again.
         }
         return false;
     }, [router]);
@@ -116,7 +197,7 @@ export const TenantDashboard = () => {
             setRequestId(result.id);
             setSentToPhone(phone);
             setPayState("pending");
-            setPayMessage("STK push sent! Check your phone and enter your M-Pesa PIN to complete payment.");
+            setPayMessage("STK push sent. Check your phone and enter your M-Pesa PIN to complete payment.");
 
             pollRef.current = setInterval(async () => {
                 const done = await checkStatus(result.id);
@@ -132,7 +213,7 @@ export const TenantDashboard = () => {
 
     const refreshStatus = useCallback(async () => {
         if (requestId) {
-            setPayMessage("Checking…");
+            setPayMessage("Checking...");
             await checkStatus(requestId);
         }
     }, [requestId, checkStatus]);
@@ -152,18 +233,22 @@ export const TenantDashboard = () => {
 
     if (isLoading) {
         return (
-            <div className="page-container space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="tenant-dashboard-page page-container space-y-5">
+                <div className="tenant-skeleton-hero" />
+                <div className="tenant-kpi-grid">
                     {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="card-elevated p-4 space-y-2">
-                            <div className="skeleton h-3 w-1/3" />
-                            <div className="skeleton h-7 w-1/2" />
+                        <div key={i} className="tenant-kpi-card">
+                            <div className="skeleton h-9 w-9" />
+                            <div className="flex-1 space-y-2">
+                                <div className="skeleton h-3 w-1/3" />
+                                <div className="skeleton h-7 w-2/3" />
+                            </div>
                         </div>
                     ))}
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="card-elevated p-4"><div className="skeleton h-48 w-full" /></div>
-                    <div className="card-elevated p-4"><div className="skeleton h-48 w-full" /></div>
+                <div className="tenant-dashboard-grid">
+                    <div className="tenant-panel"><div className="skeleton h-60 w-full" /></div>
+                    <div className="tenant-panel"><div className="skeleton h-60 w-full" /></div>
                 </div>
             </div>
         );
@@ -171,11 +256,13 @@ export const TenantDashboard = () => {
 
     if (isError) {
         return (
-            <div className="page-container">
-                <div className="card p-6 text-center max-w-md mx-auto">
-                    <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load dashboard</p>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please try again</p>
+            <div className="tenant-dashboard-page page-container">
+                <div className="tenant-empty-state">
+                    <AlertTriangle className="h-9 w-9 text-danger" strokeWidth={1.6} />
+                    <div>
+                        <p className="tenant-empty-title">Failed to load dashboard</p>
+                        <p className="tenant-empty-copy">Please try again.</p>
+                    </div>
                     <button onClick={() => refetch()} className="btn-outline btn-sm">Retry</button>
                 </div>
             </div>
@@ -184,136 +271,241 @@ export const TenantDashboard = () => {
 
     if (!data) {
         return (
-            <div className="page-container">
-                <div className="card p-8 text-center max-w-md mx-auto">
-                    <Home className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No lease yet</p>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Your portal will activate once your reservation is confirmed and lease is created.</p>
+            <div className="tenant-dashboard-page page-container">
+                <div className="tenant-empty-state">
+                    <Home className="h-10 w-10 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.5} />
+                    <div>
+                        <p className="tenant-empty-title">No lease yet</p>
+                        <p className="tenant-empty-copy">Your portal will activate once your reservation is confirmed and lease is created.</p>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    const { tenantName, tenantPhone, currentBalance, nextDueDate, overdueAmount, leaseStatus, unitNumber, propertyName, monthlyRent } = data;
+    const {
+        tenantName,
+        tenantPhone,
+        currentBalance,
+        nextDueDate,
+        nextDueAmount,
+        overdueAmount,
+        leaseStatus,
+        unitNumber,
+        propertyName,
+        monthlyRent,
+    } = data;
 
+    const firstName = tenantName.split(" ").filter(Boolean)[0] ?? tenantName;
     const isOverdue = overdueAmount > 0;
+    const hasBalance = currentBalance > 0;
     const canPay = leaseStatus === "ACTIVE";
-
     const payButtonDisabled = payState === "initiating" || payState === "pending";
+    const balanceTone = isOverdue ? "is-overdue" : hasBalance ? "is-due" : "is-clear";
+    const balanceHelper = isOverdue
+        ? `${formatCurrency(overdueAmount)} is overdue.`
+        : hasBalance
+            ? "Ready for secure M-Pesa checkout."
+            : "All clear. No rent balance is due right now.";
+    const nextDueText = nextDueDate ? formatDate(nextDueDate) : "-";
+    const payPreviewAmount = parseFloat(payAmount || currentBalance.toString());
 
     return (
-        <div className="page-container space-y-6 animate-fade-in-up">
-            {/* Welcome Header */}
-            <div className="hero-card">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Welcome back</p>
-                        <h1 className="page-title !text-[1.75rem] mt-1">{tenantName}</h1>
-                        <p className="page-subtitle !text-sm mt-1">Unit {unitNumber} · {propertyName}</p>
+        <div className="tenant-dashboard-page page-container animate-fade-in-up">
+            <section className="tenant-hero-panel">
+                <div className="tenant-hero-main">
+                    <div className="tenant-hero-copy">
+                        <p className="tenant-eyebrow">Tenant command center</p>
+                        <h1 className="tenant-hero-title">Welcome back, {firstName}</h1>
+                        <p className="tenant-hero-subtitle">
+                            Unit {unitNumber} at {propertyName}
+                        </p>
+                        <div className="tenant-hero-chips">
+                            <StatusBadge status={leaseStatus} />
+                            <span className="tenant-context-chip">
+                                <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                {dueSummary(nextDueDate)}
+                            </span>
+                            <span className="tenant-context-chip">
+                                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                Verified portal
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
-                            <span className="status-dot-success status-dot-live" />
-                            {leaseStatus?.toLowerCase()}
-                        </span>
+
+                    <div className={`tenant-balance-card ${balanceTone}`}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="tenant-balance-label">Balance due</p>
+                                <p className="tenant-balance-value">{formatCurrency(Math.max(0, currentBalance))}</p>
+                            </div>
+                            <div className="tenant-balance-icon">
+                                {hasBalance ? (
+                                    <Wallet className="h-5 w-5" strokeWidth={1.9} />
+                                ) : (
+                                    <CheckCircle2 className="h-5 w-5" strokeWidth={1.9} />
+                                )}
+                            </div>
+                        </div>
+                        <p className="tenant-balance-copy">{balanceHelper}</p>
+                        <div className="tenant-balance-strip">
+                            <span>
+                                <span>Overdue</span>
+                                <strong>{formatCurrency(overdueAmount)}</strong>
+                            </span>
+                            <span>
+                                <span>Next due</span>
+                                <strong>{nextDueText}</strong>
+                            </span>
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                {/* KPIs */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                    <KpiCard
-                        icon={CreditCard}
-                        label="Balance Due"
-                        value={formatCurrency(Math.max(0, currentBalance))}
-                        iconColor={isOverdue ? "var(--color-danger)" : "var(--color-brand)"}
-                        iconBg={isOverdue ? "var(--color-danger-bg)" : "var(--color-brand-50)"}
-                        trend={isOverdue ? { value: Math.round((overdueAmount / monthlyRent) * 100), positive: false } : undefined}
-                    />
-                    <KpiCard
-                        icon={AlertCircleIcon}
-                        label="Overdue"
-                        value={formatCurrency(overdueAmount)}
-                        iconColor="var(--color-danger)"
-                        iconBg="var(--color-danger-bg)"
-                    />
-                    <KpiCard
-                        icon={TrendingUp}
-                        label="Next Due"
-                        value={nextDueDate ? formatDate(nextDueDate) : "—"}
-                        iconColor={isOverdue ? "var(--color-warning)" : "var(--color-success)"}
-                        iconBg={isOverdue ? "var(--color-warning-bg)" : "var(--color-success-bg)"}
-                    />
-                    <KpiCard
-                        icon={Home}
-                        label="Monthly Rent"
-                        value={formatCurrency(monthlyRent)}
-                        iconColor="var(--color-brand)"
-                        iconBg="var(--color-brand-50)"
-                    />
-                </div>
-            </div>
+            <section className="tenant-kpi-grid" aria-label="Rent summary">
+                <KpiCard
+                    icon={CreditCard}
+                    label="Balance Due"
+                    value={formatCurrency(Math.max(0, currentBalance))}
+                    hint={hasBalance ? "Outstanding now" : "Account settled"}
+                    tone={isOverdue ? "danger" : hasBalance ? "warning" : "success"}
+                />
+                <KpiCard
+                    icon={AlertCircleIcon}
+                    label="Overdue"
+                    value={formatCurrency(overdueAmount)}
+                    hint={isOverdue ? "Needs attention" : "No arrears"}
+                    tone={isOverdue ? "danger" : "neutral"}
+                />
+                <KpiCard
+                    icon={TrendingUp}
+                    label="Next Due"
+                    value={nextDueText}
+                    hint={nextDueAmount > 0 ? formatCurrency(nextDueAmount) : dueSummary(nextDueDate)}
+                    tone={isOverdue ? "warning" : "brand"}
+                />
+                <KpiCard
+                    icon={Home}
+                    label="Monthly Rent"
+                    value={formatCurrency(monthlyRent)}
+                    hint="Recurring lease charge"
+                    tone="neutral"
+                />
+            </section>
 
-            {/* Quick Actions & Payment History */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="card-elevated lg:col-span-2">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="section-header !text-sm !mb-0">Recent Payments</h3>
-                        <Link href="/portal/payments" className="inline-flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "var(--color-brand)" }}>
-                            View all <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
+            <div className="tenant-dashboard-grid">
+                <section className="tenant-panel tenant-ledger-panel">
+                    <div className="tenant-panel-header">
+                        <div>
+                            <p className="tenant-panel-kicker">Ledger</p>
+                            <h2 className="tenant-panel-title">Recent payments</h2>
+                        </div>
+                        <Link href="/portal/payments" className="tenant-panel-link">
+                            View all <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.4} />
                         </Link>
                     </div>
                     <TenantRecentPayments payments={data.recentPayments} />
-                </div>
+                </section>
 
-                <div className="card-elevated">
-                    <h3 className="section-header !text-sm !mb-4">Quick Actions</h3>
-                    <div className="space-y-3">
-                        {payState === "phone_prompt" && canPay && (
-                            <div className="card-sm space-y-3 mb-3">
-                                <p className="text-xs font-medium text-fg dark:text-fg-dark">Pay {formatCurrency(parseFloat(payAmount || currentBalance.toString()))}</p>
-                                <div>
-                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">Amount</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark font-mono-nums text-sm">KSh</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0.01"
-                                            value={payAmount || currentBalance}
-                                            onChange={(e) => setPayAmount(e.target.value)}
-                                            className="input-field pl-12 w-full text-sm"
-                                            disabled={payButtonDisabled}
-                                        />
-                                    </div>
+                <aside className="tenant-panel tenant-payment-panel">
+                    <div className="tenant-panel-header">
+                        <div>
+                            <p className="tenant-panel-kicker">M-Pesa checkout</p>
+                            <h2 className="tenant-panel-title">Quick actions</h2>
+                        </div>
+                        <span className="tenant-secure-chip">
+                            <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
+                            Secure
+                        </span>
+                    </div>
+
+                    <div className="tenant-payment-stack">
+                        {payState === "idle" && canPay && (
+                            <div className="tenant-pay-box">
+                                <div className="tenant-pay-box-header">
+                                    <span>Amount to pay</span>
+                                    <strong>{formatCurrency(payPreviewAmount || 0)}</strong>
                                 </div>
-                                <div>
-                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">M-Pesa Number</label>
+                                <label className="tenant-field-label" htmlFor="tenant-pay-amount">Amount</label>
+                                <div className="tenant-money-input">
+                                    <span>KSh</span>
                                     <input
-                                        type="tel"
-                                        value={mpesaPhone || tenantPhone || ""}
-                                        onChange={(e) => setMpesaPhone(e.target.value)}
-                                        placeholder="+254712345678"
-                                        className="input-field w-full text-sm"
-                                        disabled={payButtonDisabled}
-                                        onKeyDown={(e) => { if (e.key === "Enter") initiatePayment(); }}
+                                        id="tenant-pay-amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={payAmount || currentBalance}
+                                        onChange={(e) => setPayAmount(e.target.value)}
+                                        className="tenant-input pl-12"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 pt-1">
+                                <button
+                                    onClick={() => setPayState("phone_prompt")}
+                                    disabled={!payAmount && currentBalance <= 0}
+                                    className="tenant-primary-action"
+                                >
+                                    <Smartphone className="h-4 w-4" strokeWidth={2} />
+                                    Continue to Payment
+                                </button>
+                                <p className="tenant-payment-footnote">
+                                    {hasBalance ? "You will confirm the phone number before the STK push is sent." : "No balance is due. Enter a custom amount to make an advance payment."}
+                                </p>
+                            </div>
+                        )}
+
+                        {payState === "phone_prompt" && canPay && (
+                            <div className="tenant-pay-box">
+                                <div className="tenant-pay-box-header">
+                                    <span>Confirm payment</span>
+                                    <strong>{formatCurrency(payPreviewAmount || 0)}</strong>
+                                </div>
+                                <label className="tenant-field-label" htmlFor="tenant-confirm-amount">Amount</label>
+                                <div className="tenant-money-input">
+                                    <span>KSh</span>
+                                    <input
+                                        id="tenant-confirm-amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={payAmount || currentBalance}
+                                        onChange={(e) => setPayAmount(e.target.value)}
+                                        className="tenant-input pl-12"
+                                        disabled={payButtonDisabled}
+                                    />
+                                </div>
+                                <label className="tenant-field-label" htmlFor="tenant-mpesa-phone">M-Pesa number</label>
+                                <input
+                                    id="tenant-mpesa-phone"
+                                    type="tel"
+                                    value={mpesaPhone || tenantPhone || ""}
+                                    onChange={(e) => setMpesaPhone(e.target.value)}
+                                    placeholder="+254712345678"
+                                    className="tenant-input"
+                                    disabled={payButtonDisabled}
+                                    onKeyDown={(e) => { if (e.key === "Enter") initiatePayment(); }}
+                                />
+                                <div className="grid grid-cols-[1fr_auto] gap-2">
                                     <button
                                         onClick={initiatePayment}
                                         disabled={payButtonDisabled || !(mpesaPhone || tenantPhone)}
-                                        className="btn-primary btn-sm flex-1"
+                                        className="tenant-primary-action"
                                     >
                                         {payButtonDisabled ? (
-                                            <><Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} /> Sending...</>
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                                                Sending...
+                                            </>
                                         ) : (
-                                            <><Smartphone className="h-3 w-3" strokeWidth={2} /> Pay {formatCurrency(parseFloat(payAmount || currentBalance.toString()))}</>
+                                            <>
+                                                <Smartphone className="h-4 w-4" strokeWidth={2} />
+                                                Pay now
+                                            </>
                                         )}
                                     </button>
                                     <button
                                         onClick={resetPay}
                                         disabled={payButtonDisabled}
-                                        className="btn-outline btn-sm"
+                                        className="tenant-secondary-action"
                                     >
                                         Cancel
                                     </button>
@@ -322,103 +514,72 @@ export const TenantDashboard = () => {
                         )}
 
                         {payState === "initiating" && (
-                            <div className="card-sm space-y-2 mb-3">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
-                                    <span className="font-medium text-fg dark:text-fg-dark">Sending payment request…</span>
+                            <div className="tenant-payment-state">
+                                <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
+                                <div>
+                                    <p>Sending payment request</p>
+                                    <span>Preparing your M-Pesa STK push.</span>
                                 </div>
                             </div>
                         )}
 
                         {payState === "pending" && (
-                            <div className="card-sm space-y-2 mb-3">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
-                                    <span className="font-medium text-fg dark:text-fg-dark">Awaiting M-Pesa confirmation</span>
+                            <div className="tenant-payment-state">
+                                <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
+                                <div className="min-w-0">
+                                    <p>Awaiting M-Pesa confirmation</p>
+                                    <span>{payMessage}</span>
+                                    {sentToPhone && <span>Sent to <strong>{sentToPhone}</strong></span>}
+                                    <button onClick={refreshStatus} className="tenant-secondary-action mt-3">Check status</button>
                                 </div>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{payMessage}</p>
-                                {sentToPhone && (
-                                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
-                                        Sent to <span className="font-medium font-mono-nums">{sentToPhone}</span>
-                                    </p>
-                                )}
-                                <button onClick={refreshStatus} className="btn-outline btn-sm mt-1">Check Status</button>
                             </div>
                         )}
 
                         {payState === "error" && (
-                            <div className="card-sm space-y-2 mb-3">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <AlertTriangle className="h-4 w-4 text-danger" strokeWidth={2} />
-                                    <span className="font-medium text-danger">Payment failed</span>
-                                </div>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{payMessage}</p>
-                                <button onClick={resetPay} className="btn-outline btn-sm">Try again</button>
-                            </div>
-                        )}
-
-                        {payState === "idle" && canPay && (
-                            <div className="space-y-3 mb-3">
+                            <div className="tenant-payment-state is-error">
+                                <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
                                 <div>
-                                    <label className="text-[10px] uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark mb-1 block">Amount to pay</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted dark:text-fg-muted-dark font-mono-nums text-sm">KSh</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0.01"
-                                            value={payAmount || currentBalance}
-                                            onChange={(e) => setPayAmount(e.target.value)}
-                                            className="input-field pl-12 w-full text-sm"
-                                        />
-                                    </div>
+                                    <p>Payment failed</p>
+                                    <span>{payMessage}</span>
+                                    <button onClick={resetPay} className="tenant-secondary-action mt-3">Try again</button>
                                 </div>
-                                <button
-                                    onClick={() => setPayState("phone_prompt")}
-                                    disabled={!payAmount && currentBalance <= 0}
-                                    className="btn-primary w-full justify-center gap-2 py-2.5"
-                                >
-                                    <Smartphone className="h-5 w-5" strokeWidth={1.75} />
-                                    Continue to Payment
-                                </button>
                             </div>
                         )}
 
-                        <Link href="/portal/payments" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
-                                <CreditCard className="h-4 w-4" strokeWidth={1.75} />
+                        {!canPay && (
+                            <div className="tenant-payment-state">
+                                <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={2} />
+                                <div>
+                                    <p>Payments paused</p>
+                                    <span>Your lease status is {titleCaseStatus(leaseStatus)}.</span>
+                                </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-fg dark:text-fg-dark">View Payment History</p>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Download receipts, check status</p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
-                        </Link>
-                        <Link href="/portal/lease" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
-                                <Home className="h-4 w-4" strokeWidth={1.75} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-fg dark:text-fg-dark">Lease Agreement</p>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">View terms, landlord contacts</p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
-                        </Link>
-                        <Link href="/portal/maintenance" className="group flex items-center gap-3 p-3 rounded-xl border border-border dark:border-border-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all duration-200">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
-                                <Wrench className="h-4 w-4" strokeWidth={1.75} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-fg dark:text-fg-dark">Maintenance Request</p>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Submit a repair request</p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
-                        </Link>
+                        )}
+
+                        <div className="tenant-action-list">
+                            <ActionLink
+                                href="/portal/payments"
+                                icon={CreditCard}
+                                title="View payment history"
+                                description="Receipts, status, and ledger details"
+                            />
+                            <ActionLink
+                                href="/portal/lease"
+                                icon={FileText}
+                                title="Lease agreement"
+                                description="Terms, rent cycle, and contacts"
+                            />
+                            <ActionLink
+                                href="/portal/maintenance"
+                                icon={Wrench}
+                                title="Maintenance request"
+                                description="Submit and track repair requests"
+                            />
+                        </div>
                     </div>
-                </div>
+                </aside>
             </div>
 
-            {/* Rate the platform */}
             <PlatformReviewCard />
         </div>
     );
@@ -438,12 +599,14 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
 }> }) => {
     if (!payments || payments.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-border-subtle dark:bg-border-subtle-dark mb-3">
-                    <CreditCard className="h-6 w-6 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={1.5} />
+            <div className="tenant-ledger-empty">
+                <div className="tenant-ledger-empty-icon">
+                    <CreditCard className="h-5 w-5" strokeWidth={1.7} />
                 </div>
-                <p className="text-sm font-medium text-fg dark:text-fg-dark">No payments yet</p>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">Your payment history will appear here</p>
+                <div>
+                    <p>No payments yet</p>
+                    <span>Your payment history will appear here once a transaction is recorded.</span>
+                </div>
             </div>
         );
     }
@@ -458,36 +621,42 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
         DEPOSIT: "Deposit",
     };
 
-    const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-        PAYMENT: { icon: ArrowDownLeft, color: "var(--color-success)", bg: "var(--color-success-bg)" },
-        RENT_CHARGE: { icon: ArrowUpRight, color: "var(--color-danger)", bg: "var(--color-danger-bg)" },
-        DEPOSIT: { icon: Wallet, color: "var(--color-brand)", bg: "var(--color-brand-50)" },
+    const TYPE_META: Record<string, { icon: LucideIcon; tone: string }> = {
+        PAYMENT: { icon: ArrowDownLeft, tone: "success" },
+        RENT_CHARGE: { icon: ArrowUpRight, tone: "danger" },
+        DEPOSIT: { icon: Wallet, tone: "brand" },
+        REFUND: { icon: ArrowUpRight, tone: "warning" },
     };
 
     return (
-        <div className="space-y-2">
+        <div className="tenant-ledger-list">
             {payments.slice(0, 5).map((tx) => {
-                const meta = TYPE_META[tx.type] ?? { icon: Receipt, color: "var(--color-fg-muted)", bg: "var(--color-border-subtle)" };
-                const MetaIcon = meta.icon as React.ComponentType<{ className?: string; strokeWidth?: number }>;
+                const meta = TYPE_META[tx.type] ?? { icon: Receipt, tone: "neutral" };
+                const MetaIcon = meta.icon;
+                const reference = tx.mpesaTransactionId
+                    ? `M-Pesa: ${tx.mpesaTransactionId}`
+                    : tx.externalReference ?? tx.source;
+                const isCharge = tx.type === "RENT_CHARGE";
+                const amountPrefix = isCharge ? "+" : tx.type === "ADJUSTMENT" ? "" : "-";
+
                 return (
-                    <div key={tx.id} className="card-sm flex items-center gap-3 p-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: meta.bg, color: meta.color }}>
+                    <div key={tx.id} className="tenant-ledger-row">
+                        <div className={`tenant-ledger-icon tenant-ledger-icon-${meta.tone}`}>
                             <MetaIcon className="h-4 w-4" strokeWidth={2} />
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm text-fg dark:text-fg-dark">{TYPE_LABELS[tx.type] ?? tx.type}</p>
-                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark truncate">
+                        <div className="tenant-ledger-main">
+                            <div className="tenant-ledger-title-line">
+                                <p>{TYPE_LABELS[tx.type] ?? titleCaseStatus(tx.type)}</p>
+                                <StatusBadge status={tx.status} />
+                            </div>
+                            <p className="tenant-ledger-meta">
                                 {formatDate(tx.occurredAt)}
-                                {tx.externalReference ? ` · ${tx.externalReference}` : ""}
-                                {tx.mpesaTransactionId ? ` · M-Pesa: ${tx.mpesaTransactionId}` : ""}
+                                {reference ? ` - ${reference}` : ""}
                             </p>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <p className={`font-mono-nums font-semibold text-sm ${tx.type === "RENT_CHARGE" ? "text-danger" : tx.type === "PAYMENT" ? "text-success" : "text-fg"}`}>
-                                {tx.type === "RENT_CHARGE" ? "+" : tx.type === "ADJUSTMENT" ? "" : "−"}{formatCurrency(tx.amount)}
-                            </p>
-                            <StatusBadge status={tx.status} />
-                        </div>
+                        <p className={`tenant-ledger-amount ${isCharge ? "is-charge" : "is-credit"}`}>
+                            {amountPrefix}{formatCurrency(tx.amount)}
+                        </p>
                     </div>
                 );
             })}

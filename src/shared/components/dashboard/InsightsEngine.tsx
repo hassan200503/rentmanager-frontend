@@ -98,10 +98,10 @@ export default function InsightsEngine({
     }
   }
 
-  const toneStyles: Record<string, { bg: string; icon: string; border: string }> = {
-    positive: { bg: "bg-success-bg/50 dark:bg-success-bg-dark/30", icon: "text-success dark:text-success", border: "border-success/20" },
-    negative: { bg: "bg-warning-bg/50 dark:bg-warning-bg-dark/30", icon: "text-warning-dark dark:text-warning", border: "border-warning/20" },
-    neutral: { bg: "bg-info-bg/50 dark:bg-info-bg-dark/30", icon: "text-info dark:text-info", border: "border-info/20" },
+  const toneStyles: Record<string, { bg: string; icon: string; border: string; accent: string }> = {
+    positive: { bg: "bg-success-bg/55 dark:bg-success-bg-dark/30", icon: "text-success dark:text-success", border: "border-success/20", accent: "bg-success" },
+    negative: { bg: "bg-warning-bg/55 dark:bg-warning-bg-dark/30", icon: "text-warning-dark dark:text-warning", border: "border-warning/20", accent: "bg-warning" },
+    neutral: { bg: "bg-info-bg/55 dark:bg-info-bg-dark/30", icon: "text-info dark:text-info", border: "border-info/20", accent: "bg-info" },
   };
 
   return (
@@ -112,10 +112,11 @@ export default function InsightsEngine({
         return (
           <div
             key={i}
-            className={`flex items-start gap-3 rounded-xl border p-4 ${styles.bg} ${styles.border} animate-slide-up`}
+            className={`relative flex items-start gap-3 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card ${styles.bg} ${styles.border} animate-slide-up`}
             style={{ animationDelay: `${i * 80}ms` }}
           >
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${styles.bg} ${styles.icon}`}>
+            <span className={`absolute inset-y-3 left-0 w-0.5 rounded-r-full ${styles.accent}`} />
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10 ${styles.icon}`}>
               <Icon className="h-3.5 w-3.5" strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
@@ -126,7 +127,7 @@ export default function InsightsEngine({
               {insight.actionLabel && insight.actionHref && (
                 <Link
                   href={insight.actionHref}
-                  className="link-brand inline-flex items-center gap-1 text-xs font-semibold mt-2 hover:underline"
+                  className="link-brand mt-3 inline-flex items-center gap-1 rounded-full border border-brand/20 bg-white/50 px-2.5 py-1 text-xs font-semibold shadow-sm hover:no-underline dark:bg-white/5"
                 >
                   {insight.actionLabel}
                   <ArrowRight className="h-3 w-3" strokeWidth={2.5} />

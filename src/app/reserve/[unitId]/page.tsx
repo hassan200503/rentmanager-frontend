@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
+import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 // --- Types ---
 interface UnitDetails {
@@ -205,7 +206,7 @@ export default function ReservationPage() {
 
             router.push(`/reserve/waiting?paymentIntentId=${paymentIntentId}`);
         } catch (err: unknown) {
-            setSubmitError(err instanceof Error ? err.message : "Unexpected error.");
+            setSubmitError(getProcessErrorMessage(err, "Unexpected error."));
             setSubmitting(false);
         }
     };

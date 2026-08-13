@@ -21,6 +21,7 @@ import {
     CircleDashed,
     UserPlus,
     ArrowUpRight,
+    Plug,
 } from "lucide-react";import {
     BarChart,
     Bar,
@@ -45,6 +46,7 @@ const TONE_MAP: Record<string, string> = {
     amber: "from-amber-500 to-amber-600",
     blue: "from-sky-500 to-sky-600",
     rose: "from-rose-500 to-rose-600",
+    teal: "from-teal-500 to-cyan-600",
 };
 
 function compactKes(value: number) {
@@ -412,6 +414,7 @@ function OverviewContent() {
                     <ModuleCard title="Renters" description="Directory of all renters across the platform" icon={Users} tone="emerald" href="/admin/renters" />
                     <ModuleCard title="Properties" description="Platform-wide property and unit inventory" icon={Home} tone="violet" href="/admin/properties" />
                     <ModuleCard title="Disbursements" description="Monitor and retry MPESA payout batches" icon={Send} tone="blue" href="/admin/disbursements" />
+                    <ModuleCard title="Integrations" description="Configure M-Pesa, SMS, WhatsApp, email, storage and auth providers" icon={Plug} tone="teal" href="/admin/integrations" />
                     <ModuleCard title="Commission policy" description="Default and per-landlord commission rates" icon={Wallet} tone="amber" href="/admin/commission" />
                     <ModuleCard title="Platform settings" description="Branding, environment and configuration" icon={Settings} tone="rose" href="/admin/settings" />
                 </div>

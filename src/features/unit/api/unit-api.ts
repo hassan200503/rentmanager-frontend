@@ -68,7 +68,7 @@ export const unitApi = {
         if (params.status && params.propertyId) {
             const query = buildPageQuery({ ...params, size: params.size ?? 100 });
             const endpoint = params.search
-                ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&propertyId=${encodeURIComponent(params.propertyId)}&${query}`
+                ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}`
                 : `${unitEndpoints.byProperty(params.propertyId)}?${query}`;
 
             const page = await apiClient.get<UnitPageResponse>(endpoint, token, tenantId);
@@ -85,7 +85,7 @@ export const unitApi = {
         const query = buildPageQuery(params);
 
         const endpoint = params.search
-            ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&propertyId=${encodeURIComponent(params.propertyId)}&${query}`
+            ? `${unitEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}`
             : `${unitEndpoints.byProperty(params.propertyId)}?${query}`;
 
         return apiClient.get<UnitPageResponse>(endpoint, token, tenantId);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePlatformBrandingQuery } from "@/features/admin/hooks/use-platform-branding";
-import { BadgeMark, BrandBadge } from "./BrandBadge";
+import { BadgeMark, BrandBadge, ON_DARK_WORDMARK } from "./BrandBadge";
 
 interface PlatformBrandProps {
   size?: "sm" | "md" | "lg";
@@ -38,7 +38,7 @@ export function PlatformBrand({ size = "md", showTag, withName = true, onDark }:
 
   if (logoUrl && !broken) {
     return (
-      <span className={`inline-flex items-center ${s.gap}`}>
+      <span className={`inline-flex items-center whitespace-nowrap ${s.gap}`}>
         <img
           src={logoUrl}
           alt={`${platformName} logo`}
@@ -49,11 +49,7 @@ export function PlatformBrand({ size = "md", showTag, withName = true, onDark }:
         />
         {withName && (
           <span
-            className={`font-display font-semibold tracking-tight ${s.textSize} ${
-              onDark
-                ? "bg-gradient-to-r from-white via-white to-jade-300 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(16,185,129,0.35)]"
-                : "text-fg dark:text-fg-dark"
-            }`}
+            className={`${onDark ? ON_DARK_WORDMARK : "font-display font-semibold tracking-[-0.02em] text-fg dark:text-fg-dark"} ${s.textSize}`}
           >
             {platformName}
           </span>

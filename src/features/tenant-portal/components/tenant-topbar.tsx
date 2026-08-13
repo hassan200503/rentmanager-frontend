@@ -47,13 +47,13 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                 : "text-success-dark dark:text-success";
 
     return (
-        <header className="h-14 bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-xl border-b border-border/60 dark:border-border-dark/60 flex items-center justify-between px-3 sm:px-5 sticky top-0 z-30">
+        <header className="tenant-topbar h-14 flex items-center justify-between px-3 sm:px-5 sticky top-0 z-30">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <button
                     type="button"
                     onClick={onOpenMenu}
                     aria-label="Open menu"
-                    className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface dark:bg-surface-dark border border-border dark:border-border-dark text-fg-muted dark:text-fg-muted-dark shadow-card"
+                    className="tenant-topbar-menu md:hidden flex h-9 w-9 shrink-0 items-center justify-center"
                 >
                     <Menu className="h-4 w-4" strokeWidth={2} />
                 </button>
@@ -63,7 +63,7 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                             {pageTitle}
                         </h1>
                         {data?.leaseStatus && (
-                            <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-700">
+                            <span className="tenant-status-chip tenant-status-chip-success hidden sm:inline-flex shrink-0">
                                 <span className="status-dot-success status-dot-live" />
                                 {data.leaseStatus.toLowerCase()}
                             </span>
@@ -75,7 +75,7 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Balance chip */}
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-border-subtle/50 dark:bg-border-subtle-dark/50 text-xs">
+                <div className="tenant-topbar-balance hidden sm:flex items-center gap-1.5 text-xs">
                     <Wallet className="h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
                     <span className="text-fg-muted dark:text-fg-muted-dark">{balanceLabel}</span>
                     <span className={`font-data font-semibold tabular-nums ${balanceTone}`}>{formatCurrency(balanceValue)}</span>
@@ -84,7 +84,7 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                 <button
                     type="button"
                     aria-label="Help"
-                    className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-border-subtle dark:hover:bg-border-subtle-dark transition-all duration-150"
+                    className="tenant-topbar-button hidden sm:flex h-8 w-8 items-center justify-center"
                 >
                     <HelpCircle className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
                 </button>
@@ -93,7 +93,7 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                     type="button"
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     aria-label="Toggle theme"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-border-subtle dark:hover:bg-border-subtle-dark transition-all duration-150"
+                    className="tenant-topbar-button flex h-8 w-8 items-center justify-center"
                 >
                     {mounted && theme === "dark" ? (
                         <Sun className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />

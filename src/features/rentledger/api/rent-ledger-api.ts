@@ -61,9 +61,11 @@ export const rentLedgerApi = {
 
     resolveUnmatchedPayment: async (request: ResolveUnmatchedPaymentRequest): Promise<void> => {
         const { token, tenantId } = await getAuthContext();
+        // The backend DTO accepts only { unitId } — the transaction id lives
+        // in the URL path. Sending extra fields risks strict deserializers.
         return apiClient.post<void>(
             rentLedgerEndpoints.resolveUnmatched(request.transactionId),
-            request,
+            { unitId: request.unitId },
             token,
             tenantId
         );

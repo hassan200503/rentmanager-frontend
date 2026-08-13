@@ -105,6 +105,12 @@ export default function PortfolioAlerts({
     success: "text-success-dark dark:text-success",
   };
 
+  const iconBgMap = {
+    warning: "bg-warning-bg dark:bg-warning-bg-dark",
+    info: "bg-info-bg dark:bg-info-bg-dark",
+    success: "bg-success-bg dark:bg-success-bg-dark",
+  };
+
   return (
     <div className="space-y-2.5">
       {visible.map((alert) => {
@@ -112,17 +118,19 @@ export default function PortfolioAlerts({
         return (
           <div
             key={alert.id}
-            className={`alert-card ${alertClassMap[alert.variant]} animate-slide-up`}
+            className={`alert-card ${alertClassMap[alert.variant]} animate-slide-up shadow-sm`}
             style={{ animationDelay: `${alerts.indexOf(alert) * 50}ms` }}
           >
-            <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${colorMap[alert.variant]}`} strokeWidth={2} />
+            <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-black/5 dark:ring-white/10 ${iconBgMap[alert.variant]}`}>
+              <Icon className={`h-4 w-4 ${colorMap[alert.variant]}`} strokeWidth={2} />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-fg dark:text-fg-dark">{alert.title}</p>
               <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">{alert.description}</p>
               {alert.actionLabel && alert.actionHref && (
                 <Link
                   href={alert.actionHref}
-                  className="inline-flex items-center gap-1 text-xs font-medium mt-2 hover:underline"
+                  className="mt-3 inline-flex items-center gap-1 rounded-full border border-brand/20 bg-white/50 px-2.5 py-1 text-xs font-semibold hover:no-underline dark:bg-white/5"
                   style={{ color: "var(--color-brand)" }}
                 >
                   {alert.actionLabel}

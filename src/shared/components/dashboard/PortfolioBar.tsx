@@ -26,13 +26,13 @@ export default function PortfolioBar({ active, underMaintenance, draft, archived
 
     return (
         <div className="space-y-4">
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-border-subtle shadow-inner ring-1 ring-black/5 dark:bg-border-subtle-dark dark:ring-white/10">
                 {total > 0 ?
                     segments.map((seg) =>
                         seg.value > 0 ? (
                             <div
                                 key={seg.label}
-                                className={seg.barClass}
+                                className={`${seg.barClass} transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]`}
                                 style={{ width: `${(seg.value / total) * 100}%` }}
                                 title={`${seg.label}: ${seg.value}`}
                             />
@@ -40,16 +40,16 @@ export default function PortfolioBar({ active, underMaintenance, draft, archived
                     ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {total === 0 ? (
                     <p className="text-xs text-fg-muted dark:text-fg-muted-dark">No properties yet.</p>
                 ) : (
                     segments.map((seg) => (
-                        <div key={seg.label} className="flex items-center gap-2 text-xs">
+                        <div key={seg.label} className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface/60 px-3 py-2 text-xs shadow-sm dark:border-border-dark/60 dark:bg-surface-dark/60">
                             <span className={`h-2 w-2 rounded-full shrink-0 ${seg.dotClass}`} aria-hidden />
-                            <span className="text-fg-muted dark:text-fg-muted-dark">{seg.label}</span>
+                            <span className="min-w-0 flex-1 truncate text-fg-muted dark:text-fg-muted-dark">{seg.label}</span>
                             <span className="font-mono-nums font-semibold text-fg dark:text-fg-dark">{seg.value}</span>
-                            <span className="text-fg-subtle dark:text-fg-subtle-dark">({Math.round((seg.value / total) * 100)}%)</span>
+                            <span className="font-mono-nums text-fg-subtle dark:text-fg-subtle-dark">({Math.round((seg.value / total) * 100)}%)</span>
                         </div>
                     ))
                 )}

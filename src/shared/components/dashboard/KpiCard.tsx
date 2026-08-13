@@ -105,11 +105,11 @@ export default function KpiCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-      className="card-elevated group cursor-default"
+      className="card-elevated kpi-card-premium group cursor-default min-h-[10rem] !p-4 sm:!p-5"
     >
-      <div className="flex items-start justify-between mb-3">
+      <div className="relative z-10 flex items-start justify-between mb-4">
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-black/5 transition-all duration-200 group-hover:shadow-sm group-hover:scale-105 dark:ring-white/10"
           style={{ backgroundColor: iconBg || "var(--color-brand-50)", color: iconColor || "var(--color-brand)" } as CSSProperties}
         >
           {/* @ts-expect-error - React 19 ElementType inference issue */}
@@ -118,30 +118,33 @@ export default function KpiCard({
         <div className="flex items-center gap-2">
           {badge && (
             <span className={`badge badge-${badge.variant} !text-[10px] !px-2 !py-0`}>
+              <span className="status-badge-dot" />
               {badge.label}
             </span>
           )}
         </div>
       </div>
-      <p className="kpi-label mb-1">{label}</p>
-      <p className="kpi-value mb-1.5" aria-live="polite">
-        {isFormatted ? value : displayValue.toLocaleString()}
-      </p>
-      <div className="flex items-center gap-2">
-        {trend && (
-          <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${trend.positive ? "kpi-trend-up" : "kpi-trend-down"}`}>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-              <path d={trend.positive ? "M5 1.5L8.5 7H1.5L5 1.5Z" : "M5 8.5L1.5 3H8.5L5 8.5Z"} fill="currentColor" />
-            </svg>
-            {trend.value}%
-          </span>
-        )}
-        {subtitle && <span className="text-xs text-fg-muted dark:text-fg-muted-dark">{subtitle}</span>}
-        {sparklineData && !trend && (
-          <span className="ml-auto">
-            <MiniSparkline data={sparklineData} />
-          </span>
-        )}
+      <div className="relative z-10">
+        <p className="kpi-label mb-2">{label}</p>
+        <p className="kpi-value mb-2" aria-live="polite">
+          {isFormatted ? value : displayValue.toLocaleString()}
+        </p>
+        <div className="flex min-h-6 items-center gap-2">
+          {trend && (
+            <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold ${trend.positive ? "bg-success-bg text-success dark:bg-success-bg-dark" : "bg-danger-bg text-danger dark:bg-danger-bg-dark"}`}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                <path d={trend.positive ? "M5 1.5L8.5 7H1.5L5 1.5Z" : "M5 8.5L1.5 3H8.5L5 8.5Z"} fill="currentColor" />
+              </svg>
+              {trend.value}%
+            </span>
+          )}
+          {subtitle && <span className="truncate text-xs text-fg-muted dark:text-fg-muted-dark">{subtitle}</span>}
+          {sparklineData && !trend && (
+            <span className="ml-auto">
+              <MiniSparkline data={sparklineData} />
+            </span>
+          )}
+        </div>
       </div>
     </motion.div>
   );

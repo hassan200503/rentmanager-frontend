@@ -11,7 +11,6 @@ export const unitEndpoints = {
     archive: (id: string) => `${base}/${id}/archive`,
     markOccupied: (id: string) => `${base}/${id}/occupied`,
     markVacant: (id: string) => `${base}/${id}/vacant`,
-    uploadImage: (id: string) => `${base}/${id}/image`,
     uploadMedia: (id: string) => `${base}/${id}/media`,
     remove: (id: string) => `${base}/${id}`,
 };

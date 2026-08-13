@@ -23,6 +23,7 @@ const PAGE_CRUMBS: { prefix: string; label: string }[] = [
     { prefix: "/admin/properties", label: "Properties" },
     { prefix: "/admin/reviews", label: "Reviews" },
     { prefix: "/admin/disbursements", label: "Disbursements" },
+    { prefix: "/admin/integrations", label: "Integrations" },
     { prefix: "/admin/commission", label: "Commission policy" },
     { prefix: "/admin/settings", label: "Platform settings" },
 ];

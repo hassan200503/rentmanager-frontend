@@ -1,27 +1,31 @@
 // features/reviews/components/reviews-page.tsx
+// Landlord Reviews hub: ratings received, moderation state across BOTH
+// review directions (renter reviews + the account's platform review),
+// premium write cards for rating renters and RentManager, and the
+// Received / Given lists.
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
     AlertTriangle,
-    Loader2,
     MessageSquarePlus,
     Quote,
+    Sparkles,
     Star,
     UserRound,
     Users,
 } from "lucide-react";
-import { toast } from "sonner";
-import { useLeaseSearchQuery } from "@/features/lease/queries/use-lease-search-query";
 import {
+    useMyPlatformReviewQuery,
     useReviewCountsQuery,
     useRenterReviewsQuery,
     useReviewsQuery,
     useReviewSummaryQuery,
 } from "../hooks/use-review-query";
-import { useSubmitRenterReviewMutation } from "../hooks/use-review-mutations";
 import { ReviewStatusBadge } from "./review-status-badge";
-import { reviewStatusOrder, type ReviewStatus } from "../types/review-response";
+import { PlatformReviewCard } from "./platform-review-card";
+import { RateRenterCard } from "./rate-renter-card";
+import { reviewStatusOrder, type PlatformReviewResponse, type ReviewStatus } from "../types/review-response";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -40,29 +44,6 @@ function Stars({ value, size = "h-3.5 w-3.5" }: { value: number; size?: string }
                     }`}
                     strokeWidth={1.5}
                 />
-            ))}
-        </div>
-    );
-}
-
-function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-    return (
-        <div className="flex items-center gap-1.5">
-            {[1, 2, 3, 4, 5].map((i) => (
-                <button
-                    key={i}
-                    type="button"
-                    onClick={() => onChange(i)}
-                    aria-label={`Rate ${i} star${i === 1 ? "" : "s"}`}
-                    className="rounded-md p-0.5 transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                >
-                    <Star
-                        className={`h-7 w-7 transition-all duration-200 ${
-                            i <= value ? "fill-amber-400 text-amber-400" : "text-border dark:text-border-dark"
-                        }`}
-                        strokeWidth={1.5}
-                    />
-                </button>
             ))}
         </div>
     );
@@ -106,6 +87,39 @@ function RenterReviewCard({ comment, rating, renterName, createdAt, status }: Re
     );
 }
 
+/** The account's review of RentManager, rendered inside the Given list. */
+function PlatformReviewRow({ review }: { review: PlatformReviewResponse }) {
+    return (
+        <div className="relative overflow-hidden rounded-xl border border-border dark:border-border-dark bg-gradient-to-br from-brand/[0.04] to-transparent dark:from-brand/[0.07] p-4">
+            <Sparkles className="pointer-events-none absolute -top-1 -right-1 h-14 w-14 rotate-12 text-brand/10 dark:text-brand/15" strokeWidth={1.5} aria-hidden />
+            <div className="relative flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-600 text-white shadow-sm shadow-brand/20">
+                        <Sparkles className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                    <p className="truncate text-sm font-medium text-fg dark:text-fg-dark">
+                        RentManager
+                        <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand dark:text-brand-400">
+                            The platform
+                        </span>
+                    </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                    <Stars value={review.rating} />
+                    <ReviewStatusBadge status={review.status} />
+                </div>
+            </div>
+            {review.comment && (
+                <p className="relative mt-2 text-sm leading-relaxed text-fg-muted dark:text-fg-muted-dark">
+                    {review.comment}
+                </p>
+            )}            <p className="relative mt-2 text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
+                {formatDate(review.createdAt)}
+            </p>
+        </div>
+    );
+}
+
 const FILTERS: { key: Filter; label: string }[] = [
     { key: "ALL", label: "All" },
     ...reviewStatusOrder.map((s) => ({ key: s as Filter, label: reviewMetaLabel(s) })),
@@ -122,138 +136,6 @@ function reviewMetaLabel(status: ReviewStatus): string {
     }
 }
 
-/* ── Review a renter form ──────────────────────────────────── */
-
-function ReviewRenterForm({ onDone }: { onDone: () => void }) {
-    const { data: leases, isLoading: leasesLoading } = useLeaseSearchQuery({ size: 100 });
-    const submit = useSubmitRenterReviewMutation();
-
-    const renterOptions = useMemo(() => {
-        const seen = new Set<string>();
-        const out: { tenantProfileId: string; label: string }[] = [];
-        for (const lease of leases?.content ?? []) {
-            if (!lease.tenantProfileId) continue;
-            const label = lease.tenantFullName ?? "Renter";
-            const key = lease.tenantProfileId;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            out.push({ tenantProfileId: key, label });
-        }
-        return out;
-    }, [leases]);
-
-    const [profileId, setProfileId] = useState("");
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState("");
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!profileId || rating < 1) return;
-        submit.mutate(
-            { tenantProfileId: profileId, rating, comment: comment.trim() || null },
-            {
-                onSuccess: () => {
-                    toast.success("Review submitted — it will appear once approved");
-                    setProfileId("");
-                    setRating(0);
-                    setComment("");
-                    onDone();
-                },
-                onError: () => {
-                    toast.error("Failed to submit review. Please try again.");
-                },
-            }
-        );
-    };
-
-    return (
-        <div className="card p-5 sm:p-6">
-            <div className="mb-4 flex items-center gap-2">
-                <MessageSquarePlus className="h-4 w-4 text-brand" strokeWidth={2} />
-                <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Review a renter</h3>
-            </div>
-
-            {leasesLoading ? (
-                <div className="skeleton h-24 w-full" />
-            ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-2">
-                        <label className="form-label" htmlFor="review-renter">
-                            Renter <span className="text-danger">*</span>
-                        </label>
-                        <select
-                            id="review-renter"
-                            value={profileId}
-                            onChange={(e) => setProfileId(e.target.value)}
-                            className="form-input w-full"
-                            disabled={renterOptions.length === 0}
-                        >
-                            <option value="">
-                                {renterOptions.length === 0
-                                    ? "No renters found on your leases"
-                                    : "Select a renter…"}
-                            </option>
-                            {renterOptions.map((o) => (
-                                <option key={o.tenantProfileId} value={o.tenantProfileId}>
-                                    {o.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="form-label">Your rating <span className="text-danger">*</span></label>
-                        <StarInput value={rating} onChange={setRating} />
-                        {rating === 0 && (
-                            <p className="text-xs text-fg-subtle dark:text-fg-subtle-dark">Tap a star to rate</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="form-label !mb-0">Comment</label>
-                            <span className="text-[11px] font-mono-nums text-fg-subtle dark:text-fg-subtle-dark">
-                                {comment.length}/1000
-                            </span>
-                        </div>
-                        <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            placeholder="How was this renter? Timely payments, unit care, communication…"
-                            className="form-input min-h-[96px] resize-y"
-                            rows={3}
-                            maxLength={1000}
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 pt-1">
-                        <p className="text-xs text-fg-subtle dark:text-fg-subtle-dark">
-                            One review per renter — it&apos;s public once approved.
-                        </p>
-                        <button
-                            type="submit"
-                            disabled={!profileId || rating < 1 || submit.isPending}
-                            className="btn-primary"
-                        >
-                            {submit.isPending ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                                    Submitting...
-                                </>
-                            ) : (
-                                <>
-                                    <Star className="h-4 w-4" strokeWidth={2} />
-                                    Submit Review
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
-            )}
-        </div>
-    );
-}
-
 /* ── Page ──────────────────────────────────────────────────── */
 
 export function ReviewsPage() {
@@ -261,10 +143,10 @@ export function ReviewsPage() {
     const { data: counts, isLoading: countsLoading, isError: countsError, refetch: refetchCounts } = useReviewCountsQuery();
     const { data: reviews, isLoading: reviewsLoading, isError: reviewsError, refetch: refetchReviews } = useReviewsQuery();
     const { data: renterReviews, isLoading: renterLoading, isError: renterError, refetch: refetchRenter } = useRenterReviewsQuery();
+    const { data: myPlatformReview } = useMyPlatformReviewQuery();
 
     const [tab, setTab] = useState<Tab>("received");
     const [filter, setFilter] = useState<Filter>("ALL");
-    const [formOpen, setFormOpen] = useState(false);
 
     const loading = summaryLoading || countsLoading || reviewsLoading || renterLoading;
     const anyError = summaryError || countsError || reviewsError || renterError;
@@ -277,8 +159,19 @@ export function ReviewsPage() {
 
     const showAverage = summary?.averageShown === true && summary.averageRating != null;
 
+    // Moderation state spans BOTH review directions: renter reviews
+    // (backend counts) plus this account's platform review.
+    const platformStatus = myPlatformReview?.status ?? null;
+    const moderationCounts = {
+        approved: (counts?.approvedCount ?? 0) + (platformStatus === "APPROVED" ? 1 : 0),
+        pending: (counts?.pendingCount ?? 0) + (platformStatus === "PENDING" ? 1 : 0),
+        hidden: (counts?.hiddenCount ?? 0) + (platformStatus === "HIDDEN" ? 1 : 0),
+    };
+
     const given = renterReviews ?? [];
     const givenFiltered = filter === "ALL" ? given : given.filter((r) => r.status === filter);
+    const platformShown = myPlatformReview != null && (filter === "ALL" || myPlatformReview.status === filter);
+    const givenTotal = given.length + (myPlatformReview ? 1 : 0);
 
     return (
         <div className="space-y-6">
@@ -327,7 +220,7 @@ export function ReviewsPage() {
                         )}
                     </div>
 
-                    {/* Moderation state */}
+                    {/* Moderation state — both directions */}
                     <div className="card p-5">
                         <p className="text-xs font-medium uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
                             Moderation state
@@ -336,7 +229,7 @@ export function ReviewsPage() {
                             {reviewStatusOrder.map((status) => (
                                 <div key={status} className="rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-3 text-center">
                                     <p className="text-2xl font-semibold text-fg dark:text-fg-dark">
-                                        {status === "APPROVED" ? counts?.approvedCount ?? 0 : status === "PENDING" ? counts?.pendingCount ?? 0 : counts?.hiddenCount ?? 0}
+                                        {status === "APPROVED" ? moderationCounts.approved : status === "PENDING" ? moderationCounts.pending : moderationCounts.hidden}
                                     </p>
                                     <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-fg-muted dark:text-fg-muted-dark">
                                         {reviewMetaLabel(status)}
@@ -345,19 +238,35 @@ export function ReviewsPage() {
                             ))}
                         </div>
                         <p className="mt-3 text-[11px] leading-relaxed text-fg-subtle dark:text-fg-subtle-dark">
-                            Reviews go live only after platform approval.
+                            Covers your renter reviews and your RentManager review. Reviews go live only after platform approval.
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* Tabs + actions */}
+            {/* Write surfaces — rate a renter, rate the platform */}
+            <section className="pt-1">
+                <div className="mb-3 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-border dark:via-border-dark dark:to-border-dark" aria-hidden="true" />
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-subtle dark:text-fg-subtle-dark">
+                        <Sparkles className="h-3 w-3 text-brand" strokeWidth={2.5} aria-hidden="true" />
+                        Rate &amp; review
+                    </span>
+                    <span className="h-px flex-1 bg-gradient-to-l from-transparent via-border to-border dark:via-border-dark dark:to-border-dark" aria-hidden="true" />
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <RateRenterCard />
+                    <PlatformReviewCard />
+                </div>
+            </section>
+
+            {/* Tabs */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-1 rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-1">
                     {(
                         [
                             { key: "received" as Tab, label: `Received (${(reviews ?? []).length})` },
-                            { key: "given" as Tab, label: `Given (${given.length})` },
+                            { key: "given" as Tab, label: `Given (${givenTotal})` },
                         ]
                     ).map((t) => (
                         <button
@@ -374,38 +283,25 @@ export function ReviewsPage() {
                         </button>
                     ))}
                 </div>
-                <div className="flex items-center gap-2.5">
-                    {tab === "given" && (
-                        <div className="flex items-center gap-1 rounded-xl bg-surface dark:bg-surface-dark p-1">
-                            {FILTERS.map((f) => (
-                                <button
-                                    key={f.key}
-                                    type="button"
-                                    onClick={() => setFilter(f.key)}
-                                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
-                                        filter === f.key
-                                            ? "bg-brand text-white shadow-sm"
-                                            : "text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark"
-                                    }`}
-                                >
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    {tab === "given" && !formOpen && (
-                        <button type="button" onClick={() => setFormOpen(true)} className="btn-primary btn-sm">
-                            <Star className="h-3.5 w-3.5" strokeWidth={2} />
-                            Review a renter
-                        </button>
-                    )}
-                </div>
+                {tab === "given" && (
+                    <div className="flex items-center gap-1 rounded-xl bg-surface dark:bg-surface-dark p-1">
+                        {FILTERS.map((f) => (
+                            <button
+                                key={f.key}
+                                type="button"
+                                onClick={() => setFilter(f.key)}
+                                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                                    filter === f.key
+                                        ? "bg-brand text-white shadow-sm"
+                                        : "text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark"
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
-
-            {/* Review a renter form */}
-            {tab === "given" && formOpen && (
-                <ReviewRenterForm onDone={() => setFormOpen(false)} />
-            )}
 
             {/* Lists */}
             {tab === "received" ? (
@@ -433,33 +329,29 @@ export function ReviewsPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {givenFiltered.length === 0 ? (
+                    {myPlatformReview && platformShown && (
+                        <PlatformReviewRow review={myPlatformReview} />
+                    )}
+                    {givenFiltered.map((review) => (
+                        <RenterReviewCard
+                            key={review.id}
+                            renterName={review.renterName}
+                            rating={review.rating}
+                            comment={review.comment}
+                            status={review.status}
+                            createdAt={review.createdAt}
+                        />
+                    ))}
+                    {givenFiltered.length === 0 && !platformShown && (
                         <div className="card p-8 text-center">
                             <MessageSquarePlus className="mx-auto h-8 w-8 text-fg-subtle opacity-60" strokeWidth={1.5} />
                             <p className="mt-3 text-sm font-medium text-fg dark:text-fg-dark">
                                 {filter === "ALL" ? "You haven't reviewed anyone yet" : `No ${reviewMetaLabel(filter).toLowerCase()} reviews`}
                             </p>
                             <p className="mt-1 text-sm text-fg-muted dark:text-fg-muted-dark">
-                                Review a renter after a recorded tenancy so other landlords know what to expect.
+                                Rate a renter — or RentManager — from the cards above.
                             </p>
-                            {filter === "ALL" && (
-                                <button type="button" onClick={() => setFormOpen(true)} className="mt-4 btn-outline btn-sm">
-                                    <Star className="h-3.5 w-3.5" strokeWidth={2} />
-                                    Review a renter
-                                </button>
-                            )}
                         </div>
-                    ) : (
-                        givenFiltered.map((review) => (
-                            <RenterReviewCard
-                                key={review.id}
-                                renterName={review.renterName}
-                                rating={review.rating}
-                                comment={review.comment}
-                                status={review.status}
-                                createdAt={review.createdAt}
-                            />
-                        ))
                     )}
                 </div>
             )}

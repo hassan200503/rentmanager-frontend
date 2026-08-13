@@ -63,15 +63,16 @@ export default function QuickActions() {
           <motion.div key={action.label} variants={item}>
             <Link
               href={action.href}
-              className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 dark:border-border-dark/60 p-4 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700/40 hover:shadow-card-hover hover:-translate-y-0.5 bg-surface dark:bg-surface-dark"
+              className="group relative flex min-h-[8.25rem] flex-col items-start gap-2 overflow-hidden rounded-2xl border border-border/60 bg-surface p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover dark:border-border-dark/60 dark:bg-surface-dark dark:hover:border-brand-700/40"
             >
+              <span className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-brand/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               <div
-                className="flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 group-hover:shadow-sm group-hover:scale-105"
+                className="flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-black/5 transition-all duration-200 group-hover:scale-105 group-hover:shadow-sm dark:ring-white/10"
                 style={{ backgroundColor: action.bg }}
               >
                 <Icon className="h-4 w-4" strokeWidth={1.75} style={{ color: action.color }} />
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex w-full items-center gap-1">
                 <span className="text-xs font-semibold text-fg dark:text-fg-dark">{action.label}</span>
                 <ArrowUpRight className="h-3 w-3 text-fg-muted dark:text-fg-muted-dark opacity-0 group-hover:opacity-100 transition-all duration-200" strokeWidth={2} />
               </div>

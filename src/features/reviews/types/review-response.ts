@@ -22,6 +22,7 @@ export interface LandlordReviewResponse {
 
 export interface RenterReviewResponse {
     id: string;
+    tenantProfileId: string;
     renterName: string;
     rating: number;
     comment: string;

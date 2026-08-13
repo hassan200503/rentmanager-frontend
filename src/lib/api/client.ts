@@ -124,8 +124,18 @@ async function request<T>(
     }
 
     if (!res.ok || !data?.success) {
+        const serverMessage =
+            typeof data?.message === "string" && data.message.trim() ? data.message : "";
+        // 5xx bodies can contain server internals (SQL fragments, stack
+        // traces, constraint names). Never surface those verbatim — map to a
+        // generic copy and keep the raw payload in `details` for observability.
+        // 4xx business messages are backend-authored UI copy and safe to show.
+        const message =
+            res.status >= 500 && res.status !== 429
+                ? "The server could not process this request. Please try again later."
+                : serverMessage || "Request failed";
         throw new ApiError({
-            message: data?.message || "Request failed",
+            message,
             status: res.status,
             code: (data?.errorCode as string) ?? "BUSINESS_ERROR",
             details: data,
