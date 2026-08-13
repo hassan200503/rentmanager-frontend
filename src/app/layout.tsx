@@ -1,7 +1,7 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Inter, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
+import { Inter, IBM_Plex_Mono, Instrument_Serif, Fraunces } from "next/font/google";
 import dynamic from "next/dynamic";
 
 import QueryProvider from "@/providers/query-provider";
@@ -32,6 +32,16 @@ const instrumentSerif = Instrument_Serif({
     variable: "--font-display-face",
     weight: ["400"],
     style: ["normal", "italic"],
+});
+
+/* Premium brand wordmark face — Fraunces variable with optical sizing:
+   tight, editorial serif that reads luxury real estate (Christie's,
+   Sotheby's territory) while staying crisp at nav sizes. */
+const fraunces = Fraunces({
+    subsets: ["latin"],
+    variable: "--font-brand-face",
+    style: ["normal", "italic"],
+    axes: ["opsz"],
 });
 
 const defaultMetadata = {
@@ -89,7 +99,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
+        <html lang="en" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
         <body className="antialiased">
         <SkipLink />
         <QueryProvider>

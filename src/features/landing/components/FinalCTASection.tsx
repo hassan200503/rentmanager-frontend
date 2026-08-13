@@ -21,8 +21,16 @@ export function FinalCTASection() {
           inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
         }`}
       >
-        <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-jade-400 bg-jade-500/10 border border-jade-500/20 px-4 py-1.5 rounded-full">
+        <span className="inline-flex items-center gap-2.5 text-[11px] font-semibold tracking-widest uppercase text-jade-400 bg-jade-500/10 border border-jade-500/20 px-4 py-1.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-jade-400 animate-live-pulse" aria-hidden="true" />
+          <span className="flex items-center gap-1 font-brand font-semibold normal-case tracking-[-0.01em] text-[14px] text-jade-300">
+            <span>RentManager</span>
+            <span
+              aria-hidden="true"
+              className="h-1 w-1 rotate-45 rounded-[0.5px] bg-jade-300 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+            />
+          </span>
+          <span className="w-px h-3.5 bg-white/15" aria-hidden="true" />
           Kenya&apos;s trusted rental platform
         </span>
 
@@ -30,7 +38,8 @@ export function FinalCTASection() {
           Ready to find your next home?
         </h2>
         <p className="text-lg text-white/60 mt-5 max-w-lg mx-auto [text-wrap:balance]">
-          Join thousands of Kenyans who find and reserve their homes on RentManager.
+          Join thousands of Kenyans who find and reserve their homes on{" "}
+          <span className="font-brand font-semibold text-white">RentManager</span>.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

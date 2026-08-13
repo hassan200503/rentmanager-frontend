@@ -126,7 +126,7 @@ export function PlatformReviewCard() {
                     </p>
                 </div>
                 {hasReview && (
-                    <span className={`tenant-review-status ${reviewStatusMeta[existing!.status].chip}`}>
+                    <span className={`tenant-review-status inline-flex ${reviewStatusMeta[existing!.status].chip}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${reviewStatusMeta[existing!.status].dot}`} />
                         {existing!.status === "APPROVED"
                             ? "Live"

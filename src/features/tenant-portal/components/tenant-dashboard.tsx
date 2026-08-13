@@ -322,11 +322,11 @@ export const TenantDashboard = () => {
                         </p>
                         <div className="tenant-hero-chips">
                             <StatusBadge status={leaseStatus} />
-                            <span className="tenant-context-chip">
+                            <span className="tenant-context-chip inline-flex">
                                 <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.9} />
                                 {dueSummary(nextDueDate)}
                             </span>
-                            <span className="tenant-context-chip">
+                            <span className="tenant-context-chip inline-flex">
                                 <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.9} />
                                 Verified portal
                             </span>
@@ -413,7 +413,7 @@ export const TenantDashboard = () => {
                             <p className="tenant-panel-kicker">M-Pesa checkout</p>
                             <h2 className="tenant-panel-title">Quick actions</h2>
                         </div>
-                        <span className="tenant-secure-chip">
+                        <span className="tenant-secure-chip inline-flex">
                             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
                             Secure
                         </span>

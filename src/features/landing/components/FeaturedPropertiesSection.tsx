@@ -30,6 +30,7 @@ export function FeaturedPropertiesSection({
             <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-jade-400">
               <span className="w-8 h-px bg-gradient-to-r from-transparent to-jade-500/60" aria-hidden="true" />
               Featured
+              <span className="w-8 h-px bg-gradient-to-l from-transparent to-jade-500/60" aria-hidden="true" />
             </span>
             <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white mt-4 [text-wrap:balance]">
               Available properties

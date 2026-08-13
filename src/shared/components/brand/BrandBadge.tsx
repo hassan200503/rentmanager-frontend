@@ -12,11 +12,11 @@ const sizes = {
   lg: { logoSize: 26, textSize: "text-base", gap: "gap-3" },
 };
 
-/* Premium dark-surface wordmark — white melting into jade with a
-   soft glow so it stays legible over video/photos while reading
-   expensive. Shared with the platform-logo branch of PlatformBrand. */
+/* Premium dark-surface wordmark — Fraunces brand serif, white melting
+   into jade with a soft glow so it stays legible over video/photos while
+   reading expensive. Shared with the platform-logo branch of PlatformBrand. */
 export const ON_DARK_WORDMARK =
-  "font-display font-semibold tracking-[-0.02em] bg-gradient-to-r from-white via-white to-jade-300 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(16,185,129,0.45)]";
+  "font-brand font-semibold tracking-[-0.01em] bg-gradient-to-r from-white via-white to-jade-300 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(16,185,129,0.45)]";
 
 /* The wordmark over light surfaces — ink tokens track the theme. */
 const LIGHT_WORDMARK = "font-display font-semibold tracking-[-0.02em] text-fg dark:text-fg-dark";
@@ -77,9 +77,27 @@ export function BrandBadge({ size = "md", showTag, onDark }: BrandBadgeProps) {
         size={s.logoSize}
         className={onDark ? "drop-shadow-[0_0_12px_rgba(16,185,129,0.4)]" : ""}
       />
-      <span className={`${onDark ? ON_DARK_WORDMARK : LIGHT_WORDMARK} ${s.textSize}`}>
-        RentManager
-      </span>
+      {onDark ? (
+        /* Landing / dark-surface wordmark: two-tone brand serif with a
+           jade diamond device — "Rent" in white, "Manager" in a jade
+           gradient, capped by the signature brand mark. */
+        <span className={`${s.textSize}`}>
+          <span className="inline-flex items-center font-brand font-semibold tracking-[-0.01em]">
+            <span className="text-white">Rent</span>
+            <span className="bg-gradient-to-r from-jade-200 via-jade-300 to-emerald-400 bg-clip-text text-transparent">
+              Manager
+            </span>
+            <span
+              aria-hidden="true"
+              className="ml-[3px] h-1.5 w-1.5 rotate-45 rounded-[1px] bg-gradient-to-br from-jade-300 to-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+            />
+          </span>
+        </span>
+      ) : (
+        <span className={`${LIGHT_WORDMARK} ${s.textSize}`}>
+          RentManager
+        </span>
+      )}
       {showTag && (
         <span className="ml-1 text-[10px] font-medium text-brand bg-brand-50 dark:bg-brand-900/30 dark:text-brand-300 px-1.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-700">
           BETA

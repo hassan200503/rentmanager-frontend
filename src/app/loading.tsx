@@ -7,8 +7,11 @@ export default function Loading() {
         <PlatformLogoMark size={26} />
       </div>
       <div className="flex flex-col items-center gap-3">
-        <span className="font-display text-sm font-semibold tracking-tight text-fg dark:text-fg-dark">
-          RentManager
+        <span className="flex items-center gap-1 font-brand text-sm font-semibold tracking-[-0.01em] text-fg dark:text-fg-dark">
+          <span>Rent</span>
+          <span className="bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent dark:from-emerald-400 dark:to-emerald-200">
+            Manager
+          </span>
         </span>
         <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand/25 border-t-brand" />
         <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Preparing your workspace…</span>

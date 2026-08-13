@@ -166,7 +166,16 @@ function BrandIntroScreen({ reduced }: DemoScreenProps) {
         <div className="flex h-24 w-24 items-center justify-center rounded-[1.75rem] bg-white shadow-xl shadow-emerald-900/10 ring-1 ring-slate-900/5">
           <PlatformLogoMark size={58} />
         </div>
-        <p className="mt-5 font-display text-[26px] font-semibold tracking-tight text-slate-900">RentManager</p>
+        <p className="mt-5 flex items-center justify-center gap-1.5 font-brand text-[26px] font-semibold tracking-[-0.01em] text-slate-900">
+          <span>Rent</span>
+          <span className="bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
+            Manager
+          </span>
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 rotate-45 rounded-[1px] bg-gradient-to-br from-emerald-500 to-emerald-700"
+          />
+        </p>
         <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-slate-400">Property management · Kenya</p>
       </div>
 

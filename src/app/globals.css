@@ -119,6 +119,7 @@
 
   /* ── Typography ────────────────────────────────────────────── */
   --font-display: var(--font-display-face), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-brand-face), var(--font-display), ui-serif, Georgia, serif;
   --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, "IBM Plex Mono", monospace;
   --font-data: var(--font-mono), ui-monospace, "IBM Plex Mono", monospace;
@@ -3625,7 +3626,6 @@ section[id], div[id] {
 .tenant-secure-chip,
 .tenant-review-status,
 .tenant-status-chip {
-  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   width: fit-content;
