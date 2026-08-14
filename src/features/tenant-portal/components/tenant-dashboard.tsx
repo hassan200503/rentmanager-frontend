@@ -5,7 +5,6 @@ import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tenantPortalApi } from "../api/tenant-portal-api";
-import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
 import {
     AlertCircle as AlertCircleIcon,
     AlertTriangle,
@@ -579,8 +578,6 @@ export const TenantDashboard = () => {
                     </div>
                 </aside>
             </div>
-
-            <PlatformReviewCard />
         </div>
     );
 };

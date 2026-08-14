@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
 import { isPremiumLandlord, type TenantLeaseResponse } from "../api/tenant-portal-api";
-import { TenantReviewCard } from "./tenant-review-card";
-import { TenantRatingsReceived } from "./tenant-ratings-received";
 
 const formatMemberSince = (iso: string | null) => {
     if (!iso) return null;
@@ -514,12 +512,6 @@ export const TenantLandlordPage = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Your ratings from this landlord (V65) */}
-            <TenantRatingsReceived />
-
-            {/* Landlord review (Phase 4b) */}
-            <TenantReviewCard />
         </div>
     );
 };

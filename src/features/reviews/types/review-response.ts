@@ -50,6 +50,7 @@ export interface PlatformReviewResponse {
     type: PlatformReviewType;
     reviewId: string;
     reviewerName: string | null;
+    reviewerType: "LANDLORD" | "RENTER" | null;
     rating: number;
     comment: string | null;
     status: ReviewStatus;

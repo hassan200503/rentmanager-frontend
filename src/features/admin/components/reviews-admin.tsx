@@ -39,6 +39,11 @@ const DIRECTION_META: Record<
     PLATFORM: { label: "User → RentManager", chip: "bg-amber-50 text-amber-700 border-amber-300/40", icon: Sparkles },
 };
 
+const REVIEWER_ROLE_META: Record<"LANDLORD" | "RENTER", string> = {
+    LANDLORD: "Landlord",
+    RENTER: "Renter",
+};
+
 function StatsPanel() {
     const { data, isPending, isError } = useAdminReviewStatsQuery();
 
@@ -129,6 +134,18 @@ function ReviewRow({ review }: { review: PlatformReviewResponse }) {
     const direction = DIRECTION_META[review.type] ?? DIRECTION_META.LANDLORD;
     const DirectionIcon = direction.icon;
 
+    // Platform reviews carry the author's side (LANDLORD/RENTER); never
+    // render an email-lookalike snapshot (e.g. "unknown@clerk.user") on
+    // the admin surface — fall back to the neutral label.
+    const isPlatformReview = review.type === "PLATFORM";
+    const roleChip = isPlatformReview && review.reviewerType
+        ? { label: `${REVIEWER_ROLE_META[review.reviewerType]} → RentManager`, chip: direction.chip }
+        : null;
+    const displayName =
+        review.reviewerName && !review.reviewerName.includes("@")
+            ? review.reviewerName
+            : "Verified user";
+
     const isPending = approve.isPending || hide.isPending;
 
     const handleApprove = () => {
@@ -164,11 +181,11 @@ function ReviewRow({ review }: { review: PlatformReviewResponse }) {
                     </span>
                     <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-fg dark:text-fg-dark">
-                            {review.reviewerName || "Unknown reviewer"}
+                            {displayName}
                         </p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${direction.chip}`}>
-                                {direction.label}
+                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${roleChip?.chip ?? direction.chip}`}>
+                                {roleChip?.label ?? direction.label}
                             </span>
                             <span className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
                                 {formatDate(review.createdAt)}

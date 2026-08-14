@@ -103,6 +103,13 @@ function PlatformReviewRow({ review }: { review: PlatformReviewResponse }) {
                             The platform
                         </span>
                     </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
+                        {review.reviewerType === "RENTER"
+                            ? "Rated as a renter"
+                            : review.reviewerType === "LANDLORD"
+                              ? "Rated as a landlord"
+                              : "Platform user"}
+                    </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                     <Stars value={review.rating} />

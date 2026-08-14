@@ -12,11 +12,13 @@ interface TestimonialItem {
   name: string;
   text: string;
   rating: number;
+  role: "LANDLORD" | "RENTER" | null;
 }
 
 interface PublicTestimonial {
   reviewId: string;
   reviewerFirstName: string | null;
+  reviewerType: "LANDLORD" | "RENTER" | null;
   rating: number;
   comment: string | null;
   createdAt: string;
@@ -45,6 +47,7 @@ export function TestimonialsSection() {
         name: t.reviewerFirstName ?? "Verified user",
         text: t.comment ?? "",
         rating: t.rating,
+        role: t.reviewerType,
       })),
     [live]
   );
@@ -159,10 +162,15 @@ export function TestimonialsSection() {
                     <span className="w-9 h-9 rounded-full bg-gradient-to-br from-jade-500/30 to-jade-600/20 flex items-center justify-center text-sm font-bold text-jade-300 border border-jade-500/20" aria-hidden="true">
                       {t.name[0]}
                     </span>
-                    <p className="text-sm font-semibold text-white flex items-center gap-1.5">
-                      {t.name}
-                      <BadgeCheck className="w-3.5 h-3.5 text-jade-400" strokeWidth={2} aria-label="Verified user" />
-                    </p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white flex items-center gap-1.5">
+                        {t.name}
+                        <BadgeCheck className="w-3.5 h-3.5 text-jade-400" strokeWidth={2} aria-label="Verified user" />
+                      </p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-jade-300/70 mt-0.5">
+                        {t.role === "RENTER" ? "Renter" : t.role === "LANDLORD" ? "Landlord" : "Platform user"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

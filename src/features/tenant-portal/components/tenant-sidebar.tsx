@@ -13,6 +13,7 @@ import {
     HelpCircle,
     Building2,
     Megaphone,
+    Star,
     Sparkles,
     X,
     Sun,
@@ -44,6 +45,7 @@ const baseNavItems: NavItem[] = [
     { href: "/portal/payments", label: "Payments", icon: CreditCard },
     { href: "/portal/lease", label: "Lease", icon: FileText },
     { href: "/portal/landlord", label: "Landlord", icon: Building2 },
+    { href: "/portal/reviews", label: "Reviews", icon: Star },
     { href: "/portal/announcements", label: "Announcements", icon: Megaphone },
 ];
 
@@ -316,8 +318,8 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
     const pathname = usePathname();
 
     return (
-        <nav className="tenant-mobile-tabs md:hidden fixed bottom-0 inset-x-0 z-40 safe-area-bottom">
-            <div className="flex items-center justify-around h-16 px-2">
+        <nav className="tenant-mobile-tabs md:hidden fixed bottom-0 inset-x-0 z-40 safe-area-bottom overflow-x-auto custom-scrollbar">
+            <div className="flex items-center justify-around gap-1 h-16 px-2 w-max mx-auto">
                 {baseNavItems.map((item) => {
                     const active = isItemActive(pathname, item.href);
                     const Icon = item.icon;
@@ -325,7 +327,7 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] ${
+                            className={`tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] shrink-0 ${
                                 active ? "text-brand dark:text-brand-400" : "text-fg-subtle dark:text-fg-subtle-dark"
                             } ${active ? "is-active" : ""}`}
                         >
@@ -339,7 +341,7 @@ function MobileTabBar({ onOpenMore }: { onOpenMore: () => void }) {
                 <button
                     type="button"
                     onClick={onOpenMore}
-                    className="tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] text-fg-subtle dark:text-fg-subtle-dark"
+                    className="tenant-mobile-tab flex flex-col items-center gap-1 px-3 py-1.5 min-w-[3.5rem] shrink-0 text-fg-subtle dark:text-fg-subtle-dark"
                     aria-label="Open more"
                 >
                     <MenuIcon className="h-5 w-5" strokeWidth={1.75} />
