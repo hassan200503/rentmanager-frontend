@@ -82,7 +82,15 @@ export function LandingPage() {
           onRetry={() => void propertiesQuery.refetch()}
         />
         <TestimonialsSection />
-        <Premium3DKenyaMapSection />
+        <Premium3DKenyaMapSection
+          verifiedCount={unitsQuery.data?.totalElements}
+          verifiedCountUpdatedAt={
+            unitsQuery.dataUpdatedAt
+              ? new Date(unitsQuery.dataUpdatedAt).toISOString()
+              : undefined
+          }
+          verifiedCountError={unitsQuery.isError}
+        />
         <StatsSection totalProperties={totalProperties} totalUnits={totalUnits} cityCount={CITIES.length} />
         <WhyRentManagerSection />
         <Premium3DDashboardSection />

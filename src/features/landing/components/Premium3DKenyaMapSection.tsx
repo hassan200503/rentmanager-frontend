@@ -8,8 +8,25 @@ import { SectionHeader } from "./SectionHeader";
 import { Kenya3DMapScene, KENYA_CITIES, type CityDef } from "./Kenya3DMap/Kenya3DMapScene";
 import { GrainOverlay } from "./CoverageSection/GrainOverlay";
 import { AmbientMesh } from "./CoverageSection/AmbientMesh";
+import { VerifiedStat } from "./CoverageSection/VerifiedStat";
 import { useScrollReveal } from "@/shared/hooks/useScrollReveal";
+import { useShouldAnimate } from "@/features/landing/hooks/useShouldAnimate";
 import { AnimatedGradient } from "@/shared/components/premium-3d";
+
+interface Premium3DKenyaMapSectionProps {
+  /** Layer 1 — static film grain over the map. */
+  grain?: boolean;
+  /** Layer 2 — ambient drifting gradient mesh behind the map. */
+  ambientMesh?: boolean;
+  /** Layer 3 — breathing marker beacons + live verified-count readout. */
+  livePulse?: boolean;
+  /** Verified listings count (`undefined` while loading). */
+  verifiedCount?: number;
+  /** ISO timestamp of the fetch that produced `verifiedCount`. */
+  verifiedCountUpdatedAt?: string;
+  /** Verified-count fetch failed — VerifiedStat falls back to static copy. */
+  verifiedCountError?: boolean;
+}
 
 /**
  * Premium 3D Kenya Coverage Map Section
@@ -18,13 +35,15 @@ import { AnimatedGradient } from "@/shared/components/premium-3d";
 export function Premium3DKenyaMapSection({
   grain = true,
   ambientMesh = true,
-}: {
-  grain?: boolean;
-  ambientMesh?: boolean;
-}) {
+  livePulse = true,
+  verifiedCount,
+  verifiedCountUpdatedAt,
+  verifiedCountError = false,
+}: Premium3DKenyaMapSectionProps) {
   const [hoveredCity, setHoveredCity] = useState<CityDef | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityDef | null>(null);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.15 });
+  const shouldAnimate = useShouldAnimate(ref);
 
   const handleCityHover = useCallback((city: CityDef | null) => {
     setHoveredCity(city);
@@ -42,7 +61,7 @@ export function Premium3DKenyaMapSection({
         <div className="absolute inset-0 bg-grid-white opacity-10" />
       </div>
 
-      {ambientMesh && <AmbientMesh isAnimating />}
+      {ambientMesh && <AmbientMesh isAnimating={shouldAnimate} />}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
@@ -65,7 +84,11 @@ export function Premium3DKenyaMapSection({
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-square glass-premium rounded-2xl overflow-hidden relative">
+              <div
+                className={`aspect-square glass-premium rounded-2xl overflow-hidden relative coverage-map-shell${
+                  shouldAnimate ? " is-animating" : ""
+                }`}
+              >
                 {/* Loading fallback */}
                 <Suspense
                   fallback={
@@ -142,9 +165,17 @@ export function Premium3DKenyaMapSection({
             className="flex items-center justify-center gap-2 mt-12"
           >
             <span className="w-2 h-2 rounded-full bg-jade-400 animate-pulse" aria-hidden="true" />
-            <p className="text-sm text-white/60 font-medium">
-              Every unit is verified before it&apos;s listed
-            </p>
+            {livePulse ? (
+              <VerifiedStat
+                count={verifiedCount}
+                updatedAt={verifiedCountUpdatedAt}
+                isError={verifiedCountError}
+              />
+            ) : (
+              <p className="text-sm text-white/60 font-medium">
+                Every unit is verified before it&apos;s listed
+              </p>
+            )}
           </motion.div>
         </div>
       </div>

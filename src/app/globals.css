@@ -3062,6 +3062,66 @@ section[id], div[id] {
   .ambient-mesh { opacity: 0.12; }
 }
 
+/* ── Coverage Section: Breathing Marker Beacon ────────────────── */
+
+/* The 3D city markers render in WebGL; their DOM labels track the markers
+   per frame (camera orbit included). The beacon is a pure-CSS pseudo-layer
+   on those labels — zero JS, zero map-internals changes. `.text-center` is
+   unique to the city labels inside this shell. */
+.coverage-map-shell .text-center {
+  position: relative;
+  z-index: 0; /* own stacking context: halo paints behind the text */
+}
+
+.coverage-map-shell .text-center::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2.75em;
+  height: 2.75em;
+  margin: -1.375em 0 0 -1.375em;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(52, 211, 153, 0.55) 0%,
+    rgba(52, 211, 153, 0.18) 45%,
+    transparent 70%
+  );
+  opacity: 0.5;
+  z-index: -1;
+  pointer-events: none;
+  animation: marker-breathe 3.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Frozen when off-screen / tab hidden / reduced motion / data-saver */
+.coverage-map-shell:not(.is-animating) .text-center::before {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+@keyframes marker-breathe {
+  0%   { transform: scale(0.9); opacity: 0.45; }
+  70%  { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Coverage Section: Verified-Stat Skeleton ────────────────── */
+
+.trust-line--skeleton {
+  min-height: 1.25rem; /* same line box as the final text-sm copy */
+  width: 16rem;
+  max-width: 70vw;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coverage-map-shell .text-center::before {
+    animation: none !important;
+  }
+}
+
 /* ── Map Pin 3D Styles ───────────────────────────────────────── */
 
 .map-pin-3d {
