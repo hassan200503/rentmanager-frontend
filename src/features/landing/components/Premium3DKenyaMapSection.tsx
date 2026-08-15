@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeader } from "./SectionHeader";
 import { Kenya3DMapScene, KENYA_CITIES, type CityDef } from "./Kenya3DMap/Kenya3DMapScene";
 import { GrainOverlay } from "./CoverageSection/GrainOverlay";
+import { AmbientMesh } from "./CoverageSection/AmbientMesh";
 import { useScrollReveal } from "@/shared/hooks/useScrollReveal";
 import { AnimatedGradient } from "@/shared/components/premium-3d";
 
@@ -14,7 +15,13 @@ import { AnimatedGradient } from "@/shared/components/premium-3d";
  * Premium 3D Kenya Coverage Map Section
  * Features interactive 3D map with city markers and info cards
  */
-export function Premium3DKenyaMapSection({ grain = true }: { grain?: boolean }) {
+export function Premium3DKenyaMapSection({
+  grain = true,
+  ambientMesh = true,
+}: {
+  grain?: boolean;
+  ambientMesh?: boolean;
+}) {
   const [hoveredCity, setHoveredCity] = useState<CityDef | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityDef | null>(null);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.15 });
@@ -34,6 +41,8 @@ export function Premium3DKenyaMapSection({ grain = true }: { grain?: boolean }) 
         <AnimatedGradient variant="orbs" className="absolute inset-0" />
         <div className="absolute inset-0 bg-grid-white opacity-10" />
       </div>
+
+      {ambientMesh && <AmbientMesh isAnimating />}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
