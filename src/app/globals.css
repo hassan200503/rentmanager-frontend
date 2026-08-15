@@ -5067,3 +5067,635 @@ section[id], div[id] {
     transform: none !important;
   }
 }
+
+
+
+/* ══════════════════════════════════════════════════════════════
+   Premium Tenant Dashboard Enhancements
+   Modern SaaS-grade UI with gradients, glass effects, and micro-interactions
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Premium Design Tokens ─────────────────────────────────── */
+:root {
+  /* Premium Blue Palette (for accents) */
+  --premium-blue-50: #eff6ff;
+  --premium-blue-100: #dbeafe;
+  --premium-blue-500: #3b82f6;
+  --premium-blue-600: #2563eb;
+  --premium-blue-700: #1d4ed8;
+  
+  /* Premium Shadow System */
+  --shadow-premium-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-premium-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-premium-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-premium-xl: 0 16px 40px rgba(0, 0, 0, 0.10), 0 8px 16px rgba(0, 0, 0, 0.06);
+  
+  /* Premium Glow Effects */
+  --glow-brand: 0 0 24px rgba(5, 150, 105, 0.25), 0 0 8px rgba(5, 150, 105, 0.15);
+  --glow-success: 0 0 24px rgba(16, 185, 129, 0.25), 0 0 8px rgba(16, 185, 129, 0.15);
+  --glow-warning: 0 0 24px rgba(217, 119, 6, 0.25), 0 0 8px rgba(217, 119, 6, 0.15);
+  --glow-danger: 0 0 24px rgba(220, 38, 38, 0.25), 0 0 8px rgba(220, 38, 38, 0.15);
+  --glow-blue: 0 0 24px rgba(59, 130, 246, 0.25), 0 0 8px rgba(59, 130, 246, 0.15);
+}
+
+/* ── Premium Animations ────────────────────────────────────── */
+@keyframes premium-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes premium-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes premium-shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes premium-pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes premium-gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ── Enhanced Hero Section ─────────────────────────────────── */
+.tenant-premium-hero {
+  animation: premium-fade-in-up 600ms var(--ease-settle);
+}
+
+.tenant-hero-title-premium {
+  background: linear-gradient(135deg, var(--color-fg) 0%, color-mix(in srgb, var(--color-brand) 75%, var(--color-fg)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(5, 150, 105, 0.15));
+}
+
+.dark .tenant-hero-title-premium {
+  background: linear-gradient(135deg, var(--color-fg-dark) 0%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Balance Card */
+.tenant-balance-card-premium {
+  position: relative;
+  overflow: hidden;
+  transition: all 300ms var(--ease-settle);
+}
+
+.tenant-balance-card-premium:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 28px 52px -30px rgba(2, 44, 34, 0.85),
+    0 12px 24px -14px rgba(2, 44, 34, 0.65),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.tenant-balance-card-premium.is-clear:hover {
+  box-shadow: 
+    0 28px 52px -30px rgba(4, 78, 59, 0.85),
+    var(--glow-success);
+}
+
+.tenant-balance-card-premium.is-overdue:hover {
+  box-shadow:
+    0 28px 52px -30px rgba(127, 29, 29, 0.85),
+    var(--glow-danger);
+}
+
+/* Animated gradient background for balance card */
+.tenant-balance-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 48%,
+    rgba(255, 255, 255, 0.18) 52%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: premium-gradient-shift 8s ease infinite;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.tenant-balance-card-premium:hover .tenant-balance-gradient-overlay {
+  opacity: 1;
+}
+
+/* ── Premium KPI Cards ─────────────────────────────────────── */
+.tenant-kpi-premium {
+  animation: premium-scale-in 400ms var(--ease-settle);
+  animation-fill-mode: both;
+}
+
+/* Stagger animation delays */
+.tenant-kpi-premium:nth-child(1) { animation-delay: 50ms; }
+.tenant-kpi-premium:nth-child(2) { animation-delay: 100ms; }
+.tenant-kpi-premium:nth-child(3) { animation-delay: 150ms; }
+.tenant-kpi-premium:nth-child(4) { animation-delay: 200ms; }
+
+.tenant-kpi-icon-premium {
+  background: linear-gradient(135deg, var(--icon-gradient-start), var(--icon-gradient-end));
+  color: white;
+  box-shadow: var(--shadow-premium-sm);
+  transition: all 250ms var(--ease-settle);
+}
+
+.tenant-kpi-card:hover .tenant-kpi-icon-premium {
+  transform: scale(1.08) rotate(5deg);
+  box-shadow: var(--shadow-premium-md);
+}
+
+/* KPI Icon Gradients by Tone */
+.tenant-kpi-brand .tenant-kpi-icon-premium {
+  --icon-gradient-start: var(--color-brand-600);
+  --icon-gradient-end: var(--color-brand-400);
+}
+
+.tenant-kpi-success .tenant-kpi-icon-premium {
+  --icon-gradient-start: #047857;
+  --icon-gradient-end: #10b981;
+}
+
+.tenant-kpi-warning .tenant-kpi-icon-premium {
+  --icon-gradient-start: #d97706;
+  --icon-gradient-end: #fbbf24;
+}
+
+.tenant-kpi-danger .tenant-kpi-icon-premium {
+  --icon-gradient-start: #dc2626;
+  --icon-gradient-end: #f87171;
+}
+
+.tenant-kpi-neutral .tenant-kpi-icon-premium {
+  --icon-gradient-start: #6b7280;
+  --icon-gradient-end: #9ca3af;
+}
+
+/* Dark mode icon adjustments */
+.dark .tenant-kpi-icon-premium {
+  box-shadow: var(--shadow-premium-sm), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ── Premium Button System ─────────────────────────────────── */
+.tenant-btn-premium-primary {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-brand-700) 0%, var(--color-brand-500) 100%);
+  box-shadow: 
+    0 4px 14px rgba(5, 150, 105, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 220ms var(--ease-settle);
+}
+
+.tenant-btn-premium-primary:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 8px 22px rgba(5, 150, 105, 0.45),
+    var(--glow-brand),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.tenant-btn-premium-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 
+    0 2px 8px rgba(5, 150, 105, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer effect on button */
+.tenant-btn-premium-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 500ms ease;
+}
+
+.tenant-btn-premium-primary:hover::before {
+  left: 100%;
+}
+
+/* Blue variant for M-Pesa */
+.tenant-btn-premium-blue {
+  background: linear-gradient(135deg, var(--premium-blue-700) 0%, var(--premium-blue-500) 100%);
+  box-shadow: 
+    0 4px 14px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.tenant-btn-premium-blue:hover:not(:disabled) {
+  box-shadow: 
+    0 8px 22px rgba(37, 99, 235, 0.45),
+    var(--glow-blue),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.tenant-btn-premium-secondary {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: var(--color-fg);
+  transition: all 220ms var(--ease-settle);
+}
+
+.tenant-btn-premium-secondary:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+}
+
+.dark .tenant-btn-premium-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-fg-dark);
+}
+
+.dark .tenant-btn-premium-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Premium Panel Enhancements ────────────────────────────── */
+.tenant-panel-premium {
+  animation: premium-fade-in-up 500ms var(--ease-settle);
+  animation-delay: 250ms;
+  animation-fill-mode: both;
+}
+
+.tenant-panel-premium:hover {
+  border-color: color-mix(in srgb, var(--color-brand) 15%, rgba(15, 23, 42, 0.08));
+}
+
+/* Premium ledger row hover */
+.tenant-ledger-row-premium {
+  transition: all 180ms var(--ease-settle);
+  cursor: default;
+  border-radius: 0.65rem;
+  margin: 0 -0.25rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.tenant-ledger-row-premium:hover {
+  background: rgba(5, 150, 105, 0.03);
+  transform: translateX(4px);
+}
+
+.dark .tenant-ledger-row-premium:hover {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+/* Premium icon badges for ledger */
+.tenant-ledger-icon-premium {
+  background: linear-gradient(135deg, var(--icon-gradient-start), var(--icon-gradient-end));
+  color: white;
+  box-shadow: var(--shadow-premium-sm);
+  transition: transform 180ms var(--ease-settle);
+}
+
+.tenant-ledger-row-premium:hover .tenant-ledger-icon-premium {
+  transform: scale(1.08);
+}
+
+.tenant-ledger-icon-premium.icon-success {
+  --icon-gradient-start: #047857;
+  --icon-gradient-end: #10b981;
+}
+
+.tenant-ledger-icon-premium.icon-danger {
+  --icon-gradient-start: #dc2626;
+  --icon-gradient-end: #f87171;
+}
+
+.tenant-ledger-icon-premium.icon-brand {
+  --icon-gradient-start: var(--color-brand-700);
+  --icon-gradient-end: var(--color-brand-500);
+}
+
+.tenant-ledger-icon-premium.icon-warning {
+  --icon-gradient-start: #d97706;
+  --icon-gradient-end: #fbbf24;
+}
+
+.tenant-ledger-icon-premium.icon-neutral {
+  --icon-gradient-start: #6b7280;
+  --icon-gradient-end: #9ca3af;
+}
+
+/* ── Premium Loading States ────────────────────────────────── */
+.tenant-skeleton-premium {
+  background: linear-gradient(
+    90deg,
+    rgba(243, 244, 246, 0.8) 0%,
+    rgba(229, 231, 235, 0.8) 50%,
+    rgba(243, 244, 246, 0.8) 100%
+  );
+  background-size: 1000px 100%;
+  animation: premium-shimmer 2s infinite linear;
+  border-radius: 0.5rem;
+}
+
+.dark .tenant-skeleton-premium {
+  background: linear-gradient(
+    90deg,
+    rgba(39, 39, 42, 0.6) 0%,
+    rgba(63, 63, 70, 0.6) 50%,
+    rgba(39, 39, 42, 0.6) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* ── Premium Input Fields ──────────────────────────────────── */
+.tenant-input-premium {
+  transition: all 200ms var(--ease-settle);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.tenant-input-premium:hover:not(:disabled) {
+  border-color: rgba(5, 150, 105, 0.25);
+}
+
+.tenant-input-premium:focus {
+  border-color: var(--color-brand-500);
+  box-shadow: 
+    inset 0 1px 2px rgba(15, 23, 42, 0.04),
+    0 0 0 3px rgba(5, 150, 105, 0.12);
+  outline: none;
+}
+
+.dark .tenant-input-premium {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .tenant-input-premium:focus {
+  border-color: var(--color-brand-400);
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* ── Premium Status Indicators ─────────────────────────────── */
+.tenant-status-indicator-premium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tenant-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: premium-pulse-glow 2s ease-in-out infinite;
+}
+
+.tenant-status-dot.status-active {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.tenant-status-dot.status-warning {
+  background: var(--color-warning);
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.5);
+}
+
+.tenant-status-dot.status-danger {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+}
+
+/* ── Premium Action Links ──────────────────────────────────── */
+.tenant-action-row-premium {
+  transition: all 180ms var(--ease-settle);
+  border-radius: 0.65rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tenant-action-row-premium::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(135deg, var(--color-brand-600), var(--color-brand-400));
+  transform: translateX(-3px);
+  transition: transform 180ms var(--ease-settle);
+}
+
+.tenant-action-row-premium:hover::before {
+  transform: translateX(0);
+}
+
+.tenant-action-row-premium:hover {
+  background: rgba(5, 150, 105, 0.04);
+  padding-left: 0.85rem;
+}
+
+.dark .tenant-action-row-premium:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.tenant-action-row-premium .tenant-action-chevron {
+  transition: transform 180ms var(--ease-settle);
+}
+
+.tenant-action-row-premium:hover .tenant-action-chevron {
+  transform: translateX(4px);
+}
+
+/* ── Premium Empty States ──────────────────────────────────── */
+.tenant-empty-state-premium {
+  animation: premium-scale-in 500ms var(--ease-settle);
+}
+
+.tenant-empty-state-premium .tenant-ledger-empty-icon {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(5, 150, 105, 0.02));
+  border: 1px solid rgba(5, 150, 105, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.dark .tenant-empty-state-premium .tenant-ledger-empty-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.04));
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+/* ── Premium Payment States ────────────────────────────────── */
+.tenant-payment-state-premium {
+  animation: premium-fade-in-up 300ms var(--ease-settle);
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.03), rgba(5, 150, 105, 0.01));
+  border: 1px solid rgba(5, 150, 105, 0.12);
+  border-radius: 0.95rem;
+  padding: 1rem;
+}
+
+.tenant-payment-state-premium.is-error {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.04), rgba(220, 38, 38, 0.01));
+  border-color: rgba(220, 38, 38, 0.15);
+}
+
+.dark .tenant-payment-state-premium {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.dark .tenant-payment-state-premium.is-error {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(248, 113, 113, 0.02));
+  border-color: rgba(248, 113, 113, 0.15);
+}
+
+/* ── Premium Glass Morphism ────────────────────────────────── */
+.tenant-glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .tenant-glass-card {
+  background: rgba(24, 24, 27, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Responsive Premium Adjustments ────────────────────────── */
+@media (max-width: 1023px) {
+  .tenant-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .tenant-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  
+  .tenant-hero-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .tenant-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+  
+  .tenant-kpi-card {
+    min-height: auto;
+    padding: 0.85rem;
+  }
+  
+  /* Reduce animation intensity on mobile */
+  .tenant-kpi-card:hover,
+  .tenant-balance-card-premium:hover {
+    transform: none;
+  }
+  
+  .tenant-btn-premium-primary:hover:not(:disabled) {
+    transform: scale(1);
+  }
+}
+
+/* ── Accessibility Enhancements ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tenant-premium-hero,
+  .tenant-kpi-premium,
+  .tenant-panel-premium,
+  .tenant-empty-state-premium,
+  .tenant-payment-state-premium {
+    animation: none;
+  }
+  
+  .tenant-balance-gradient-overlay {
+    animation: none;
+  }
+  
+  .tenant-status-dot {
+    animation: none;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.tenant-kpi-card:focus-visible,
+.tenant-action-row-premium:focus-visible,
+.tenant-btn-premium-primary:focus-visible,
+.tenant-btn-premium-secondary:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* High contrast adjustments */
+@media (prefers-contrast: high) {
+  .tenant-kpi-card,
+  .tenant-panel,
+  .tenant-balance-card {
+    border-width: 2px;
+  }
+  
+  .tenant-status-chip {
+    border-width: 2px;
+    font-weight: 800;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   End Premium Tenant Dashboard Enhancements
+   ══════════════════════════════════════════════════════════════ */

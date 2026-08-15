@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useTenantDashboardQuery, useTenantPaymentHistoryQuery, useTenantPaymentSummaryQuery, useTenantPaymentReceiptQuery } from "../hooks/use-tenant-portal-queries";
-import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, XCircle, Wallet, TrendingUp, CreditCard, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, XCircle, Wallet, TrendingUp, CreditCard, CheckCircle2, Sparkles } from "lucide-react";
 import { formatCurrency, formatDateTime, formatDate, StatusBadge } from "./tenant-dashboard";
 import { TenantPaymentReceiptResponse, tenantPortalApi } from "../api/tenant-portal-api";
 import { downloadReceiptPdf } from "@/features/rentledger/components/download-receipt";
@@ -14,8 +15,11 @@ type PayState = "idle" | "phone_prompt" | "initiating" | "pending" | "success" |
 
 export const TenantPaymentsPage = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [page, setPage] = useState(0);
     const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+
+    const setupAutoPay = searchParams.get("setup") === "autopay";
 
     const { data: dashboardData } = useTenantDashboardQuery();
     const { data: summary } = useTenantPaymentSummaryQuery();
@@ -154,6 +158,27 @@ export const TenantPaymentsPage = () => {
 
     return (
         <div className="page-container space-y-6 animate-fade-in-up">
+            {/* Auto-pay upsell banner (from ?setup=autopay) */}
+            {setupAutoPay && (
+                <div className="rounded-2xl border border-brand/25 bg-gradient-to-br from-brand-50 to-brand-100/50 dark:from-brand-950/20 dark:to-brand-900/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+                        <Sparkles className="h-5 w-5" strokeWidth={2} />
+                    </span>
+                    <div className="flex-1">
+                        <p className="text-sm font-semibold text-fg dark:text-fg-dark">
+                            Never miss a due date — set up auto-pay
+                        </p>
+                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">
+                            Your rent will be paid automatically from M-Pesa on your due date. Takes less than a minute.
+                        </p>
+                    </div>
+                    <Link href="/portal/lease?setup=autopay" className="btn-primary shrink-0 gap-2">
+                        <Smartphone className="h-4 w-4" strokeWidth={2} />
+                        Set up on Lease page
+                    </Link>
+                </div>
+            )}
+
             {/* Pay Now Card */}
             {canPay && (
                 <div className="card-elevated p-5">

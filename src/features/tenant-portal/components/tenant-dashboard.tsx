@@ -34,17 +34,25 @@ export const formatCurrency = (amount: number) =>
         maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0,
     }).format(amount);
 
-export const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
+export const formatDate = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
+};
 
-export const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString("en-KE", {
+export const formatDateTime = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleString("en-KE", {
         year: "numeric",
         month: "short",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
     });
+};
 
 const titleCaseStatus = (status: string) =>
     status
@@ -99,8 +107,8 @@ const KpiCard = ({
     const Icon = icon;
 
     return (
-        <div className={`tenant-kpi-card tenant-kpi-${tone}`}>
-            <div className="tenant-kpi-icon">
+        <div className={`tenant-kpi-card tenant-kpi-${tone} tenant-kpi-premium`}>
+            <div className="tenant-kpi-icon tenant-kpi-icon-premium">
                 <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={1.9} />
             </div>
             <div className="min-w-0">
@@ -126,7 +134,7 @@ const ActionLink = ({
     const Icon = icon;
 
     return (
-        <Link href={href} className="tenant-action-row group">
+        <Link href={href} className="tenant-action-row tenant-action-row-premium group">
             <span className="tenant-action-icon">
                 <Icon className="h-4 w-4" strokeWidth={1.9} />
             </span>
@@ -233,21 +241,25 @@ export const TenantDashboard = () => {
     if (isLoading) {
         return (
             <div className="tenant-dashboard-page page-container space-y-5">
-                <div className="tenant-skeleton-hero" />
+                <div className="tenant-skeleton-hero tenant-skeleton-premium" style={{ height: "16rem" }} />
                 <div className="tenant-kpi-grid">
                     {[0, 1, 2, 3].map((i) => (
                         <div key={i} className="tenant-kpi-card">
-                            <div className="skeleton h-9 w-9" />
+                            <div className="tenant-skeleton-premium h-9 w-9" style={{ borderRadius: "0.78rem" }} />
                             <div className="flex-1 space-y-2">
-                                <div className="skeleton h-3 w-1/3" />
-                                <div className="skeleton h-7 w-2/3" />
+                                <div className="tenant-skeleton-premium h-3 w-1/3" />
+                                <div className="tenant-skeleton-premium h-7 w-2/3" />
                             </div>
                         </div>
                     ))}
                 </div>
                 <div className="tenant-dashboard-grid">
-                    <div className="tenant-panel"><div className="skeleton h-60 w-full" /></div>
-                    <div className="tenant-panel"><div className="skeleton h-60 w-full" /></div>
+                    <div className="tenant-panel">
+                        <div className="tenant-skeleton-premium h-60 w-full" />
+                    </div>
+                    <div className="tenant-panel">
+                        <div className="tenant-skeleton-premium h-60 w-full" />
+                    </div>
                 </div>
             </div>
         );
@@ -311,11 +323,11 @@ export const TenantDashboard = () => {
 
     return (
         <div className="tenant-dashboard-page page-container animate-fade-in-up">
-            <section className="tenant-hero-panel">
+            <section className="tenant-hero-panel tenant-premium-hero">
                 <div className="tenant-hero-main">
                     <div className="tenant-hero-copy">
                         <p className="tenant-eyebrow">Tenant command center</p>
-                        <h1 className="tenant-hero-title">Welcome back, {firstName}</h1>
+                        <h1 className="tenant-hero-title tenant-hero-title-premium">Welcome back, {firstName}</h1>
                         <p className="tenant-hero-subtitle">
                             Unit {unitNumber} at {propertyName}
                         </p>
@@ -332,7 +344,8 @@ export const TenantDashboard = () => {
                         </div>
                     </div>
 
-                    <div className={`tenant-balance-card ${balanceTone}`}>
+                    <div className={`tenant-balance-card tenant-balance-card-premium ${balanceTone}`}>
+                        <div className="tenant-balance-gradient-overlay"></div>
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="tenant-balance-label">Balance due</p>
@@ -393,7 +406,7 @@ export const TenantDashboard = () => {
             </section>
 
             <div className="tenant-dashboard-grid">
-                <section className="tenant-panel tenant-ledger-panel">
+                <section className="tenant-panel tenant-panel-premium tenant-ledger-panel">
                     <div className="tenant-panel-header">
                         <div>
                             <p className="tenant-panel-kicker">Ledger</p>
@@ -406,7 +419,7 @@ export const TenantDashboard = () => {
                     <TenantRecentPayments payments={data.recentPayments} />
                 </section>
 
-                <aside className="tenant-panel tenant-payment-panel">
+                <aside className="tenant-panel tenant-panel-premium tenant-payment-panel">
                     <div className="tenant-panel-header">
                         <div>
                             <p className="tenant-panel-kicker">M-Pesa checkout</p>
@@ -435,13 +448,13 @@ export const TenantDashboard = () => {
                                         min="0.01"
                                         value={payAmount || currentBalance}
                                         onChange={(e) => setPayAmount(e.target.value)}
-                                        className="tenant-input pl-12"
+                                        className="tenant-input tenant-input-premium pl-12"
                                     />
                                 </div>
                                 <button
                                     onClick={() => setPayState("phone_prompt")}
                                     disabled={!payAmount && currentBalance <= 0}
-                                    className="tenant-primary-action"
+                                    className="tenant-primary-action tenant-btn-premium-blue"
                                 >
                                     <Smartphone className="h-4 w-4" strokeWidth={2} />
                                     Continue to Payment
@@ -468,7 +481,7 @@ export const TenantDashboard = () => {
                                         min="0.01"
                                         value={payAmount || currentBalance}
                                         onChange={(e) => setPayAmount(e.target.value)}
-                                        className="tenant-input pl-12"
+                                        className="tenant-input tenant-input-premium pl-12"
                                         disabled={payButtonDisabled}
                                     />
                                 </div>
@@ -479,7 +492,7 @@ export const TenantDashboard = () => {
                                     value={mpesaPhone || tenantPhone || ""}
                                     onChange={(e) => setMpesaPhone(e.target.value)}
                                     placeholder="+254712345678"
-                                    className="tenant-input"
+                                    className="tenant-input tenant-input-premium"
                                     disabled={payButtonDisabled}
                                     onKeyDown={(e) => { if (e.key === "Enter") initiatePayment(); }}
                                 />
@@ -487,7 +500,7 @@ export const TenantDashboard = () => {
                                     <button
                                         onClick={initiatePayment}
                                         disabled={payButtonDisabled || !(mpesaPhone || tenantPhone)}
-                                        className="tenant-primary-action"
+                                        className="tenant-primary-action tenant-btn-premium-blue"
                                     >
                                         {payButtonDisabled ? (
                                             <>
@@ -504,7 +517,7 @@ export const TenantDashboard = () => {
                                     <button
                                         onClick={resetPay}
                                         disabled={payButtonDisabled}
-                                        className="tenant-secondary-action"
+                                        className="tenant-secondary-action tenant-btn-premium-secondary"
                                     >
                                         Cancel
                                     </button>
@@ -513,7 +526,7 @@ export const TenantDashboard = () => {
                         )}
 
                         {payState === "initiating" && (
-                            <div className="tenant-payment-state">
+                            <div className="tenant-payment-state tenant-payment-state-premium">
                                 <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
                                 <div>
                                     <p>Sending payment request</p>
@@ -523,30 +536,30 @@ export const TenantDashboard = () => {
                         )}
 
                         {payState === "pending" && (
-                            <div className="tenant-payment-state">
+                            <div className="tenant-payment-state tenant-payment-state-premium">
                                 <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
                                 <div className="min-w-0">
                                     <p>Awaiting M-Pesa confirmation</p>
                                     <span>{payMessage}</span>
                                     {sentToPhone && <span>Sent to <strong>{sentToPhone}</strong></span>}
-                                    <button onClick={refreshStatus} className="tenant-secondary-action mt-3">Check status</button>
+                                    <button onClick={refreshStatus} className="tenant-secondary-action tenant-btn-premium-secondary mt-3">Check status</button>
                                 </div>
                             </div>
                         )}
 
                         {payState === "error" && (
-                            <div className="tenant-payment-state is-error">
+                            <div className="tenant-payment-state tenant-payment-state-premium is-error">
                                 <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
                                 <div>
                                     <p>Payment failed</p>
                                     <span>{payMessage}</span>
-                                    <button onClick={resetPay} className="tenant-secondary-action mt-3">Try again</button>
+                                    <button onClick={resetPay} className="tenant-secondary-action tenant-btn-premium-secondary mt-3">Try again</button>
                                 </div>
                             </div>
                         )}
 
                         {!canPay && (
-                            <div className="tenant-payment-state">
+                            <div className="tenant-payment-state tenant-payment-state-premium">
                                 <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={2} />
                                 <div>
                                     <p>Payments paused</p>
@@ -596,7 +609,7 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
 }> }) => {
     if (!payments || payments.length === 0) {
         return (
-            <div className="tenant-ledger-empty">
+            <div className="tenant-ledger-empty tenant-empty-state-premium">
                 <div className="tenant-ledger-empty-icon">
                     <CreditCard className="h-5 w-5" strokeWidth={1.7} />
                 </div>
@@ -637,8 +650,8 @@ const TenantRecentPayments = ({ payments }: { payments: Array<{
                 const amountPrefix = isCharge ? "+" : tx.type === "ADJUSTMENT" ? "" : "-";
 
                 return (
-                    <div key={tx.id} className="tenant-ledger-row">
-                        <div className={`tenant-ledger-icon tenant-ledger-icon-${meta.tone}`}>
+                    <div key={tx.id} className="tenant-ledger-row tenant-ledger-row-premium">
+                        <div className={`tenant-ledger-icon tenant-ledger-icon-premium icon-${meta.tone}`}>
                             <MetaIcon className="h-4 w-4" strokeWidth={2} />
                         </div>
                         <div className="tenant-ledger-main">

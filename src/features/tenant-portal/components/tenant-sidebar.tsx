@@ -51,7 +51,7 @@ const baseNavItems: NavItem[] = [
 
 const secondaryNavItems: NavItem[] = [
     { href: "/portal/maintenance", label: "Maintenance", icon: Wrench },
-    { href: "#help", label: "Help & Support", icon: HelpCircle, disabled: true },
+    { href: "/portal/help", label: "Help & Support", icon: HelpCircle },
 ];
 
 function isItemActive(pathname: string | null, href: string) {

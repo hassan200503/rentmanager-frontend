@@ -4,6 +4,7 @@
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
+import Link from "next/link";
 import { Menu, HelpCircle, Sun, Moon, Wallet } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
@@ -17,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
     "/portal/reviews": "Reviews",
     "/portal/maintenance": "Maintenance",
     "/portal/announcements": "Announcements",
+    "/portal/help": "Help & Support",
     "/portal/payment-success": "Payment Receipt",
 };
 
@@ -82,13 +84,13 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                     <span className={`font-data font-semibold tabular-nums ${balanceTone}`}>{formatCurrency(balanceValue)}</span>
                 </div>
 
-                <button
-                    type="button"
-                    aria-label="Help"
+                <Link
+                    href="/portal/help"
+                    aria-label="Help & Support"
                     className="tenant-topbar-button hidden sm:flex h-8 w-8 items-center justify-center"
                 >
                     <HelpCircle className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
-                </button>
+                </Link>
 
                 <button
                     type="button"

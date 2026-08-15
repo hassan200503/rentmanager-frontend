@@ -7,6 +7,7 @@ import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileTex
 import { formatCurrency, formatDate } from "./tenant-dashboard";
 import { tenantPortalApi } from "../api/tenant-portal-api";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export const TenantLeasePage = () => {
     const { data: dashboardData } = useTenantDashboardQuery();
@@ -14,7 +15,18 @@ export const TenantLeasePage = () => {
     const { data: summary, refetch: refetchSummary } = useTenantPaymentSummaryQuery();
     const { data: autoPaySettings } = useTenantAutoPaySettingsQuery();
     const toggleAutoPayMut = useToggleAutoPayMutation();
+    const searchParams = useSearchParams();
     const autoPay = autoPaySettings?.enabled ?? false;
+
+    const setupAutoPay = searchParams.get("setup") === "autopay";
+    const autoPayCardRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (setupAutoPay && autoPaySettings && autoPayCardRef.current) {
+            autoPayCardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            autoPayCardRef.current.focus({ preventScroll: true });
+        }
+    }, [setupAutoPay, autoPaySettings]);
 
     const [payState, setPayState] = useState<"idle" | "phone_prompt" | "initiating" | "pending" | "success" | "error">("idle");
     const [payMessage, setPayMessage] = useState("");
@@ -322,7 +334,14 @@ export const TenantLeasePage = () => {
 
             {/* Auto-Pay Settings */}
             {autoPaySettings && (
-                <div className="card-elevated p-6">
+                <div
+                    ref={autoPayCardRef}
+                    tabIndex={-1}
+                    id="autopay-settings"
+                    className={`card-elevated p-6 outline-none ${
+                        setupAutoPay ? "ring-2 ring-brand/40 border-brand/30 animate-pulse-once" : ""
+                    }`}
+                >
                     <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
                         <Bell className="h-4 w-4 text-brand" strokeWidth={2} />
                         Auto-Pay Settings
@@ -352,6 +371,31 @@ export const TenantLeasePage = () => {
                                 <span className="font-medium text-danger">{autoPaySettings.consecutiveFailures}</span>
                             </div>
                         )}
+                        <div className="pt-3 border-t border-border dark:border-border-dark flex items-center justify-between gap-3">
+                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                                {autoPay
+                                    ? "Rent is deducted automatically on your due date."
+                                    : "Never miss a due date — rent is paid automatically each month."}
+                            </p>
+                            <button
+                                onClick={handleToggleAutoPay}
+                                disabled={toggleAutoPayMut.isPending}
+                                className={`btn-sm shrink-0 gap-2 ${
+                                    autoPay
+                                        ? "btn-primary"
+                                        : "btn-outline border-brand/40 dark:border-brand/40 text-brand dark:text-brand-300"
+                                }`}
+                            >
+                                {toggleAutoPayMut.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                                ) : autoPay ? (
+                                    <BellOff className="h-4 w-4" strokeWidth={2} />
+                                ) : (
+                                    <Bell className="h-4 w-4" strokeWidth={2} />
+                                )}
+                                {toggleAutoPayMut.isPending ? "Saving…" : autoPay ? "Turn Off" : "Turn On"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
