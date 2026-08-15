@@ -6,6 +6,7 @@ import { MapPin, ArrowUpRight, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeader } from "./SectionHeader";
 import { Kenya3DMapScene, KENYA_CITIES, type CityDef } from "./Kenya3DMap/Kenya3DMapScene";
+import { GrainOverlay } from "./CoverageSection/GrainOverlay";
 import { useScrollReveal } from "@/shared/hooks/useScrollReveal";
 import { AnimatedGradient } from "@/shared/components/premium-3d";
 
@@ -13,7 +14,7 @@ import { AnimatedGradient } from "@/shared/components/premium-3d";
  * Premium 3D Kenya Coverage Map Section
  * Features interactive 3D map with city markers and info cards
  */
-export function Premium3DKenyaMapSection() {
+export function Premium3DKenyaMapSection({ grain = true }: { grain?: boolean }) {
   const [hoveredCity, setHoveredCity] = useState<CityDef | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityDef | null>(null);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.15 });
@@ -27,14 +28,14 @@ export function Premium3DKenyaMapSection() {
   }, []);
 
   return (
-    <section ref={ref} className="relative py-24 md:py-32 overflow-hidden">
+    <section ref={ref} className="relative py-24 md:py-32 overflow-hidden coverage-section">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-jade-500/[0.04] to-transparent">
         <AnimatedGradient variant="orbs" className="absolute inset-0" />
         <div className="absolute inset-0 bg-grid-white opacity-10" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <SectionHeader
           eyebrow="Coverage"
@@ -72,9 +73,9 @@ export function Premium3DKenyaMapSection() {
                   />
                 </Suspense>
 
-                {/* Live-feed finish: film grain + vignette */}
+                {/* Live-feed finish: static film grain + vignette */}
                 <div className="absolute inset-0 pointer-events-none z-20" aria-hidden="true">
-                  <div className="absolute inset-0 film-grain opacity-[0.07] mix-blend-overlay" />
+                  {grain && <GrainOverlay />}
                   <div className="absolute inset-0 map-vignette" />
                 </div>
 
