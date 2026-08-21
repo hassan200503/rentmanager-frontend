@@ -8,6 +8,7 @@ import type {
     IntegrationFieldView,
     IntegrationProviderView,
     IntegrationTestResult,
+    IntegrationTestTargetView,
 } from "../types/integration-types";
 import {
     useActivateIntegrationMutation,
@@ -103,17 +104,25 @@ function TestConnectionFlow({
     supportsTestConnection,
     configured,
     isOwner,
+    testTarget,
 }: {
     providerKey: string;
     environment: IntegrationEnvironmentView;
     supportsTestConnection: boolean;
     configured: boolean;
     isOwner: boolean;
+    testTarget?: IntegrationTestTargetView | null;
 }) {
     const testMutation = useTestIntegrationMutation(providerKey);
     const [recipient, setRecipient] = useState("");
     const [result, setResult] = useState<IntegrationTestResult | null>(null);
-    const needsRecipient = providerKey === "email";
+
+    // Everything about the test destination is declared by the backend catalog
+    // (ProviderTestTarget) — the console renders whatever the provider needs
+    // instead of hard-coding it. Null means a credential-only check.
+    const targetRequired = testTarget?.required === true;
+    const needsRecipient = Boolean(testTarget);
+    const recipientMissing = needsRecipient && targetRequired && !recipient.trim();
     const blocked = !configured && !needsRecipient;
 
     const run = () => {
@@ -137,24 +146,31 @@ function TestConnectionFlow({
 
     if (!supportsTestConnection) return null;
 
+        const isEmail = testTarget?.kind === "EMAIL";
+
     return (
         <div className="mt-3 space-y-2.5">
-            {needsRecipient && (
+            {testTarget && (
                 <input
-                    type="email"
+                    type={isEmail ? "email" : "tel"}
+                    inputMode={isEmail ? "email" : "tel"}
                     value={recipient}
                     disabled={!isOwner}
                     onChange={(e) => setRecipient(e.target.value)}
-                    placeholder="Recipient email for the test message (e.g. ops@rentmanager.co.ke)"
+                    placeholder={testTarget.label}
+                    aria-label={testTarget.label}
+                    title={
+                        targetRequired
+                            ? undefined
+                            : "Optional — the sender can verify credentials without a live message."
+                    }
                     className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-border-dark dark:bg-surface-dark dark:text-fg-dark"
                 />
             )}
             <div className="flex items-center gap-2">
                 <button
                     type="button"
-                    disabled={
-                        !isOwner || testMutation.isPending || (needsRecipient && !recipient.trim())
-                    }
+                    disabled={!isOwner || testMutation.isPending || recipientMissing}
                     onClick={run}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-border-subtle disabled:cursor-not-allowed disabled:opacity-50 dark:border-border-dark dark:text-fg-dark dark:hover:bg-border-subtle-dark"
                 >
@@ -197,11 +213,13 @@ function EnvironmentSection({
     providerName,
     environment,
     isOwner,
+    testTarget,
 }: {
     providerKey: string;
     providerName: string;
     environment: IntegrationEnvironmentView;
     isOwner: boolean;
+    testTarget?: IntegrationTestTargetView | null;
 }) {
     const saveMutation = useSaveIntegrationCredentialsMutation(providerKey);
     const activateMutation = useActivateIntegrationMutation(providerKey);
@@ -344,6 +362,7 @@ function EnvironmentSection({
                     supportsTestConnection
                     configured={environment.configured || dirty}
                     isOwner={isOwner}
+                    testTarget={testTarget}
                 />
 
                 {!environment.active ? (
@@ -442,6 +461,7 @@ export function IntegrationProviderCard({
                         providerKey={provider.providerKey}
                         providerName={provider.displayName}
                         environment={env}
+                        testTarget={provider.testTarget}
                         isOwner={isOwner}
                     />
                 ))}

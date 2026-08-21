@@ -44,3 +44,13 @@ export const useTestIntegrationMutation = (providerKey: string) => {
         onSuccess: invalidate,
     });
 };
+
+export const useRollToProductionMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => integrationApi.rollout(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: integrationKeys.providers() });
+        },
+    });
+};

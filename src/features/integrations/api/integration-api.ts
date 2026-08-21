@@ -3,6 +3,7 @@ import type {
     IntegrationActivateResult,
     IntegrationAuditEntry,
     IntegrationProviderView,
+    IntegrationRolloutView,
     IntegrationTestResult,
 } from "../types/integration-types";
 import { apiClient } from "@/lib/api/client";
@@ -57,6 +58,14 @@ export const integrationApi = {
         return apiClient.post<IntegrationTestResult>(
             integrationEndpoints.test(providerKey, environment),
             target ? { target } : undefined,
+            token
+        );
+    },
+    rollout: async (): Promise<IntegrationRolloutView> => {
+        const { token } = await getAuthContext();
+        return apiClient.post<IntegrationRolloutView>(
+            integrationEndpoints.rollout(),
+            undefined,
             token
         );
     },

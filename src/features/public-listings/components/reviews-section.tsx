@@ -272,7 +272,7 @@ export function ReviewsSection({ unitId, propertyId }: { unitId?: string; proper
                                                         {review.comment && (
                                                             <blockquote className="mt-5 pl-0.5">
                                                                 <p className="text-[15px] text-ink-muted dark:text-white/70 leading-relaxed font-medium">
-                                                                    "{review.comment}"
+                                                                    &ldquo;{review.comment}&rdquo;
                                                                 </p>
                                                             </blockquote>
                                                         )}

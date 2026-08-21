@@ -11,4 +11,5 @@ export const integrationEndpoints = {
         `${base}/${providerKey}/${environment}/activate`,
     test: (providerKey: string, environment: string) =>
         `${base}/${providerKey}/${environment}/test`,
+    rollout: () => `${base}/roll-to-production`,
 };

@@ -132,7 +132,7 @@
   --radius-2xl: 1rem;
   --radius-3xl: 1.25rem;
 
-  /* Premium shadow stack — 5-level depth system */
+  /* Premium shadow stack — 8-level depth system for $500M+ UI */
   --shadow-xs:   0 1px 2px rgba(0,0,0,0.03);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.03);
@@ -140,6 +140,30 @@
   --shadow-dropdown: 0 24px 48px -8px rgba(0,0,0,0.16), 0 8px 16px -4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
   --shadow-button: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02);
   --shadow-elevated: 0 16px 40px -8px rgba(0,0,0,0.12), 0 8px 16px -6px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.03);
+  
+  /* Premium 3D depth shadows for hero elements */
+  --shadow-hero: 0 32px 64px -12px rgba(0,0,0,0.18), 0 12px 24px -8px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.05);
+  --shadow-hero-dark: 0 32px 64px -12px rgba(0,0,0,0.50), 0 12px 24px -8px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+  
+  /* Glassmorphism shadows with colored glow */
+  --shadow-glass: 0 8px 32px rgba(5, 150, 105, 0.12), 0 2px 8px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.4);
+  --shadow-glass-dark: 0 8px 32px rgba(16, 185, 129, 0.15), 0 2px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08);
+  
+  /* Colored brand shadows for CTAs */
+  --shadow-brand: 0 4px 14px rgba(5, 150, 105, 0.24), 0 1px 4px rgba(5, 150, 105, 0.18);
+  --shadow-brand-hover: 0 8px 24px rgba(5, 150, 105, 0.32), 0 4px 8px rgba(5, 150, 105, 0.24);
+  
+  /* Premium gradients */
+  --gradient-brand: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  --gradient-brand-vibrant: linear-gradient(135deg, #047857 0%, #059669 50%, #10B981 100%);
+  --gradient-hero: linear-gradient(160deg, #059669 0%, #047857 45%, #064E3B 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%);
+  --gradient-glass-dark: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%);
+  --gradient-shimmer: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  
+  /* Mesh gradients for premium backgrounds */
+  --gradient-mesh-brand: radial-gradient(at 0% 0%, rgba(5,150,105,0.2) 0, transparent 50%), radial-gradient(at 100% 0%, rgba(16,185,129,0.15) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(94,234,212,0.1) 0, transparent 50%);
+  --gradient-mesh-dark: radial-gradient(at 0% 0%, rgba(4,120,87,0.3) 0, transparent 50%), radial-gradient(at 100% 0%, rgba(16,185,129,0.2) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(6,78,59,0.25) 0, transparent 50%);
 }
 
 /* ── Premium Motion Tokens ─────────────────────────────────── */
@@ -149,14 +173,24 @@
   --text-h2: clamp(1.875rem, 1.5rem + 1.5vw, 3rem);      /* section titles */
   --text-body-lg: clamp(1.0625rem, 1rem + 0.25vw, 1.25rem);
 
-  /* Easing Curves */
+  /* Easing Curves — $500M+ signature motion */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);          /* signature "arrive and stop" ease */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);      /* small playful moments */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);        /* premium smooth glide */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55); /* attention-grabbing bounce */
 
   /* Durations */
-  --duration-fast: 150ms;    /* button/link micro-interactions */
-  --duration-base: 400ms;    /* card hover, accordion */
-  --duration-slow: 800ms;    /* section entrances */
+  --duration-instant: 100ms;    /* immediate feedback */
+  --duration-fast: 200ms;       /* button/link micro-interactions */
+  --duration-base: 400ms;       /* card hover, accordion */
+  --duration-slow: 600ms;       /* section entrances */
+  --duration-grand: 1000ms;     /* hero animations */
+  
+  /* Glassmorphism blur levels */
+  --blur-glass-sm: blur(8px);
+  --blur-glass-md: blur(16px);
+  --blur-glass-lg: blur(24px);
+  --blur-glass-xl: blur(40px);
 }
 
 /* ── Base ──────────────────────────────────────────────────── */
@@ -5699,3 +5733,238 @@ section[id], div[id] {
 /* ══════════════════════════════════════════════════════════════
    End Premium Tenant Dashboard Enhancements
    ══════════════════════════════════════════════════════════════ */
+
+
+/* ── Premium Animation Keyframes ───────────────────────────── */
+
+/* Shimmer effect for loading/premium states */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Gentle floating animation for hero elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Premium pulse with glow */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Bounce-in entrance */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  50% {
+    transform: scale(1.02) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Slide up entrance */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale up entrance */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Gradient animation for premium backgrounds */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Rotate animation for loading states */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Premium fade-in-up */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glow pulse for interactive elements */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(5, 150, 105, 0.2), 0 0 40px rgba(5, 150, 105, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(5, 150, 105, 0.4), 0 0 60px rgba(5, 150, 105, 0.2);
+  }
+}
+
+/* ── Premium Utility Classes ───────────────────────────────── */
+
+/* Glassmorphism effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-effect {
+  background: rgba(24, 24, 27, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Frosted glass - heavier blur */
+.glass-frosted {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-frosted {
+  background: rgba(24, 24, 27, 0.4);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Premium card with enhanced depth */
+.card-premium {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
+  transition: all var(--duration-base) var(--ease-premium);
+}
+
+.card-premium:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.dark .card-premium {
+  background: var(--color-surface-dark);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text effect */
+.text-gradient {
+  background: var(--gradient-brand-vibrant);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Shimmer overlay for loading states */
+.shimmer-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-shimmer);
+  animation: shimmer 2s infinite;
+}
+
+/* Premium button with hover lift */
+.btn-premium {
+  position: relative;
+  transition: all var(--duration-fast) var(--ease-premium);
+}
+
+.btn-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-brand-hover);
+}
+
+.btn-premium:active {
+  transform: translateY(0px);
+}
+
+/* Floating animation helper */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Glow effect for focus/active states */
+.glow-brand {
+  box-shadow: 0 0 20px rgba(5, 150, 105, 0.3);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Smooth scale transition */
+.scale-hover {
+  transition: transform var(--duration-fast) var(--ease-premium);
+}
+
+.scale-hover:hover {
+  transform: scale(1.02);
+}
+
+/* Premium focus ring */
+.focus-premium:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.5);
+}
+
+/* Dark mode adjustments for animations */
+.dark .glow-brand {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+}

@@ -205,7 +205,7 @@ function ListingsPageContent() {
                                 </span>
                                 {debouncedKeyword && (
                                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
-                                        Search: "{debouncedKeyword}"
+                                        Search: &ldquo;{debouncedKeyword}&rdquo;
                                     </span>
                                 )}
                                 {debouncedLocation && (

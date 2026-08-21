@@ -13,6 +13,16 @@ export type IntegrationStatus =
     | "VERIFIED"
     | "ERROR";
 
+/** Input shape a provider's Test Connection expects for its destination. */
+export type IntegrationTestTargetKind = "TEXT" | "EMAIL" | "PHONE";
+
+export interface IntegrationTestTargetView {
+    kind: IntegrationTestTargetKind;
+    required: boolean;
+    label: string;
+    message: string;
+}
+
 export interface IntegrationFieldView {
     key: string;
     label: string;
@@ -42,6 +52,8 @@ export interface IntegrationProviderView {
     category: string;
     docsUrl: string | null;
     supportsTestConnection: boolean;
+    /** Declared by the backend catalog; null when the Test is credential-only. */
+    testTarget: IntegrationTestTargetView | null;
     environments: IntegrationEnvironmentView[];
 }
 
@@ -54,6 +66,18 @@ export interface IntegrationTestResult {
 
 export interface IntegrationActivateResult {
     environment: IntegrationEnvironmentView;
+}
+
+export interface IntegrationRolloutSkipView {
+    providerKey: string;
+    displayName: string;
+    reason: string;
+}
+
+export interface IntegrationRolloutView {
+    targetEnvironment: string;
+    activated: string[];
+    skipped: IntegrationRolloutSkipView[];
 }
 
 export interface IntegrationAuditEntry {

@@ -7,6 +7,7 @@ import { PageHeader } from "@/features/admin/components/admin-ui";
 import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
 import { useIntegrationProvidersQuery } from "@/features/integrations/hooks/use-integration-queries";
 import { IntegrationProviderCard } from "@/features/integrations/components/integration-provider-card";
+import { RollToProductionButton } from "@/features/integrations/components/integration-rollout";
 
 function ProviderCardSkeleton() {
     return (
@@ -44,9 +45,15 @@ function IntegrationsContent() {
                 icon={Plug}
                 iconTone="from-emerald-500 to-teal-600"
                 actions={
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[11px] font-medium text-fg-muted dark:border-border-dark dark:bg-surface-dark dark:text-fg-muted-dark">
-                        <ShieldCheck className="h-3.5 w-3.5 text-success-dark dark:text-success" strokeWidth={2} />
-                        {isPlatformOwner ? "Owner — full control" : "Admin — read only"}
+                    <span className="flex items-center gap-2">
+                        <RollToProductionButton
+                            providers={data ?? []}
+                            isOwner={isPlatformOwner}
+                        />
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[11px] font-medium text-fg-muted dark:border-border-dark dark:bg-surface-dark dark:text-fg-muted-dark">
+                            <ShieldCheck className="h-3.5 w-3.5 text-success-dark dark:text-success" strokeWidth={2} />
+                            {isPlatformOwner ? "Owner — full control" : "Admin — read only"}
+                        </span>
                     </span>
                 }
             />
