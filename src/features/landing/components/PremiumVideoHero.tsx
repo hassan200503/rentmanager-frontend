@@ -124,9 +124,16 @@ export function PremiumVideoHero({
         {eyebrow}
 
         <div className="mt-8">
-          {/* Static, complete copy for assistive tech */}
+          {/* Static, complete copy for assistive tech — the page's only h1. */}
           <h1 className="sr-only">{phrases.join(" ")}</h1>
-          <motion.h1
+
+          {/* The rotating visual headline is a div, not a second h1.
+              It carries aria-hidden so screen readers already ignored it and
+              lose nothing, but as an <h1> it still put two of them in the
+              document, which crawlers and SEO audits count and flag. A
+              document should have exactly one h1; this is the presentation of
+              it, not a second one. */}
+          <motion.div
             key={phraseIndex}
             aria-hidden="true"
             initial={{ opacity: 0, y: 40 }}
@@ -134,7 +141,7 @@ export function PremiumVideoHero({
             className="font-display font-bold text-[length:clamp(2.5rem,5vw,4.5rem)] leading-[1.1] tracking-[-0.02em] text-white min-h-[2.2em] [text-wrap:balance] [text-shadow:0_4px_30px_rgba(0,0,0,0.4)]"
           >
             {phrases[phraseIndex]}
-          </motion.h1>
+          </motion.div>
         </div>
 
         {/* Segmented progress — active segment fills over the dwell */}

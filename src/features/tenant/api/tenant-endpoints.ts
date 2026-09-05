@@ -5,6 +5,7 @@ export const tenantEndpoints = {
     byId: (id: string) => `${base}/${id}`,
     darajaCredentialsStatus: (id: string) => `${base}/${id}/daraja-credentials/status`,
     darajaCredentials: (id: string) => `${base}/${id}/daraja-credentials`,
+    darajaCredentialsTest: (id: string) => `${base}/${id}/daraja-credentials/test`,
     suspend: (id: string) => `${base}/${id}/suspend`,
     activate: (id: string) => `${base}/${id}/activate`,
     // Deliberately NOT nested under `base` — this is POST /api/v1/onboarding/tenant,

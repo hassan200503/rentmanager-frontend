@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Menu, HelpCircle, Sun, Moon, Wallet } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
-import { formatCurrency } from "./tenant-dashboard";
+import { formatCurrency, toMoneyNumber } from "@/shared/utils/money";
 
 const PAGE_TITLES: Record<string, string> = {
     "/portal": "Dashboard",
@@ -25,7 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
 export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void }) {
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
-    const { data } = useTenantDashboardQuery();
+    const { data, isLoading, isError } = useTenantDashboardQuery();
 
     const mounted = useSyncExternalStore(
         () => () => {},
@@ -34,12 +34,14 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
     );
 
     const pageTitle = PAGE_TITLES[pathname ?? ""] ?? "Tenant Portal";
-    const unitContext = data?.unitNumber
-        ? `Unit ${data.unitNumber}${data?.propertyName ? ` · ${data.propertyName}` : ""}`
-        : (data?.propertyName ?? "Your rental home");
 
-    const balance = data?.currentBalance ?? 0;
-    const overdue = data?.overdueAmount ?? 0;
+    // A money figure must never be synthesised from missing data. Previously
+    // `toMoneyNumber(undefined)` collapsed to 0, so a failed or in-flight
+    // dashboard query still rendered a confident "Balance Ksh 0" — a number the
+    // app did not actually know, sitting next to "Unable to load dashboard".
+    const hasBalance = Boolean(data) && !isError;
+    const balance = toMoneyNumber(data?.currentBalance);
+    const overdue = toMoneyNumber(data?.overdueAmount);
     const balanceLabel = overdue > 0 ? "Overdue" : "Balance";
     const balanceValue = overdue > 0 ? overdue : Math.max(0, balance);
     const balanceTone =
@@ -60,29 +62,44 @@ export default function TenantTopbar({ onOpenMenu }: { onOpenMenu: () => void })
                 >
                     <Menu className="h-4 w-4" strokeWidth={2} />
                 </button>
-                <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                        <h1 className="font-display text-sm sm:text-base font-semibold text-fg dark:text-fg-dark truncate">
-                            {pageTitle}
-                        </h1>
-                        {data?.leaseStatus && (
-                            <span className="tenant-status-chip tenant-status-chip-success hidden sm:inline-flex shrink-0">
-                                <span className="status-dot-success status-dot-live" />
-                                {data.leaseStatus.toLowerCase()}
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark truncate hidden sm:block">{unitContext}</p>
+                {/* Page title only. The unit/property line used to repeat here, but
+                    the sidebar already anchors it persistently and the dashboard hero
+                    features it — three copies of "Unit X · Property" on one screen
+                    reads as a templating bug, not as polish. */}
+                <div className="min-w-0 flex items-center gap-2">
+                    {/* font-brand (Fraunces), not font-display (Instrument Serif) —
+                        the latter is a thin display face meant for large hero type
+                        and reads spindly at this size. See BrandBadge.tsx's
+                        LIGHT_WORDMARK comment for the full reasoning. */}
+                    <h1 className="font-brand text-sm sm:text-base font-semibold text-fg dark:text-fg-dark truncate">
+                        {pageTitle}
+                    </h1>
+                    {data?.leaseStatus && (
+                        <span className="tenant-status-chip tenant-status-chip-success hidden sm:inline-flex shrink-0">
+                            <span className="status-dot-success status-dot-live" />
+                            {data.leaseStatus.toLowerCase()}
+                        </span>
+                    )}
                 </div>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Balance chip */}
-                <div className="tenant-topbar-balance hidden sm:flex items-center gap-1.5 text-xs">
-                    <Wallet className="h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
-                    <span className="text-fg-muted dark:text-fg-muted-dark">{balanceLabel}</span>
-                    <span className={`font-data font-semibold tabular-nums ${balanceTone}`}>{formatCurrency(balanceValue)}</span>
-                </div>
+                {/* Balance chip — shown only when a real figure is known.
+                    While loading it holds its space with a shimmer so the topbar
+                    does not reflow; on error it is omitted entirely rather than
+                    inventing a zero. */}
+                {hasBalance ? (
+                    <div className="tenant-topbar-balance hidden sm:flex items-center gap-1.5 text-xs">
+                        <Wallet className="h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
+                        <span className="text-fg-muted dark:text-fg-muted-dark">{balanceLabel}</span>
+                        <span className={`font-data font-semibold tabular-nums ${balanceTone}`}>{formatCurrency(balanceValue)}</span>
+                    </div>
+                ) : isLoading ? (
+                    <div className="tenant-topbar-balance hidden sm:flex items-center gap-1.5">
+                        <div className="tenant-skeleton-premium h-3 w-12 rounded" />
+                        <div className="tenant-skeleton-premium h-3 w-14 rounded" />
+                    </div>
+                ) : null}
 
                 <Link
                     href="/portal/help"

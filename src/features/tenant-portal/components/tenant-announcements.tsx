@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Megaphone, MessageCircle } from "lucide-react";
-import { formatDate } from "./tenant-dashboard";
+import { AlertTriangle, CheckCircle2, ChevronDown, Loader2, Megaphone, MessageCircle } from "lucide-react";
+import { formatDate } from "./tenant-format";
 import {
     useTenantAnnouncementsQuery,
     useWhatsAppOptInQuery,
@@ -13,6 +13,14 @@ import {
     useUpdateWhatsAppOptInMutation,
 } from "../hooks/use-tenant-portal-mutations";
 import { RenterAnnouncementResponse } from "../api/tenant-portal-api";
+import {
+    PortalPage,
+    PortalPageHeader,
+    PortalCard,
+    PortalEmptyState,
+    PortalSkeleton,
+    PortalErrorState,
+} from "./portal-chrome";
 
 export default function TenantAnnouncements() {
     const announcementsQuery = useTenantAnnouncementsQuery();
@@ -22,37 +30,41 @@ export default function TenantAnnouncements() {
 
     const [openId, setOpenId] = useState<string | null>(null);
 
-    const openAnnouncement = (item: RenterAnnouncementResponse) => {
-        setOpenId(item.id);
+    const toggleAnnouncement = (item: RenterAnnouncementResponse) => {
+        setOpenId((current) => (current === item.id ? null : item.id));
         if (!item.read) {
             markReadMutation.mutate(item.id);
         }
     };
 
     return (
-        <div className="page-container py-6 sm:py-8 space-y-6">
-            <div className="animate-fade-in-up">
-                <h1 className="page-title">Announcements</h1>
-                <p className="page-subtitle">
-                    Updates from your landlord - rent changes, maintenance schedules, and notices.
-                </p>
-            </div>
+        <PortalPage>
+            <PortalPageHeader
+                icon={Megaphone}
+                eyebrow="Your landlord"
+                title="Announcements"
+                subtitle="Rent changes, maintenance schedules and notices — sent straight to your portal."
+            />
 
             {/* ── WhatsApp opt-in consent ─────────────────────────────── */}
-            <div className="animate-fade-in-up card-elevated p-4 sm:p-5 flex items-start gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
-                    <MessageCircle className="h-5 w-5 text-emerald-600" />
+            {/* Was raw Tailwind emerald throughout — the landlord-side
+                equivalent toggle (emergency-contact-card.tsx) already uses
+                peer-checked:bg-brand; this is the one instance in the app
+                still on the un-tokened color. */}
+            <div className="tenant-panel !p-4 sm:!p-5 flex items-start gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30">
+                    <MessageCircle className="h-5 w-5 text-brand dark:text-brand-300" />
                 </span>
                 <div className="flex-1 space-y-1">
-                    <p className="text-sm font-semibold text-fg">WhatsApp announcements</p>
-                    <p className="text-sm text-fg-muted">
+                    <p className="text-sm font-semibold text-fg dark:text-fg-dark">WhatsApp announcements</p>
+                    <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
                         Allow your landlord to send you announcements on WhatsApp. This is opt-in -
                         you can change it any time, and you&apos;ll still get in-app, SMS and email
                         updates either way.
                     </p>
                 </div>
                 {whatsAppOptInQuery.isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-fg-subtle" />
+                    <Loader2 className="h-5 w-5 animate-spin text-fg-subtle dark:text-fg-subtle-dark" />
                 ) : (
                     <label className="relative inline-flex cursor-pointer items-center">
                         <input
@@ -62,43 +74,28 @@ export default function TenantAnnouncements() {
                             onChange={(e) => optInMutation.mutate(e.target.checked)}
                             disabled={optInMutation.isPending}
                         />
-                        <span className="h-6 w-11 rounded-full bg-border peer-checked:bg-emerald-600 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5 peer-disabled:opacity-50" />
+                        <span className="h-6 w-11 rounded-full bg-border dark:bg-border-dark peer-checked:bg-brand transition-colors duration-200 after:content-[''] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5 peer-disabled:opacity-50" />
                     </label>
                 )}
             </div>
 
             {/* ── List ────────────────────────────────────────────────── */}
             {announcementsQuery.isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="card-elevated p-4 flex items-center gap-4">
-                            <div className="skeleton h-10 w-10 rounded-lg shrink-0" />
-                            <div className="flex-1 space-y-2">
-                                <div className="skeleton h-4 w-48 rounded" />
-                                <div className="skeleton h-3 w-32 rounded" />
-                            </div>
-                            <div className="skeleton h-6 w-16 rounded-full" />
-                        </div>
-                    ))}
-                </div>
+                <PortalSkeleton rows={3} />
             ) : announcementsQuery.isError ? (
-                <div className="card-elevated p-8 text-center">
-                    <p className="text-sm text-fg-muted">Could not load announcements.</p>
-                    <button
-                        className="btn-outline btn-sm mt-3"
-                        onClick={() => announcementsQuery.refetch()}
-                    >
-                        Retry
-                    </button>
-                </div>
+                <PortalErrorState
+                    title="Couldn't load announcements"
+                    description="This is usually temporary. Check your connection and try again."
+                    onRetry={() => announcementsQuery.refetch()}
+                />
             ) : announcementsQuery.data?.length === 0 ? (
-                <div className="card-elevated p-10 text-center">
-                    <Megaphone className="mx-auto h-10 w-10 text-fg-subtle" />
-                    <p className="mt-3 text-sm font-medium text-fg">No announcements yet</p>
-                    <p className="mt-1 text-sm text-fg-muted">
-                        When your landlord broadcasts a message, it will appear here.
-                    </p>
-                </div>
+                <PortalCard padded={false}>
+                    <PortalEmptyState
+                        icon={Megaphone}
+                        title="No announcements yet"
+                        description="When your landlord broadcasts a message, it will appear here."
+                    />
+                </PortalCard>
             ) : (
                 <div className="space-y-3">
                     {announcementsQuery.data?.map((item) => {
@@ -106,26 +103,28 @@ export default function TenantAnnouncements() {
                         return (
                             <button
                                 key={item.id}
-                                className={`card-elevated w-full p-4 sm:p-5 text-left transition-colors ${
-                                    !item.read && !isOpen ? "border-emerald-600/40 bg-emerald-50/40 dark:bg-emerald-950/20" : ""
+                                type="button"
+                                aria-expanded={isOpen}
+                                className={`tenant-panel !p-4 sm:!p-5 w-full text-left transition-all duration-200 hover:-translate-y-0.5 ${
+                                    !item.read && !isOpen ? "border-brand/40 bg-brand-50/40 dark:bg-brand-900/15" : ""
                                 }`}
-                                onClick={() => openAnnouncement(item)}
+                                onClick={() => toggleAnnouncement(item)}
                             >
                                 <div className="flex items-start gap-4">
                                     <span
                                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
                                             item.priority === "URGENT"
-                                                ? "bg-red-50 dark:bg-red-950/40"
-                                                : "bg-emerald-50 dark:bg-emerald-950/40"
+                                                ? "bg-danger-bg dark:bg-danger-bg-dark"
+                                                : "bg-brand-50 dark:bg-brand-900/30"
                                         }`}
                                     >
                                         {item.priority === "URGENT" ? (
-                                            <AlertTriangle className="h-5 w-5 text-red-600" />
+                                            <AlertTriangle className="h-5 w-5 text-danger-dark dark:text-danger" />
                                         ) : (
-                                            <Megaphone className="h-5 w-5 text-emerald-600" />
+                                            <Megaphone className="h-5 w-5 text-brand dark:text-brand-300" />
                                         )}
                                     </span>
-                                    <div className="flex-1 space-y-1.5">
+                                    <div className="flex-1 min-w-0 space-y-1.5">
                                         <div className="flex flex-wrap items-center gap-2">
                                             {item.priority === "URGENT" && (
                                                 <span className="badge badge-danger !text-[10px]">Urgent</span>
@@ -133,27 +132,42 @@ export default function TenantAnnouncements() {
                                             {!item.read && (
                                                 <span className="badge badge-emerald !text-[10px]">New</span>
                                             )}
-                                            <span className="text-xs text-fg-muted">{formatDate(item.createdAt)}</span>
+                                            <span className="text-xs text-fg-muted dark:text-fg-muted-dark">{formatDate(item.createdAt)}</span>
                                         </div>
+                                        {/* line-clamp-2 used to stay applied even when isOpen
+                                            was true — clicking marked the announcement read and
+                                            changed its text color, but never actually revealed
+                                            anything past the second line. Any message longer than
+                                            two lines (a rent change, a maintenance notice — the
+                                            exact content this page exists for) had no way to be
+                                            read in full. */}
                                         <p
-                                            className={`line-clamp-2 text-sm ${
-                                                isOpen ? "" : item.read ? "text-fg-muted" : "font-medium text-fg"
+                                            className={`text-sm whitespace-pre-wrap ${!isOpen ? "line-clamp-2" : ""} ${
+                                                isOpen ? "text-fg dark:text-fg-dark" : item.read ? "text-fg-muted dark:text-fg-muted-dark" : "font-medium text-fg dark:text-fg-dark"
                                             }`}
                                         >
                                             {item.message}
                                         </p>
                                     </div>
-                                    {item.read ? (
-                                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                                    ) : (
-                                        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
-                                    )}
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        {item.read ? (
+                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-brand dark:text-brand-300" />
+                                        ) : (
+                                            <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
+                                        )}
+                                        {/* Nothing previously hinted these cards were
+                                            expandable — a renter had no way to know clicking
+                                            did anything at all. */}
+                                        <ChevronDown
+                                            className={`h-4 w-4 shrink-0 text-fg-subtle dark:text-fg-subtle-dark transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                                        />
+                                    </div>
                                 </div>
                             </button>
                         );
                     })}
                 </div>
             )}
-        </div>
+        </PortalPage>
     );
 }

@@ -8,6 +8,8 @@ import { SectionHeader } from "./SectionHeader";
 import { Button } from "@/shared/components/ui/Button";
 import { usePublicSubscriptionPlansQuery } from "@/features/subscription/queries/use-public-subscription-plans";
 import type { SubscriptionPlan } from "@/features/subscription/types/subscription-types";
+import { toMoneyNumber } from "@/shared/utils/money";
+import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
 type Billing = "monthly" | "annual";
 
@@ -28,36 +30,66 @@ interface RenderPlan {
 
 const RENTER_PLAN = PRICING_PLANS[0];
 
+/**
+ * Fallback feature list for a plan code that has no entry in
+ * LANDLORD_PLAN_META — today only ENTERPRISE, but also any plan the backend
+ * catalogue gains later.
+ *
+ * Three claims were removed from it:
+ *
+ *   "Unlimited property listings" — every self-service plan is unit-capped
+ *       (V50 seeds STARTER 10, GROWTH 30, PORTFOLIO 75). The cap is now read
+ *       off the plan itself by unitAllowanceFeature() below, so a new plan
+ *       code cannot inherit a false "unlimited" by forgetting its metadata.
+ *
+ *   "Priority support" — there is no support tier, ticketing system or SLA
+ *       for RentManager's own customers. The SLA tracking in the codebase is
+ *       the maintenance module: a landlord's response time to a tenant's
+ *       repair request, which is a different thing entirely.
+ *
+ *   "eTIMS-ready digital receipts" — receipts carry the eTIMS fields, and the
+ *       receipt PDF itself prints "Pending KRA Integration" against them.
+ *       "Ready" reads, on a pricing page, as though it handles a landlord's
+ *       KRA obligations. It does not yet.
+ */
 const genericFeatures = [
-    "Unlimited property listings",
     "M-Pesa rent collection & reminders",
     "Digital lease agreements",
     "Tenant & occupancy tracking",
-    "eTIMS-ready digital receipts",
-    "Priority support",
+    "Every payment receipted on a record that cannot be edited",
 ];
 
+/**
+ * The plan's real unit allowance, straight from the catalogue. A null cap
+ * genuinely means unlimited (ENTERPRISE); anything else states the number.
+ */
+const unitAllowanceFeature = (maxUnits: number | null | undefined): string =>
+    maxUnits == null ? "Unlimited units" : `Up to ${maxUnits} units`;
+
 const isDisplayable = (plan: SubscriptionPlan) =>
-    plan.active && plan.selfService && plan.monthlyPrice != null && plan.monthlyPrice > 0;
+    plan.active && plan.selfService && plan.monthlyPrice != null && toMoneyNumber(plan.monthlyPrice) > 0;
 
 function toLandlordPlan(plan: SubscriptionPlan, index: number, total: number): RenderPlan {
     const meta = LANDLORD_PLAN_META[plan.code.toUpperCase()];
+    const monthlyPrice = plan.monthlyPrice != null ? toMoneyNumber(plan.monthlyPrice) : null;
 
     return {
         key: plan.code,
         name: plan.name,
         tagline: meta?.tagline ?? plan.description ?? genericFeatures[5],
-        priceLabel: `KES ${plan.monthlyPrice!.toLocaleString()}`,
+        priceLabel: `KES ${(monthlyPrice ?? 0).toLocaleString()}`,
         periodLabel: "per month",
         capacity: plan.maxUnits != null ? `Up to ${plan.maxUnits} units` : undefined,
-        features: meta?.features ?? genericFeatures,
+        // The unit allowance leads, and comes from the plan row rather than
+        // from a hard-coded list, so it can never contradict the catalogue.
+        features: meta?.features ?? [unitAllowanceFeature(plan.maxUnits), ...genericFeatures],
         // Middle card is the natural "most popular" position; a single
         // card column stands alone unless there are exactly two.
         highlight: total >= 2 ? index === Math.floor(total / 2) : index === 0,
         ctaLabel: "Start free trial",
-        ctaHref: "/public/sign-up?intent=landlord",
+        ctaHref: SIGNUP_LANDLORD_HREF,
         live: true,
-        monthlyPrice: plan.monthlyPrice,
+        monthlyPrice,
     };
 }
 
@@ -227,7 +259,7 @@ export function PricingSection() {
 
     const livePlans: RenderPlan[] = (data ?? [])
         .filter(isDisplayable)
-        .sort((a, b) => (a.monthlyPrice ?? 0) - (b.monthlyPrice ?? 0))
+        .sort((a, b) => toMoneyNumber(a.monthlyPrice) - toMoneyNumber(b.monthlyPrice))
         .map((plan, index, all) => toLandlordPlan(plan, index, all.length));
 
     const fallbackPlans: RenderPlan[] = FALLBACK_LANDLORD_PLANS.map((fallback, index) =>
@@ -242,7 +274,7 @@ export function PricingSection() {
                 maxUnits: fallback.maxUnits,
                 maxUsers: null,
                 maxStorageGb: null,
-                monthlyPrice: fallback.monthlyPrice,
+                monthlyPrice: String(fallback.monthlyPrice),
                 yearlyPrice: null,
                 active: true,
                 selfService: true,

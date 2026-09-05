@@ -1,19 +1,22 @@
 // components/tenant-lease.tsx
 "use client";
 
-import { useTenantDashboardQuery, useTenantLeaseQuery, useTenantPaymentSummaryQuery, useTenantAutoPaySettingsQuery } from "../hooks/use-tenant-portal-queries";
+import { useTenantDashboardQuery, useTenantLeaseQuery, useTenantPaymentSummaryQuery, useTenantAutoPaySettingsQuery, useTenantDepositQuery } from "../hooks/use-tenant-portal-queries";
 import { useToggleAutoPayMutation } from "../hooks/use-tenant-portal-mutations";
 import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileText, MapPin, User, Clock, Smartphone, Loader2, CheckCircle2, Bell, BellOff } from "lucide-react";
-import { formatCurrency, formatDate } from "./tenant-dashboard";
-import { tenantPortalApi } from "../api/tenant-portal-api";
+import { formatDate } from "./tenant-format";
+import { formatCurrency } from "@/shared/utils/money";
+import { tenantPortalApi, type DepositStatus } from "../api/tenant-portal-api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { PortalPage, PortalPageHeader, PortalCard, PortalEmptyState, PortalErrorState } from "./portal-chrome";
 
 export const TenantLeasePage = () => {
     const { data: dashboardData } = useTenantDashboardQuery();
     const { data: lease, isLoading, isError, refetch } = useTenantLeaseQuery();
     const { data: summary, refetch: refetchSummary } = useTenantPaymentSummaryQuery();
     const { data: autoPaySettings } = useTenantAutoPaySettingsQuery();
+    const { data: deposit } = useTenantDepositQuery();
     const toggleAutoPayMut = useToggleAutoPayMutation();
     const searchParams = useSearchParams();
     const autoPay = autoPaySettings?.enabled ?? false;
@@ -119,35 +122,48 @@ export const TenantLeasePage = () => {
         await toggleAutoPayMut.mutateAsync({ enabled: next, mpesaPhone: phone });
     };
 
+    // This page previously rolled its own <div className="space-y-6"> wrapper
+    // and a hand-built header instead of PortalPage/PortalPageHeader — the
+    // same "one page still on its own dialect" gap already found and fixed on
+    // the payments page this session. Every state below now goes through the
+    // shared chrome, matching tenant-maintenance.tsx's established pattern.
     if (isLoading) {
         return (
-            <div className="space-y-6">
-                <div className="card-elevated p-6"><div className="skeleton h-8 w-1/4 mb-4" /><div className="skeleton h-32 w-full" /></div>
+            <PortalPage>
+                <div className="tenant-panel !p-6"><div className="tenant-skeleton-premium h-8 w-1/4 mb-4" /><div className="tenant-skeleton-premium h-32 w-full" /></div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="card-elevated p-6"><div className="skeleton h-48 w-full" /></div>
-                    <div className="card-elevated p-6"><div className="skeleton h-48 w-full" /></div>
+                    <div className="tenant-panel !p-6"><div className="tenant-skeleton-premium h-48 w-full" /></div>
+                    <div className="tenant-panel !p-6"><div className="tenant-skeleton-premium h-48 w-full" /></div>
                 </div>
-            </div>
+            </PortalPage>
         );
     }
 
     if (isError) {
         return (
-            <div className="card p-6 text-center">
-                <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load lease</p>
-                <button onClick={() => refetch()} className="mt-2 btn-outline btn-sm">Retry</button>
-            </div>
+            <PortalPage>
+                <PortalPageHeader icon={Home} eyebrow="Your home" title="Lease" />
+                <PortalErrorState
+                    title="Couldn't load your lease"
+                    description="This is usually temporary. Check your connection and try again."
+                    onRetry={() => refetch()}
+                />
+            </PortalPage>
         );
     }
 
     if (!lease) {
         return (
-            <div className="card p-8 text-center">
-                <Home className="h-12 w-12 mx-auto text-fg-muted dark:text-fg-muted-dark mb-3" strokeWidth={1.5} />
-                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No active lease</p>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Your lease will appear here once your reservation is confirmed and the landlord creates the lease agreement.</p>
-            </div>
+            <PortalPage>
+                <PortalPageHeader icon={Home} eyebrow="Your home" title="Lease" />
+                <PortalCard padded={false}>
+                    <PortalEmptyState
+                        icon={Home}
+                        title="No active lease yet"
+                        description="Your lease will appear here once your reservation is confirmed and your landlord creates the agreement."
+                    />
+                </PortalCard>
+            </PortalPage>
         );
     }
 
@@ -177,38 +193,73 @@ export const TenantLeasePage = () => {
     const statusClass = statusMap[status?.toUpperCase?.()] ?? "badge-neutral";
 
     return (
-        <div className="space-y-6">
-            {/* Lease Header */}
-            <div className="card-elevated p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Lease</p>
-                            <span className={`${statusClass} !text-[10px]`}>{status?.toLowerCase()}</span>
-                        </div>
-                        <h1 className="page-title !text-[1.5rem] mb-1">{propertyName}</h1>
-                        <p className="page-subtitle !text-sm">{unitLabel ? `${unitNumber} · ${unitLabel}` : `Unit ${unitNumber}`}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
+        <PortalPage>
+            {/* Header — was a hand-rolled div mixing .page-title/.kpi-label
+                (the generic, pre-portal-chrome typography) inside a
+                .tenant-panel; PortalPageHeader is the shared eyebrow/title
+                pattern every other portal page already renders through. */}
+            <PortalPageHeader
+                icon={Home}
+                eyebrow="Your home"
+                title={propertyName}
+                subtitle={unitLabel ? `${unitNumber} · ${unitLabel}` : `Unit ${unitNumber}`}
+                actions={
+                    <div className="flex items-center gap-3">
+                        <span className={`${statusClass} !text-[10px]`}>{status?.toLowerCase()}</span>
                         <div className="text-right">
                             <p className="kpi-label">Monthly Rent</p>
                             <p className="kpi-value font-data">{formatCurrency(monthlyRent)}</p>
                         </div>
                     </div>
-                </div>
+                }
+            />
 
+            {/* Tenancy-ended notice. Leases expire automatically the night
+                after their end date, and until recently that silently locked
+                the renter out of this whole portal. They keep read access
+                now, so the page has to say plainly which state they are in —
+                otherwise an expired lease renders identically to a live one,
+                minus a Pay button, with no explanation. */}
+            {!canPay && (
+                <div className="tenant-panel !p-4 sm:!p-5 flex items-start gap-3.5 border-l-4 border-l-warning">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning">
+                        <Clock className="h-4.5 w-4.5" strokeWidth={2} />
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-fg dark:text-fg-dark">
+                            This tenancy is {status?.toLowerCase() ?? "no longer active"}
+                        </p>
+                        <p className="mt-0.5 text-sm text-fg-muted dark:text-fg-muted-dark">
+                            Rent collection is closed for this lease. Your payment history, receipts and
+                            deposit record stay available here for your own records — download anything
+                            you need for a deposit claim or a future landlord reference.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            <PortalCard>
                 {/* Key Details Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border dark:border-border-dark">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <LeaseDetailItem icon={Calendar} label="Start Date" value={formatDate(startDate)} />
                     <LeaseDetailItem icon={Calendar} label="End Date" value={endDate ? formatDate(endDate) : "Ongoing"} />
-                    <LeaseDetailItem icon={CreditCard} label="Deposit Paid" value={formatCurrency(depositAmount)} />
+                    {/* "Deposit Paid" was the label here, but this figure is
+                        activeLease.getSecurityDeposit() — the amount the lease
+                        requires, not a payment confirmation. A renter who hasn't
+                        paid a shilling of it yet (no Deposit record exists) would
+                        have been told "Deposit Paid: Ksh 30,000" — a materially
+                        false claim about their own money. The Security Deposit
+                        card lower on this page (rendered only once a real
+                        Deposit record exists) is where actual payment status
+                        belongs; this slot describes a lease term. */}
+                    <LeaseDetailItem icon={CreditCard} label="Security Deposit" value={formatCurrency(depositAmount)} />
                     <LeaseDetailItem icon={Shield} label="Lease #" value={leaseNumber} />
                 </div>
-            </div>
+            </PortalCard>
 
             {/* Pay Rent */}
             {canPay && payState === "idle" && (
-                <div className="card-elevated p-6 border-2 border-brand/20 dark:border-brand/20">
+                <div className="tenant-panel !p-6 border-2 border-brand/20 dark:border-brand/20">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h3 className="section-header !text-sm !mb-1">Pay Rent</h3>
@@ -243,7 +294,7 @@ export const TenantLeasePage = () => {
             )}
 
             {canPay && payState === "phone_prompt" && (
-                <div className="card-elevated p-6 border-2 border-brand/20 dark:border-brand/20">
+                <div className="tenant-panel !p-6 border-2 border-brand/20 dark:border-brand/20">
                     <h3 className="section-header !text-sm !mb-4">Pay Rent</h3>
                     <div className="space-y-4">
                         <div>
@@ -285,7 +336,7 @@ export const TenantLeasePage = () => {
             )}
 
             {payState === "initiating" && (
-                <div className="card-elevated p-6">
+                <div className="tenant-panel !p-6">
                     <div className="flex items-center gap-3 py-2">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
                         <span className="text-sm text-fg-muted dark:text-fg-muted-dark">Sending payment request…</span>
@@ -294,7 +345,7 @@ export const TenantLeasePage = () => {
             )}
 
             {payState === "pending" && (
-                <div className="card-elevated p-6">
+                <div className="tenant-panel !p-6">
                     <div className="flex items-center gap-3 py-2">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
                         <span className="text-sm text-fg-muted dark:text-fg-muted-dark">Awaiting M-Pesa confirmation…</span>
@@ -312,7 +363,7 @@ export const TenantLeasePage = () => {
             )}
 
             {payState === "success" && (
-                <div className="card-elevated p-6 border-2 border-success/20 dark:border-success/20">
+                <div className="tenant-panel !p-6 border-2 border-success/20 dark:border-success/20">
                     <div className="flex items-center gap-3 py-2">
                         <CheckCircle2 className="h-5 w-5 text-success" strokeWidth={2} />
                         <span className="text-sm font-medium text-success">Payment successful!</span>
@@ -322,7 +373,7 @@ export const TenantLeasePage = () => {
             )}
 
             {payState === "error" && (
-                <div className="card-elevated p-6 border-2 border-danger/20 dark:border-danger/20">
+                <div className="tenant-panel !p-6 border-2 border-danger/20 dark:border-danger/20">
                     <div className="flex items-center gap-3 py-2">
                         <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
                         <span className="text-sm font-medium text-danger">Payment failed</span>
@@ -338,7 +389,7 @@ export const TenantLeasePage = () => {
                     ref={autoPayCardRef}
                     tabIndex={-1}
                     id="autopay-settings"
-                    className={`card-elevated p-6 outline-none ${
+                    className={`tenant-panel !p-6 outline-none ${
                         setupAutoPay ? "ring-2 ring-brand/40 border-brand/30 animate-pulse-once" : ""
                     }`}
                 >
@@ -371,6 +422,17 @@ export const TenantLeasePage = () => {
                                 <span className="font-medium text-danger">{autoPaySettings.consecutiveFailures}</span>
                             </div>
                         )}
+                        {autoPaySettings.lastFailureReason && (
+                            <div className="flex items-start gap-2 rounded-lg bg-danger/10 border border-danger/20 px-3 py-2.5">
+                                <AlertTriangle className="h-4 w-4 text-danger shrink-0 mt-0.5" strokeWidth={2} />
+                                <div>
+                                    <p className="text-xs font-medium text-danger">Last attempt didn&apos;t go through</p>
+                                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">
+                                        {autoPaySettings.lastFailureReason}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                         <div className="pt-3 border-t border-border dark:border-border-dark flex items-center justify-between gap-3">
                             <p className="text-xs text-fg-muted dark:text-fg-muted-dark">
                                 {autoPay
@@ -400,10 +462,63 @@ export const TenantLeasePage = () => {
                 </div>
             )}
 
+            {/* Security Deposit -- trust feature: shows what's actually happened to it,
+                not just the amount. Only renders once a Deposit record exists (i.e. the
+                deposit has actually been paid); before that the amount alone is already
+                shown in the Key Details grid above. */}
+            {deposit && (
+                <div className="tenant-panel !p-6">
+                    <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-brand" strokeWidth={2} />
+                        Security Deposit
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Status</span>
+                            <DepositStatusChip status={deposit.status} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-fg-muted dark:text-fg-muted-dark">Amount held</span>
+                            <span className="font-medium font-data">{formatCurrency(deposit.amountPaid)}</span>
+                        </div>
+                        {deposit.paidAt && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-fg-muted dark:text-fg-muted-dark">Paid on</span>
+                                <span className="font-medium">{formatDate(deposit.paidAt)}</span>
+                            </div>
+                        )}
+                        {(deposit.status === "REFUNDED" || deposit.status === "PARTIALLY_REFUNDED") && (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-fg-muted dark:text-fg-muted-dark">Amount refunded</span>
+                                    <span className="font-medium font-data text-success">{formatCurrency(deposit.amountRefunded)}</span>
+                                </div>
+                                {deposit.refundedAt && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-fg-muted dark:text-fg-muted-dark">Refunded on</span>
+                                        <span className="font-medium">{formatDate(deposit.refundedAt)}</span>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {deposit.status === "HELD" && (
+                            <p className="pt-3 border-t border-border dark:border-border-dark text-xs text-fg-muted dark:text-fg-muted-dark">
+                                Held by your landlord for the duration of your tenancy. It will be refunded, minus any lawful deductions, after move-out inspection.
+                            </p>
+                        )}
+                        {deposit.status === "FORFEITED" && (
+                            <p className="pt-3 border-t border-border dark:border-border-dark text-xs text-fg-muted dark:text-fg-muted-dark">
+                                This deposit was forfeited. Contact your landlord if you believe this is in error.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Lease Terms & Landlord Contact */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Lease Terms */}
-                <div className="card-elevated p-6">
+                <div className="tenant-panel !p-6">
                     <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
                         <FileText className="h-4 w-4 text-brand" strokeWidth={2} />
                         Lease Terms
@@ -420,13 +535,13 @@ export const TenantLeasePage = () => {
                 </div>
 
                 {/* Landlord Contact */}
-                <div className="card-elevated p-6">
+                <div className="tenant-panel !p-6">
                     <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
                         <User className="h-4 w-4 text-brand" strokeWidth={2} />
                         Landlord Contact
                     </h3>
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700 hover:-translate-y-0.5 hover:shadow-sm">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
                                 <User className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                             </div>
@@ -435,27 +550,38 @@ export const TenantLeasePage = () => {
                                 <p className="font-medium text-fg dark:text-fg-dark">{landlordName}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20">
-                                <Phone className="h-5 w-5 text-green-600 dark:text-green-400" strokeWidth={2} />
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                                <Phone className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                             </div>
                             <div>
                                 <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Phone</p>
-                                <a href={`tel:${landlordPhone}`} className="font-medium text-fg dark:text-fg-dark hover:text-brand transition-colors">{landlordPhone}</a>
+                                {/* Absent contact details previously rendered an empty <a href="tel:">
+                                    — an invisible, unclickable link that made the row look broken.
+                                    Fall back to a dash, matching the landlord page. */}
+                                {landlordPhone ? (
+                                    <a href={`tel:${landlordPhone}`} className="font-medium text-fg dark:text-fg-dark hover:text-brand transition-colors">{landlordPhone}</a>
+                                ) : (
+                                    <p className="font-medium text-fg-subtle dark:text-fg-subtle-dark">Not provided</p>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                                <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                                <Mail className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                             </div>
                             <div>
                                 <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Email</p>
-                                <a href={`mailto:${landlordEmail}`} className="font-medium text-fg dark:text-fg-dark hover:text-brand transition-colors">{landlordEmail}</a>
+                                {landlordEmail ? (
+                                    <a href={`mailto:${landlordEmail}`} className="font-medium text-fg dark:text-fg-dark hover:text-brand transition-colors break-all">{landlordEmail}</a>
+                                ) : (
+                                    <p className="font-medium text-fg-subtle dark:text-fg-subtle-dark">Not provided</p>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20">
-                                <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/60 transition-all duration-200 hover:border-brand-200 dark:hover:border-brand-700 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-800">
+                                <MapPin className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                             </div>
                             <div>
                                 <p className="text-xs uppercase tracking-widest text-fg-muted dark:text-fg-muted-dark">Property Address</p>
@@ -467,7 +593,7 @@ export const TenantLeasePage = () => {
             </div>
 
             {/* Important Dates */}
-            <div className="card-elevated p-6">
+            <div className="tenant-panel !p-6">
                 <h3 className="section-header !text-sm !mb-4 flex items-center gap-2">
                     <Clock className="h-4 w-4 text-brand" strokeWidth={2} />
                     Important Dates
@@ -478,8 +604,25 @@ export const TenantLeasePage = () => {
                     <DateCard icon={CreditCard} label="Rent Due" date={null} custom="1st of each month" />
                 </div>
             </div>
-        </div>
+        </PortalPage>
     );
+};
+
+const DEPOSIT_STATUS_META: Record<DepositStatus, { label: string; className: string }> = {
+    UNPAID: { label: "Unpaid", className: "tenant-status-chip-neutral" },
+    // NOT "held in escrow" — this system has no escrow facility and takes no
+    // custody of deposits (see AGENTS.md: "There is no escrow"). The landlord
+    // holds it directly; RentManager only records that it was paid and what
+    // has happened to it since.
+    HELD: { label: "Held by landlord", className: "tenant-status-chip-success" },
+    PARTIALLY_REFUNDED: { label: "Partially refunded", className: "tenant-status-chip-warning" },
+    REFUNDED: { label: "Refunded", className: "tenant-status-chip-success" },
+    FORFEITED: { label: "Forfeited", className: "tenant-status-chip-danger" },
+};
+
+const DepositStatusChip = ({ status }: { status: DepositStatus }) => {
+    const meta = DEPOSIT_STATUS_META[status] ?? DEPOSIT_STATUS_META.UNPAID;
+    return <span className={`tenant-status-chip ${meta.className} inline-flex`}>{meta.label}</span>;
 };
 
 const LeaseDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (

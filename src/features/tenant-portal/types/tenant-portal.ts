@@ -1,3 +1,16 @@
+// features/tenant-portal/types/tenant-portal.ts
+//
+// Money fields are MoneyValue (string | number), not number.
+//
+// The backend serialises EVERY BigDecimal as a JSON string — see the
+// backend's JacksonConfig — so these arrive as "15000.00" at runtime. They
+// were declared as `number`, which meant TypeScript accepted arithmetic that
+// silently concatenates: `totalPaid + totalDue` type-checked and produced
+// "100200" from 100 and 200.
+//
+// Typing them honestly forces every use site through toMoneyNumber(), which
+// is the one place that converts for display-side maths.
+import type { MoneyValue } from "@/shared/utils/money";
 // types/tenant-portal.ts
 // Tenant/renter portal types — mirrors backend tenant-facing DTOs
 
@@ -19,8 +32,8 @@ export interface TenantLeaseResponse {
     propertyAddress: string;
     startDate: string;
     endDate: string | null;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: MoneyValue;
+    depositAmount: MoneyValue;
     depositPaid: boolean;
     status: "ACTIVE" | "EXPIRED" | "TERMINATED" | "PENDING";
     moveInDate: string;
@@ -35,22 +48,24 @@ export interface TenantLeaseResponse {
 }
 
 export interface TenantPaymentSummaryResponse {
-    totalPaid: number;
-    totalDue: number;
-    overdueAmount: number;
+    totalPaid: MoneyValue;
+    totalDue: MoneyValue;
+    overdueAmount: MoneyValue;
     nextDueDate: string | null;
-    nextDueAmount: number;
+    nextDueAmount: MoneyValue;
 }
 
 export interface TenantPaymentHistoryItemResponse {
     id: string;
-    amount: number;
+    amount: MoneyValue;
     paidAt: string;
     mpesaReceiptNumber: string | null;
     status: "COMPLETED" | "PENDING" | "FAILED" | "PARTIAL";
     periodStart: string;
     periodEnd: string;
-    balanceAfter: number;
+    // Money, so MoneyValue. The four fields below it are pagination counts
+    // and are genuinely numbers.
+    balanceAfter: MoneyValue;
 }
 
 export interface TenantPortalDashboardResponse {

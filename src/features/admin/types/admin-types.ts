@@ -14,10 +14,13 @@ export type LeaseStatus =
   | "CANCELLED"
   | "TERMINATED"
   | "SUSPENDED";
-export type PropertyStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "UNDER_MAINTENANCE";
+// Mirrors the backend PropertyStatus enum. ARCHIVED was missing, so a
+// response carrying it was typed as something it is not.
+export type PropertyStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "UNDER_MAINTENANCE" | "ARCHIVED";
+// Mirrors the backend PropertyType enum; AIRBNB was missing.
 export type PropertyType =
   | "APARTMENT" | "BEDSITTER" | "STUDIO" | "MAISONETTE" | "VILLA"
-  | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL";
+  | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL" | "AIRBNB";
 export type PremisesType = "RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE";
 export type CommissionSource = "OVERRIDE" | "DEFAULT";
 
@@ -35,14 +38,14 @@ export interface AdminOverviewPlatformStats {
   totalUnits: number;
   activeLeases: number;
   totalRenters: number;
-  platformDefaultCommissionRate: number | null;
+  platformDefaultCommissionRate: string | null; // BigDecimal -> JSON string
 }
 
 export interface AdminOverviewPaymentStats {
-  gmvCurrentMonth: number;
-  gmvPreviousMonth: number;
-  commissionCurrentMonth: number;
-  commissionPreviousMonth: number;
+  gmvCurrentMonth: string;
+  gmvPreviousMonth: string;
+  commissionCurrentMonth: string;
+  commissionPreviousMonth: string;
   paymentRequestsPending: number;
   paymentRequestsPaid: number;
   paymentRequestsFailed: number;
@@ -80,10 +83,10 @@ export interface LandlordSummary {
   unitsCount: number;
   activeLeasesCount: number;
   rentersCount: number;
-  gmvAmount: number;
-  commissionAmount: number;
+  gmvAmount: string; // BigDecimal -> JSON string
+  commissionAmount: string;
   lastActivityAt: string | null;
-  effectiveCommissionRate: number | null;
+  effectiveCommissionRate: string | null;
 }
 
 export interface SpringPage<T> {
@@ -124,12 +127,12 @@ export interface LandlordDetailLease {
   unitId: string;
   startDate: string;
   endDate: string;
-  rentAmount: number;
+  rentAmount: string; // BigDecimal -> JSON string
 }
 
 export interface LandlordDetailPaymentRequest {
   id: string;
-  amount: number;
+  amount: string;
   status: RentPaymentRequestStatus;
   mpesaReceiptNumber: string | null;
   createdAt: string;
@@ -137,7 +140,7 @@ export interface LandlordDetailPaymentRequest {
 
 export interface LandlordDetailDisbursement {
   id: string;
-  amount: number;
+  amount: string;
   recipientName: string | null;
   status: DisbursementStatus;
   requiresManualAttention: boolean;
@@ -146,8 +149,8 @@ export interface LandlordDetailDisbursement {
 
 export interface LandlordDetailTransaction {
   id: string;
-  amount: number;
-  commissionAmount: number | null;
+  amount: string;
+  commissionAmount: string | null;
   source: RentTransactionSource;
   occurredAt: string;
 }
@@ -162,9 +165,9 @@ export interface LandlordDetailResponse {
   billingMode: BillingMode;
   createdAt: string;
   lastActivityAt: string | null;
-  gmvAmount: number;
-  commissionAmount: number;
-  effectiveCommissionRate: number | null;
+  gmvAmount: string; // BigDecimal -> JSON string
+  commissionAmount: string;
+  effectiveCommissionRate: string | null;
   commissionSource: CommissionSource;
   properties: LandlordDetailProperty[];
   renters: LandlordDetailRenter[];
@@ -176,7 +179,7 @@ export interface LandlordDetailResponse {
 
 export interface LandlordCommission {
   landlordOrgId: string;
-  ratePercent: number | null;
+  ratePercent: string | null; // BigDecimal -> JSON string
   source: CommissionSource;
   effectiveFrom: string | null;
   updatedAt: string | null;
@@ -191,7 +194,7 @@ export interface DisbursementItem {
   tenantId: string;
   leaseId: string | null;
   ledgerEntryId: string | null;
-  amount: number;
+  amount: string; // BigDecimal -> JSON string
   recipientPhone: string;
   recipientName: string | null;
   commandId: string;
@@ -270,8 +273,8 @@ export interface PropertyDetailUnit {
   label: string;
   status: UnitStatus;
   occupancyStatus: UnitOccupancyStatus;
-  rentAmount: number;
-  depositAmount: number;
+  rentAmount: string; // BigDecimal -> JSON string
+  depositAmount: string;
   floor: string | null;
 }
 
@@ -286,7 +289,7 @@ export interface PropertyDetailLease {
   renterEmail: string;
   startDate: string;
   endDate: string;
-  rentAmount: number;
+  rentAmount: string; // BigDecimal -> JSON string
   createdAt: string;
 }
 
@@ -402,4 +405,33 @@ export interface PlatformReviewStats {
   platformPending: number;
   platformHidden: number;
   platformAverageRating: number;
+}
+
+// ── Rent payment queue ──────────────────────────────────────────────────────
+//
+// The rows behind the overview's pending/failed payment counters. The alert
+// panel linked to these long before anything could list them.
+
+// RentPaymentRequestStatus is already declared at the top of this file.
+
+export interface PaymentRequestItem {
+  id: string;
+  tenantId: string;
+  leaseId: string | null;
+  rentLedgerEntryId: string | null;
+  amount: string; // BigDecimal -> JSON string
+  phoneNumber: string | null;
+  status: RentPaymentRequestStatus;
+  mpesaCheckoutRequestId: string | null;
+  mpesaReceiptNumber: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface PaymentRequestQueryParams {
+  landlordId?: string;
+  status?: RentPaymentRequestStatus;
+  page?: number;
+  size?: number;
 }

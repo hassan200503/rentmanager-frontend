@@ -12,6 +12,7 @@ import { ReviewsSection } from "@/features/public-listings/components/reviews-se
 import { VerifiedBadge } from "@/features/public-listings/components/verified-badge";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 const occupancyBadge = (occupancyStatus: string): { label: string; className: string } => {
     switch (occupancyStatus) {
@@ -198,13 +199,13 @@ export default function UnitDetailPage() {
                     <section className="card p-6">
                         <h2 className="section-header !text-base">Unit details</h2>
                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {unit.rentAmount > 0 && (
+                            {toMoneyNumber(unit.rentAmount) > 0 && (
                                 <div className="rounded-xl bg-ink/[0.03] dark:bg-white/[0.05] border border-border/70 dark:border-border-dark/70 px-4 py-3.5">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-muted">
                                         Monthly rent
                                     </p>
                                     <p className="mt-1 font-data text-base font-semibold text-ink">
-                                        KES {unit.rentAmount.toLocaleString()}
+                                        KES {toMoneyNumber(unit.rentAmount).toLocaleString()}
                                     </p>
                                 </div>
                             )}
@@ -214,7 +215,7 @@ export default function UnitDetailPage() {
                                         Refundable deposit
                                     </p>
                                     <p className="mt-1 font-data text-base font-semibold text-ink">
-                                        KES {unit.depositAmount.toLocaleString()}
+                                        KES {toMoneyNumber(unit.depositAmount).toLocaleString()}
                                     </p>
                                 </div>
                             ) : null}
@@ -253,7 +254,7 @@ export default function UnitDetailPage() {
                                 Monthly rent
                             </p>
                             <p className="font-data text-3xl font-semibold text-ink">
-                                KES {unit.rentAmount.toLocaleString()}
+                                KES {toMoneyNumber(unit.rentAmount).toLocaleString()}
                                 <span className="font-sans text-base font-normal text-ink-muted"> /month</span>
                             </p>
                         </div>
@@ -262,7 +263,7 @@ export default function UnitDetailPage() {
                             {unit.landlordVerified && <VerifiedBadge size="sm" />}
                             {unit.depositAmount ? (
                                 <span>
-                                    {unit.depositAmount.toLocaleString()} KES deposit
+                                    {toMoneyNumber(unit.depositAmount).toLocaleString()} KES deposit
                                 </span>
                             ) : null}
                         </div>
@@ -308,7 +309,7 @@ export default function UnitDetailPage() {
             <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/90 dark:bg-surface-dark/90 backdrop-blur-xl border-t border-border px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-4px_24px_rgba(20,33,61,0.1)]">
                 <div>
                     <p className="font-data text-xl font-semibold text-ink leading-none">
-                        KES {unit.rentAmount.toLocaleString()}
+                        KES {toMoneyNumber(unit.rentAmount).toLocaleString()}
                     </p>
                     <p className="text-[11px] text-ink-muted mt-1">per month</p>
                 </div>

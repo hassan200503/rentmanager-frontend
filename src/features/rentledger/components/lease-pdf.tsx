@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { TenantLeaseResponse } from "@/features/tenant-portal/api/tenant-portal-api";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 const styles = StyleSheet.create({
     page: {
@@ -147,11 +148,11 @@ export function LeasePdfDocument({ lease, tenantName, tenantPhone }: {
                     <Text style={styles.sectionTitle}>Financial Terms</Text>
                     <View style={styles.row}>
                         <Text style={styles.label}>Monthly Rent</Text>
-                        <Text style={[styles.value, { fontWeight: "bold" }]}>KES {lease.monthlyRent.toLocaleString("en-KE")}</Text>
+                        <Text style={[styles.value, { fontWeight: "bold" }]}>KES {toMoneyNumber(lease.monthlyRent).toLocaleString("en-KE")}</Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.label}>Security Deposit</Text>
-                        <Text style={styles.value}>KES {lease.depositAmount.toLocaleString("en-KE")}</Text>
+                        <Text style={styles.value}>KES {toMoneyNumber(lease.depositAmount).toLocaleString("en-KE")}</Text>
                     </View>
                 </View>
 

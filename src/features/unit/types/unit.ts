@@ -26,8 +26,8 @@ export interface Unit {
     floor?: string;
     description?: string;
 
-    rentAmount: number;
-    depositAmount: number;
+    rentAmount: string; // BigDecimal -> JSON string
+    depositAmount: string;
 
     // FIXED: was `status: string` — UnitStatusBadge and UnitTable both compare
     // this against UnitStatus enum members (canActivate/canDeactivate checks,

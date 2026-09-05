@@ -4,9 +4,7 @@ import { useResolveUnmatchedPaymentMutation } from "../hooks/use-unmatched-payme
 import { UnmatchedPaymentResponse } from "../types/rent-ledger-response";
 import { ChevronDown, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency } from "@/shared/utils/money";
 
 const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });

@@ -7,14 +7,15 @@ import { ShieldCheck } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
+import { formatCurrency, type MoneyValue } from "@/shared/utils/money";
 
 // --- Types ---
 interface UnitDetails {
     unitNumber: string;
     label?: string;
     propertyName: string;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: string; // BigDecimal -> JSON string
+    depositAmount: string;
 }
 
 interface FormData {
@@ -44,8 +45,8 @@ interface UnitSummaryResponse {
     unitNumber: string;
     label?: string;
     propertyName: string;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: string; // BigDecimal -> JSON string
+    depositAmount: string;
 }
 
 // Fixed order used to walk to the first invalid field after a failed submit.
@@ -66,8 +67,7 @@ const AUTOCOMPLETE: Partial<Record<keyof FormData, string>> = {
 };
 
 // --- Helpers ---
-const formatKES = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+const formatKES = (amount: MoneyValue) => formatCurrency(amount);
 
 const validatePhone = (phone: string) => /^(?:\+?254|0)[71]\d{8}$/.test(phone.trim());
 

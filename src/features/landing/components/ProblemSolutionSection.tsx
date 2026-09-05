@@ -19,13 +19,23 @@ const PAIN_POINTS = [
 const SOLUTIONS = [
   {
     icon: ShieldCheck,
-    title: "Every listing is ID-verified",
-    desc: "A property goes live only after the owner has been verified. Fake listings never make it to the platform.",
+    // Was: "Every listing is ID-verified" / "Fake listings never make it to
+    // the platform". Neither is true — there is no identity verification in
+    // the system, and UnitStatus has no moderation state, so a unit is listed
+    // the moment its landlord marks it vacant. What IS true is that the
+    // landlord account behind it had to be approved.
+    title: "Listings come from approved landlords",
+    desc: "A landlord account is approved before it can collect rent through the platform, and every listing shows who it belongs to.",
   },
   {
     icon: Wallet,
     title: "Reserve directly, zero broker fees",
-    desc: "You deal with the verified owner. Your deposit is held securely and refunded if a listing falls through.",
+    // Was: "Your deposit is held securely and refunded if a listing falls
+    // through" — an escrow promise. The platform takes no custody of a
+    // deposit; it is paid to the landlord, who refunds it. Saying otherwise
+    // is the single most damaging claim on this page, because a renter would
+    // reasonably rely on it.
+    desc: "You deal with the landlord directly and pay no broker fee. Your deposit is recorded against your lease, so both sides can see what was paid.",
   },
   {
     icon: BadgeCheck,

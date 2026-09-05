@@ -26,9 +26,9 @@ export interface LeaseResponse {
     billingCycle: BillingCycle;
     startDate: string;
     endDate: string;
-    rentAmount: number;
-    securityDeposit: number;
-    lateFeeAmount: number;
+    rentAmount: string; // BigDecimal -> JSON string
+    securityDeposit: string;
+    lateFeeAmount: string;
     gracePeriodDays: number;
     autoRenew: boolean;
     status: string;
@@ -46,8 +46,8 @@ export interface LeaseDetailResponse {
     billingCycle: BillingCycle;
     startDate: string;
     endDate: string;
-    rentAmount: number;
-    securityDeposit: number;
+    rentAmount: string; // BigDecimal -> JSON string
+    securityDeposit: string;
     status: LeaseStatus;
     gracePeriodDays: number;
     autoRenew: boolean;
@@ -79,7 +79,7 @@ export interface LeaseSummaryResponse {
     status: LeaseStatus;
     startDate: string;
     endDate: string;
-    rentAmount: number;
+    rentAmount: string; // BigDecimal -> JSON string
     tenantProfileId: string | null;
     tenantFullName: string | null;
     tenantPhone: string | null;

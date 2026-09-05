@@ -14,9 +14,7 @@ import { LeaseStatCard } from "@/features/lease/components/lease-stat-card";
 import { LeaseSummaryResponse, LeaseStatus } from "@/features/lease/types/lease-response";
 import { isExpiringSoon } from "@/features/lease/utils/lease-date-utils";
 import { exportLeasesToCsv } from "@/features/lease/utils/lease-csv-export";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency, toMoneyNumber } from "@/shared/utils/money";
 
 const formatDate = (isoDate: string) =>
     new Date(isoDate).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -78,7 +76,7 @@ export default function LeasesPage() {
         if (!sortKey) return filteredLeases;
         const dir = sortDir === "asc" ? 1 : -1;
         return [...filteredLeases].sort((a, b) => {
-            if (sortKey === "rentAmount") return (a.rentAmount - b.rentAmount) * dir;
+            if (sortKey === "rentAmount") return (toMoneyNumber(a.rentAmount) - toMoneyNumber(b.rentAmount)) * dir;
             if (sortKey === "endDate") return (new Date(a.endDate).getTime() - new Date(b.endDate).getTime()) * dir;
             const aVal = (a as unknown as Record<string, string | number | null>)[sortKey] ?? a.leaseNumber;
             const bVal = (b as unknown as Record<string, string | number | null>)[sortKey] ?? b.leaseNumber;
@@ -91,7 +89,7 @@ export default function LeasesPage() {
         const expiringSoonCount = rawLeases.filter((l) => isExpiringSoon(l.status, l.endDate, 30)).length;
         const monthlyRent = rawLeases
             .filter((l) => l.status === "ACTIVE" || l.status === "RENEWED")
-            .reduce((sum, l) => sum + l.rentAmount, 0);
+            .reduce((sum, l) => sum + toMoneyNumber(l.rentAmount), 0);
         return { activeCount, expiringSoonCount, monthlyRent };
     }, [rawLeases]);
 

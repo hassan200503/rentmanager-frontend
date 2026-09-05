@@ -3,6 +3,17 @@ export interface PublicListingFilters {
 
     location?: string;
 
+    /** Applies to the available unit, not the property as a whole. */
+    minRent?: number;
+    maxRent?: number;
+
+    /**
+     * Stands in for bedroom count — there is no bedroom column, and in this
+     * market supply is described by type (bedsitter, studio, apartment,
+     * maisonette) rather than a number nobody entered.
+     */
+    propertyType?: string;
+
     page?: number;
 
     size?: number;

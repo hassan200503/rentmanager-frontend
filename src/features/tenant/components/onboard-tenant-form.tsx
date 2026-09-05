@@ -73,68 +73,68 @@ export function OnboardTenantForm() {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="form-label">
                     Company / organization name
                 </label>
                 <input
                     {...register("name")}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    className="form-input"
                     placeholder="Acme Rentals"
                 />
                 {errors.name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+                    <p className="text-sm text-danger-dark dark:text-danger mt-1">{errors.name.message}</p>
                 )}
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="form-label">
                     Business email
                 </label>
                 <input
                     {...register("email")}
                     type="email"
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    className="form-input"
                     placeholder="you@company.com"
                 />
                 {errors.email && (
-                    <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+                    <p className="text-sm text-danger-dark dark:text-danger mt-1">{errors.email.message}</p>
                 )}
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="form-label">
                     Phone number
                 </label>
                 <input
                     {...register("phoneNumber")}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    className="form-input"
                     placeholder="+254700000000"
                 />
                 {errors.phoneNumber && (
-                    <p className="text-sm text-red-600 mt-1">
+                    <p className="text-sm text-danger-dark dark:text-danger mt-1">
                         {errors.phoneNumber.message}
                     </p>
                 )}
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address <span className="text-gray-400">(optional)</span>
+                <label className="form-label">
+                    Address <span className="text-ink-muted dark:text-ink-muted-dark">(optional)</span>
                 </label>
                 <input
                     {...register("address")}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    className="form-input"
                     placeholder="123 Main St, Nairobi"
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="form-label">
                     Account type
                 </label>
                 <select
                     {...register("tenantType")}
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                    className="form-input"
                 >
                     <option value={TenantType.TRIAL}>Trial</option>
                     <option value={TenantType.STANDARD}>Standard</option>
@@ -142,7 +142,7 @@ export function OnboardTenantForm() {
                     <option value={TenantType.ENTERPRISE}>Enterprise</option>
                 </select>
                 {errors.tenantType && (
-                    <p className="text-sm text-red-600 mt-1">
+                    <p className="text-sm text-danger-dark dark:text-danger mt-1">
                         {errors.tenantType.message}
                     </p>
                 )}
@@ -151,7 +151,7 @@ export function OnboardTenantForm() {
             <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full rounded bg-gray-900 text-white text-sm font-medium py-2 disabled:opacity-50"
+                className="btn btn-primary w-full"
             >
                 {mutation.isPending ? "Setting up your account…" : "Create my account"}
             </button>

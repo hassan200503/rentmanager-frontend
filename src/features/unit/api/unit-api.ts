@@ -8,7 +8,7 @@ import {
 } from "../types/unit-request";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
-import {UnitSummaryResponse} from "@/features/unit/types/unit-summary";
+import {PropertyOccupancyResponse, UnitSummaryResponse} from "@/features/unit/types/unit-summary";
 
 const buildPageQuery = (params?: UnitListParams) => {
     const query = new URLSearchParams();
@@ -179,6 +179,15 @@ export const unitApi = {
         return apiClient.post<{ url: string }>(
             unitEndpoints.uploadMedia(id),
             formData,
+            token,
+            tenantId
+        );
+    },
+
+    getOccupancyByProperty: async (): Promise<PropertyOccupancyResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<PropertyOccupancyResponse[]>(
+            unitEndpoints.occupancyByProperty,
             token,
             tenantId
         );

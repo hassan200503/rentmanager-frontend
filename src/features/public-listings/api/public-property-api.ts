@@ -20,6 +20,18 @@ const buildQuery = (filters?: PublicListingFilters) => {
         query.set("location", filters.location.trim());
     }
 
+    if (filters?.minRent !== undefined && filters.minRent !== null) {
+        query.set("minRent", String(filters.minRent));
+    }
+
+    if (filters?.maxRent !== undefined && filters.maxRent !== null) {
+        query.set("maxRent", String(filters.maxRent));
+    }
+
+    if (filters?.propertyType?.trim()) {
+        query.set("propertyType", filters.propertyType.trim());
+    }
+
     return query.toString();
 };
 

@@ -4,6 +4,7 @@ const base = "/tenant-portal";
 export const tenantPortalEndpoints = {
     dashboard: () => `${base}/dashboard`,
     lease: () => `${base}/lease`,
+    deposit: () => `${base}/deposit`,
     paymentSummary: () => `${base}/payments/summary`,
     paymentHistory: (page: number = 0, size: number = 20) =>
         `${base}/payments/history?page=${page}&size=${size}`,

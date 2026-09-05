@@ -3,12 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
-
-const ksh = new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 0,
-});
+import { formatCurrency } from "@/shared/utils/money";
 
 const dateFmt = new Intl.DateTimeFormat("en-KE", {
     day: "numeric",
@@ -47,7 +42,7 @@ function ConfirmationContent() {
                     <div className="flex items-center justify-between gap-4 py-2">
                         <dt className="text-sm text-fg-muted dark:text-fg-muted-dark">Amount paid</dt>
                         <dd className="text-sm font-medium text-fg dark:text-fg-dark">
-                            {ksh.format(amount)}
+                            {formatCurrency(amount)}
                         </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4 py-2">

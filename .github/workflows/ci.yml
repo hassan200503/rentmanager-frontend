@@ -1,0 +1,69 @@
+name: CI
+
+# Type check, lint-gated build, and unit tests on every push and pull request.
+#
+# `next build` runs ESLint, so an unused import fails here rather than at
+# deploy time — which is the project's own stated rule and was previously
+# enforced only by whoever remembered to run it.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type check, build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Build-time configuration only. None of these are real credentials and
+    # none reach a browser: the Clerk key is the well-known dummy publishable
+    # key, and BACKEND_URL exists purely to satisfy next.config.ts, which
+    # deliberately refuses a production build that would silently proxy
+    # /api/v1 to localhost. Real values belong in the deploy environment, not
+    # in a CI file.
+    env:
+      BACKEND_URL: https://ci.invalid
+      NEXT_PUBLIC_APP_NAME: RentManager
+      NEXT_PUBLIC_APP_ENV: ci
+      NEXT_PUBLIC_APP_URL: https://ci.invalid
+      NEXT_PUBLIC_APP_VERSION: 0.0.0-ci
+      NEXT_PUBLIC_API_URL: https://ci.invalid/api/v1
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuaW5jbHVkZWQua2F0eWRpZC05Mi5sY2wuZGV2JA
+      CLERK_SECRET_KEY: sk_test_ci_placeholder
+      CLERK_WEBHOOK_SIGNING_SECRET: whsec_ci_placeholder
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          # Matches the version in local use. package.json declares no
+          # "engines" field; pinning here at least makes CI reproducible, and
+          # a mismatch surfaces as a failing build rather than a mystery.
+          node-version: "24"
+          cache: npm
+
+      # `npm ci` rather than `npm install`: it installs exactly the lockfile
+      # and fails if package.json and the lock have drifted, which is a real
+      # signal worth failing on.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npx vitest run
+
+      # Last because it is the slowest, and because a type error or a failing
+      # test is more useful to see first.
+      - name: Production build (runs ESLint)
+        run: npx next build

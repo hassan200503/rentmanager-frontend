@@ -57,10 +57,15 @@ export default function InsightsEngine({
           tone: "positive",
         });
       } else {
+        // "dropped to" asserted a change over time. This component holds a
+        // single current figure and no prior period, so it cannot know whether
+        // occupancy rose, fell, or has been flat since the portfolio was
+        // created — a landlord who has just added their first units would have
+        // been told their occupancy had dropped.
         insights.push({
           icon: TrendingDown,
-          text: `Occupancy dropped to ${occupancyRate}%.`,
-          recommendation: "Review pricing and run promotions to attract tenants.",
+          text: `Occupancy is ${occupancyRate}%.`,
+          recommendation: "Review pricing and listing visibility on vacant units.",
           tone: "negative",
         });
       }

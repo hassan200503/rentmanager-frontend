@@ -14,22 +14,13 @@ import type {
     RentPaymentRequestStatus,
     BillingMode,
 } from "../types/admin-types";
+import { formatCurrency as formatMoneyValue, formatRate as formatRateValue, type MoneyValue } from "@/shared/utils/money";
 
 // ---------- Formatting helpers ----------
 
-export const formatCurrency = (amount: number | null | undefined) => {
-    const value = Number(amount ?? 0);
-    return new Intl.NumberFormat("en-KE", {
-        style: "currency",
-        currency: "KES",
-        maximumFractionDigits: 0,
-    }).format(value);
-};
+export const formatCurrency = (amount: MoneyValue) => formatMoneyValue(amount);
 
-export const formatRate = (rate: number | null | undefined) => {
-    if (rate === null || rate === undefined) return "—";
-    return `${Number(rate).toFixed(2)}%`;
-};
+export const formatRate = (rate: MoneyValue) => formatRateValue(rate);
 
 export const formatDate = (iso: string | null | undefined) => {
     if (!iso) return "—";

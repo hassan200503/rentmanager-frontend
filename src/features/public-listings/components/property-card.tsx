@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Home, MapPin, ArrowUpRight } from "lucide-react";
+import { Home, MapPin, ArrowUpRight, DoorOpen } from "lucide-react";
 import { PublicPropertyResponse } from "../types/public-property";
+import { formatCurrency } from "@/shared/utils/money";
 
 interface PropertyCardProps {
     property: PublicPropertyResponse;
@@ -161,6 +162,26 @@ export function PropertyCard({ property }: PropertyCardProps) {
                             </div>
                         )}
                     </div>
+
+                    {/* Availability + asking price — the two questions a renter asks first */}
+                    {property.availableUnits !== undefined && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success text-xs font-bold">
+                                <DoorOpen className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                {property.availableUnits} {property.availableUnits === 1 ? "unit" : "units"} available
+                            </span>
+                            {(property.minRent !== undefined || property.maxRent !== undefined) && (
+                                <span className="text-sm font-black text-ink dark:text-white">
+                                    {property.minRent !== undefined &&
+                                    property.maxRent !== undefined &&
+                                    String(property.minRent) !== String(property.maxRent)
+                                        ? `${formatCurrency(property.minRent)} – ${formatCurrency(property.maxRent)}`
+                                        : formatCurrency(property.minRent ?? property.maxRent)}
+                                    <span className="text-xs font-medium text-ink-muted dark:text-white/60"> /month</span>
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {/* Description with refined typography */}
                     {property.description && (

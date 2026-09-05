@@ -5,9 +5,11 @@ export interface TenantSettingsResponse {
     timezone: string;
     currency: string;
     locale: string;
-    emailNotificationsEnabled: boolean;
-    smsNotificationsEnabled: boolean;
-    pushNotificationsEnabled: boolean;
+    // REMOVED: emailNotificationsEnabled / smsNotificationsEnabled /
+    // pushNotificationsEnabled. The backend never populated them — they
+    // serialised as false on every response — and the @Entity that declared
+    // them mapped to a table no migration creates. Reminder channels are
+    // configured per milestone via /rent-reminders/cadence.
     maintenanceModuleEnabled: boolean;
     accountingModuleEnabled: boolean;
     analyticsModuleEnabled: boolean;

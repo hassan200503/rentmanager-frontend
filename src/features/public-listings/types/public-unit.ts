@@ -5,8 +5,8 @@ export interface PublicUnitResponse {
     label?: string;
     floor?: string;
     description: string;
-    rentAmount: number;
-    depositAmount?: number;
+    rentAmount: string; // BigDecimal -> JSON string
+    depositAmount?: string;
     occupancyStatus: string;
     images: string[];
 

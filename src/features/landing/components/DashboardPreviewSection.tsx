@@ -9,6 +9,7 @@ import { SectionHeader } from "./SectionHeader";
 import { Button } from "@/shared/components/ui/Button";
 import { useInView } from "@/features/landing/hooks/use-in-view";
 import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
+import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -132,7 +133,7 @@ export function DashboardPreviewSection() {
           </div>
 
           <div className="text-center mt-12">
-            <Button href="/public/sign-up?intent=landlord" variant="primary" size="lg">
+            <Button href={SIGNUP_LANDLORD_HREF} variant="primary" size="lg">
               Create a free landlord account
               <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
             </Button>

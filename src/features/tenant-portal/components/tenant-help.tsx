@@ -78,7 +78,7 @@ const FAQSection = () => {
                 return (
                     <div
                         key={faq.question}
-                        className="card-elevated overflow-hidden"
+                        className="tenant-panel overflow-hidden !p-5 sm:!p-6"
                     >
                         <button
                             type="button"
@@ -147,7 +147,7 @@ export default function TenantHelp() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <a
                     href={landlordPhone ? `tel:${landlordPhone}` : undefined}
-                    className={`card-elevated p-5 flex items-start gap-4 transition-all duration-200 ${
+                    className={`tenant-panel !p-5 flex items-start gap-4 transition-all duration-200 ${
                         landlordPhone ? "hover:-translate-y-0.5 hover:shadow-dropdown" : "opacity-60 pointer-events-none"
                     }`}
                 >
@@ -168,7 +168,7 @@ export default function TenantHelp() {
                     href={whatsappHref ?? undefined}
                     target={whatsappHref ? "_blank" : undefined}
                     rel={whatsappHref ? "noopener noreferrer" : undefined}
-                    className={`card-elevated p-5 flex items-start gap-4 transition-all duration-200 ${
+                    className={`tenant-panel !p-5 flex items-start gap-4 transition-all duration-200 ${
                         whatsappHref ? "hover:-translate-y-0.5 hover:shadow-dropdown" : "opacity-60 pointer-events-none"
                     }`}
                 >
@@ -186,7 +186,7 @@ export default function TenantHelp() {
 
                 <a
                     href={landlordEmail ? `mailto:${landlordEmail}` : undefined}
-                    className={`card-elevated p-5 flex items-start gap-4 transition-all duration-200 ${
+                    className={`tenant-panel !p-5 flex items-start gap-4 transition-all duration-200 ${
                         landlordEmail ? "hover:-translate-y-0.5 hover:shadow-dropdown" : "opacity-60 pointer-events-none"
                     }`}
                 >
@@ -242,7 +242,7 @@ export default function TenantHelp() {
 
             {/* Quick actions */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Link href="/portal/maintenance" className="card-elevated p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
+                <Link href="/portal/maintenance" className="tenant-panel !p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
                         <Wrench className="h-5 w-5" strokeWidth={1.75} />
                     </span>
@@ -253,7 +253,7 @@ export default function TenantHelp() {
                     <ChevronDown className="h-4 w-4 -rotate-90 text-fg-subtle group-hover:text-brand transition-colors" strokeWidth={2} />
                 </Link>
 
-                <Link href="/portal/payments" className="card-elevated p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
+                <Link href="/portal/payments" className="tenant-panel !p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success">
                         <CreditCard className="h-5 w-5" strokeWidth={1.75} />
                     </span>
@@ -264,7 +264,7 @@ export default function TenantHelp() {
                     <ChevronDown className="h-4 w-4 -rotate-90 text-fg-subtle group-hover:text-brand transition-colors" strokeWidth={2} />
                 </Link>
 
-                <Link href="/portal/lease" className="card-elevated p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
+                <Link href="/portal/lease" className="tenant-panel !p-5 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown group">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
                         <Bell className="h-5 w-5" strokeWidth={1.75} />
                     </span>

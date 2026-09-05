@@ -22,13 +22,14 @@ import {
     Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { formatCurrency, formatDateTime } from "./premium-tenant-dashboard";
+import { formatDateTime } from "./premium-tenant-dashboard";
+import { formatCurrency, type MoneyValue } from "@/shared/utils/money";
 import { tenantPortalApi, type TenantPaymentReceiptResponse } from "../api/tenant-portal-api";
 import { downloadReceiptPdf } from "@/features/rentledger/components/download-receipt";
 
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CONFETTI ANIMATION
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 interface Confetti {
     id: number;
@@ -90,9 +91,9 @@ const ConfettiRain = () => {
     );
 };
 
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SUCCESS CHECKMARK ANIMATION
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const AnimatedCheckmark = () => {
     return (
@@ -122,9 +123,9 @@ const AnimatedCheckmark = () => {
     );
 };
 
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MAIN COMPONENT
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const STATUS_POLL_INTERVAL_MS = 3000;
 const STATUS_POLL_ATTEMPTS = 25;
@@ -136,11 +137,11 @@ export const PremiumPaymentSuccess = () => {
     const requestId = searchParams.get("requestId");
 
     const [loadState, setLoadState] = useState<LoadState>(requestId ? "loading" : "pending");
-    const [message, setMessage] = useState("Confirming your paymentâ€¦");
+    const [message, setMessage] = useState("Confirming your payment…");
     const [pollKey, setPollKey] = useState(0);
     const [payment, setPayment] = useState<{
         transactionId: string;
-        amount: number;
+        amount: MoneyValue;
         mpesaRef: string;
         timestamp: string;
     } | null>(null);
@@ -166,7 +167,7 @@ export const PremiumPaymentSuccess = () => {
                 try {
                     status = await tenantPortalApi.getPaymentRequestStatus(requestId);
                 } catch {
-                    // transient failure â€” keep polling
+                    // transient failure — keep polling
                 }
                 if (cancelled) return;
 
@@ -174,7 +175,7 @@ export const PremiumPaymentSuccess = () => {
                     setPayment({
                         transactionId: status.transactionId ?? requestId,
                         amount: status.amount,
-                        mpesaRef: status.mpesaReceiptNumber ?? "â€”",
+                        mpesaRef: status.mpesaReceiptNumber ?? "—",
                         timestamp: new Date().toISOString(),
                     });
                     if (status.transactionId) {
@@ -185,7 +186,7 @@ export const PremiumPaymentSuccess = () => {
                             setPayment({
                                 transactionId: r.transactionId,
                                 amount: r.amount,
-                                mpesaRef: r.mpesaTransactionId ?? status.mpesaReceiptNumber ?? "â€”",
+                                mpesaRef: r.mpesaTransactionId ?? status.mpesaReceiptNumber ?? "—",
                                 timestamp: r.paymentDate,
                             });
                         } catch {
@@ -205,14 +206,14 @@ export const PremiumPaymentSuccess = () => {
                 setMessage(
                     attemptsRef.current > 5
                         ? "Still waiting for M-Pesa confirmation. Check your phone for the prompt."
-                        : "Confirming your paymentâ€¦",
+                        : "Confirming your payment…",
                 );
                 await new Promise((resolve) => setTimeout(resolve, STATUS_POLL_INTERVAL_MS));
             }
 
             if (!cancelled) {
                 setLoadState("pending");
-                setMessage("We could not confirm the payment yet. It may still be processing â€” check your M-Pesa messages.");
+                setMessage("We could not confirm the payment yet. It may still be processing — check your M-Pesa messages.");
             }
         };
 
@@ -223,7 +224,7 @@ export const PremiumPaymentSuccess = () => {
         };
     }, [requestId, pollKey]);
 
-    // No requestId â†’ show a graceful "couldn't confirm" state without state churn.
+    // No requestId → show a graceful "couldn't confirm" state without state churn.
     const shownState: LoadState = requestId ? loadState : "pending";
     const shownMessage = requestId
         ? message
@@ -415,7 +416,7 @@ export const PremiumPaymentSuccess = () => {
                                                     Receipt No.
                                                 </span>
                                                 <span className="text-sm font-mono font-medium text-ink dark:text-ink-dark truncate">
-                                                    {receipt?.receiptNumber ?? payment?.transactionId ?? "â€”"}
+                                                    {receipt?.receiptNumber ?? payment?.transactionId ?? "—"}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between gap-4">
@@ -424,7 +425,7 @@ export const PremiumPaymentSuccess = () => {
                                                     M-Pesa Ref
                                                 </span>
                                                 <span className="text-sm font-mono font-medium text-ink dark:text-ink-dark truncate">
-                                                    {payment?.mpesaRef ?? "â€”"}
+                                                    {payment?.mpesaRef ?? "—"}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between gap-4">
@@ -450,7 +451,7 @@ export const PremiumPaymentSuccess = () => {
                                                         Billing Period
                                                     </span>
                                                     <span className="text-sm font-medium text-ink dark:text-ink-dark">
-                                                        {formatDateShort(receipt.billingPeriodStart)} â€“ {formatDateShort(receipt.billingPeriodEnd)}
+                                                        {formatDateShort(receipt.billingPeriodStart)} – {formatDateShort(receipt.billingPeriodEnd)}
                                                     </span>
                                                 </div>
                                             )}
@@ -483,7 +484,7 @@ export const PremiumPaymentSuccess = () => {
                                             {isDownloading ? (
                                                 <>
                                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                                    Preparingâ€¦
+                                                    Preparing…
                                                 </>
                                             ) : (
                                                 <>
@@ -583,13 +584,13 @@ export const PremiumPaymentSuccess = () => {
     );
 };
 
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SMALL LOCAL HELPERS
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const formatDateShort = (iso: string | null | undefined) => {
-    if (!iso) return "â€”";
+    if (!iso) return "—";
     const date = new Date(iso);
-    if (isNaN(date.getTime())) return "â€”";
+    if (isNaN(date.getTime())) return "—";
     return date.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 };

@@ -1,16 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { propertyApi } from "../api/property-api";
-import { PropertyStatus, OccupancyStatus, Property } from "../types/property";
+import { PropertyStatus } from "../types/property";
+import { unitApi } from "@/features/unit/api/unit-api";
 
 export interface PropertyDashboardMetrics {
     totalProperties: number;
     activeProperties: number;
-    fullyOccupied: number;
-    partiallyOccupied: number;
-    vacant: number;
     underMaintenance: number;
     draft: number;
     archived: number;
+
+    /** Units across the portfolio, from the server-side aggregate. */
+    totalUnits: number;
+    occupiedUnits: number;
+    vacantUnits: number;
+
+    /**
+     * Occupied units as a percentage of all units, or null when there are no
+     * units to divide by.
+     *
+     * <p>This used to be {@code fullyOccupied / activeProperties} — a count of
+     * *properties* whose occupancyStatus was FULLY_OCCUPIED, divided by the
+     * number of active properties. A 40-unit block with 39 tenants counted as
+     * zero, because the block was only PARTIALLY_OCCUPIED. The figure was also
+     * computed from a single page of results, so a landlord past the first
+     * page had it silently truncated.
+     *
+     * <p>It now comes from GET /units/summary, which counts units in SQL.
+     */
+    occupancyRate: number | null;
 }
 
 // Local key namespace, deliberately not touching an assumed `property-keys.ts`
@@ -21,18 +39,6 @@ const dashboardKeys = {
     byStatus: (status: PropertyStatus, tenantId?: string) =>
         ["properties", "dashboard", "status", status, tenantId] as const,
 };
-
-function countOccupancy(properties: Property[]) {
-    let fullyOccupied = 0;
-    let partiallyOccupied = 0;
-    let vacant = 0;
-    for (const p of properties) {
-        if (p.occupancyStatus === OccupancyStatus.FULLY_OCCUPIED) fullyOccupied += 1;
-        else if (p.occupancyStatus === OccupancyStatus.PARTIALLY_OCCUPIED) partiallyOccupied += 1;
-        else if (p.occupancyStatus === OccupancyStatus.VACANT) vacant += 1;
-    }
-    return { fullyOccupied, partiallyOccupied, vacant };
-}
 
 export function usePropertyDashboardMetrics(tenantId: string | undefined) {
     const enabled = Boolean(tenantId);
@@ -45,7 +51,18 @@ export function usePropertyDashboardMetrics(tenantId: string | undefined) {
 
     const activeQuery = useQuery({
         queryKey: dashboardKeys.byStatus(PropertyStatus.ACTIVE, tenantId),
-        queryFn: () => propertyApi.list({ status: PropertyStatus.ACTIVE }),
+        // size: 1 — only totalElements is used. This previously fetched a full
+        // unpaginated page so it could count occupancy in the browser, which
+        // was both the wrong calculation and an unbounded transfer.
+        queryFn: () => propertyApi.list({ page: 0, size: 1, status: PropertyStatus.ACTIVE }),
+        enabled,
+    });
+
+    // One SQL aggregate for occupancy, replacing an in-browser count over a
+    // truncated page of properties.
+    const unitSummaryQuery = useQuery({
+        queryKey: ["units", "summary", tenantId] as const,
+        queryFn: () => unitApi.getSummary(),
         enabled,
     });
 
@@ -68,6 +85,7 @@ export function usePropertyDashboardMetrics(tenantId: string | undefined) {
     });
 
     const isLoading =
+        unitSummaryQuery.isLoading ||
         totalQuery.isLoading ||
         activeQuery.isLoading ||
         maintenanceQuery.isLoading ||
@@ -75,28 +93,40 @@ export function usePropertyDashboardMetrics(tenantId: string | undefined) {
         archivedQuery.isLoading;
 
     const isError =
+        unitSummaryQuery.isError ||
         totalQuery.isError ||
         activeQuery.isError ||
         maintenanceQuery.isError ||
         draftQuery.isError ||
         archivedQuery.isError;
 
-    const { fullyOccupied, partiallyOccupied, vacant } = countOccupancy(activeQuery.data?.content ?? []);
+    const units = unitSummaryQuery.data;
+    const totalUnits = units?.totalUnits ?? 0;
 
     const metrics: PropertyDashboardMetrics = {
         totalProperties: totalQuery.data?.totalElements ?? 0,
         activeProperties: activeQuery.data?.totalElements ?? 0,
-        fullyOccupied,
-        partiallyOccupied,
-        vacant,
         underMaintenance: maintenanceQuery.data?.totalElements ?? 0,
         draft: draftQuery.data?.totalElements ?? 0,
         archived: archivedQuery.data?.totalElements ?? 0,
+
+        totalUnits,
+        occupiedUnits: units?.occupiedUnits ?? 0,
+        vacantUnits: units?.vacantUnits ?? 0,
+
+        // null, not 0: a landlord with no units yet has no occupancy rate,
+        // and showing them "0% occupied" reads as a failure rather than an
+        // empty portfolio.
+        occupancyRate:
+            units && totalUnits > 0
+                ? Math.round((units.occupiedUnits / totalUnits) * 100)
+                : null,
     };
 
     const refetch = () => {
         return Promise.all([
             totalQuery.refetch(),
+            unitSummaryQuery.refetch(),
             activeQuery.refetch(),
             maintenanceQuery.refetch(),
             draftQuery.refetch(),

@@ -5,9 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTenantDashboardQuery, useTenantPaymentHistoryQuery, useTenantPaymentSummaryQuery, useTenantPaymentReceiptQuery } from "../hooks/use-tenant-portal-queries";
 import { Loader2, AlertTriangle, Download, FileText, ChevronRight, Smartphone, XCircle, Wallet, TrendingUp, CreditCard, CheckCircle2, Sparkles } from "lucide-react";
-import { formatCurrency, formatDateTime, formatDate, StatusBadge } from "./tenant-dashboard";
+import { formatDateTime, formatDate, StatusBadge } from "./tenant-format";
 import { TenantPaymentReceiptResponse, tenantPortalApi } from "../api/tenant-portal-api";
 import { downloadReceiptPdf } from "@/features/rentledger/components/download-receipt";
+import { formatCurrency, toMoneyNumber } from "@/shared/utils/money";
+import { MpesaMark } from "./payment-brand-marks";
+import {
+    PortalPage,
+    PortalPageHeader,
+    PortalCard,
+    PortalCardHeader,
+    PortalEmptyState,
+    PortalSkeleton,
+    PortalErrorState,
+} from "./portal-chrome";
 
 const PAGE_SIZE = 20;
 
@@ -35,7 +46,7 @@ export const TenantPaymentsPage = () => {
     const [sentToPhone, setSentToPhone] = useState("");
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const currentBalance = summary?.currentBalance ?? 0;
+    const currentBalance = toMoneyNumber(summary?.currentBalance);
     const canPay = true;
     const defaultPayAmount = canPay ? currentBalance.toString() : "";
     const effectivePayAmount = amountOverridden ? payAmount : defaultPayAmount;
@@ -109,29 +120,35 @@ export const TenantPaymentsPage = () => {
 
     if (isLoading && page === 0) {
         return (
-            <div className="page-container space-y-6">
+            <PortalPage>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[0, 1, 2].map((i) => (
-                        <div key={i} className="card-elevated p-4 space-y-2">
-                            <div className="skeleton h-3 w-1/3" />
-                            <div className="skeleton h-7 w-1/2" />
+                        <div key={i} className="tenant-panel !p-4 space-y-2">
+                            <div className="tenant-skeleton-premium h-3 w-1/3 rounded" />
+                            <div className="tenant-skeleton-premium h-7 w-1/2 rounded" />
                         </div>
                     ))}
                 </div>
-                <div className="card-elevated p-4"><div className="skeleton h-64 w-full" /></div>
-            </div>
+                <PortalSkeleton rows={4} />
+            </PortalPage>
         );
     }
 
     if (isError) {
         return (
-            <div className="page-container">
-                <div className="card p-6 text-center max-w-md mx-auto">
-                    <AlertTriangle className="h-10 w-10 mx-auto text-danger mb-3" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Failed to load payment history</p>
-                    <button onClick={() => refetch()} className="mt-2 btn-outline btn-sm">Retry</button>
-                </div>
-            </div>
+            <PortalPage>
+                <PortalPageHeader
+                    icon={Wallet}
+                    eyebrow="Your money"
+                    title="Payments"
+                    subtitle="Every rent charge, payment and receipt in one place."
+                />
+                <PortalErrorState
+                    title="Couldn't load your payment history"
+                    description="This is usually temporary. Check your connection and try again."
+                    onRetry={() => refetch()}
+                />
+            </PortalPage>
         );
     }
 
@@ -157,7 +174,14 @@ export const TenantPaymentsPage = () => {
     };
 
     return (
-        <div className="page-container space-y-6 animate-fade-in-up">
+        <PortalPage>
+            <PortalPageHeader
+                icon={Wallet}
+                eyebrow="Your money"
+                title="Payments"
+                subtitle="Every rent charge, payment and receipt in one place."
+            />
+
             {/* Auto-pay upsell banner (from ?setup=autopay) */}
             {setupAutoPay && (
                 <div className="rounded-2xl border border-brand/25 bg-gradient-to-br from-brand-50 to-brand-100/50 dark:from-brand-950/20 dark:to-brand-900/10 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -179,9 +203,14 @@ export const TenantPaymentsPage = () => {
                 </div>
             )}
 
-            {/* Pay Now Card */}
+            {/* Pay Now Card — was a flat card-elevated div; every other portal
+                page (lease, maintenance) already moved onto PortalCard's
+                glass surface, this was the one page still on the older
+                dialect. The plain-text "M-Pesa" chip is now the same
+                MpesaMark used in the dashboard's payment method selector,
+                rather than a second, differently-styled M-Pesa label. */}
             {canPay && (
-                <div className="card-elevated p-5">
+                <PortalCard>
                     <div className="flex items-start justify-between mb-4 gap-3">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
@@ -190,7 +219,7 @@ export const TenantPaymentsPage = () => {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-semibold text-fg dark:text-fg-dark">Make a Payment</h3>
-                                    <span className="text-[9px] font-bold uppercase tracking-wide bg-emerald-600 text-white px-1.5 py-0.5 rounded">M-Pesa</span>
+                                    <MpesaMark />
                                 </div>
                                 <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-0.5">
                                     Current balance due: <span className="font-data font-semibold text-danger-dark dark:text-danger">{formatCurrency(currentBalance)}</span>
@@ -288,53 +317,60 @@ export const TenantPaymentsPage = () => {
                             <button onClick={resetPay} className="btn-outline btn-sm mt-2">Try again</button>
                         </div>
                     )}
-                </div>
+                </PortalCard>
             )}
 
-            {/* Summary Cards */}
+            {/* Summary Cards — now the same .tenant-panel glass surface as
+                the rest of the portal, not the flatter card-elevated utility. */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                <PortalCard className="transition-all duration-200 hover:-translate-y-0.5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-success-bg dark:bg-success-bg-dark text-success">
                         <TrendingUp className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
                     </div>
                     <p className="kpi-label">Total Paid</p>
                     <p className="kpi-value font-data text-success-dark dark:text-success">{formatCurrency(summary?.totalPaid ?? 0)}</p>
-                </div>
-                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                </PortalCard>
+                <PortalCard className="transition-all duration-200 hover:-translate-y-0.5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-danger-bg dark:bg-danger-bg-dark text-danger">
                         <CreditCard className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
                     </div>
                     <p className="kpi-label">Total Due</p>
                     <p className="kpi-value font-data text-danger-dark dark:text-danger">{formatCurrency(summary?.totalDue ?? 0)}</p>
-                </div>
-                <div className="card-elevated p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-dropdown">
+                </PortalCard>
+                <PortalCard className="transition-all duration-200 hover:-translate-y-0.5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl mb-3 bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300">
                         <Wallet className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} />
                     </div>
                     <p className="kpi-label">Current Balance</p>
-                    <p className={`kpi-value font-data ${(summary?.currentBalance ?? 0) > 0 ? "text-danger-dark dark:text-danger" : "text-success-dark dark:text-success"}`}>
+                    <p className={`kpi-value font-data ${currentBalance > 0 ? "text-danger-dark dark:text-danger" : "text-success-dark dark:text-success"}`}>
                         {formatCurrency(summary?.currentBalance ?? 0)}
                     </p>
-                </div>
+                </PortalCard>
             </div>
 
-            {/* Payment History Table */}
-            <div className="card-elevated">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                    <h3 className="section-header !text-sm !mb-0">Payment History</h3>
-                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark">
-                        {totalElements} {totalElements === 1 ? "payment" : "payments"}
-                    </span>
-                </div>
+            {/* Payment History Table — PortalCard stays padded (default); the
+                table itself bleeds to the card edge via -mx-4 below, same
+                trick the original markup already used against card-elevated's
+                padding, so PortalEmptyState (which has its own generous
+                internal padding) and the table's edge-to-edge rows both work
+                inside one consistently-padded card. */}
+            <PortalCard>
+                <PortalCardHeader
+                    kicker="Ledger"
+                    title="Payment History"
+                    action={
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark">
+                            {totalElements} {totalElements === 1 ? "payment" : "payments"}
+                        </span>
+                    }
+                />
 
                 {payments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-border-subtle dark:bg-border-subtle-dark mb-3">
-                            <FileText className="h-6 w-6 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={1.5} />
-                        </div>
-                        <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">No payments yet</p>
-                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Your payment history will appear here once you make your first payment.</p>
-                    </div>
+                    <PortalEmptyState
+                        icon={FileText}
+                        title="No payments yet"
+                        description="Your payment history will appear here once you make your first payment."
+                    />
                 ) : (
                     <>
                         <div className="table-container -mx-4">
@@ -360,8 +396,21 @@ export const TenantPaymentsPage = () => {
                                             <td className="text-sm text-fg-muted dark:text-fg-muted-dark">
                                                 {formatDate(p.billingPeriodStart)} – {formatDate(p.billingPeriodEnd)}
                                             </td>
-                                            <td className="font-data font-semibold text-fg dark:text-fg-dark">
-                                                {p.type === "RENT_CHARGE" ? "+" : "−"}{formatCurrency(p.amount)}
+                                            {/* Was inverted: RENT_CHARGE (money the renter now owes
+                                                more of) got "+", everything else (PAYMENT included —
+                                                money reducing what they owe) got "−". The dashboard's
+                                                TransactionItem already has this the right way round
+                                                (isCredit = PAYMENT || REFUND); matched here for both
+                                                correctness and cross-page consistency. */}
+                                            <td
+                                                className={`font-data font-semibold tabular-nums ${
+                                                    p.type === "PAYMENT" || p.type === "REFUND"
+                                                        ? "text-success-dark dark:text-success"
+                                                        : "text-fg dark:text-fg-dark"
+                                                }`}
+                                            >
+                                                {p.type === "PAYMENT" || p.type === "REFUND" ? "+" : "−"}
+                                                {formatCurrency(p.amount)}
                                             </td>
                                             <td>
                                                 <span className={`font-mono-nums text-xs ${sourceColors[p.source] ?? ""}`}>{p.source}</span>
@@ -435,8 +484,8 @@ export const TenantPaymentsPage = () => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+            </PortalCard>
+        </PortalPage>
     );
 };
 
@@ -494,9 +543,19 @@ const ReceiptModalContent = ({ receipt, onClose }: { receipt: TenantPaymentRecei
                     </div>
                 </div>
 
+                {/* Says "eTIMS invoice", not "eTIMS Compliant".
+                    The platform cannot certify a renter's or landlord's tax
+                    compliance; it can display an invoice number that KRA
+                    issued. Today it never renders — the backend hardcodes
+                    eTimsInvoiceNumber to null because the eRITS/eTIMS
+                    transmission adapters are honest stubs returning
+                    NOT_AVAILABLE. The old wording was therefore a dormant
+                    trap: the moment anything populated that field with a
+                    locally generated number, a renter would have been shown a
+                    statutory compliance claim with no KRA involvement. */}
                 {receipt.eTimsInvoiceNumber && (
                     <div className="rounded-xl bg-brand-50 dark:bg-brand-900/20 p-3 border border-brand-100 dark:border-brand-800">
-                        <p className="text-xs font-medium text-brand dark:text-brand-300">eTIMS Compliant</p>
+                        <p className="text-xs font-medium text-brand dark:text-brand-300">eTIMS invoice</p>
                         <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">Invoice: <span className="font-data font-medium">{receipt.eTimsInvoiceNumber}</span></p>
                     </div>
                 )}

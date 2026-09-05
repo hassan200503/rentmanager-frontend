@@ -6,7 +6,6 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import {
     User,
     Palette,
-    Bell,
     AlertTriangle,
     LogOut,
     Sun,
@@ -21,6 +20,8 @@ import { BrandingCard } from "@/features/settings/components/branding-card";
 import { EmergencyContactCard } from "@/features/settings/components/emergency-contact-card";
 import { TaxComplianceCard } from "@/features/settings/components/tax-compliance-card";
 import { DarajaConfigCard } from "@/features/daraja/components/daraja-config-card";
+import { RentReminderCadenceCard } from "@/features/settings/components/rent-reminder-cadence-card";
+import { PayoutDestinationCard } from "@/features/settings/components/payout-destination-card";
 import { useRouter } from "next/navigation";
 
 function SectionCard({ icon: Icon, label, children }: { icon: typeof User; label: string; children: React.ReactNode }) {
@@ -75,12 +76,6 @@ export default function SettingsPage() {
     const { user: clerkUser } = useUser();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
-    const [notifications, setNotifications] = useState({
-        rentReminders: true,
-        overdueAlerts: true,
-        paymentReceipts: false,
-        activityDigest: false,
-    });
 
     useState(() => { setMounted(true); });
 
@@ -211,38 +206,22 @@ export default function SettingsPage() {
             </SectionCard>
 
             {/* ── Notifications ────────────────────────────────── */}
-            <SectionCard icon={Bell} label="Notifications">
-                <p className="text-sm text-fg-muted dark:text-fg-muted-dark mb-4">
-                    Configure which alerts you receive. These apply to all your managed properties.
-                </p>
-                <div className="space-y-3">
-                    {([
-                        { key: "rentReminders" as const, label: "Rent reminders", desc: "Notify tenants before rent is due" },
-                        { key: "overdueAlerts" as const, label: "Overdue alerts", desc: "Alert you when payments become overdue" },
-                        { key: "paymentReceipts" as const, label: "Payment receipts", desc: "Send receipt notifications when payments arrive" },
-                        { key: "activityDigest" as const, label: "Activity digest", desc: "Daily summary of portfolio activity" },
-                    ]).map((item) => (
-                        <label key={item.key} className="flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg hover:bg-border-subtle/50 dark:hover:bg-border-subtle-dark/50 transition-colors cursor-pointer">
-                            <div>
-                                <p className="text-sm font-medium text-fg dark:text-fg-dark">{item.label}</p>
-                                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{item.desc}</p>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="checkbox"
-                                    checked={notifications[item.key]}
-                                    onChange={() => setNotifications((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-9 h-5 rounded-full bg-border dark:bg-border-dark peer-checked:bg-brand transition-colors cursor-pointer after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
-                            </div>
-                        </label>
-                    ))}
-                </div>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-3 pt-3 border-t border-border dark:border-border-dark">
-                    UI only — notification preferences are not persisted until a backend endpoint is built.
-                </p>
-            </SectionCard>
+            {/* The four-toggle section that used to sit here was local state
+                labelled "UI only — not persisted", and it could not have been
+                anything else: tenant_settings is an @Entity with no migration
+                behind it, so emailNotificationsEnabled / smsNotificationsEnabled
+                have no table to live in. Rent reminders are configured below,
+                per milestone, against a table that does exist. */}
+
+            {/* ── Payout destination ───────────────────────────── */}
+            {/* Above the reminder cadence deliberately: without a payout
+                number, rent is collected and never disbursed, and until now
+                there was no way to set one at all. That is the more urgent
+                thing for a landlord to find on this page. */}
+            <PayoutDestinationCard />
+
+            {/* ── Rent reminder cadence ────────────────────────── */}
+            <RentReminderCadenceCard />
 
             {/* ── Danger zone ──────────────────────────────────── */}
             <div className="card animate-fade-in-up border-danger/20 dark:border-danger/20">

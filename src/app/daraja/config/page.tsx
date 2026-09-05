@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { DarajaConfigCard } from "@/features/daraja/components/daraja-config-card";
+import { PayoutDestinationCard } from "@/features/settings/components/payout-destination-card";
 
 function PageHeader() {
     return (
@@ -25,8 +26,11 @@ function PageHeader() {
                     <Smartphone className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={2} />
                 </div>
                 <div>
-                    <h1 className="page-title mb-1">M-Pesa configuration</h1>
-                    <p className="page-subtitle mb-0">Manage your Daraja credentials for accepting rent payments.</p>
+                    <h1 className="page-title mb-1">Payment settings</h1>
+                    <p className="page-subtitle mb-0">
+                        Your renters&rsquo; payments go straight into your own M-Pesa. These
+                        are the credentials that make that work.
+                    </p>
                 </div>
             </div>
         </div>
@@ -72,7 +76,18 @@ export default function DarajaConfigPage() {
     return (
         <div className="page-container max-w-xl">
             <PageHeader />
-            <DarajaConfigCard tenantId={user.tenantId} />
+            <div className="space-y-5">
+                {/* Collection: the credentials rent is taken with. */}
+                <DarajaConfigCard tenantId={user.tenantId} />
+                {/* Payout: where the money actually lands. Configuring Daraja
+                    without this is a half-finished setup — B2CDisbursementService
+                    refuses to disburse when tenants.payout_phone_number is
+                    unset, so the landlord collects rent that cannot be paid
+                    out. It also lives on /dashboard/settings, which is the
+                    only route a MANAGER can reach it by; writing it is
+                    OWNER-only server-side, matching this page's own gate. */}
+                <PayoutDestinationCard />
+            </div>
         </div>
     );
 }

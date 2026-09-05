@@ -19,9 +19,7 @@ import {
 } from "lucide-react";
 import { useDisbursementQuery } from "@/features/disbursement/hooks/use-disbursement-queries";
 import type { DisbursementStatus } from "@/features/disbursement/types/disbursement-types";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency } from "@/shared/utils/money";
 
 const formatDate = (iso: string) => {
     const d = new Date(iso);

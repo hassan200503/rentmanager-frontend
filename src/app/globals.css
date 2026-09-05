@@ -598,7 +598,323 @@ body {
   font-size: 0.875rem;
   color: var(--color-fg-muted);
   margin-top: 0.25rem;
-  line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM TENANT PORTAL ANIMATIONS & EFFECTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Premium Animation Keyframes ─────────────────────────────── */
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  33% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  66% {
+    transform: translateY(-10px) translateX(-10px);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-30px) rotate(5deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(5, 150, 105, 0.3),
+      inset 0 0 20px rgba(5, 150, 105, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(5, 150, 105, 0.5),
+      inset 0 0 30px rgba(5, 150, 105, 0.2);
+  }
+}
+
+@keyframes number-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Premium Glass Card System ────────────────────────────────── */
+
+.tenant-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  transition: all var(--duration-base) var(--ease-settle);
+}
+
+.dark .tenant-glass-card {
+  background: rgba(24, 24, 27, 0.75);
+  backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.tenant-glass-card:hover {
+  border-color: rgba(5, 150, 105, 0.3);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(5, 150, 105, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.dark .tenant-glass-card:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Premium Loading States ───────────────────────────────────── */
+
+.tenant-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  border-radius: var(--radius-md);
+}
+
+.dark .tenant-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+}
+
+/* ── Premium Button Enhancement ───────────────────────────────── */
+
+.tenant-btn-premium {
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-button);
+  transition: all var(--duration-fast) var(--ease-settle);
+}
+
+.tenant-btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 600ms var(--ease-settle);
+}
+
+.tenant-btn-premium:hover::before {
+  left: 100%;
+}
+
+.tenant-btn-premium:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--shadow-elevated);
+}
+
+.tenant-btn-premium:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ── Premium Status Badges ────────────────────────────────────── */
+
+.tenant-status-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+  transition: all var(--duration-fast) var(--ease-settle);
+}
+
+.tenant-status-premium.success {
+  background: rgba(236, 253, 245, 0.8);
+  color: var(--color-success);
+  border-color: rgba(22, 163, 74, 0.2);
+  text-shadow: 0 0 8px rgba(22, 163, 74, 0.15);
+}
+
+.tenant-status-premium.danger {
+  background: rgba(254, 242, 242, 0.8);
+  color: var(--color-danger);
+  border-color: rgba(220, 38, 38, 0.2);
+  text-shadow: 0 0 8px rgba(220, 38, 38, 0.15);
+}
+
+.tenant-status-premium.warning {
+  background: rgba(255, 251, 235, 0.8);
+  color: var(--color-warning);
+  border-color: rgba(217, 119, 6, 0.2);
+  text-shadow: 0 0 8px rgba(217, 119, 6, 0.15);
+}
+
+.dark .tenant-status-premium.success {
+  background: rgba(4, 120, 87, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.dark .tenant-status-premium.danger {
+  background: rgba(127, 29, 29, 0.2);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.dark .tenant-status-premium.warning {
+  background: rgba(120, 53, 15, 0.2);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.tenant-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.tenant-status-dot.success {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(22, 163, 74, 0.5);
+}
+
+.tenant-status-dot.danger {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+}
+
+.tenant-status-dot.warning {
+  background: var(--color-warning);
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.5);
+}
+
+/* ── Accessibility - Reduced Motion ───────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Focus States for Keyboard Navigation ─────────────────────── */
+
+.tenant-focusable:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.dark .tenant-focusable:focus-visible {
+  outline-color: var(--color-brand-400);
 }
 
 .dark .page-subtitle {
@@ -5968,3 +6284,112 @@ section[id], div[id] {
 .dark .glow-brand {
   box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
 }
+/* ──────────────────────────────────────────────────────────────
+   TENANT PORTAL PREMIUM — TRANSACTION ROWS, SCORE, QUICK LINKS
+   ────────────────────────────────────────────────────────────── */
+
+/* Transaction row glass card */
+.tenant-txn-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: transform 300ms var(--ease-settle), border-color 300ms var(--ease-settle), box-shadow 300ms var(--ease-settle), background 300ms var(--ease-settle);
+}
+.dark .tenant-txn-card {
+  background: rgba(24, 24, 27, 0.72);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+.tenant-txn-card:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(5, 150, 105, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+.dark .tenant-txn-card:hover {
+  background: rgba(24, 24, 27, 0.92);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.tenant-txn-icon {
+  transition: transform 300ms var(--ease-spring);
+}
+.tenant-txn-card:hover .tenant-txn-icon {
+  transform: rotate(-6deg) scale(1.08);
+}
+.tenant-txn-icon.credit {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.16), rgba(16, 185, 129, 0.08));
+  color: var(--color-success);
+}
+.tenant-txn-icon.debit {
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.12), rgba(148, 163, 184, 0.05));
+  color: var(--color-fg-muted);
+}
+.dark .tenant-txn-icon.credit { background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(6, 78, 59, 0.1)); }
+.dark .tenant-txn-icon.debit { background: linear-gradient(135deg, rgba(161, 161, 170, 0.14), rgba(82, 82, 91, 0.06)); }
+.tenant-txn-amount.credit { text-shadow: 0 0 10px rgba(22, 163, 74, 0.25); }
+
+/* Payment score card */
+.tenant-score-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 400ms var(--ease-settle), box-shadow 400ms var(--ease-settle);
+}
+.dark .tenant-score-card {
+  background: rgba(24, 24, 27, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.tenant-score-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+.tenant-score-ring {
+  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.35));
+}
+
+/* Quick links card */
+.tenant-quicklinks-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.dark .tenant-quicklinks-card {
+  background: rgba(24, 24, 27, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.tenant-quick-link-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  transition: transform 250ms var(--ease-settle), background 250ms var(--ease-settle);
+}
+.tenant-quick-link-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(236, 253, 245, 0) 0%, rgba(236, 253, 245, 0.55) 50%, rgba(236, 253, 245, 0) 100%);
+  transform: translateX(-100%);
+  transition: transform 350ms var(--ease-settle);
+  pointer-events: none;
+}
+.tenant-quick-link-item:hover {
+  transform: translateX(4px);
+  background: linear-gradient(90deg, rgba(236, 253, 245, 0.6), rgba(236, 253, 245, 0.15));
+}
+.tenant-quick-link-item:hover::before { transform: translateX(100%); }
+.tenant-quick-link-item:hover .tenant-qk-icon { color: var(--color-brand-600); transform: rotate(-6deg) scale(1.1); }
+.tenant-qk-icon { transition: color 300ms var(--ease-spring), transform 300ms var(--ease-spring); }
+.tenant-qk-arrow { transition: transform 300ms var(--ease-spring), opacity 300ms var(--ease-spring); opacity: 0.45; }
+.tenant-quick-link-item:hover .tenant-qk-arrow { transform: translateX(4px); opacity: 1; }
+.dark .tenant-quick-link-item::before {
+  background: linear-gradient(90deg, rgba(4, 120, 87, 0) 0%, rgba(4, 120, 87, 0.35) 50%, rgba(4, 120, 87, 0) 100%);
+}
+.dark .tenant-quick-link-item:hover {
+  background: linear-gradient(90deg, rgba(4, 120, 87, 0.28), rgba(4, 120, 87, 0.1));
+}
+.dark .tenant-quick-link-item:hover .tenant-qk-icon { color: var(--color-brand-400); }

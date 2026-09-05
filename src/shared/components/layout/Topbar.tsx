@@ -4,7 +4,7 @@ import { Search, Bell, HelpCircle, Settings, Command } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useOrgStore } from "@/stores/org-store";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import NotificationPanel from "@/shared/components/dashboard/NotificationPanel";
 import { useNotificationStore } from "@/stores/notification-store";
 
@@ -14,14 +14,25 @@ export default function Topbar() {
 
   const { unreadCount, toggleOpen } = useNotificationStore();
 
-  const currentTime = useSyncExternalStore(
-    (callback) => {
-      const interval = setInterval(callback, 60000);
-      return () => clearInterval(interval);
-    },
-    () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    () => ""
-  );
+  // A clock is not an external store. getSnapshot must return a cached value
+  // and be equal across consecutive calls; this one recomputed the time on
+  // every call, so whenever a render and React's change-check straddled a
+  // minute boundary the two reads disagreed and React reported
+  // "The result of getSnapshot should be cached to avoid an infinite loop".
+  // State updated on an interval is the right shape for a value that changes
+  // on its own. Starting empty also keeps the server and first client render
+  // identical, which is what the old getServerSnapshot was doing.
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const tick = () =>
+      setCurrentTime(
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    tick();
+    const interval = setInterval(tick, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   function handleSearchClick() {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));

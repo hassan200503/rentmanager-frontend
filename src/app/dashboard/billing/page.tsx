@@ -33,12 +33,7 @@ import type {
     SubscriptionStatus,
     SubscriptionStatusResponse,
 } from "@/features/subscription/types/subscription-types";
-
-const ksh = new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 0,
-});
+import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
 
 const dateFmt = new Intl.DateTimeFormat("en-KE", {
     day: "numeric",
@@ -46,9 +41,12 @@ const dateFmt = new Intl.DateTimeFormat("en-KE", {
     year: "numeric",
 });
 
-function formatMoney(amount: number | null | undefined): string {
-    if (amount == null) return "—";
-    return ksh.format(amount);
+// "—" for genuinely absent data rather than the "Ksh 0" formatCurrency would
+// otherwise render for null/undefined — this page's own deliberate choice,
+// not something the shared formatter should assume for every caller.
+function formatMoney(amount: MoneyValue): string {
+    if (amount === null || amount === undefined) return "—";
+    return formatCurrency(amount);
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -197,7 +195,7 @@ function RatibaCard({
     billingMode: BillingMode;
     paybillNumber: string | null;
     accountReference: string | null;
-    amount: number | null;
+    amount: MoneyValue;
     ratibaEnabled: boolean;
     standingOrderStatus: StandingOrderStatus | null;
 }) {
@@ -332,11 +330,11 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
     const availablePlans = useMemo(
         () =>
             (plans.data ?? []).filter(
-                (plan): plan is SubscriptionPlan & { monthlyPrice: number } =>
+                (plan): plan is SubscriptionPlan & { monthlyPrice: string } =>
                     plan.active &&
                     plan.selfService &&
                     plan.monthlyPrice != null &&
-                    plan.monthlyPrice > 0
+                    toMoneyNumber(plan.monthlyPrice) > 0
             ),
         [plans.data]
     );
@@ -389,7 +387,7 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                 onSuccess: (request) => {
                     setPaymentRequestId(request.id);
                     setPendingPhone(request.mpesaPhone);
-                    setPendingAmount(request.amount);
+                    setPendingAmount(toMoneyNumber(request.amount));
                 },
             }
         );

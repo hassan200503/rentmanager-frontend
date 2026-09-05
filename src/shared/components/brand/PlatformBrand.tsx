@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePlatformBrandingQuery } from "@/features/admin/hooks/use-platform-branding";
-import { BadgeMark, BrandBadge, ON_DARK_WORDMARK } from "./BrandBadge";
+import { BadgeMark, BrandBadge, ON_DARK_WORDMARK, LIGHT_WORDMARK } from "./BrandBadge";
 
 interface PlatformBrandProps {
   size?: "sm" | "md" | "lg";
@@ -49,7 +49,7 @@ export function PlatformBrand({ size = "md", showTag, withName = true, onDark }:
         />
         {withName && (
           <span
-            className={`${onDark ? ON_DARK_WORDMARK : "font-display font-semibold tracking-[-0.02em] text-fg dark:text-fg-dark"} ${s.textSize}`}
+            className={`${onDark ? ON_DARK_WORDMARK : LIGHT_WORDMARK} ${s.textSize}`}
           >
             {platformName}
           </span>

@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import type { TenantPaymentReceiptResponse } from "@/features/tenant-portal/api/tenant-portal-api";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 Font.register({
     family: "Helvetica",
@@ -211,13 +212,13 @@ export function ReceiptPdfDocument({ receipt }: { receipt: TenantPaymentReceiptR
                 <View style={styles.amountRow}>
                     <Text style={styles.amountLabel}>Amount Paid</Text>
                     <Text style={styles.amountValue}>
-                        KES {receipt.amount.toLocaleString("en-KE")}
+                        KES {toMoneyNumber(receipt.amount).toLocaleString("en-KE")}
                     </Text>
                 </View>
                 <View style={styles.balanceRow}>
                     <Text style={styles.balanceLabel}>Balance after payment</Text>
                     <Text style={styles.balanceValue}>
-                        KES {receipt.balanceAfterPayment.toLocaleString("en-KE")}
+                        KES {toMoneyNumber(receipt.balanceAfterPayment).toLocaleString("en-KE")}
                     </Text>
                 </View>
 
