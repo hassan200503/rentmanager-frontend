@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Backend test command
 - Run specific test: `mvn test -f "C:\JavaProjects\rentmanager-backend" -Dtest="ClassName" -pl .`
 - Run full suite: `mvn test -f "C:\JavaProjects\rentmanager-backend" -pl .`
-- Status (2026-09-04): full suite is green — 1,442 tests, 0 failures, 0 errors. Treat any new failure as caused by your change.
+- Status (2026-09-04): full suite is green — 1,445 tests, 0 failures, 0 errors. Treat any new failure as caused by your change.
 
 # Test conventions for new tests
 - Do NOT use `@Mock`/`@InjectMocks`/`@ExtendWith(MockitoExtension.class)` or `@Nested` — Mockito's strict stubbing causes `UnnecessaryStubbingException` when tests override shared `@BeforeEach` stubs.
