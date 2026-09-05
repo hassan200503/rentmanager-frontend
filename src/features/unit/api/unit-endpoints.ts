@@ -3,6 +3,7 @@ const base = "/units";
 export const unitEndpoints = {
     base,
     summary: `${base}/summary`,
+    occupancyByProperty: `${base}/occupancy-by-property`,
     search: `${base}/search`,
     byId: (id: string) => `${base}/${id}`,
     byProperty: (propertyId: string) => `${base}/property/${propertyId}`,

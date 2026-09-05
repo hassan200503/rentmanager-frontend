@@ -1,12 +1,12 @@
 import { useRentLedgerTransactionsQuery } from "../hooks/use-rent-ledger-transactions-query";
 import { RentTransactionType } from "../types/rent-ledger-response";
+import { formatCurrencyPrecise } from "@/shared/utils/money";
 
 interface RentLedgerTransactionsProps {
     entryId: string;
 }
 
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(amount);
+const formatCurrency = formatCurrencyPrecise;
 
 const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("en-KE", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -19,17 +19,24 @@ const TYPE_LABELS: Record<RentTransactionType, string> = {
     CREDIT_APPLIED: "Credit Applied",
     ADJUSTMENT: "Adjustment",
     DEPOSIT: "Deposit",
+    REVERSAL: "Reversal",
 };
 
+// A REVERSAL voids an earlier transaction and moves the balance the exact
+// opposite way to whatever it reversed — reversing a PAYMENT increases what
+// is owed, reversing a REFUND decreases it. The response carries no
+// reversesTransactionId, so the direction genuinely cannot be derived from
+// this row. It is therefore rendered neutral, like ADJUSTMENT, rather than
+// guessing a colour and a sign that would be wrong half the time.
 const amountColorClass = (type: RentTransactionType) => {
     if (type === "RENT_CHARGE") return "text-danger-dark dark:text-danger";
-    if (type === "ADJUSTMENT") return "text-fg dark:text-fg-dark";
+    if (type === "ADJUSTMENT" || type === "REVERSAL") return "text-fg dark:text-fg-dark";
     return "text-success-dark dark:text-success";
 };
 
 const amountSign = (type: RentTransactionType) => {
     if (type === "RENT_CHARGE") return "+";
-    if (type === "ADJUSTMENT") return "";
+    if (type === "ADJUSTMENT" || type === "REVERSAL") return "";
     return "\u2212";
 };
 

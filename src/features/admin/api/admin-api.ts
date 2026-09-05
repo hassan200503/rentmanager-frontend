@@ -2,6 +2,8 @@ import { adminEndpoints } from "./admin-endpoints";
 import type {
     AdminOverviewResponse,
     DisbursementItem,
+    PaymentRequestItem,
+    PaymentRequestQueryParams,
     LandlordCommission,
     LandlordDetailResponse,
     LandlordSummary,
@@ -108,6 +110,16 @@ export const adminApi = {
         if (params?.size !== undefined) qs.set("size", String(params.size));
         const q = qs.toString();
         return apiClient.get<SpringPage<DisbursementItem>>(adminEndpoints.disbursements(q || undefined), token);
+    },
+    getPaymentRequests: async (params?: PaymentRequestQueryParams): Promise<SpringPage<PaymentRequestItem>> => {
+        const { token } = await getAuthContext();
+        const qs = new URLSearchParams();
+        if (params?.landlordId) qs.set("landlordId", params.landlordId);
+        if (params?.status) qs.set("status", params.status);
+        if (params?.page !== undefined) qs.set("page", String(params.page));
+        if (params?.size !== undefined) qs.set("size", String(params.size));
+        const q = qs.toString();
+        return apiClient.get<SpringPage<PaymentRequestItem>>(adminEndpoints.paymentRequests(q || undefined), token);
     },
     retryDisbursement: async (disbursementId: string): Promise<void> => {
         const { token } = await getAuthContext();

@@ -118,31 +118,31 @@ export const TenantLandlordPage = () => {
     if (isLoading) {
         return (
             <div className="page-container space-y-6 animate-fade-in-up">
-                <div className="hero-card p-6 sm:p-8 space-y-4">
+                <div className="tenant-hero-panel !p-6 sm:!p-8 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                        <div className="skeleton h-20 w-20 rounded-2xl shrink-0" />
+                        <div className="tenant-skeleton-premium h-20 w-20 rounded-2xl shrink-0" />
                         <div className="space-y-2.5 flex-1">
-                            <div className="skeleton h-3 w-24 rounded" />
-                            <div className="skeleton h-7 w-1/3 rounded" />
-                            <div className="skeleton h-4 w-2/5 rounded" />
-                            <div className="skeleton h-3 w-1/4 rounded" />
+                            <div className="tenant-skeleton-premium h-3 w-24 rounded" />
+                            <div className="tenant-skeleton-premium h-7 w-1/3 rounded" />
+                            <div className="tenant-skeleton-premium h-4 w-2/5 rounded" />
+                            <div className="tenant-skeleton-premium h-3 w-1/4 rounded" />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
                         {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className="skeleton h-12 w-full rounded-xl" />
+                            <div key={i} className="tenant-skeleton-premium h-12 w-full rounded-xl" />
                         ))}
                     </div>
                 </div>
-                <div className="card-elevated p-5 space-y-3">
-                    <div className="skeleton h-4 w-32 rounded" />
+                <div className="tenant-panel !p-5 space-y-3">
+                    <div className="tenant-skeleton-premium h-4 w-32 rounded" />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {[0, 1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className="skeleton h-16 w-full rounded-xl" />
+                            <div key={i} className="tenant-skeleton-premium h-16 w-full rounded-xl" />
                         ))}
                     </div>
                 </div>
-                <div className="skeleton h-16 w-full rounded-2xl" />
+                <div className="tenant-skeleton-premium h-16 w-full rounded-2xl" />
             </div>
         );
     }
@@ -150,7 +150,7 @@ export const TenantLandlordPage = () => {
     if (isError) {
         return (
             <div className="page-container">
-                <div className="card p-8 text-center max-w-md mx-auto animate-fade-in-up">
+                <div className="tenant-panel !p-8 text-center max-w-md mx-auto animate-fade-in-up">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-danger-bg dark:bg-danger-bg-dark text-danger dark:text-danger ring-1 ring-danger/20 mb-4">
                         <AlertTriangle className="h-7 w-7" strokeWidth={1.75} />
                     </div>
@@ -165,7 +165,7 @@ export const TenantLandlordPage = () => {
     if (!lease) {
         return (
             <div className="page-container">
-                <div className="card p-8 text-center max-w-md mx-auto animate-fade-in-up">
+                <div className="tenant-panel !p-8 text-center max-w-md mx-auto animate-fade-in-up">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40 mb-4">
                         <Building2 className="h-8 w-8" strokeWidth={1.5} />
                     </div>
@@ -216,8 +216,13 @@ export const TenantLandlordPage = () => {
 
     return (
         <div className="page-container space-y-6 animate-fade-in-up" style={themeVars}>
-            {/* Hero / identity card */}
-            <div className="hero-card relative overflow-hidden p-6 sm:p-8">
+            {/* Hero / identity card — was .hero-card, a separate (also
+                well-built) glass treatment from .tenant-panel used by every
+                other section on this page. Both are fully dark-mode-safe, so
+                this wasn't a bug, but one consistent panel language reads as
+                more considered than two equally good ones mixed on the same
+                page. */}
+            <div className="tenant-hero-panel relative !p-6 sm:!p-8">
                 {/* Branding gradient wash */}
                 <div
                     className="absolute inset-0 pointer-events-none"
@@ -350,7 +355,7 @@ export const TenantLandlordPage = () => {
             </div>
 
             {/* Contact details */}
-            <div className="card-elevated">
+            <div className="tenant-panel !p-5 sm:!p-6">
                 <div className="flex items-center gap-2.5 mb-4">
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
                         <Contact className="h-4.5 w-4.5" strokeWidth={2} />
@@ -480,7 +485,7 @@ export const TenantLandlordPage = () => {
             </div>
 
             {/* Trust / reassurance */}
-            <div className="relative card-elevated p-5 sm:p-6 overflow-hidden border-2 border-brand/20 dark:border-brand/20">
+            <div className="relative tenant-panel !p-5 sm:!p-6 overflow-hidden border-2 border-brand/20 dark:border-brand/20">
                 <div
                     className="absolute inset-0 pointer-events-none opacity-70"
                     style={{
@@ -493,15 +498,27 @@ export const TenantLandlordPage = () => {
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
                         <ShieldCheck className="h-5.5 w-5.5" strokeWidth={1.75} />
                     </div>
+                    {/* TRUST COPY — every sentence here must be traceable to code.
+                        What was here before made three claims the system does not
+                        support: "Payments are always protected" (there is no
+                        protection scheme, escrow or insurance behind it),
+                        "you're in safe hands", and "remitted directly to <landlord>'s
+                        M-Pesa account" — which is simply not how rent flows.
+                        RentPaymentInitiationService charges rent against the
+                        PLATFORM's Daraja credentials and the landlord is paid
+                        afterwards by B2C disbursement, so nothing is remitted
+                        directly. What IS true is stronger anyway: the PIN never
+                        leaves the renter's own phone, and the ledger is
+                        append-only with a matched M-Pesa receipt per payment. */}
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-fg dark:text-fg-dark">
-                            {landlordVerified
-                                ? "Verified landlord — you're in safe hands"
-                                : "Payments are always protected"}
+                            Every payment leaves a receipt
                         </p>
                         <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5 leading-relaxed">
-                            Rent payments are processed securely through RentManager and remitted directly to {landlordName ?? "your landlord"}&apos;s
-                            M-Pesa account. Every payment you make is recorded in your ledger and receipt history.
+                            You approve each payment with your M-Pesa PIN on your own phone — it is never
+                            shared with us or with {landlordName ?? "your landlord"}. Each payment is matched
+                            to its M-Pesa receipt number and written to your ledger, where records cannot be
+                            edited or deleted, only corrected by a visible reversal.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

@@ -8,13 +8,51 @@ import { PremiumVideoHero } from "./PremiumVideoHero";
 import { useScrollReveal } from "@/shared/hooks/use-scroll-reveal";
 import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
 
+/**
+ * A single live figure in the hero strip.
+ *
+ * `null` means "we do not know" — the listings API has not answered yet, or
+ * it failed. Those are rendered as a placeholder rather than as a number,
+ * because the previous behaviour was to render Math.max(1, count), which
+ * displayed a confident "1" to a prospective customer whenever the API was
+ * down. StatsSection further down the same page rendered "0" from the same
+ * failure, so one screen could show two different invented figures.
+ *
+ * A real zero is also not shown: "0+ properties" is a true statement that
+ * reads as a broken page, and it is better to omit a fact than to lead with
+ * the least flattering true one.
+ */
+function HeroStat({ value, label }: { value: number | null; label: string }) {
+  const known = value !== null && value > 0;
+
+  return (
+    <div className="text-center">
+      <p className="font-mono-nums text-2xl md:text-3xl font-bold text-white">
+        {known ? (
+          <>
+            {value.toLocaleString()}
+            <span className="text-jade-400">+</span>
+          </>
+        ) : (
+          <span className="text-white/30" aria-hidden="true">
+            &mdash;
+          </span>
+        )}
+      </p>
+      <p className="text-xs text-white/50 mt-1">{label}</p>
+    </div>
+  );
+}
+
 export function HeroSection({
   totalProperties,
   totalUnits,
   cityCount,
 }: {
-  totalProperties: number;
-  totalUnits: number;
+  /** null when the listings API has not answered or failed. */
+  totalProperties: number | null;
+  /** null when the listings API has not answered or failed. */
+  totalUnits: number | null;
   cityCount: number;
 }) {
   const router = useRouter();
@@ -22,8 +60,12 @@ export function HeroSection({
   const { ref: revealRef, isVisible: revealInView } = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
 
   const trustItems = [
-    { icon: CheckCircle2, text: "Verified listings" },
-    { icon: ShieldCheck, text: "Secure deposits" },
+    // "Verified listings" overstated a landlord-level approval as a
+    // per-listing check, and "Secure deposits" implied custody the platform
+    // does not take — the deposit goes to the landlord, not to an escrow
+    // account. Both replaced with what the system actually does.
+    { icon: CheckCircle2, text: "Approved landlords" },
+    { icon: ShieldCheck, text: "Deposits recorded" },
     { icon: FileText, text: "Digital leases" },
   ];
 
@@ -51,8 +93,13 @@ export function HeroSection({
         }`}
       >
         <p className="mt-6 text-base sm:text-lg text-white/70 max-w-xl mx-auto leading-relaxed [text-wrap:balance] [text-shadow:0_1px_20px_rgba(0,0,0,0.9)]">
-          Verified vacancies across Kenya. Reserve any unit with a refundable deposit.
-          {" "}No agents, no fake listings, no hassle.
+          {/* Was: "Verified vacancies ... refundable deposit ... no fake
+              listings". Three claims the system cannot keep — listings are
+              not individually verified, the platform takes no custody of a
+              deposit so cannot promise it back, and nothing screens a listing
+              for authenticity. What is left is what is actually true. */}
+          Vacancies across Kenya from approved landlords. Reserve a unit and pay
+          {" "}your deposit by M-Pesa &mdash; no agents, no broker fees.
         </p>
 
         {/* Search - enhanced with focus lift */}
@@ -89,7 +136,7 @@ export function HeroSection({
 
           <p className="flex items-center justify-center gap-2 text-sm mt-4 min-h-[24px] text-white/55">
             <span className="w-1.5 h-1.5 rounded-full bg-jade-400" aria-hidden="true" />
-            Every vacancy is checked before it can be reserved
+            Every payment is receipted and kept on a record you can check
           </p>
         </div>
 
@@ -145,29 +192,14 @@ export function HeroSection({
 
         {/* Live stats strip */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-wrap items-stretch justify-center gap-x-10 gap-y-6">
-          <div className="text-center">
-            <p className="font-mono-nums text-2xl md:text-3xl font-bold text-white">
-              {Math.max(1, totalProperties).toLocaleString()}
-              <span className="text-jade-400">+</span>
-            </p>
-            <p className="text-xs text-white/50 mt-1">Verified properties</p>
-          </div>
+          {/* "Properties listed", not "Verified properties": this count is
+              every public property, and verification is a landlord-level
+              status that this figure is not filtered by. */}
+          <HeroStat value={totalProperties} label="Properties listed" />
           <div className="w-px bg-white/10 hidden sm:block" aria-hidden="true" />
-          <div className="text-center">
-            <p className="font-mono-nums text-2xl md:text-3xl font-bold text-white">
-              {Math.max(1, totalUnits).toLocaleString()}
-              <span className="text-jade-400">+</span>
-            </p>
-            <p className="text-xs text-white/50 mt-1">Available units</p>
-          </div>
+          <HeroStat value={totalUnits} label="Available units" />
           <div className="w-px bg-white/10 hidden sm:block" aria-hidden="true" />
-          <div className="text-center">
-            <p className="font-mono-nums text-2xl md:text-3xl font-bold text-white">
-              {cityCount}
-              <span className="text-jade-400">+</span>
-            </p>
-            <p className="text-xs text-white/50 mt-1">Regions across Kenya</p>
-          </div>
+          <HeroStat value={cityCount} label="Regions across Kenya" />
           <div className="w-px bg-white/10 hidden sm:block" aria-hidden="true" />
           <div className="text-center">
             <p className="font-mono-nums text-2xl md:text-3xl font-bold text-white">

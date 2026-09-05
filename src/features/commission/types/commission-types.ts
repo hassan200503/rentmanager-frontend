@@ -1,7 +1,7 @@
 export interface CommissionPolicy {
     id: string;
     landlordOrgId: string | null;
-    ratePercent: number;
+    ratePercent: string; // BigDecimal -> JSON string
     effectiveFrom: string;
     active: boolean;
     createdBy: string;

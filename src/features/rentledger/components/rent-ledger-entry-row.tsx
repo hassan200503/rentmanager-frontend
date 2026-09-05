@@ -1,9 +1,7 @@
 import { RentLedgerEntryResponse } from "../types/rent-ledger-response";
 import { RentLedgerStatusBadge } from "./rent-ledger-status-badge";
 import { ChevronRight } from "lucide-react";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0 }).format(amount);
+import { formatCurrency } from "@/shared/utils/money";
 
 const formatDate = (isoDate: string) =>
     new Date(isoDate).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });

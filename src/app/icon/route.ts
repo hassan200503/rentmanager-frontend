@@ -22,8 +22,17 @@ export async function GET() {
     const fallbackSvg = await readFile(join(process.cwd(), "public", "favicon.svg"), "utf8");
 
     try {
+        // appConfig.api.baseUrl already ends in /api/v1 (it's read straight
+        // from NEXT_PUBLIC_API_URL, which is itself ".../api/v1") — every
+        // other caller in this codebase appends only the path after that,
+        // e.g. adminEndpoints.publicBranding() = "/public/platform/branding".
+        // This route used to prepend "/api/v1" again, doubling it to
+        // ".../api/v1/api/v1/...", which the backend answers with 401 (no
+        // such route matches as expected) rather than 200 — so !brandingRes.ok
+        // was always true and this route silently served the green
+        // fallbackSvg on every request, never the configured logo.
         const brandingRes = await fetch(
-            `${appConfig.api.baseUrl}/api/v1/public/platform/branding`,
+            `${appConfig.api.baseUrl}/public/platform/branding`,
             { cache: "no-store", signal: AbortSignal.timeout(3000) }
         );
         if (!brandingRes.ok) {

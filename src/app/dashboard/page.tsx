@@ -31,11 +31,13 @@ import { PropertyStatus } from "@/features/property/types/property";
 import { usePropertyDashboardMetrics } from "@/features/property/hooks/use-property-dashboard-metrics";
 import { useActivityFeed } from "@/features/activity/hooks/use-activity-feed";
 import { useDarajaStatusQuery } from "@/features/daraja/queries/use-daraja-status-query";
+import { usePropertyOccupancyQuery } from "@/features/unit/hooks/use-unit-summary-query";
+import { useRentLedgerSummaryQuery } from "@/features/rentledger/hooks/use-rent-ledger-summary";
+import { formatCurrency } from "@/shared/utils/money";
 import { MPesaIcon } from "@/shared/components/icons/MPesaIcon";
 import { typeStyle, typeLabel } from "@/shared/components/dashboard/property-type-meta";
 import PortfolioBar from "@/shared/components/dashboard/PortfolioBar";
 import KpiCard, { KpiCardSkeleton } from "@/shared/components/dashboard/KpiCard";
-import HealthScore from "@/shared/components/dashboard/HealthScore";
 import PropertyDistributionChart from "@/shared/components/dashboard/PropertyDistributionChart";
 import OccupancyMixChart from "@/shared/components/dashboard/OccupancyMixChart";
 import PropertyRanking, { PropertyRankingSkeleton } from "@/shared/components/dashboard/PropertyRanking";
@@ -238,6 +240,8 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
   const { metrics, isLoading: metricsLoading, isError: metricsError, refetch: refetchMetrics } =
     usePropertyDashboardMetrics(tenantId);
   const darajaStatus = useDarajaStatusQuery(tenantId);
+  const propertyOccupancyQuery = usePropertyOccupancyQuery();
+  const ledgerSummaryQuery = useRentLedgerSummaryQuery(Boolean(tenantId));
 
   const propertiesQuery = useQuery({
     queryKey: ["properties", "dashboard-list", tenantId, propertyFilter],
@@ -271,6 +275,30 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
     return "Good evening";
   }, []);
 
+  // Occupied units over total units, computed in SQL by GET /units/summary.
+  // This was fullyOccupied/activeProperties — a count of PROPERTIES whose
+  // status was FULLY_OCCUPIED over active properties — so a 40-unit block
+  // with 39 tenants contributed zero.
+  // Real occupied/total per property, counted in SQL. Keyed for O(1) lookup
+  // in the panel rather than a find() per row.
+  //
+  // Declared before the loading/error returns below, not after: every Hook
+  // in a component must run on every render, and this one used to sit past
+  // those early returns — so on the loading/error render it was skipped
+  // while the surrounding useState/useMemo calls still ran, changing the
+  // number of Hooks called between renders. React matches Hooks to state by
+  // call order alone, so that mismatch is a real corruption risk, not a
+  // lint nicety — caught by eslint's react-hooks/rules-of-hooks.
+  const occupancyByProperty = useMemo(() => {
+    const rows = propertyOccupancyQuery.data ?? [];
+    return Object.fromEntries(
+      rows.map((r) => [
+        r.propertyId,
+        { totalUnits: r.totalUnits, occupiedUnits: r.occupiedUnits, occupancyPercent: r.occupancyPercent },
+      ])
+    );
+  }, [propertyOccupancyQuery.data]);
+
   if (metricsLoading || propertiesQuery.isLoading) {
     return <div className="page-container"><DashboardSkeleton /></div>;
   }
@@ -293,27 +321,32 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
   const properties = propertiesQuery.data?.content ?? [];
   const lastUpdated = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const occupancyRate =
-    metrics.activeProperties > 0 ? Math.round((metrics.fullyOccupied / metrics.activeProperties) * 100) : null;
+  const occupancyRate = metrics.occupancyRate;
+
   const activeShare =
     metrics.totalProperties > 0 ? Math.round((metrics.activeProperties / metrics.totalProperties) * 100) : null;
 
-  const portfolioHealthScore = occupancyRate != null
-    ? Math.round(
-        (occupancyRate * 0.6) +
-        ((metrics.activeProperties / Math.max(metrics.totalProperties, 1)) * 100 * 0.2) +
-        (metrics.vacant === 0 ? 20 : Math.max(0, 20 - metrics.vacant * 5))
-      )
-    : 0;
+  /*
+   * REMOVED: portfolioHealthScore and healthBreakdown.
+   *
+   * portfolioHealthScore was a hand-weighted formula over property counts
+   * (occupancy * 0.6, plus an active-share term, plus a vacancy penalty)
+   * presented to a landlord as a percentage with a "Healthy / Fair / Needs
+   * attention" verdict attached. No such metric is defined anywhere in the
+   * product, so the number could not be checked, explained, or reproduced.
+   *
+   * healthBreakdown was worse: `collections` was assigned that same score and
+   * contained no collections data whatsoever, and `revenue` was literally
+   * `occupancyRate + 10`.
+   *
+   * A landlord who asks "why is my portfolio health 73%?" deserves an answer.
+   * Until one of these has a definition that survives that question, showing
+   * a number is worse than showing nothing — it spends the credibility the
+   * rent ledger has actually earned. Real occupancy and real money figures
+   * now occupy the space instead.
+   */
 
-  const healthBreakdown = {
-    occupancy: occupancyRate ?? 0,
-    collections: portfolioHealthScore,
-    maintenance: metrics.underMaintenance > 0 ? Math.max(0, 100 - metrics.underMaintenance * 15) : 100,
-    revenue: occupancyRate != null ? Math.min(100, occupancyRate + 10) : 0,
-  };
-
-  const attentionCount = metrics.vacant + metrics.underMaintenance;
+  const attentionCount = metrics.vacantUnits + metrics.underMaintenance;
 
   return (
     <div className="page-container space-y-8">
@@ -371,19 +404,20 @@ onClick={() => {
 
         {/* Hero metrics */}
         <div className="hero-metrics grid grid-cols-2 sm:grid-cols-4 gap-6 mt-8 relative z-10">
+          {/* "Portfolio Health" removed — it displayed a hand-weighted formula
+              over property counts as an authoritative percentage with a
+              Healthy/Fair/Needs-attention verdict, and no such metric exists.
+              The tiles beside it are all directly checkable. */}
           <div className="kpi-metric">
-            <span className="kpi-metric-label">Portfolio Health</span>
+            <span className="kpi-metric-label">Units occupied</span>
             <div className="flex items-baseline gap-2">
-              <span className="kpi-metric-value" style={{ color: portfolioHealthScore >= 80 ? "var(--color-success)" : portfolioHealthScore >= 60 ? "var(--color-warning)" : "var(--color-danger)" }}>
-                {portfolioHealthScore}%
-              </span>
-              <span className={`text-xs font-semibold ${portfolioHealthScore >= 80 ? "text-success" : portfolioHealthScore >= 60 ? "text-warning-dark dark:text-warning" : "text-danger"}`}>
-                {portfolioHealthScore >= 80 ? "Healthy" : portfolioHealthScore >= 60 ? "Fair" : "Needs attention"}
+              <span className="kpi-metric-value">
+                {metrics.totalUnits > 0 ? `${metrics.occupiedUnits}/${metrics.totalUnits}` : "—"}
               </span>
             </div>
           </div>
           <div className="kpi-metric">
-            <span className="kpi-metric-label">Occupancy</span>
+            <span className="kpi-metric-label">Unit occupancy</span>
             <div className="flex items-baseline gap-2">
               <span className="kpi-metric-value">{occupancyRate != null ? `${occupancyRate}%` : "—"}</span>
               {occupancyRate != null && (
@@ -397,15 +431,34 @@ onClick={() => {
             </div>
           </div>
           <div className="kpi-metric">
-            <span className="kpi-metric-label">Monthly Revenue</span>
+            <span className="kpi-metric-label">Collected this month</span>
             <div className="flex items-baseline gap-2">
-              <span className="kpi-metric-value">KES 0</span>
+              <span className="kpi-metric-value">
+                {ledgerSummaryQuery.data
+                  ? formatCurrency(ledgerSummaryQuery.data.collectedThisMonth, {
+                      currency: ledgerSummaryQuery.data.currency,
+                    })
+                  : "—"}
+              </span>
             </div>
           </div>
           <div className="kpi-metric">
-            <span className="kpi-metric-label">Collection Rate</span>
+            <span className="kpi-metric-label">Overdue</span>
             <div className="flex items-baseline gap-2">
-              <span className="kpi-metric-value">—</span>
+              <span
+                className="kpi-metric-value"
+                style={
+                  ledgerSummaryQuery.data && ledgerSummaryQuery.data.overdueEntryCount > 0
+                    ? { color: "var(--color-danger)" }
+                    : undefined
+                }
+              >
+                {ledgerSummaryQuery.data
+                  ? formatCurrency(ledgerSummaryQuery.data.overdueTotal, {
+                      currency: ledgerSummaryQuery.data.currency,
+                    })
+                  : "—"}
+              </span>
             </div>
           </div>
         </div>
@@ -420,16 +473,19 @@ onClick={() => {
         transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1], delay: 0.1 }}
         className="grid grid-cols-1 lg:grid-cols-4 gap-6"
       >
-        {/* Portfolio Health — expanded executive component */}
-        <div className="lg:col-span-1">
-          <div className="card-elevated h-full">
-            <h2 className="section-title !text-sm mb-4">Portfolio Health</h2>
-            <HealthScore score={portfolioHealthScore} breakdown={healthBreakdown} />
-          </div>
-        </div>
+        {/*
+          The "Portfolio Health" panel is gone. It rendered a HealthScore with a
+          four-part breakdown in which `collections` held no collections data
+          (it was the overall score again) and `revenue` was occupancyRate + 10.
+          A landlord acting on either would have been acting on nothing.
+
+          The KPI row now spans the full width rather than a placeholder taking
+          its place: an empty panel is still a claim that something belongs
+          there.
+        */}
 
         {/* KPI Cards row */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title !text-sm">Key Metrics</h2>
             {attentionCount > 0 && (
@@ -457,7 +513,7 @@ onClick={() => {
             <KpiCard
               icon={CheckCircle2}
               label="Fully Occupied"
-              value={metrics.fullyOccupied}
+              value={metrics.occupiedUnits}
               subtitle={`${occupancyRate != null ? occupancyRate : 0}% occupancy`}
               badge={occupancyRate != null && occupancyRate >= 80 ? { label: "Strong", variant: "emerald" } : { label: "Below target", variant: "warning" }}
               sparklineData={[45, 50, 55, 52, 58, 62, 65, 68, 72, 75, 78, occupancyRate ?? 0]}
@@ -474,9 +530,9 @@ onClick={() => {
             <KpiCard
               icon={AlertTriangle}
               label="Vacant"
-              value={metrics.vacant}
+              value={metrics.vacantUnits}
               subtitle="properties to fill"
-              badge={metrics.vacant > 0 ? { label: "Needs attention", variant: "warning" } : { label: "None", variant: "success" }}
+              badge={metrics.vacantUnits > 0 ? { label: "Needs attention", variant: "warning" } : { label: "None", variant: "success" }}
               iconColor="var(--color-danger)"
               iconBg="var(--color-danger-bg)"
             />
@@ -555,9 +611,12 @@ onClick={() => {
                 <h3 className="section-header !text-sm !mb-0">Occupancy Mix</h3>
                 <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Across active properties</p>
               </div>
+              {/* Explicitly "of units": the chart below counts PROPERTIES by
+                  occupancy status, so an unlabelled percentage here read as a
+                  summary of the chart when it measures something else. */}
               {occupancyRate != null && (
                 <span className={`badge ${occupancyRate >= 80 ? "badge-emerald" : "badge-warning"} !text-[10px]`}>
-                  {occupancyRate}%
+                  {occupancyRate}% of units
                 </span>
               )}
             </div>
@@ -565,17 +624,25 @@ onClick={() => {
           </div>
         </div>
 
-        {/* Second row: Top Properties + Portfolio Growth */}
+        {/* Second row: Needs attention + Portfolio Growth */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
           <div className="card-elevated">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="section-header !text-sm !mb-0">Top Properties</h3>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">By occupancy rate</p>
+                {/* Was "Top Properties / By occupancy rate" — there is no
+                    per-property occupancy rate in the system, and the one this
+                    panel displayed was derived from the property name's
+                    character codes. Vacancies first is a real ordering. */}
+                <h3 className="section-header !text-sm !mb-0">Needs attention</h3>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Vacancies first</p>
               </div>
               <Sparkles className="h-4 w-4 text-brand" strokeWidth={1.75} />
             </div>
-            {propertiesQuery.isLoading ? <PropertyRankingSkeleton /> : <PropertyRanking properties={properties} />}
+            {propertiesQuery.isLoading ? (
+              <PropertyRankingSkeleton />
+            ) : (
+              <PropertyRanking properties={properties} occupancyByProperty={occupancyByProperty} />
+            )}
           </div>
 
           {/* Portfolio Growth */}
@@ -583,7 +650,7 @@ onClick={() => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="section-header !text-sm !mb-0">Portfolio Growth</h3>
-                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">12-month trend</p>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark">Not available yet</p>
               </div>
               <span className="executive-chip px-2.5 py-1 text-[10px] font-semibold">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand" />
@@ -608,9 +675,10 @@ onClick={() => {
                   <TrendingUp className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={1.75} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-fg dark:text-fg-dark">Trends unlock with your data</p>
+                  <p className="text-sm font-semibold text-fg dark:text-fg-dark">Trends are not built yet</p>
                   <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-fg-muted dark:text-fg-muted-dark">
-                    Growth and occupancy trends appear after your first month of activity &mdash; built from your real portfolio history.
+                    Nothing records portfolio history over time yet, so there is no trend to
+                    draw. Your rent ledger has every payment, dated, in the meantime.
                   </p>
                 </div>
                 <Link href="/dashboard/rent-ledger" className="btn-secondary inline-flex items-center gap-1.5 !text-xs !py-2 !px-3.5">
@@ -638,7 +706,7 @@ onClick={() => {
           </div>
           <InsightsEngine
             occupancyRate={occupancyRate}
-            vacant={metrics.vacant}
+            vacant={metrics.vacantUnits}
             activeProperties={metrics.activeProperties}
             totalProperties={metrics.totalProperties}
             underMaintenance={metrics.underMaintenance}
@@ -655,7 +723,7 @@ onClick={() => {
             )}
           </div>
           <PortfolioAlerts
-            vacant={metrics.vacant}
+            vacant={metrics.vacantUnits}
             underMaintenance={metrics.underMaintenance}
             occupancyRate={occupancyRate}
             totalProperties={metrics.totalProperties}
@@ -691,7 +759,7 @@ onClick={() => {
                       </span>
                     </div>
                     <p className="mt-1 text-[11px] font-medium text-white/85">
-                      Collect rent payments straight to your M-Pesa
+                      Rent and deposits paid straight to your M-Pesa
                     </p>
                   </div>
                   <ArrowUpRight className="h-4 w-4 shrink-0 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" strokeWidth={2.25} />

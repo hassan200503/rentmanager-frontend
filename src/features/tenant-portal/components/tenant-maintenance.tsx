@@ -2,11 +2,11 @@
 
 import { useTenantMaintenanceRequestsQuery } from "../hooks/use-tenant-portal-queries";
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { tenantPortalApi, type CreateMaintenanceRequest } from "../api/tenant-portal-api";
 import { tenantPortalKeys } from "../hooks/tenant-portal-keys";
-import { formatDate } from "./tenant-dashboard";
+import { formatDate } from "./tenant-format";
 import {
     Wrench,
     Plus,
@@ -21,15 +21,27 @@ import {
     MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+    PortalPage,
+    PortalPageHeader,
+    PortalCard,
+    PortalEmptyState,
+    PortalSkeleton,
+    PortalErrorState,
+} from "./portal-chrome";
 
 type ViewState = "list" | "form" | "detail";
 
+// Colour carries meaning here: live statuses stay saturated so they pull the
+// eye, while terminal ones (Completed/Cancelled) are deliberately neutral.
+// Completed was previously badge-success — bright green — which made finished
+// work the loudest thing on a page whose whole job is surfacing unfinished work.
 const STATUS_META: Record<string, { label: string; icon: React.ElementType; className: string }> = {
     SUBMITTED: { label: "Submitted", icon: Clock, className: "badge-info" },
     IN_REVIEW: { label: "In Review", icon: Search, className: "badge-warning" },
     SCHEDULED: { label: "Scheduled", icon: Clock, className: "badge-emerald" },
     IN_PROGRESS: { label: "In Progress", icon: Loader2, className: "badge-warning" },
-    COMPLETED: { label: "Completed", icon: CheckCircle2, className: "badge-success" },
+    COMPLETED: { label: "Completed", icon: CheckCircle2, className: "badge-neutral" },
     CANCELLED: { label: "Cancelled", icon: X, className: "badge-neutral" },
 };
 
@@ -49,24 +61,54 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
     GENERAL: MessageSquare,
 };
 
+/**
+ * Statuses that still need somebody to act. Everything else is history.
+ * This distinction drives the filter tabs AND the visual weight of a row:
+ * a Completed request previously rendered as a loud green badge while a
+ * Submitted one was quiet blue, so the requests needing no attention shouted
+ * and the ones awaiting action receded — backwards for a work queue.
+ */
+const OPEN_STATUSES = new Set(["SUBMITTED", "IN_REVIEW", "SCHEDULED", "IN_PROGRESS"]);
+
+const isOpenStatus = (status: string) => OPEN_STATUSES.has(status);
+
+/**
+ * "PEST_CONTROL" -> "Pest control". Previously rendered via
+ * .replace("_"," ").toLowerCase(), which produced an all-lowercase "general"
+ * sitting among properly-capitalised labels.
+ */
+const categoryLabel = (category: string) => {
+    const words = category.replace(/_/g, " ").toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
+type StatusFilter = "all" | "open" | "resolved";
+
+/**
+ * Short relative age for recent items ("Today", "3 days ago"); anything older
+ * keeps the absolute date, which is what matters for a record you may need to
+ * cite later.
+ */
+function relativeAge(iso: string): string | null {
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return null;
+    const days = Math.floor((Date.now() - then) / 86_400_000);
+    if (days < 0) return null;
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
+    if (days < 30) return `${days} days ago`;
+    return null;
+}
+
 function ListSkeleton() {
     return (
-        <div className="page-container py-6 sm:py-8 space-y-4">
+        <PortalPage>
             <div className="flex items-center justify-between">
-                <div className="skeleton h-8 w-48 rounded-lg" />
-                <div className="skeleton h-9 w-32 rounded-lg" />
+                <div className="tenant-skeleton-premium h-8 w-48 rounded-lg" />
+                <div className="tenant-skeleton-premium h-9 w-32 rounded-lg" />
             </div>
-            {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="card-elevated p-4 flex items-center gap-4">
-                    <div className="skeleton h-10 w-10 rounded-lg shrink-0" />
-                    <div className="flex-1 space-y-2">
-                        <div className="skeleton h-4 w-48 rounded" />
-                        <div className="skeleton h-3 w-32 rounded" />
-                    </div>
-                    <div className="skeleton h-6 w-20 rounded-full" />
-                </div>
-            ))}
-        </div>
+            <PortalSkeleton rows={3} />
+        </PortalPage>
     );
 }
 
@@ -82,90 +124,203 @@ export default function TenantMaintenance() {
 
 function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id: string) => void }) {
     const { data: requests, isLoading, error } = useTenantMaintenanceRequestsQuery();
+    const [filter, setFilter] = useState<StatusFilter>("all");
+
+    // Newest first. The API returns rows in no guaranteed order — the list was
+    // rendering 1 Aug, 2 Aug, 1 Aug, 3 Aug, 14 Aug interleaved — so ordering is
+    // enforced here rather than assumed. Sorting a copy keeps the query cache
+    // immutable.
+    const ordered = useMemo(() => {
+        return [...(requests ?? [])].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }, [requests]);
+
+    const openCount = useMemo(() => ordered.filter((r) => isOpenStatus(r.status)).length, [ordered]);
+    const resolvedCount = ordered.length - openCount;
+
+    const visible = useMemo(() => {
+        if (filter === "open") return ordered.filter((r) => isOpenStatus(r.status));
+        if (filter === "resolved") return ordered.filter((r) => !isOpenStatus(r.status));
+        return ordered;
+    }, [ordered, filter]);
 
     if (isLoading) return <ListSkeleton />;
 
     if (error) {
         return (
-            <div className="page-container py-6 sm:py-8">
-                <div className="card-elevated p-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-danger-bg dark:bg-danger-bg mx-auto mb-4">
-                        <AlertTriangle className="h-6 w-6 text-danger" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-sm font-medium text-fg dark:text-fg-dark">Failed to load maintenance requests</p>
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">Please try again later</p>
-                </div>
-            </div>
+            <PortalPage>
+                <PortalPageHeader
+                    icon={Wrench}
+                    eyebrow="Your home"
+                    title="Maintenance"
+                    subtitle="Submit and track repair requests."
+                />
+                <PortalErrorState
+                    title="Couldn't load your requests"
+                    description="This is usually temporary. Check your connection and try again."
+                />
+            </PortalPage>
         );
     }
 
     return (
-        <div className="page-container animate-fade-in-up py-6 sm:py-8 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-display font-bold text-fg dark:text-fg-dark">Maintenance</h1>
-                    <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-1">Submit and track repair requests</p>
-                </div>
-                <button type="button" onClick={onNew} className="btn-primary">
-                    <Plus className="h-4 w-4" strokeWidth={2} />
-                    New Request
-                </button>
-            </div>
-
-            {!requests || requests.length === 0 ? (
-                <div className="card-elevated p-8 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/30 mx-auto mb-4">
-                        <Wrench className="h-7 w-7 text-brand dark:text-brand-400" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-base font-semibold text-fg dark:text-fg-dark">No maintenance requests</p>
-                    <p className="text-sm text-fg-muted dark:text-fg-muted-dark mt-1 max-w-sm mx-auto">
-                        Submit a repair request and track its progress here
-                    </p>
-                    <button type="button" onClick={onNew} className="btn-primary mt-5">
+        <PortalPage>
+            <PortalPageHeader
+                icon={Wrench}
+                eyebrow="Your home"
+                title="Maintenance"
+                subtitle="Report a problem and follow its progress through to completion."
+                actions={
+                    <button type="button" onClick={onNew} className="btn-primary">
                         <Plus className="h-4 w-4" strokeWidth={2} />
-                        Submit Request
+                        New Request
                     </button>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {requests.map((req) => {
-                        const CatIcon = CATEGORY_ICONS[req.category] ?? Wrench;
-                        const statusMeta = STATUS_META[req.status] ?? STATUS_META.SUBMITTED;
-                        const priorityMeta = PRIORITY_META[req.priority] ?? PRIORITY_META.MEDIUM;
-                        const StatusIcon = statusMeta.icon;
+                }
+            />
 
-                        return (
-                            <button
-                                key={req.id}
-                                type="button"
-                                onClick={() => onSelect(req.id)}
-                                className="card-elevated w-full text-left p-4 flex items-center gap-4 hover:-translate-y-0.5 transition-all duration-200 group"
-                            >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-400">
-                                    {/* @ts-expect-error - React 19 ElementType inference issue */}
-                                    <CatIcon className="h-5 w-5" strokeWidth={1.75} />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-fg dark:text-fg-dark truncate">{req.title}</p>
-                                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-0.5">
-                                        {formatDate(req.createdAt)}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <span className={priorityMeta.className}>{priorityMeta.label}</span>
-                                    <span className={`inline-flex items-center gap-1 ${statusMeta.className}`}>
-                                        {/* @ts-expect-error - React 19 ElementType inference issue */}
-                                        <StatusIcon className="h-3 w-3" strokeWidth={2} />
-                                        {statusMeta.label}
-                                    </span>
-                                    <ChevronRight className="h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark group-hover:text-brand dark:group-hover:text-brand-400 transition-colors" strokeWidth={2} />
-                                </div>
+            {ordered.length === 0 ? (
+                <PortalCard padded={false}>
+                    <PortalEmptyState
+                        icon={Wrench}
+                        title="No maintenance requests"
+                        description="Report a repair and you'll be able to track its status here from submitted through to completed."
+                        action={
+                            <button type="button" onClick={onNew} className="btn-primary">
+                                <Plus className="h-4 w-4" strokeWidth={2} />
+                                Submit Request
                             </button>
-                        );
-                    })}
-                </div>
+                        }
+                    />
+                </PortalCard>
+            ) : (
+                <>
+                    {/* Filter + count. At nine-plus requests an unfiltered list stops
+                        being scannable, and "2 still open" is the number a renter
+                        actually cares about. */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div
+                            role="tablist"
+                            aria-label="Filter requests by status"
+                            className="inline-flex items-center gap-1 rounded-xl p-1"
+                            style={{
+                                background: "color-mix(in srgb, var(--color-ink) 5%, transparent)",
+                                border: "1px solid rgba(0,0,0,0.06)",
+                            }}
+                        >
+                            {([
+                                { id: "all" as const, label: "All", count: ordered.length },
+                                { id: "open" as const, label: "Open", count: openCount },
+                                { id: "resolved" as const, label: "Resolved", count: resolvedCount },
+                            ]).map((tab) => {
+                                const active = filter === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={active}
+                                        onClick={() => setFilter(tab.id)}
+                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                                            active
+                                                ? "bg-white text-ink shadow-sm dark:bg-white/12 dark:text-ink-dark"
+                                                : "text-ink-muted hover:text-ink dark:text-ink-muted-dark dark:hover:text-ink-dark"
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        <span className={`ml-1.5 tabular-nums ${active ? "text-ink-muted dark:text-ink-muted-dark" : "text-ink-subtle dark:text-ink-subtle-dark"}`}>
+                                            {tab.count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <p className="text-xs text-ink-muted dark:text-ink-muted-dark">
+                            {openCount === 0
+                                ? "Nothing outstanding"
+                                : `${openCount} still open`}
+                        </p>
+                    </div>
+
+                    {visible.length === 0 ? (
+                        <PortalCard padded={false}>
+                            <PortalEmptyState
+                                icon={Wrench}
+                                title={filter === "open" ? "Nothing outstanding" : "Nothing resolved yet"}
+                                description={
+                                    filter === "open"
+                                        ? "Every request you've raised has been dealt with."
+                                        : "Requests will move here once your landlord marks them completed."
+                                }
+                            />
+                        </PortalCard>
+                    ) : (
+                        <div className="space-y-2.5">
+                            {visible.map((req) => {
+                                const CatIcon = CATEGORY_ICONS[req.category] ?? Wrench;
+                                const statusMeta = STATUS_META[req.status] ?? STATUS_META.SUBMITTED;
+                                const priorityMeta = PRIORITY_META[req.priority] ?? PRIORITY_META.MEDIUM;
+                                const StatusIcon = statusMeta.icon;
+                                const open = isOpenStatus(req.status);
+                                const age = relativeAge(req.createdAt);
+
+                                return (
+                                    <button
+                                        key={req.id}
+                                        type="button"
+                                        onClick={() => onSelect(req.id)}
+                                        className={`tenant-panel !p-4 w-full text-left flex items-center gap-4 transition-all duration-200 group hover:-translate-y-0.5 ${
+                                            open ? "" : "opacity-[0.72] hover:opacity-100"
+                                        }`}
+                                    >
+                                        {/* Open requests get the brand-tinted icon; resolved ones
+                                            go neutral so the eye lands on what still needs action. */}
+                                        <div
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                                                open
+                                                    ? "bg-brand-50 text-brand dark:bg-brand-900/30 dark:text-brand-400"
+                                                    : "bg-ink/[0.05] text-ink-muted dark:bg-white/[0.07] dark:text-ink-muted-dark"
+                                            }`}
+                                        >
+                                            {/* @ts-expect-error - React 19 ElementType inference issue */}
+                                            <CatIcon className="h-5 w-5" strokeWidth={1.75} />
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold text-ink dark:text-ink-dark">
+                                                {req.title}
+                                            </p>
+                                            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted dark:text-ink-muted-dark">
+                                                <span>{formatDate(req.createdAt)}</span>
+                                                {age && (
+                                                    <>
+                                                        <span aria-hidden="true" className="text-ink-subtle/50">·</span>
+                                                        <span>{age}</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            {/* Priority is only meaningful while something is still
+                                                open — on a closed request it is noise. */}
+                                            {open && <span className={priorityMeta.className}>{priorityMeta.label}</span>}
+                                            <span className={`inline-flex items-center gap-1 ${statusMeta.className}`}>
+                                                {/* @ts-expect-error - React 19 ElementType inference issue */}
+                                                <StatusIcon className="h-3 w-3" strokeWidth={2} />
+                                                {statusMeta.label}
+                                            </span>
+                                            <ChevronRight className="h-4 w-4 text-ink-subtle transition-colors group-hover:text-brand dark:text-ink-subtle-dark dark:group-hover:text-brand-400" strokeWidth={2} />
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </>
             )}
-        </div>
+        </PortalPage>
     );
 }
 
@@ -231,7 +386,7 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="card-elevated p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="tenant-panel !p-5 sm:!p-6 space-y-5">
                 <div className="space-y-1.5">
                     <label className="form-label">Title *</label>
                     <input
@@ -297,12 +452,20 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
     if (!request) {
         return (
-            <div className="page-container py-6 sm:py-8">
-                <div className="card-elevated p-8 text-center">
-                    <p className="text-sm text-fg-muted dark:text-fg-muted-dark">Request not found</p>
-                    <button type="button" onClick={onBack} className="btn-ghost mt-3">Go back</button>
-                </div>
-            </div>
+            <PortalPage>
+                <PortalCard padded={false}>
+                    <PortalEmptyState
+                        icon={Wrench}
+                        title="Request not found"
+                        description="It may have been removed, or the link is out of date."
+                        action={
+                            <button type="button" onClick={onBack} className="btn-outline btn-sm">
+                                Back to requests
+                            </button>
+                        }
+                    />
+                </PortalCard>
+            </PortalPage>
         );
     }
 
@@ -330,10 +493,14 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                     {statusMeta.label}
                 </span>
                 <span className={priorityMeta.className}>{priorityMeta.label} Priority</span>
-                <span className="badge-info">{request.category.replace("_", " ").toLowerCase()}</span>
+                <span className="badge-neutral inline-flex items-center gap-1.5">
+                    {/* @ts-expect-error - React 19 ElementType inference issue */}
+                    <CatIcon className="h-3 w-3" strokeWidth={2} />
+                    {categoryLabel(request.category)}
+                </span>
             </div>
 
-            <div className="card-elevated p-6 space-y-5">
+            <div className="tenant-panel !p-5 sm:!p-6 space-y-5">
                 {request.description && (
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-2">Description</p>
@@ -341,19 +508,12 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                     </div>
                 )}
 
+                {/* Category and Priority are NOT repeated here — they are already
+                    stated as badges directly above. This grid carries only the
+                    facts that appear nowhere else: scheduling, assignment and
+                    completion. Restating the same three attributes in a second
+                    style is what made this screen read as a template dump. */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-1">Category</p>
-                        <div className="flex items-center gap-2 text-sm text-fg dark:text-fg-dark">
-                            {/* @ts-expect-error - React 19 ElementType inference issue */}
-                            <CatIcon className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={1.75} />
-                            {request.category.replace("_", " ").toLowerCase()}
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-1">Priority</p>
-                        <span className={priorityMeta.className}>{priorityMeta.label}</span>
-                    </div>
                     {request.scheduledDate && (
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-1">Scheduled Date</p>
@@ -382,21 +542,13 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 )}
             </div>
 
-            <div className="card-elevated p-5 bg-brand-50/50 dark:bg-brand-900/15 border border-brand-100/50 dark:border-brand-800/30">
-                <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-300">
-                        <Clock className="h-4 w-4" strokeWidth={1.75} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-fg dark:text-fg-dark">Timeline</p>
-                        <p className="text-xs text-fg-muted dark:text-fg-muted-dark mt-1">
-                            Status: <span className="font-semibold">{statusMeta.label}</span>
-                            {request.scheduledDate ? ` · Scheduled: ${formatDate(request.scheduledDate)}` : ""}
-                            {request.completedAt ? ` · Completed: ${formatDate(request.completedAt)}` : ""}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {/* The "Timeline" panel that used to sit here has been removed. It
+                restated the status badge, the scheduled date and the completion
+                date — every one of which is already on this screen — so it added
+                a third copy of the same facts without adding information. A real
+                event timeline (submitted → reviewed → scheduled → completed, with
+                timestamps) would be worth building, but the API does not expose
+                those transition times today, so inventing one would be fiction. */}
         </div>
     );
 }

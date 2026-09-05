@@ -8,6 +8,7 @@ import { useReviewsAboutMeSummaryQuery } from "../hooks/use-tenant-portal-querie
 import { TenantRatingsReceived } from "./tenant-ratings-received";
 import { TenantReviewCard } from "./tenant-review-card";
 import { PlatformReviewCard } from "@/features/reviews/components/platform-review-card";
+import { PortalPage } from "./portal-chrome";
 
 export function TenantReviewsPage() {
     const { data: summary, isLoading: summaryLoading } = useReviewsAboutMeSummaryQuery();
@@ -16,7 +17,7 @@ export function TenantReviewsPage() {
     const count = summary?.reviewCount ?? 0;
 
     return (
-        <div className="page-container space-y-6 animate-fade-in-up">
+        <PortalPage>
             {/* Hero */}
             <div className="hero-card relative overflow-hidden p-6 sm:p-8">
                 <div
@@ -64,9 +65,9 @@ export function TenantReviewsPage() {
                     <div className="shrink-0 lg:min-w-[15rem]">
                         {summaryLoading ? (
                             <div className="rounded-2xl border border-border dark:border-border-dark bg-surface/70 dark:bg-surface-dark/60 p-5">
-                                <div className="skeleton h-3 w-24" />
-                                <div className="skeleton h-10 w-16 mt-3" />
-                                <div className="skeleton h-4 w-28 mt-3" />
+                                <div className="tenant-skeleton-premium h-3 w-24" />
+                                <div className="tenant-skeleton-premium h-10 w-16 mt-3" />
+                                <div className="tenant-skeleton-premium h-4 w-28 mt-3" />
                             </div>
                         ) : (
                             <div className="rounded-2xl border border-brand-200/70 dark:border-brand-700/40 bg-white/70 dark:bg-white/[0.03] p-5 backdrop-blur-sm shadow-sm">
@@ -106,8 +107,16 @@ export function TenantReviewsPage() {
                                                 —
                                             </span>
                                         </div>
+                                        {/* This branch covers two different situations and used to
+                                            conflate them: genuinely no reviews, versus reviews existing
+                                            but the average deliberately withheld until there are enough
+                                            of them to be meaningful. Saying "No landlord reviews yet"
+                                            while the section directly below listed a real review read
+                                            as a broken page. */}
                                         <p className="mt-2.5 text-xs text-fg-muted dark:text-fg-muted-dark">
-                                            No landlord reviews yet
+                                            {count > 0
+                                                ? `${count} review${count === 1 ? "" : "s"} — your average appears once a few more landlords have rated you`
+                                                : "No landlord reviews yet"}
                                         </p>
                                     </>
                                 )}
@@ -129,6 +138,6 @@ export function TenantReviewsPage() {
             <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-fg-subtle dark:text-fg-subtle-dark pb-2">
                 Reviews are shared with verified landlords and renters only — your name always shows as a first name publicly.
             </p>
-        </div>
+        </PortalPage>
     );
 }

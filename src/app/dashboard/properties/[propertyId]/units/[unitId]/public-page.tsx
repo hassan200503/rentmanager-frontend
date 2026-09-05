@@ -8,6 +8,7 @@ import { usePublicUnit } from "@/features/public-listings/hooks/use-public-unit"
 
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
+import { formatCurrencyPrecise } from "@/shared/utils/money";
 
 // Cosmetic only -- turns "VACANT" into "Vacant" for display.
 const formatEnumLabel = (value: string) =>
@@ -70,9 +71,7 @@ export default function PublicUnitPage() {
                             <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">Rent</p>
                         </div>
                         <p className="font-data text-xl font-semibold text-ink">
-                            {unit.rentAmount != null
-                                ? new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(unit.rentAmount)
-                                : "—"}
+                            {unit.rentAmount != null ? formatCurrencyPrecise(unit.rentAmount) : "—"}
                         </p>
                     </div>
 

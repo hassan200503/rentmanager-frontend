@@ -6,6 +6,7 @@ export const tenantPortalKeys = {
     all: ["tenant-portal"] as const,
     dashboard: ["tenant-portal", "dashboard"] as const,
     lease: ["tenant-portal", "lease"] as const,
+    deposit: ["tenant-portal", "deposit"] as const,
     paymentSummary: ["tenant-portal", "payment-summary"] as const,
     paymentHistory: (page: number) => ["tenant-portal", "payment-history", page] as const,
     paymentReceipt: (transactionId: string) => ["tenant-portal", "receipt", transactionId] as const,
@@ -33,6 +34,14 @@ export const useTenantLeaseQuery = () => {
         queryKey: tenantPortalKeys.lease,
         queryFn: () => tenantPortalApi.getLease(),
         staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+};
+
+export const useTenantDepositQuery = () => {
+    return useQuery({
+        queryKey: tenantPortalKeys.deposit,
+        queryFn: () => tenantPortalApi.getDeposit(),
+        staleTime: 5 * 60 * 1000, // 5 minutes -- status changes only on a landlord refund/forfeit action
     });
 };
 

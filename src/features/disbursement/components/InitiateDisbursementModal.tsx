@@ -8,9 +8,8 @@ import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 
 interface FormValues {
     leaseId: string;
+    ledgerEntryId: string;
     amount: string;
-    recipientPhone: string;
-    recipientName: string;
     remarks: string;
 }
 
@@ -23,9 +22,8 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
     const mutation = useInitiateDisbursementMutation();
     const [form, setForm] = useState<FormValues>({
         leaseId: "",
+        ledgerEntryId: "",
         amount: "",
-        recipientPhone: "",
-        recipientName: "",
         remarks: "",
     });
     const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
@@ -33,12 +31,10 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
     const validate = (): boolean => {
         const next: typeof errors = {};
         if (!form.leaseId) next.leaseId = "Lease ID is required";
+        if (!form.ledgerEntryId) next.ledgerEntryId = "Charge ID is required";
         const amountNum = Number(form.amount);
         if (!form.amount || isNaN(amountNum)) next.amount = "Amount is required";
         else if (amountNum <= 0) next.amount = "Amount must be positive";
-        else if (amountNum > 1_000_000) next.amount = "Maximum is 1,000,000";
-        if (!form.recipientPhone || form.recipientPhone.length < 10) next.recipientPhone = "Phone number must be at least 10 digits";
-        if (!form.recipientName || form.recipientName.length < 2) next.recipientName = "Recipient name is required";
         setErrors(next);
         return Object.keys(next).length === 0;
     };
@@ -52,16 +48,18 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
         e.preventDefault();
         if (!validate()) return;
 
+        // No recipient here by design. The backend reads the payout
+        // destination from the landlord's registered payout number, so this
+        // form has nothing to send and nothing a user could redirect.
         const payload: InitiateDisbursementRequest = {
             leaseId: form.leaseId,
+            ledgerEntryId: form.ledgerEntryId,
             amount: Number(form.amount),
-            recipientPhone: form.recipientPhone,
-            recipientName: form.recipientName,
             remarks: form.remarks || null,
         };
 
         await mutation.mutateAsync(payload);
-        setForm({ leaseId: "", amount: "", recipientPhone: "", recipientName: "", remarks: "" });
+        setForm({ leaseId: "", ledgerEntryId: "", amount: "", remarks: "" });
         onClose();
     };
 
@@ -103,46 +101,49 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-fg dark:text-fg-dark mb-1">Amount (KES)</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={form.amount}
-                                onChange={handleChange("amount")}
-                                placeholder="0.00"
-                                className="form-input w-full"
-                            />
-                            {errors.amount && (
-                                <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.amount}</p>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-fg dark:text-fg-dark mb-1">Phone Number</label>
-                            <input
-                                value={form.recipientPhone}
-                                onChange={handleChange("recipientPhone")}
-                                placeholder="+254712345678"
-                                className="form-input w-full"
-                            />
-                            {errors.recipientPhone && (
-                                <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.recipientPhone}</p>
-                            )}
-                        </div>
+                    <div>
+                        <label className="block text-xs font-medium text-fg dark:text-fg-dark mb-1">Charge ID</label>
+                        <input
+                            value={form.ledgerEntryId}
+                            onChange={handleChange("ledgerEntryId")}
+                            placeholder="The rent charge this payout settles"
+                            className="form-input w-full"
+                        />
+                        {errors.ledgerEntryId && (
+                            <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.ledgerEntryId}</p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-fg dark:text-fg-dark mb-1">Recipient Name</label>
+                        <label className="block text-xs font-medium text-fg dark:text-fg-dark mb-1">Amount (KES)</label>
                         <input
-                            value={form.recipientName}
-                            onChange={handleChange("recipientName")}
-                            placeholder="John Doe"
+                            type="number"
+                            step="0.01"
+                            value={form.amount}
+                            onChange={handleChange("amount")}
+                            placeholder="0.00"
                             className="form-input w-full"
                         />
-                        {errors.recipientName && (
-                            <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.recipientName}</p>
+                        {errors.amount && (
+                            <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.amount}</p>
                         )}
+                        <p className="mt-1 text-xs text-fg-muted dark:text-fg-muted-dark">
+                            Capped at what this charge has collected, less commission and anything
+                            already paid out.
+                        </p>
+                    </div>
+
+                    {/* The phone number and recipient name fields that used to sit here
+                        let anyone with access to this screen send money to a number of
+                        their choosing. The destination now comes from the payout number
+                        on the account and cannot be set from here. */}
+                    <div className="rounded-xl bg-border-subtle/50 dark:bg-border-subtle-dark/30 border border-border dark:border-border-dark p-3">
+                        <p className="text-xs text-fg dark:text-fg-dark font-medium">
+                            Paid to your registered payout number
+                        </p>
+                        <p className="mt-0.5 text-xs text-fg-muted dark:text-fg-muted-dark">
+                            Change it in Settings. Payouts can only go to that number.
+                        </p>
                     </div>
 
                     <div>

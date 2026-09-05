@@ -3,8 +3,18 @@ import { rentLedgerEndpoints } from "./rent-ledger-endpoints";
 import { RentLedgerEntryResponse, RentLedgerStatus, RentTransactionResponse, RentTransactionSummaryResponse, UnmatchedPaymentResponse, ResolveUnmatchedPaymentRequest } from "../types/rent-ledger-response";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
+import { RentLedgerSummaryResponse } from "../types/rent-ledger-summary";
 
 export const rentLedgerApi = {
+    /**
+     * The landlord dashboard's financial figures, aggregated server-side.
+     * Replaces six cards that were a hard-coded constant array.
+     */
+    getSummary: async (): Promise<RentLedgerSummaryResponse> => {
+        const { token } = await getAuthContext();
+        return apiClient.get<RentLedgerSummaryResponse>(rentLedgerEndpoints.summary, token);
+    },
+
     getById: async (entryId: string): Promise<RentLedgerEntryResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<RentLedgerEntryResponse>(

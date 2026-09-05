@@ -2,15 +2,34 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { X, RefreshCw, AlertTriangle, MapPin, Search } from "lucide-react";
+import { X, RefreshCw, AlertTriangle, MapPin, Search, Banknote, Home } from "lucide-react";
 import { usePublicProperties } from "@/features/public-listings/hooks/use-public-properties";
 import { PropertyGrid } from "@/features/public-listings/components/property-grid";
 import { ListingPagination } from "@/features/public-listings/components/listing-pagination";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
+import { PropertyType } from "@/features/property/types/property";
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
+
+/**
+ * Stands in for a bedroom filter — there is no bedroom column in this
+ * system, and in this market supply is described by type (bedsitter,
+ * studio, apartment...) rather than a number nobody entered.
+ */
+const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
+    { value: PropertyType.BEDSITTER, label: "Bedsitter" },
+    { value: PropertyType.STUDIO, label: "Studio" },
+    { value: PropertyType.APARTMENT, label: "Apartment" },
+    { value: PropertyType.MAISONETTE, label: "Maisonette" },
+    { value: PropertyType.VILLA, label: "Villa" },
+    { value: PropertyType.HOSTEL, label: "Hostel" },
+    { value: PropertyType.AIRBNB, label: "Airbnb" },
+    { value: PropertyType.COMMERCIAL, label: "Commercial" },
+    { value: PropertyType.OFFICE, label: "Office" },
+    { value: PropertyType.WAREHOUSE, label: "Warehouse" },
+];
 
 export default function ListingsPage() {
     return (
@@ -27,8 +46,13 @@ function ListingsPageContent() {
 
     const [keyword, setKeyword] = useState(searchParams.get("q") ?? "");
     const [location, setLocation] = useState(searchParams.get("location") ?? "");
+    const [minRent, setMinRent] = useState(searchParams.get("minRent") ?? "");
+    const [maxRent, setMaxRent] = useState(searchParams.get("maxRent") ?? "");
+    const [propertyType, setPropertyType] = useState(searchParams.get("propertyType") ?? "");
     const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
     const [debouncedLocation, setDebouncedLocation] = useState(location);
+    const [debouncedMinRent, setDebouncedMinRent] = useState(minRent);
+    const [debouncedMaxRent, setDebouncedMaxRent] = useState(maxRent);
     const [page, setPage] = useState(Number(searchParams.get("page") ?? 0));
 
     // Distinguishes the first paint from later refetches so the heavyweight
@@ -41,23 +65,34 @@ function ListingsPageContent() {
         const timer = setTimeout(() => {
             setDebouncedKeyword(keyword.trim());
             setDebouncedLocation(location.trim());
+            setDebouncedMinRent(minRent.trim());
+            setDebouncedMaxRent(maxRent.trim());
             setPage(0);
         }, SEARCH_DEBOUNCE_MS);
         return () => clearTimeout(timer);
-    }, [keyword, location]);
+    }, [keyword, location, minRent, maxRent]);
 
     useEffect(() => {
         const params = new URLSearchParams();
         if (debouncedKeyword) params.set("q", debouncedKeyword);
         if (debouncedLocation) params.set("location", debouncedLocation);
+        if (debouncedMinRent) params.set("minRent", debouncedMinRent);
+        if (debouncedMaxRent) params.set("maxRent", debouncedMaxRent);
+        if (propertyType) params.set("propertyType", propertyType);
         if (page > 0) params.set("page", String(page));
         const query = params.toString();
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    }, [debouncedKeyword, debouncedLocation, page, pathname, router]);
+    }, [debouncedKeyword, debouncedLocation, debouncedMinRent, debouncedMaxRent, propertyType, page, pathname, router]);
+
+    const parsedMinRent = debouncedMinRent && !Number.isNaN(Number(debouncedMinRent)) ? Number(debouncedMinRent) : undefined;
+    const parsedMaxRent = debouncedMaxRent && !Number.isNaN(Number(debouncedMaxRent)) ? Number(debouncedMaxRent) : undefined;
 
     const { data, isLoading, isError } = usePublicProperties({
         keyword: debouncedKeyword,
         location: debouncedLocation,
+        minRent: parsedMinRent,
+        maxRent: parsedMaxRent,
+        propertyType: propertyType || undefined,
         page,
         size: PAGE_SIZE,
     });
@@ -70,10 +105,19 @@ function ListingsPageContent() {
     }
 
     const hasResults = (data?.content?.length ?? 0) > 0;
-    const isSearching = debouncedKeyword.length > 0 || debouncedLocation.length > 0;
+    const isSearching =
+        debouncedKeyword.length > 0 ||
+        debouncedLocation.length > 0 ||
+        parsedMinRent !== undefined ||
+        parsedMaxRent !== undefined ||
+        propertyType.length > 0;
+    const selectedTypeLabel = PROPERTY_TYPE_OPTIONS.find((o) => o.value === propertyType)?.label;
     const searchDescription = [
         debouncedKeyword && `"${debouncedKeyword}"`,
         debouncedLocation && `in "${debouncedLocation}"`,
+        selectedTypeLabel,
+        (parsedMinRent !== undefined || parsedMaxRent !== undefined) &&
+            `budget ${parsedMinRent ?? 0}–${parsedMaxRent ?? "∞"}`,
     ]
         .filter(Boolean)
         .join(" ");
@@ -86,8 +130,13 @@ function ListingsPageContent() {
     const clearSearch = () => {
         setKeyword("");
         setLocation("");
+        setMinRent("");
+        setMaxRent("");
+        setPropertyType("");
         setDebouncedKeyword("");
         setDebouncedLocation("");
+        setDebouncedMinRent("");
+        setDebouncedMaxRent("");
         setPage(0);
     };
 
@@ -197,6 +246,78 @@ function ListingsPageContent() {
                             </div>
                         </div>
 
+                        {/* Budget + property type — the second and third questions every renter asks */}
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="group relative">
+                                <label htmlFor="min-rent" className="block text-xs font-bold text-ink-muted dark:text-white/70 uppercase tracking-widest mb-2 ml-1">
+                                    Min Rent (KES)
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <Banknote className="w-5 h-5 text-ink-muted/60 dark:text-white/40 transition-colors group-focus-within:text-brand" strokeWidth={2} />
+                                    </div>
+                                    <input
+                                        id="min-rent"
+                                        type="number"
+                                        min={0}
+                                        inputMode="numeric"
+                                        value={minRent}
+                                        onChange={(e) => setMinRent(e.target.value)}
+                                        placeholder="No minimum"
+                                        className="w-full h-12 pl-12 pr-4 text-sm font-medium bg-white dark:bg-white/[0.08] border-2 border-border/60 dark:border-white/[0.12] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 placeholder:text-ink-muted/50 dark:placeholder:text-white/40 focus:outline-none focus:border-brand-400 dark:focus:border-brand-500 focus:ring-0 hover:border-border dark:hover:border-white/[0.18]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="group relative">
+                                <label htmlFor="max-rent" className="block text-xs font-bold text-ink-muted dark:text-white/70 uppercase tracking-widest mb-2 ml-1">
+                                    Max Rent (KES)
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <Banknote className="w-5 h-5 text-ink-muted/60 dark:text-white/40 transition-colors group-focus-within:text-brand" strokeWidth={2} />
+                                    </div>
+                                    <input
+                                        id="max-rent"
+                                        type="number"
+                                        min={0}
+                                        inputMode="numeric"
+                                        value={maxRent}
+                                        onChange={(e) => setMaxRent(e.target.value)}
+                                        placeholder="No maximum"
+                                        className="w-full h-12 pl-12 pr-4 text-sm font-medium bg-white dark:bg-white/[0.08] border-2 border-border/60 dark:border-white/[0.12] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 placeholder:text-ink-muted/50 dark:placeholder:text-white/40 focus:outline-none focus:border-brand-400 dark:focus:border-brand-500 focus:ring-0 hover:border-border dark:hover:border-white/[0.18]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="group relative">
+                                <label htmlFor="property-type" className="block text-xs font-bold text-ink-muted dark:text-white/70 uppercase tracking-widest mb-2 ml-1">
+                                    Type of Place
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <Home className="w-5 h-5 text-ink-muted/60 dark:text-white/40 transition-colors group-focus-within:text-brand" strokeWidth={2} />
+                                    </div>
+                                    <select
+                                        id="property-type"
+                                        value={propertyType}
+                                        onChange={(e) => {
+                                            setPropertyType(e.target.value);
+                                            setPage(0);
+                                        }}
+                                        className="w-full h-12 pl-12 pr-4 text-sm font-medium bg-white dark:bg-white/[0.08] border-2 border-border/60 dark:border-white/[0.12] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 text-ink dark:text-white focus:outline-none focus:border-brand-400 dark:focus:border-brand-500 focus:ring-0 hover:border-border dark:hover:border-white/[0.18] appearance-none"
+                                    >
+                                        <option value="">Any type</option>
+                                        {PROPERTY_TYPE_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Active filters display */}
                         {isSearching && (
                             <div className="mt-4 flex flex-wrap items-center gap-2 animate-fade-in-up">
@@ -212,6 +333,18 @@ function ListingsPageContent() {
                                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
                                         <MapPin className="w-3 h-3" strokeWidth={2.5} />
                                         {debouncedLocation}
+                                    </span>
+                                )}
+                                {(parsedMinRent !== undefined || parsedMaxRent !== undefined) && (
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
+                                        <Banknote className="w-3 h-3" strokeWidth={2.5} />
+                                        KES {parsedMinRent ?? 0} – {parsedMaxRent ?? "∞"}
+                                    </span>
+                                )}
+                                {selectedTypeLabel && (
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800 text-xs font-bold text-brand-900 dark:text-brand-300">
+                                        <Home className="w-3 h-3" strokeWidth={2.5} />
+                                        {selectedTypeLabel}
                                     </span>
                                 )}
                                 <button
@@ -298,7 +431,7 @@ function ListingsPageContent() {
                 ) : (
                     <>
                         <div
-                            key={`${page}-${debouncedKeyword}-${debouncedLocation}`}
+                            key={`${page}-${debouncedKeyword}-${debouncedLocation}-${debouncedMinRent}-${debouncedMaxRent}-${propertyType}`}
                             className="animate-fade-in-up"
                         >
                             <PropertyGrid properties={data?.content ?? []} />

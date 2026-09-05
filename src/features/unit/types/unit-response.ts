@@ -7,8 +7,8 @@ export interface UnitResponse {
     propertyId: string;
     unitNumber: string;
     status: UnitStatus;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: string; // BigDecimal -> JSON string
+    depositAmount: string;
     bedrooms: number;
     bathrooms: number;
     squareFootage?: number;

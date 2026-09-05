@@ -37,9 +37,7 @@ import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { useDeleteTransaction } from "@/features/rentledger/hooks/use-delete-transaction";
 import { TaxComplianceBanner } from "@/features/settings/components/tax-compliance-banner";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
 
 const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -77,6 +75,12 @@ const typeConfig: Record<RentTransactionType, { label: string; chip: string; ico
     CREDIT_APPLIED: { label: "Credit applied", chip: "bg-brand-50 text-brand-700 border-brand-200", icon: CircleDollarSign, color: "text-brand-700", bg: "bg-brand/[0.06]", dot: "bg-brand" },
     ADJUSTMENT: { label: "Adjustment", chip: "bg-ink/[0.06] text-ink-muted border-ink/[0.08]", icon: ArrowLeftRight, color: "text-ink", bg: "bg-ink/[0.04]", dot: "bg-ink-muted/40" },
     DEPOSIT: { label: "Deposit", chip: "bg-info/10 text-info-dark border-info/20", icon: Landmark, color: "text-info-dark", bg: "bg-info/[0.06]", dot: "bg-info" },
+    // Without this entry the lookup below fell through to its
+    // `?? typeConfig.RENT_CHARGE` fallback, so a reversal was labelled and
+    // coloured as a rent charge — the fallback made a missing case look like
+    // a real one. Neutral styling: the row alone does not say which way a
+    // reversal moved the balance.
+    REVERSAL: { label: "Reversal", chip: "bg-ink/[0.06] text-ink-muted border-ink/[0.08]", icon: ArrowLeftRight, color: "text-ink", bg: "bg-ink/[0.04]", dot: "bg-ink-muted/40" },
 };
 
 const sourceMeta: Record<RentTransactionSource, { icon: typeof Smartphone; label: string; chip: string }> = {
@@ -137,15 +141,12 @@ function ConfirmDeleteTransactionDialog({
     isLoading,
 }: {
     open: boolean;
-    transaction: { id: string; type: string; amount: number; date: string; tenantName: string | null } | null;
+    transaction: { id: string; type: string; amount: MoneyValue; date: string; tenantName: string | null } | null;
     onConfirm: () => void;
     onCancel: () => void;
     isLoading: boolean;
 }) {
     if (!open || !transaction) return null;
-
-    const fmt = (n: number) =>
-        new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
 
     const typeLabel = transaction.type.replaceAll("_", " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
@@ -166,7 +167,7 @@ function ConfirmDeleteTransactionDialog({
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-ink-muted">Amount</span>
-                        <span className="font-medium text-ink">{fmt(transaction.amount)}</span>
+                        <span className="font-medium text-ink">{formatCurrency(transaction.amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-ink-muted">Date</span>
@@ -214,7 +215,7 @@ export default function PaymentsPage() {
     const [sortKey, setSortKey] = useState<SortKey>("occurredAt");
     const [sortDir, setSortDir] = useState<SortDir>("desc");
     const [autoRefresh, setAutoRefresh] = useState(true);
-    const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; amount: number; date: string; tenantName: string | null } | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; amount: MoneyValue; date: string; tenantName: string | null } | null>(null);
     const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const router = useRouter();
@@ -243,7 +244,7 @@ export default function PaymentsPage() {
 
         const totalDeposits = allTransactions
             .filter((tx) => tx.type === "DEPOSIT")
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .reduce((sum, tx) => sum + toMoneyNumber(tx.amount), 0);
 
         const pendingLeases = allLeases.filter((l) =>
             ["DRAFT", "PENDING_APPROVAL", "AWAITING_DEPOSIT", "PENDING_ACTIVATION"].includes(l.status)
@@ -253,11 +254,11 @@ export default function PaymentsPage() {
             ["ACTIVE", "RENEWED"].includes(l.status)
         );
 
-        const activeRentTotal = activeLeases.reduce((sum, l) => sum + l.rentAmount, 0);
+        const activeRentTotal = activeLeases.reduce((sum, l) => sum + toMoneyNumber(l.rentAmount), 0);
 
         const totalPayments = allTransactions
             .filter((tx) => tx.type === "PAYMENT")
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .reduce((sum, tx) => sum + toMoneyNumber(tx.amount), 0);
 
         const f = (n: number) =>
             new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
@@ -301,7 +302,7 @@ export default function PaymentsPage() {
         const dir = sortDir === "asc" ? 1 : -1;
         return [...filtered].sort((a, b) => {
             if (sortKey === "occurredAt") return (new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()) * dir;
-            if (sortKey === "amount") return (a.amount - b.amount) * dir;
+            if (sortKey === "amount") return (toMoneyNumber(a.amount) - toMoneyNumber(b.amount)) * dir;
             if (sortKey === "tenantFullName") return ((a.tenantFullName ?? "").localeCompare(b.tenantFullName ?? "")) * dir;
             return (a.type.localeCompare(b.type)) * dir;
         });
@@ -556,7 +557,7 @@ export default function PaymentsPage() {
                             <div className="flex items-center gap-3 text-xs text-ink-muted">
                                 <span className="font-semibold text-ink">{sorted.length} result{sorted.length !== 1 ? "s" : ""}</span>
                                 <span className="text-ink-muted/20">|</span>
-                                <span>{formatCurrency(sorted.reduce((s, t) => s + t.amount, 0))} total volume</span>
+                                <span>{formatCurrency(sorted.reduce((s, t) => s + toMoneyNumber(t.amount), 0))} total volume</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <select

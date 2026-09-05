@@ -12,12 +12,15 @@ import {
     Loader2,
     Pencil,
     ChevronRight,
+    PlugZap,
+    XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import { ConfigureDarajaCredentialsRequest } from "@/features/daraja/types/daraja-types";
 import { useConfigureDarajaMutation } from "@/features/daraja/queries/use-configure-daraja-mutation";
 import { useDarajaStatusQuery } from "@/features/daraja/queries/use-daraja-status-query";
+import { useTestDarajaMutation } from "@/features/daraja/queries/use-test-daraja-mutation";
 
 type FormState = ConfigureDarajaCredentialsRequest;
 
@@ -48,8 +51,13 @@ function CardHeader() {
                 <Smartphone className="h-4 w-4 text-brand" strokeWidth={2} />
                 M-Pesa
             </h2>
+            {/* Deliberately mode-neutral: this header also renders while the
+                status query is still loading, before we know whether this
+                landlord collects directly. The mode-specific sentence lives
+                below, where the mode is known. */}
             <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                Manage your Daraja credentials for accepting rent payments.
+                Your Daraja credentials &mdash; the M-Pesa account your renters&rsquo;
+                payments are prompted against.
             </p>
         </div>
     );
@@ -106,6 +114,10 @@ function FormField({
 export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
     const statusQuery = useDarajaStatusQuery(tenantId);
     const mutation = useConfigureDarajaMutation(tenantId);
+    const testMutation = useTestDarajaMutation();
+    // A rejected credential is a 200 with ok:false, so the verdict lives in
+    // `data`. `testMutation.error` means the test itself could not run.
+    const testResult = testMutation.data;
 
     const [mode, setMode] = useState<"view" | "edit">("view");
     const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -142,6 +154,9 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
     }
 
     const isConfigured = statusQuery.data?.configured ?? false;
+    // Absent means DIRECT — the default, and the only claim that is safe to
+    // make when the backend has not told us otherwise.
+    const collectsDirectly = (statusQuery.data?.collectionMode ?? "DIRECT") === "DIRECT";
 
     function handleFieldChange(field: keyof FormState, value: string) {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -237,14 +252,75 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
                     doesn&#39;t return them once saved. To change them, update below.
                 </p>
 
-                <button
-                    type="button"
-                    onClick={() => setMode("edit")}
-                    className="btn-secondary mt-6"
-                >
-                    <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-                    Update credentials
-                </button>
+                {/* Saving credentials proves nothing about whether they
+                    work — wrong keys used to sit here looking "Configured"
+                    until a renter failed to pay a deposit, with the real
+                    error visible only in the server log. This asks Safaricom
+                    directly. */}
+                <div className="mt-6 flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => testMutation.mutate(tenantId)}
+                        disabled={testMutation.isPending}
+                        className="btn-secondary"
+                    >
+                        {testMutation.isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
+                        ) : (
+                            <PlugZap className="h-3.5 w-3.5" strokeWidth={2} />
+                        )}
+                        {testMutation.isPending ? "Testing…" : "Test connection"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMode("edit")}
+                        className="btn-secondary"
+                    >
+                        <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                        Update credentials
+                    </button>
+                </div>
+
+                {testResult && (
+                    <div
+                        className={`mt-4 rounded-xl border p-3 text-sm ${
+                            testResult.ok
+                                ? "border-success/30 bg-success/[0.06] text-success-dark dark:text-success"
+                                : "border-danger/30 bg-danger/[0.06] text-danger-dark dark:text-danger"
+                        }`}
+                        role="status"
+                    >
+                        <p className="inline-flex items-center gap-1.5 font-medium">
+                            {testResult.ok ? (
+                                <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
+                            ) : (
+                                <XCircle className="h-4 w-4" strokeWidth={2} />
+                            )}
+                            {testResult.message}
+                        </p>
+                        {/* Safaricom's own words, not a paraphrase — the
+                            landlord needs the code they can actually search. */}
+                        {testResult.error && (
+                            <p className="mt-1 font-mono text-xs opacity-90 break-words">
+                                {testResult.error}
+                            </p>
+                        )}
+                        <p className="mt-2 text-xs text-fg-muted dark:text-fg-muted-dark">
+                            {testResult.scope} Tested against{" "}
+                            <span className="font-mono">{testResult.environment}</span>.
+                        </p>
+                    </div>
+                )}
+
+                {testMutation.isError && (
+                    <p className="mt-3 text-sm text-danger" role="status">
+                        Couldn&#39;t run the test:{" "}
+                        {getProcessErrorMessage(
+                            testMutation.error,
+                            "The server could not be reached."
+                        )}
+                    </p>
+                )}
             </div>
         );
     }
@@ -256,8 +332,19 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
                 {isConfigured ? "Update M-Pesa credentials" : "Set up M-Pesa"}
             </h2>
             <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                These are used to authenticate STK Push requests to your own Till or
-                Paybill. They&#39;re encrypted at rest and never shown again once saved.
+                {collectsDirectly ? (
+                    <>
+                        These sign every payment your renters make &mdash; rent and reservation
+                        deposits alike. The money lands in your own Till or Paybill, not ours.
+                        Encrypted at rest and never shown again once saved.
+                    </>
+                ) : (
+                    <>
+                        These sign reservation deposits, which land in your own Till or Paybill.
+                        Rent on this account is collected by RentManager and paid out to your
+                        payout number. Encrypted at rest and never shown again once saved.
+                    </>
+                )}
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">

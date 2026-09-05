@@ -13,12 +13,21 @@
  */
 const build = (path: string) => path;
 
-/**
- * Tenant-aware builder
- * Ensures strict multi-tenant isolation
+/*
+ * REMOVED: buildTenantScoped and the endpoints.tenantScoped block.
+ *
+ * They produced `/tenants/{tenantId}/properties` and were commented
+ * "ensures strict multi-tenant isolation" — which is the opposite of what a
+ * tenant id in a URL path does. The backend resolves the tenant from the
+ * verified JWT and treats a path id as, at most, a value to compare against
+ * it; the frontend's `X-Tenant-Id` header is ignored outright. A caller who
+ * could choose their own tenant id in a path would be choosing their own
+ * authority.
+ *
+ * Nothing imported them. They are gone rather than deprecated so that the
+ * pattern cannot be revived by autocomplete — a builder that still exists is
+ * a builder somebody will eventually call.
  */
-const buildTenantScoped = (tenantId: string, path: string) =>
-    `/tenants/${tenantId}${path}`;
 
 export const endpoints = {
     properties: build("/properties"),
@@ -28,15 +37,4 @@ export const endpoints = {
     payments: build("/payments"),
     maintenance: build("/maintenance"),
 
-    /**
-     * Tenant-scoped endpoints (multi-tenant SaaS isolation)
-     */
-    tenantScoped: {
-        properties: (tenantId: string) => buildTenantScoped(tenantId, "/properties"),
-        units: (tenantId: string) => buildTenantScoped(tenantId, "/units"),
-        leases: (tenantId: string) => buildTenantScoped(tenantId, "/leases"),
-        payments: (tenantId: string) => buildTenantScoped(tenantId, "/payments"),
-        maintenance: (tenantId: string) =>
-            buildTenantScoped(tenantId, "/maintenance"),
-    }
 }

@@ -1,7 +1,11 @@
 // components/premium-tenant-dashboard.tsx
 "use client";
 
-import { useTenantDashboardQuery, useTenantPaymentHistoryQuery } from "../hooks/use-tenant-portal-queries";
+import {
+    useTenantDashboardQuery,
+    useTenantPaymentHistoryQuery,
+    useTenantPaymentSummaryQuery,
+} from "../hooks/use-tenant-portal-queries";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,14 +20,12 @@ import {
     Calendar,
     CheckCircle2,
     Clock,
-    CreditCard,
     FileText,
     Home,
     Loader2,
     Lock,
     Phone,
     Receipt,
-    ShieldCheck,
     Smartphone,
     Sparkles,
     TrendingDown,
@@ -35,17 +37,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
+import { MpesaMark, BankMark, CardMark } from "./payment-brand-marks";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // UTILITY FUNCTIONS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-export const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", {
-        style: "currency",
-        currency: "KES",
-        maximumFractionDigits: Math.abs(amount) < 1 ? 2 : 0,
-    }).format(amount);
 
 export const formatDate = (iso: string | null | undefined) => {
     if (!iso) return "—";
@@ -74,6 +71,21 @@ const titleCaseStatus = (status: string) =>
         .filter(Boolean)
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(" ") || "Unknown";
+
+/**
+ * Whole days from today to `iso`, negative once the date has passed.
+ * Returns a large number for an unparseable date so callers fall back to
+ * their calm state rather than flagging urgency they can't justify.
+ */
+const daysUntil = (iso: string | null) => {
+    if (!iso) return Number.MAX_SAFE_INTEGER;
+    const due = new Date(iso);
+    if (isNaN(due.getTime())) return Number.MAX_SAFE_INTEGER;
+    const today = new Date();
+    due.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+};
 
 const dueSummary = (iso: string | null) => {
     if (!iso) return "No due date scheduled";
@@ -117,7 +129,7 @@ export const isValidMpesaPhone = (raw: string): boolean => {
 // PREMIUM COMPONENTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const StatusBadge = ({ status, className = "" }: { status: string; className?: string }) => {
+const StatusBadge = ({ status, onBrand = false }: { status: string; onBrand?: boolean }) => {
     const tone = statusTone(status);
     const colorClasses = {
         success: "bg-success/10 text-success dark:bg-success/15 border-success/20",
@@ -126,11 +138,34 @@ const StatusBadge = ({ status, className = "" }: { status: string; className?: s
         neutral: "bg-ink/5 text-ink-muted dark:bg-ink/10 border-ink/10",
     };
 
+    // For the hero, which sits on a fixed brand-green gradient in both
+    // themes: a monochrome white pill, no tone color at all — including the
+    // dot, previously hardcoded to the tone color regardless of context. The
+    // caller used to pass tone-colored classes as an override string
+    // concatenated after colorClasses[tone] in the same className; several
+    // of those utilities target the same CSS property (bg-success/10 vs.
+    // bg-white/10, text-success vs. text-white), so which one actually won
+    // depended on Tailwind's internal stylesheet ordering, not source order —
+    // an unpredictable way to guarantee legible white text on a green hero.
     return (
         <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[tone]} ${className}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                onBrand ? "bg-white/10 border-white/20 text-white" : colorClasses[tone]
+            }`}
         >
-            <span className={`w-1.5 h-1.5 rounded-full ${tone === "success" ? "bg-success" : tone === "danger" ? "bg-danger" : tone === "warning" ? "bg-warning" : "bg-ink-muted"}`} />
+            <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                    onBrand
+                        ? "bg-white/80"
+                        : tone === "success"
+                          ? "bg-success"
+                          : tone === "danger"
+                            ? "bg-danger"
+                            : tone === "warning"
+                              ? "bg-warning"
+                              : "bg-ink-muted"
+                }`}
+            />
             {titleCaseStatus(status)}
         </span>
     );
@@ -155,33 +190,85 @@ const MetricCard = ({ icon: Icon, label, value, hint, trend, tone = "neutral", l
         neutral: "text-ink-muted dark:text-ink-muted",
     };
 
+    const iconGradients = {
+        brand: "from-brand-600/10 to-brand-500/5",
+        success: "from-success/15 to-success/5",
+        warning: "from-warning/15 to-warning/5",
+        danger: "from-danger/15 to-danger/5",
+        neutral: "from-ink/10 to-ink/5",
+    };
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="group relative bg-surface dark:bg-surface-dark border border-border/60 dark:border-border-dark/60 rounded-xl p-5 hover:border-brand-200 dark:hover:border-brand-700/50 hover:shadow-card-hover transition-all duration-300"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            whileHover={{ 
+                y: -4,
+                transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
+            }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            // Glass card: was a hardcoded rgba(255,255,255,...) inline style with
+            // no dark-mode counterpart, so it rendered a near-white pane on a dark
+            // page — the four cards a renter sees first, wrong in the one theme
+            // that should look most "premium." backdrop-blur/shadow stay inline
+            // (arbitrary values Tailwind can't express); color/border/shadow tint
+            // move to classes so dark: can actually apply.
+            className="group relative overflow-hidden rounded-xl p-5 transition-all duration-400 bg-white/[0.92] dark:bg-surface-dark/80 border border-white/60 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            style={{ backdropFilter: 'blur(16px) saturate(180%)' }}
         >
-            <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 rounded-lg bg-ink/5 dark:bg-ink/10 ${toneClasses[tone]} group-hover:scale-105 transition-transform duration-300`}>
-                    <Icon className="w-4 h-4" />
+            {/* Hover glow effect */}
+            <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+                style={{
+                    background: 'radial-gradient(circle at center, rgba(5, 150, 105, 0.08) 0%, transparent 70%)'
+                }}
+            />
+            
+            <div className="relative">
+                <div className="flex items-start justify-between mb-3">
+                    <motion.div 
+                        className={`p-2.5 rounded-lg bg-gradient-to-br ${iconGradients[tone]} ${toneClasses[tone]} transition-transform duration-400`}
+                        whileHover={{ 
+                            rotate: 3,
+                            scale: 1.05,
+                            transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }
+                        }}
+                    >
+                        <Icon className="w-4 h-4" />
+                    </motion.div>
+                    {trend && (
+                        <div className={`flex items-center gap-1 text-xs font-medium ${trend.direction === "up" ? "text-success" : "text-danger"}`}>
+                            {trend.direction === "up" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                            {Math.abs(trend.value)}%
+                        </div>
+                    )}
                 </div>
-                {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${trend.direction === "up" ? "text-success" : "text-danger"}`}>
-                        {trend.direction === "up" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                        {Math.abs(trend.value)}%
-                    </div>
-                )}
-            </div>
 
-            <div className="space-y-1">
-                <p className="text-xs text-ink-muted dark:text-ink-muted-dark font-medium uppercase tracking-wider">{label}</p>
-                {loading ? (
-                    <div className="h-8 w-24 bg-ink/5 dark:bg-ink/10 animate-pulse rounded" />
-                ) : (
-                    <p className="text-2xl font-semibold text-ink dark:text-ink-dark">{value}</p>
-                )}
-                {hint && <p className="text-xs text-ink-subtle dark:text-ink-subtle-dark">{hint}</p>}
+                <div className="space-y-1">
+                    <p className="text-xs text-ink-muted dark:text-ink-muted-dark font-medium uppercase tracking-wider">{label}</p>
+                    {loading ? (
+                        <div className="h-8 w-24 tenant-skeleton rounded" />
+                    ) : (
+                        <motion.p 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-2xl font-semibold text-ink dark:text-ink-dark tabular-nums"
+                        >
+                            {value}
+                        </motion.p>
+                    )}
+                    {hint && (
+                        <motion.p 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-xs text-ink-subtle dark:text-ink-subtle-dark"
+                        >
+                            {hint}
+                        </motion.p>
+                    )}
+                </div>
             </div>
         </motion.div>
     );
@@ -197,35 +284,50 @@ interface QuickActionProps {
 const QuickAction = ({ icon: Icon, label, href, variant = "secondary" }: QuickActionProps) => {
     const variantClasses = {
         primary:
-            "bg-brand-600 text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 shadow-button hover:shadow-elevated",
+            "bg-white text-brand-700 hover:bg-white/95 shadow-button hover:shadow-elevated",
         secondary:
             "bg-ink/5 text-ink hover:bg-ink/8 dark:bg-ink/10 dark:text-ink-dark dark:hover:bg-ink/15",
         outline:
-            "bg-transparent text-ink border border-border dark:text-ink-dark dark:border-border-dark hover:bg-ink/5 dark:hover:bg-ink/10",
+            "bg-white/10 text-white border border-white/30 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm",
     };
 
     return (
-        <Link
-            href={href}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${variantClasses[variant]}`}
+        <motion.div
+            whileHover={{ 
+                scale: 1.02, 
+                y: -2 
+            }}
+            whileTap={{ 
+                scale: 0.98 
+            }}
+            transition={{
+                duration: 0.2,
+                ease: [0.16, 1, 0.3, 1]
+            }}
         >
-            <Icon className="w-4 h-4" />
-            {label}
-        </Link>
+            <Link
+                href={href}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${variantClasses[variant]}`}
+            >
+                <Icon className="w-4 h-4" />
+                {label}
+            </Link>
+        </motion.div>
     );
 };
 
 // Real, null-safe transaction row with receipt navigation.
 interface TransactionItemProps {
     type: string;
-    amount: number;
+    amount: MoneyValue;
     occurredAt: string;
     status?: string;
     mpesaRef?: string | null;
     billingPeriod?: string;
+    index?: number;
 }
 
-const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPeriod }: TransactionItemProps) => {
+const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPeriod, index = 0 }: TransactionItemProps) => {
     const isCredit = type === "PAYMENT" || type === "REFUND";
     const typeLabels: Record<string, string> = {
         RENT_CHARGE: "Rent Charge",
@@ -241,11 +343,12 @@ const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPe
         <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-between p-4 bg-surface dark:bg-surface-dark border border-border/40 dark:border-border-dark/40 rounded-lg hover:border-brand-200 dark:hover:border-brand-700/50 hover:shadow-sm transition-all duration-200 group"
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{ animationDelay: `${index * 50}ms` }}
+            className="tenant-txn-card flex items-center justify-between p-4 group"
         >
             <div className="flex items-start gap-4 min-w-0">
-                <div className={`p-2.5 rounded-lg shrink-0 ${isCredit ? "bg-success/10 text-success" : "bg-ink/5 text-ink-muted dark:bg-ink/10"}`}>
+                <div className={`tenant-txn-icon ${isCredit ? "credit" : "debit"} p-2.5 rounded-lg shrink-0`}>
                     {isCredit ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
                 </div>
                 <div className="space-y-1 min-w-0">
@@ -267,9 +370,9 @@ const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPe
                 </div>
             </div>
 
-            <p className={`text-sm font-semibold tabular-nums shrink-0 ${isCredit ? "text-success" : "text-ink dark:text-ink-dark"}`}>
+            <p className={`tenant-txn-amount ${isCredit ? "credit" : ""} text-sm font-semibold tabular-nums shrink-0 ${isCredit ? "text-success" : "text-ink dark:text-ink-dark"}`}>
                 {isCredit ? "+" : "-"}
-                {formatCurrency(Math.abs(amount))}
+                {formatCurrency(Math.abs(toMoneyNumber(amount)))}
             </p>
         </motion.div>
     );
@@ -423,9 +526,9 @@ const PaymentWidget = ({
     }, [overdueAmount, nextDueAmount, monthlyRent]);
 
     const paymentMethods = [
-        { id: "mpesa" as const, label: "M-Pesa", icon: Smartphone, timing: "Instant", popular: true },
-        { id: "bank" as const, label: "Bank Transfer", icon: CreditCard, timing: "1-2 days", popular: false, comingSoon: true },
-        { id: "card" as const, label: "Card", icon: Wallet, timing: "Instant", popular: false, comingSoon: true },
+        { id: "mpesa" as const, Mark: MpesaMark, label: "M-Pesa", timing: "Instant", popular: true },
+        { id: "bank" as const, Mark: BankMark, label: "Bank Transfer", timing: "1–2 days", popular: false, comingSoon: true },
+        { id: "card" as const, Mark: CardMark, label: "Card", timing: "Instant", popular: false, comingSoon: true },
     ];
 
     return (
@@ -433,7 +536,12 @@ const PaymentWidget = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-gradient-to-br from-brand-50 to-brand-100/50 dark:from-brand-950/20 dark:to-brand-900/10 border border-brand-200/60 dark:border-brand-800/40 rounded-2xl p-6 shadow-card"
+            // Was a `color-mix(in srgb, ..., white)` gradient — mixing with the
+            // literal color white, so this always rendered as a pale mint card
+            // even in dark mode. This is where a renter actually pays rent; a
+            // washed-out light panel breaking the dark theme on the one action
+            // that moves their money is the worst place for that bug to be.
+            className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/25 dark:to-emerald-900/15 border-[1.5px] border-brand-200 dark:border-brand-800/60 shadow-[0_2px_12px_rgba(5,150,105,0.08),0_8px_32px_rgba(5,150,105,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2),0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]"
         >
             <div className="flex items-start justify-between mb-6">
                 <div>
@@ -491,6 +599,13 @@ const PaymentWidget = ({
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted dark:text-ink-muted-dark font-medium">
                                         KSh
                                     </span>
+                                    {/* Was a fixed rgba(255,255,255,...) background with the
+                                        focus "grow + glow" effect done by directly mutating
+                                        e.target.style in onFocus/onBlur — invisible to React,
+                                        wrong every time the two handlers' values drifted from
+                                        the base style, and (like the surfaces above) permanently
+                                        light-mode. CSS :focus does the identical effect natively,
+                                        with a dark: counterpart, and can't drift out of sync. */}
                                     <input
                                         type="number"
                                         min="1"
@@ -498,25 +613,31 @@ const PaymentWidget = ({
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                         placeholder={suggestedAmount > 0 ? suggestedAmount.toString() : "0"}
-                                        className="w-full pl-16 pr-4 py-3.5 bg-surface dark:bg-surface-dark border border-border/60 dark:border-border-dark/60 rounded-lg text-ink dark:text-ink-dark text-lg font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all"
+                                        className="w-full pl-16 pr-4 py-3.5 text-lg font-bold tabular-nums rounded-lg transition-all duration-200 bg-white/95 dark:bg-surface-dark border-2 border-black/[0.08] dark:border-white/10 shadow-[0_2px_4px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(0,0,0,0.02)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(0,0,0,0.1)] text-ink dark:text-ink-dark focus:outline-none focus:scale-[1.01] focus:border-brand-500 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.08),0_4px_8px_rgba(0,0,0,0.06)] dark:focus:shadow-[0_0_0_4px_rgba(16,185,129,0.15),0_4px_8px_rgba(0,0,0,0.2)]"
                                     />
                                 </div>
 
                                 {quickAmounts.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-3">
                                         {quickAmounts.map((amount) => (
-                                            <button
+                                            <motion.button
                                                 key={amount}
                                                 type="button"
                                                 onClick={() => setCustomAmount(String(amount))}
-                                                className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 ${
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                transition={{
+                                                    duration: 0.2,
+                                                    ease: [0.34, 1.56, 0.64, 1]
+                                                }}
+                                                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 ${
                                                     customAmount === String(amount)
-                                                        ? "border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400"
-                                                        : "border-border dark:border-border-dark text-ink-muted dark:text-ink-muted-dark hover:border-brand-300 dark:hover:border-brand-700 hover:text-ink dark:hover:text-ink-dark"
+                                                        ? "border-2 border-brand-500 text-brand-700 dark:text-brand-400 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/40 dark:to-emerald-900/25 shadow-[0_0_0_4px_rgba(5,150,105,0.08)] dark:shadow-[0_0_0_4px_rgba(16,185,129,0.15)]"
+                                                        : "border-2 border-border dark:border-border-dark text-ink-muted dark:text-ink-muted-dark hover:border-brand-300 dark:hover:border-brand-700 bg-white/80 dark:bg-white/5"
                                                 }`}
                                             >
                                                 {formatCurrency(amount)}
-                                            </button>
+                                            </motion.button>
                                         ))}
                                     </div>
                                 )}
@@ -535,34 +656,49 @@ const PaymentWidget = ({
                                 <div className="grid grid-cols-3 gap-2">
                                     {paymentMethods.map((method) => {
                                         const selected = selectedMethod === method.id;
+                                        const { Mark } = method;
                                         return (
                                             <button
                                                 key={method.id}
                                                 type="button"
                                                 onClick={() => !method.comingSoon && setSelectedMethod(method.id)}
                                                 disabled={method.comingSoon}
+                                                aria-pressed={selected}
                                                 title={method.comingSoon ? "Coming soon" : undefined}
-                                                className={`relative p-3 rounded-lg border-2 transition-all duration-200 ${
+                                                // A real border rather than a 2px ring: at rest it is a
+                                                // hairline, selected it becomes a brand-tinted card that
+                                                // sits forward. (Was inline rgba(255,255,255,...) with no
+                                                // dark counterpart — a washed-out white tile in dark mode.)
+                                                className={`group relative flex flex-col items-center gap-2 rounded-xl px-3 pt-4 pb-3 transition-all duration-200 disabled:opacity-55 ${
+                                                    method.comingSoon
+                                                        ? "cursor-not-allowed"
+                                                        : "cursor-pointer hover:-translate-y-0.5"
+                                                } ${
                                                     selected
-                                                        ? "border-brand-500 bg-brand-50 dark:bg-brand-950/30"
-                                                        : "border-border/40 dark:border-border-dark/40 hover:border-brand-200 dark:hover:border-brand-800"
-                                                } ${method.comingSoon ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                                        ? "bg-gradient-to-b from-brand-50 to-brand-100 dark:from-brand-900/35 dark:to-emerald-900/20 border border-brand-400 dark:border-brand-600 shadow-[0_0_0_3px_rgba(5,150,105,0.12),0_4px_12px_rgba(5,150,105,0.13)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_12px_rgba(0,0,0,0.25)]"
+                                                        : "bg-white/[0.72] dark:bg-white/5 border border-black/[0.07] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
+                                                }`}
                                             >
-                                                {method.popular && (
-                                                    <span className="absolute -top-2 -right-2 bg-success text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                                        POPULAR
+                                                {method.popular && !method.comingSoon && (
+                                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-ink px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm dark:bg-white dark:text-ink">
+                                                        Popular
                                                     </span>
                                                 )}
                                                 {method.comingSoon && (
-                                                    <span className="absolute -top-2 -left-2 bg-ink/10 dark:bg-ink/20 text-ink-muted dark:text-ink-muted-dark text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                                                        SOON
+                                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-black/5 bg-ink/[0.07] px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.08em] text-ink-muted dark:bg-white/10 dark:text-ink-muted-dark">
+                                                        Soon
                                                     </span>
                                                 )}
-                                                <div className="flex flex-col items-center gap-1.5">
-                                                    <method.icon className="w-5 h-5 text-ink dark:text-ink-dark" />
-                                                    <span className="text-xs font-medium text-ink dark:text-ink-dark">{method.label}</span>
-                                                    <span className="text-[10px] text-ink-subtle dark:text-ink-subtle-dark">{method.timing}</span>
-                                                </div>
+
+                                                <span className="flex h-[26px] items-center">
+                                                    <Mark />
+                                                </span>
+                                                <span className="text-[11px] font-semibold leading-none text-ink dark:text-ink-dark">
+                                                    {method.label}
+                                                </span>
+                                                <span className="text-[10px] leading-none text-ink-subtle dark:text-ink-subtle-dark">
+                                                    {method.timing}
+                                                </span>
                                             </button>
                                         );
                                     })}
@@ -570,16 +706,44 @@ const PaymentWidget = ({
                             </div>
 
                             {/* CTA Button */}
-                            <button
+                            <motion.button
                                 type="button"
                                 onClick={() => setPayState("phone")}
                                 disabled={!amountValid}
-                                className="w-full py-4 bg-brand-600 hover:bg-brand-700 disabled:bg-ink/10 disabled:text-ink-muted dark:disabled:bg-ink/10 text-white font-semibold rounded-lg shadow-button hover:shadow-elevated hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                whileHover={{ 
+                                    y: -2, 
+                                    scale: 1.01 
+                                }}
+                                whileTap={{ 
+                                    y: 0, 
+                                    scale: 0.99 
+                                }}
+                                transition={{
+                                    duration: 0.2,
+                                    ease: [0.16, 1, 0.3, 1]
+                                }}
+                                // Disabled background was rgba(0,0,0,0.1) — a 10% black tint
+                                // that reads as a faint dark button on a light card, but is
+                                // nearly invisible on the dark-mode card behind it, leaving
+                                // white text floating with almost no button shape at all.
+                                className={`tenant-btn-premium w-full py-4 font-bold rounded-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                                    amountValid
+                                        ? "text-white"
+                                        : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
+                                }`}
+                                style={
+                                    amountValid
+                                        ? {
+                                              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                                              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                                          }
+                                        : undefined
+                                }
                             >
                                 <Zap className="w-5 h-5" />
                                 {displayAmount > 0 ? `Pay ${formatCurrency(displayAmount)}` : "Enter Amount"}
                                 <ArrowRight className="w-4 h-4 ml-auto" />
-                            </button>
+                            </motion.button>
                         </motion.div>
                     )}
 
@@ -630,15 +794,29 @@ const PaymentWidget = ({
                             </div>
 
                             <div className="grid grid-cols-[1fr_auto] gap-3">
-                                <button
+                                <motion.button
                                     type="button"
                                     onClick={initiatePayment}
                                     disabled={!amountValid || !phoneValid}
-                                    className="py-4 bg-brand-600 hover:bg-brand-700 disabled:bg-ink/10 disabled:text-ink-muted dark:disabled:bg-ink/10 text-white font-semibold rounded-lg shadow-button hover:shadow-elevated hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                    whileHover={{ y: -2, scale: 1.01 }}
+                                    whileTap={{ y: 0, scale: 0.99 }}
+                                    className={`tenant-btn-premium py-4 font-bold rounded-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                                        amountValid && phoneValid
+                                            ? "text-white"
+                                            : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
+                                    }`}
+                                    style={
+                                        amountValid && phoneValid
+                                            ? {
+                                                  background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                                                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                                              }
+                                            : undefined
+                                    }
                                 >
                                     <Smartphone className="w-5 h-5" />
                                     Pay now
-                                </button>
+                                </motion.button>
                                 <button
                                     type="button"
                                     onClick={resetPay}
@@ -752,21 +930,31 @@ const PaymentWidget = ({
                 </AnimatePresence>
             )}
 
-            {/* Trust Signals */}
+            {/* Trust Signals -- every claim here must trace to real behavior
+                (see AGENTS.md: "No claim on a public page that you cannot
+                trace to working code"). This used to include a "PCI
+                Compliant" badge; removed because it was false -- this system
+                never processes card numbers, it sends an M-Pesa STK push and
+                the renter enters their PIN on their own phone. A fabricated
+                compliance claim actively undermines the trust it's meant to
+                build. The three claims below are each backed by real code:
+                the payment rail (M-Pesa STK push), the transport (HTTPS/TLS,
+                same as every page), and the append-only ledger + receipt
+                generation from this session's earlier hardening work. */}
             <div className="mt-4 pt-4 border-t border-brand-200/40 dark:border-brand-800/20">
-                <div className="flex items-center justify-center gap-6 text-xs text-ink-subtle dark:text-ink-subtle-dark">
-                    <div className="flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>256-bit SSL</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <BadgeCheck className="w-3.5 h-3.5" />
-                        <span>PCI Compliant</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Encrypted</span>
-                    </div>
+                <div className="flex items-center justify-center gap-2 text-xs text-ink-subtle dark:text-ink-subtle-dark flex-wrap">
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
+                        <Smartphone className="w-3.5 h-3.5 text-brand-600" />
+                        <span>M-Pesa secured</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
+                        <Lock className="w-3.5 h-3.5 text-brand-600" />
+                        <span>Bank-grade encryption</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
+                        <Receipt className="w-3.5 h-3.5 text-brand-600" />
+                        <span>Every payment recorded</span>
+                    </span>
                 </div>
             </div>
 
@@ -860,22 +1048,60 @@ const computePaymentScore = (payments: TenantPaymentHistoryItem[]): PaymentScore
 
 const HISTORY_FETCH_SIZE = 100;
 
+// Shaped like the loaded layout below (hero, 4-metric grid, two-column
+// content) rather than a centered spinner, so nothing visibly jumps into
+// place once data arrives — the landlord and admin dashboards already do
+// this with the same .tenant-skeleton / .tenant-skeleton-hero shimmer
+// classes; this was the one renter-facing surface still using a spinner.
+// Exported so app/portal/page.tsx's Suspense fallback (the brief window
+// before this component's own code finishes loading) can show the same
+// shape too, instead of a different spinner flashing before this one.
+export const TenantDashboardSkeleton = () => (
+    <div className="space-y-8 pb-12" aria-busy="true" aria-label="Loading your dashboard">
+        <div className="tenant-skeleton-hero" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl p-5 border border-border/40 dark:border-border-dark/40 space-y-3">
+                    <div className="tenant-skeleton h-9 w-9 rounded-lg" />
+                    <div className="tenant-skeleton h-3 w-16 rounded" />
+                    <div className="tenant-skeleton h-7 w-24 rounded" />
+                </div>
+            ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+                <div className="tenant-skeleton rounded-2xl h-[26rem]" />
+                <div className="space-y-3">
+                    <div className="tenant-skeleton h-6 w-32 rounded" />
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="tenant-skeleton h-[4.5rem] rounded-xl" />
+                    ))}
+                </div>
+            </div>
+            <div className="space-y-6">
+                <div className="tenant-skeleton rounded-2xl h-64" />
+                <div className="tenant-skeleton rounded-2xl h-48" />
+            </div>
+        </div>
+    </div>
+);
+
 export const PremiumTenantDashboard = () => {
     const { data: dashboard, isLoading, error } = useTenantDashboardQuery();
     const { data: historyData } = useTenantPaymentHistoryQuery(0, HISTORY_FETCH_SIZE);
+    const { data: summary } = useTenantPaymentSummaryQuery();
     const router = useRouter();
 
     const score = useMemo(() => computePaymentScore(historyData?.content ?? []), [historyData]);
 
+    // The score is computed from one page of history (HISTORY_FETCH_SIZE), not
+    // the full ledger. For a long tenancy that silently understates a lifetime
+    // figure, so when the ledger is larger than the window the card says what
+    // the number actually covers instead of implying it is all-time.
+    const scoreIsWindowed = (historyData?.totalElements ?? 0) > HISTORY_FETCH_SIZE;
+
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center space-y-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto" />
-                    <p className="text-sm text-ink-muted dark:text-ink-muted-dark">Loading your dashboard...</p>
-                </div>
-            </div>
-        );
+        return <TenantDashboardSkeleton />;
     }
 
     if (error || !dashboard) {
@@ -898,12 +1124,20 @@ export const PremiumTenantDashboard = () => {
         );
     }
 
-    const { tenantName, tenantPhone, unitNumber, propertyName, currentBalance, overdueAmount, nextDueAmount, nextDueDate, monthlyRent, recentPayments, leaseStatus } = dashboard;
+    const { tenantName, tenantPhone, unitNumber, propertyName, nextDueDate, recentPayments, leaseStatus } = dashboard;
+    const currentBalance = toMoneyNumber(dashboard.currentBalance);
+    const overdueAmount = toMoneyNumber(dashboard.overdueAmount);
+    const nextDueAmount = toMoneyNumber(dashboard.nextDueAmount);
+    const monthlyRent = toMoneyNumber(dashboard.monthlyRent);
 
-    // Real "total paid this year" from the full history
-    const totalPaidThisYear = (historyData?.content ?? [])
-        .filter((p) => p.type === "PAYMENT" && new Date(p.occurredAt).getFullYear() === new Date().getFullYear())
-        .reduce((sum, p) => sum + Math.abs(p.amount), 0);
+    // Total paid comes from the server-side aggregate, not a client-side sum.
+    // This previously filtered historyData.content — one page of at most
+    // HISTORY_FETCH_SIZE rows — and was labelled "This year", so a renter with a
+    // long ledger would be shown a money figure that silently understated what
+    // they had actually paid. A displayed amount must never be a partial sum
+    // dressed up as a total; the backend already computes totalPaid across the
+    // whole ledger, so use that and label it for what it is.
+    const totalPaid = summary?.totalPaid;
 
     const activity = recentPayments.length > 0 ? recentPayments : (historyData?.content ?? []).slice(0, 5);
 
@@ -911,55 +1145,169 @@ export const PremiumTenantDashboard = () => {
         <div className="space-y-8 pb-12">
             {/* Hero Section */}
             <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="bg-gradient-to-br from-brand-600 to-brand-700 dark:from-brand-700 dark:to-brand-900 text-white rounded-2xl p-8 shadow-elevated relative overflow-hidden"
+                transition={{ 
+                    duration: 0.6, 
+                    ease: [0.16, 1, 0.3, 1]
+                }}
+                className="relative overflow-hidden rounded-2xl p-8 shadow-elevated"
+                style={{
+                    background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10B981 100%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'gradient-shift 12s ease infinite'
+                }}
             >
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-                </div>
+                {/* Floating Orb Decorations */}
+                <div 
+                    className="absolute pointer-events-none"
+                    style={{
+                        width: '500px',
+                        height: '500px',
+                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%)',
+                        borderRadius: '50%',
+                        top: '-20%',
+                        right: '-10%',
+                        animation: 'float-slow 20s ease-in-out infinite',
+                        filter: 'blur(60px)'
+                    }}
+                />
+                <div 
+                    className="absolute pointer-events-none"
+                    style={{
+                        width: '400px',
+                        height: '400px',
+                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
+                        borderRadius: '50%',
+                        bottom: '-15%',
+                        left: '-5%',
+                        animation: 'float-slow 25s ease-in-out infinite reverse',
+                        filter: 'blur(50px)'
+                    }}
+                />
 
-                <div className="relative">
-                    <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
+                <div className="relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                            duration: 0.5, 
+                            delay: 0.1,
+                            ease: [0.16, 1, 0.3, 1]
+                        }}
+                        className="flex items-start justify-between mb-8 gap-4 flex-wrap"
+                    >
                         <div>
-                            <p className="text-brand-100 text-sm font-medium mb-1 flex items-center gap-2">
+                            <motion.p 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-full text-sm font-medium"
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    color: 'rgba(255, 255, 255, 0.95)'
+                                }}
+                            >
                                 <Home className="w-4 h-4" />
                                 Unit {unitNumber} · {propertyName}
-                            </p>
-                            <h1 className="text-3xl font-bold">Welcome back, {tenantName.split(" ")[0]}</h1>
+                            </motion.p>
+                            <motion.h1 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                className="text-white font-bold"
+                                style={{
+                                    fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                                    letterSpacing: '-0.03em',
+                                    lineHeight: '1.1',
+                                    textShadow: '0 2px 12px rgba(0, 0, 0, 0.2)'
+                                }}
+                            >
+                                Welcome back, {tenantName.split(" ")[0]}
+                            </motion.h1>
                         </div>
-                        <StatusBadge status={leaseStatus} className="bg-white/10 border-white/20 text-white" />
-                    </div>
+                        <StatusBadge status={leaseStatus} onBrand />
+                    </motion.div>
 
-                    <div className="space-y-2 mb-6">
-                        <p className="text-brand-100 text-sm font-medium uppercase tracking-wider">Account Balance</p>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                            duration: 0.5, 
+                            delay: 0.4,
+                            ease: [0.16, 1, 0.3, 1]
+                        }}
+                        className="space-y-2 mb-6"
+                    >
+                        <p className="text-sm font-medium uppercase tracking-wider"
+                            style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                            Account Balance
+                        </p>
                         <div className="flex items-baseline gap-4 flex-wrap">
-                            <p className="text-5xl font-bold tabular-nums">{formatCurrency(currentBalance)}</p>
+                            <motion.p 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ 
+                                    duration: 0.6, 
+                                    delay: 0.5,
+                                    ease: [0.16, 1, 0.3, 1]
+                                }}
+                                className="text-white font-extrabold tabular-nums"
+                                style={{
+                                    fontSize: 'clamp(3rem, 6vw, 5rem)',
+                                    letterSpacing: '-0.04em',
+                                    lineHeight: '1',
+                                    textShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+                                    fontVariantNumeric: 'tabular-nums'
+                                }}
+                            >
+                                {formatCurrency(currentBalance)}
+                            </motion.p>
                             {currentBalance === 0 && (
-                                <div className="flex items-center gap-1.5 text-brand-100">
+                                <motion.div 
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+                                    className="flex items-center gap-1.5"
+                                    style={{ color: 'rgba(255, 255, 255, 0.95)' }}
+                                >
                                     <CheckCircle2 className="w-5 h-5" />
                                     <span className="text-sm font-medium">All clear</span>
-                                </div>
+                                </motion.div>
                             )}
                         </div>
-                        <p className="text-brand-100">
+                        <motion.p 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.7 }}
+                            style={{ color: 'rgba(255, 255, 255, 0.85)' }}
+                        >
                             {currentBalance > 0
                                 ? overdueAmount > 0
                                     ? `${formatCurrency(overdueAmount)} overdue • Payment required`
                                     : dueSummary(nextDueDate)
                                 : "No balance due • Account settled"}
-                        </p>
-                    </div>
+                        </motion.p>
+                    </motion.div>
 
                     {/* Quick Actions */}
-                    <div className="flex flex-wrap gap-3">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                            duration: 0.5, 
+                            delay: 0.8,
+                            ease: [0.16, 1, 0.3, 1]
+                        }}
+                        className="flex flex-wrap gap-3"
+                    >
                         <QuickAction icon={Wallet} label="Make Payment" href="#payment" variant="primary" />
                         <QuickAction icon={FileText} label="View Lease" href="/portal/lease" variant="outline" />
                         <QuickAction icon={Wrench} label="Maintenance" href="/portal/maintenance" variant="outline" />
-                    </div>
+                    </motion.div>
                 </div>
             </motion.div>
 
@@ -968,17 +1316,39 @@ export const PremiumTenantDashboard = () => {
                 <MetricCard
                     icon={AlertCircle}
                     label="Overdue"
-                    value={overdueAmount > 0 ? formatCurrency(overdueAmount) : "Ksh 0"}
+                    value={formatCurrency(overdueAmount)}
                     hint={overdueAmount === 0 ? "No arrears" : "Immediate payment required"}
                     tone={overdueAmount > 0 ? "danger" : "success"}
                     loading={isLoading}
                 />
+                {/* "Not scheduled" used to be what almost every renter saw here.
+                    The backend only matched a ledger entry dated today or later,
+                    but RentChargeScheduler never posts ahead — so for most of
+                    every month no such entry existed. It now projects the next
+                    charge from the scheduler's own rule, and "Not scheduled" is
+                    left for the one case where it is true: a tenancy with no
+                    further rent to come.
+
+                    The hint carries the exact date as well as the amount —
+                    "when" and "how much" are the two things a renter opens this
+                    tile for, and a relative "Due in 27 days" alone can't be
+                    checked against their own calendar.
+
+                    Tone is amber only as the date approaches. Every active
+                    renter now always has a next due date, so a permanent
+                    warning colour would mean nothing at all. */}
                 <MetricCard
                     icon={Calendar}
                     label="Next Due"
                     value={nextDueDate ? dueSummary(nextDueDate) : "Not scheduled"}
-                    hint={nextDueAmount > 0 ? formatCurrency(nextDueAmount) : "-"}
-                    tone={nextDueDate ? "warning" : "neutral"}
+                    hint={
+                        nextDueDate
+                            ? [nextDueAmount > 0 ? formatCurrency(nextDueAmount) : null, formatDate(nextDueDate)]
+                                  .filter(Boolean)
+                                  .join(" · ")
+                            : undefined
+                    }
+                    tone={nextDueDate && daysUntil(nextDueDate) <= 7 ? "warning" : "neutral"}
                     loading={isLoading}
                 />
                 <MetricCard
@@ -992,8 +1362,8 @@ export const PremiumTenantDashboard = () => {
                 <MetricCard
                     icon={TrendingUp}
                     label="Total Paid"
-                    value={formatCurrency(totalPaidThisYear)}
-                    hint="This year"
+                    value={totalPaid == null ? "—" : formatCurrency(totalPaid)}
+                    hint="All time"
                     tone="success"
                     trend={score.totalPayments > 0 ? { value: score.onTimeRate, direction: "up" } : undefined}
                     loading={isLoading}
@@ -1018,9 +1388,9 @@ export const PremiumTenantDashboard = () => {
 
                     {/* Recent Payments */}
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.3 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-semibold text-ink dark:text-ink-dark">Recent Activity</h2>
@@ -1034,9 +1404,12 @@ export const PremiumTenantDashboard = () => {
                         </div>
 
                         {activity.length === 0 ? (
-                            <div className="bg-surface dark:bg-surface-dark border border-border/40 dark:border-border-dark/40 rounded-xl p-10 text-center">
-                                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-ink/5 dark:bg-ink/10 flex items-center justify-center">
-                                    <Receipt className="w-5 h-5 text-ink-muted dark:text-ink-muted-dark" />
+                            <div className="tenant-txn-card p-10 text-center">
+                                <div className="relative w-14 h-14 mx-auto mb-4">
+                                    <div className="absolute inset-0 rounded-xl bg-brand-500/10 blur-lg" />
+                                    <div className="relative rounded-xl bg-gradient-to-br from-brand-500/15 to-brand-300/5 flex items-center justify-center">
+                                        <Receipt className="w-6 h-6 text-brand-600" strokeWidth={2} />
+                                    </div>
                                 </div>
                                 <p className="text-sm font-medium text-ink dark:text-ink-dark">No activity yet</p>
                                 <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1 max-w-xs mx-auto">
@@ -1045,9 +1418,10 @@ export const PremiumTenantDashboard = () => {
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {activity.slice(0, 5).map((payment) => (
+                                {activity.slice(0, 5).map((payment, index) => (
                                     <TransactionItem
                                         key={payment.id}
+                                        index={index}
                                         type={payment.type}
                                         amount={payment.amount}
                                         occurredAt={payment.occurredAt}
@@ -1071,17 +1445,71 @@ export const PremiumTenantDashboard = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.4, delay: 0.4 }}
-                        className="bg-surface dark:bg-surface-dark border border-border/60 dark:border-border-dark/60 rounded-xl p-6 shadow-card"
+                        transition={{ duration: 0.4, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="tenant-score-card p-6"
                     >
-                        <h3 className="text-lg font-semibold text-ink dark:text-ink-dark mb-4 flex items-center gap-2">
-                            <BadgeCheck className="w-5 h-5 text-brand-600" />
-                            Payment Score
-                        </h3>
+                        <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-ink dark:text-ink-dark flex items-center gap-2">
+                                <BadgeCheck className="w-5 h-5 text-brand-600" />
+                                Payment Score
+                            </h3>
+                            {score.totalPayments > 0 && (
+                                <p className="mt-0.5 text-[11px] text-ink-subtle dark:text-ink-subtle-dark">
+                                    {scoreIsWindowed
+                                        ? `Based on your last ${HISTORY_FETCH_SIZE} payments`
+                                        : "Based on your full payment history"}
+                                </p>
+                            )}
+                        </div>
 
+                        {/* First-run state. A 0% ring beside "Keep it up!" reads as a
+                            broken widget rather than a new account — there is no score
+                            to show until at least one payment exists, so say that
+                            instead of rendering a hollow zero. */}
+                        {score.totalPayments === 0 ? (
+                            <div className="py-2 text-center">
+                                <div className="relative mx-auto mb-4 h-24 w-24">
+                                    <svg className="h-24 w-24 -rotate-90" aria-hidden="true">
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="40"
+                                            stroke="currentColor"
+                                            strokeWidth="7"
+                                            fill="none"
+                                            strokeDasharray="4 9"
+                                            strokeLinecap="round"
+                                            className="text-ink/12 dark:text-white/15"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <BadgeCheck className="h-8 w-8 text-ink/20 dark:text-white/25" strokeWidth={1.75} />
+                                    </div>
+                                </div>
+                                <p className="text-sm font-semibold text-ink dark:text-ink-dark">
+                                    Your record starts here
+                                </p>
+                                {/* Only claims what ships today: payments are recorded and
+                                    each one has a downloadable receipt. Deliberately does NOT
+                                    promise a portable/exportable rental reference — that
+                                    feature does not exist yet (AGENTS.md: no claim you cannot
+                                    trace to working code). */}
+                                <p className="mx-auto mt-1.5 max-w-[15rem] text-xs leading-relaxed text-ink-muted dark:text-ink-muted-dark">
+                                    Once you pay rent through the portal, every payment is recorded
+                                    here with a receipt you can download any time.
+                                </p>
+                            </div>
+                        ) : (
+                        <>
                         <div className="flex items-center justify-center mb-4">
                             <div className="relative w-32 h-32">
-                                <svg className="transform -rotate-90 w-32 h-32">
+                                <svg className="tenant-score-ring transform -rotate-90 w-32 h-32">
+                                    <defs>
+                                        <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#10B981" />
+                                            <stop offset="100%" stopColor="#059669" />
+                                        </linearGradient>
+                                    </defs>
                                     <circle
                                         cx="64"
                                         cy="64"
@@ -1095,7 +1523,7 @@ export const PremiumTenantDashboard = () => {
                                         cx="64"
                                         cy="64"
                                         r="56"
-                                        stroke="currentColor"
+                                        stroke="url(#score-gradient)"
                                         strokeWidth="8"
                                         fill="none"
                                         strokeDasharray={`${2 * Math.PI * 56}`}
@@ -1112,36 +1540,44 @@ export const PremiumTenantDashboard = () => {
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-ink-muted dark:text-ink-muted-dark">Total Payments</span>
-                                <span className="font-medium text-ink dark:text-ink-dark">{score.totalPayments}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-ink-muted dark:text-ink-muted-dark">Late Payments</span>
-                                <span className={`font-medium ${score.latePayments > 0 ? "text-danger" : "text-success"}`}>{score.latePayments}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-ink-muted dark:text-ink-muted-dark">Current Streak</span>
-                                <span className="font-medium text-brand-600 flex items-center gap-1">
-                                    <Zap className="w-3.5 h-3.5" />
-                                    {score.currentStreakMonths} month{score.currentStreakMonths === 1 ? "" : "s"}
-                                </span>
-                            </div>
+                            {[
+                                { label: "Total Payments", value: String(score.totalPayments), tone: "default" },
+                                { label: "Late Payments", value: String(score.latePayments), tone: score.latePayments > 0 ? "danger" : "success" },
+                                { label: "Current Streak", value: `${score.currentStreakMonths} month${score.currentStreakMonths === 1 ? "" : "s"}`, tone: "brand", streak: true },
+                            ].map((stat, i) => (
+                                <motion.div
+                                    key={stat.label}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 + i * 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                    className="flex items-center justify-between text-sm row-fade"
+                                >
+                                    <span className="text-ink-muted dark:text-ink-muted-dark">{stat.label}</span>
+                                    <span className={`font-medium ${stat.tone === "danger" ? "text-danger" : stat.tone === "success" ? "text-success" : stat.tone === "brand" ? "text-brand-600" : "text-ink dark:text-ink-dark"} flex items-center gap-1`}>
+                                        {stat.streak && <Zap className="w-3.5 h-3.5" />}
+                                        {stat.value}
+                                    </span>
+                                </motion.div>
+                            ))}
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-border/40 dark:border-border-dark/40">
                             <p className="text-xs text-ink-subtle dark:text-ink-subtle-dark text-center">
-                                Keep it up! Perfect payment history helps you secure better rentals in the future.
+                                {score.latePayments === 0
+                                    ? "A clean payment history helps you secure better rentals in the future."
+                                    : "On-time payments strengthen the record you can show future landlords."}
                             </p>
                         </div>
+                        </>
+                        )}
                     </motion.div>
 
                     {/* Quick Links */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.4, delay: 0.5 }}
-                        className="bg-surface dark:bg-surface-dark border border-border/60 dark:border-border-dark/60 rounded-xl p-6 shadow-card"
+                        transition={{ duration: 0.4, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        className="tenant-quicklinks-card p-6"
                     >
                         <h3 className="text-lg font-semibold text-ink dark:text-ink-dark mb-4">Quick Links</h3>
                         <div className="space-y-2">
@@ -1154,13 +1590,13 @@ export const PremiumTenantDashboard = () => {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-ink/5 dark:hover:bg-ink/10 transition-colors group"
+                                    className="tenant-quick-link-item flex items-center justify-between p-3 group"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <link.icon className="w-4 h-4 text-ink-muted dark:text-ink-muted-dark" />
+                                        <link.icon className="tenant-qk-icon w-4 h-4 text-ink-muted dark:text-ink-muted-dark" />
                                         <span className="text-sm font-medium text-ink dark:text-ink-dark">{link.label}</span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-ink-subtle dark:text-ink-subtle-dark group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="tenant-qk-arrow w-4 h-4 text-ink-subtle dark:text-ink-subtle-dark" />
                                 </Link>
                             ))}
                         </div>

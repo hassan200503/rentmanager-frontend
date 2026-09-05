@@ -14,10 +14,10 @@ export interface RentLedgerEntryResponse {
     billingPeriodStart: string; // LocalDate -> ISO date string
     billingPeriodEnd: string;
     dueDate: string;
-    amountDue: number;
-    amountPaid: number;
-    balanceOwed: number;
-    excessAmount: number;
+    amountDue: string; // BigDecimal -> JSON string, see shared/utils/money.ts
+    amountPaid: string;
+    balanceOwed: string;
+    excessAmount: string;
     status: RentLedgerStatus;
     prorated: boolean;
     version: number;
@@ -30,7 +30,12 @@ export type RentTransactionType =
     | "REFUND"
     | "CREDIT_APPLIED"
     | "ADJUSTMENT"
-    | "DEPOSIT";
+    | "DEPOSIT"
+    // Added by V71 and reachable since DELETE /rent-ledger/transactions/{id}
+    // stopped hard-deleting and started posting a compensating REVERSAL that
+    // keeps both rows. It was missing here, so the ledger drill-down rendered
+    // it with a blank label and the payments table fell back to "Rent charge".
+    | "REVERSAL";
 
 export type RentTransactionSource =
     | "MPESA"
@@ -43,7 +48,7 @@ export interface RentTransactionResponse {
     ledgerEntryId: string;
     leaseId: string;
     type: RentTransactionType;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     externalReference: string | null;  // null for SYSTEM-sourced transactions per RentTransaction.create(...) usage
     source: RentTransactionSource;
     recordedBy: string;
@@ -57,7 +62,7 @@ export interface RentTransactionSummaryResponse {
     ledgerEntryId: string;
     leaseId: string;
     type: RentTransactionType;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     externalReference: string | null;
     source: RentTransactionSource;
     recordedBy: string;
@@ -73,7 +78,7 @@ export interface RentTransactionSummaryResponse {
 export interface UnmatchedPaymentResponse {
     id: string;
     transactionId: string;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     phoneNumber: string;           // masked to last 4 digits in UI
     accountReference: string;      // raw reference as received
     occurredAt: string;
@@ -82,7 +87,7 @@ export interface UnmatchedPaymentResponse {
         unitId: string;
         unitNumber: string;
         tenantName: string;
-        rentAmount: number;
+        rentAmount: string;
         matchReason: string;
     }>;
 }

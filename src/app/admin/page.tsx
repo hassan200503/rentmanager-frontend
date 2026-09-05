@@ -38,6 +38,7 @@ import { AdminErrorBoundary } from "@/features/admin/components/AdminErrorBounda
 import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
 import { useAdminOverviewQuery } from "@/features/admin/hooks/use-admin-queries";
 import { PageHeader, formatCurrency } from "@/features/admin/components/admin-ui";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 const TONE_MAP: Record<string, string> = {
     brand: "from-emerald-500 to-emerald-600",
@@ -223,21 +224,26 @@ function OverviewContent() {
 
     const { platform, payments, disbursements } = data;
 
+    const gmvCurrentMonth = toMoneyNumber(payments.gmvCurrentMonth);
+    const gmvPreviousMonth = toMoneyNumber(payments.gmvPreviousMonth);
+    const commissionCurrentMonth = toMoneyNumber(payments.commissionCurrentMonth);
+    const commissionPreviousMonth = toMoneyNumber(payments.commissionPreviousMonth);
+
     const gmvDelta =
-        payments.gmvPreviousMonth > 0
-            ? ((payments.gmvCurrentMonth - payments.gmvPreviousMonth) / payments.gmvPreviousMonth) * 100
+        gmvPreviousMonth > 0
+            ? ((gmvCurrentMonth - gmvPreviousMonth) / gmvPreviousMonth) * 100
             : null;
     const commissionDelta =
-        payments.commissionPreviousMonth > 0
-            ? ((payments.commissionCurrentMonth - payments.commissionPreviousMonth) / payments.commissionPreviousMonth) * 100
+        commissionPreviousMonth > 0
+            ? ((commissionCurrentMonth - commissionPreviousMonth) / commissionPreviousMonth) * 100
             : null;
 
     const paymentTotal = payments.paymentRequestsPending + payments.paymentRequestsPaid + payments.paymentRequestsFailed;
     const disbursementTotal = disbursements.initiated + disbursements.pending + disbursements.success + disbursements.failed;
 
     const revenueData = [
-        { label: "GMV", current: payments.gmvCurrentMonth, previous: payments.gmvPreviousMonth },
-        { label: "Commission", current: payments.commissionCurrentMonth, previous: payments.commissionPreviousMonth },
+        { label: "GMV", current: gmvCurrentMonth, previous: gmvPreviousMonth },
+        { label: "Commission", current: commissionCurrentMonth, previous: commissionPreviousMonth },
     ];
 
     const pipelineData = [

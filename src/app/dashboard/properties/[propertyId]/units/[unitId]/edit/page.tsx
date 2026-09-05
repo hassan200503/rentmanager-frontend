@@ -8,6 +8,7 @@ import { useUpdateUnit } from "@/features/unit/hooks/use-update-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest, UpdateUnitRequest } from "@/features/unit/types/unit-request";
 import Loading from "@/app/loading";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 export default function EditUnitPage() {
     const router = useRouter();
@@ -100,8 +101,8 @@ export default function EditUnitPage() {
                     defaultValues={{
                         unitNumber: unit.unitNumber,
                         label: unit.label,
-                        rentAmount: unit.rentAmount,
-                        depositAmount: unit.depositAmount,
+                        rentAmount: toMoneyNumber(unit.rentAmount),
+                        depositAmount: toMoneyNumber(unit.depositAmount),
                         description: unit.description,
                     }}
                     onSubmit={handleSubmit}

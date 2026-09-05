@@ -4,6 +4,7 @@ import { Search, ArrowUpRight } from "lucide-react";
 import { SkylineBackground } from "./SkylineBackground";
 import { Button } from "@/shared/components/ui/Button";
 import { useInView } from "@/features/landing/hooks/use-in-view";
+import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
 export function FinalCTASection() {
   const { ref, inView } = useInView<HTMLDivElement>(0.2);
@@ -47,7 +48,7 @@ export function FinalCTASection() {
             Browse Properties
             <Search className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
           </Button>
-          <Button href="/public/sign-up?intent=landlord" variant="primary" size="lg">
+          <Button href={SIGNUP_LANDLORD_HREF} variant="primary" size="lg">
             List Property
             <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
           </Button>

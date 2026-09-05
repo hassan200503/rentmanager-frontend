@@ -15,7 +15,7 @@ interface ReservationDetail {
     fullName: string;
     phone: string;
     email: string;
-    depositAmount: number;
+    depositAmount: string; // BigDecimal -> JSON string
     status: ReservationStatus;
     mpesaReceiptNumber: string | null;
     moveInDate: string;
@@ -29,13 +29,13 @@ function depositLabel(status: ReservationStatus): { title: string; description: 
         case "FULFILLING":
             return {
                 title: "Deposit held",
-                description: "Your deposit is safely held in escrow. It will be released to the landlord after you move in.",
+                description: "Your deposit has been recorded against this unit and is held by the landlord. You can track its status any time from your tenant portal.",
                 icon: "held",
             };
         case "COMPLETED":
             return {
-                title: "Deposit released",
-                description: "Your deposit has been released to the landlord. Welcome to your new home!",
+                title: "Move-in confirmed",
+                description: "Your tenancy is now active and your deposit is recorded against your lease. Welcome to your new home!",
                 icon: "released",
             };
         case "CANCELLED":

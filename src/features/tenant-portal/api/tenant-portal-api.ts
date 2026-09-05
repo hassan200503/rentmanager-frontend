@@ -4,6 +4,7 @@ import { apiClient } from "@/lib/api/client";
 import { getAuthContext as sharedGetAuthContext } from "@/lib/auth/get-auth-context";
 import { tenantPortalEndpoints } from "./tenant-portal-endpoints";
 import { LandlordReviewResponse, RenterReviewResponse, ReviewSummaryResponse } from "@/features/reviews/types/review-response";
+import type { MoneyValue } from "@/shared/utils/money";
 
 // Types for tenant portal responses
 export interface TenantDashboardResponse {
@@ -11,16 +12,16 @@ export interface TenantDashboardResponse {
     tenantName: string;
     tenantPhone: string;
     tenantEmail: string;
-    currentBalance: number;
+    currentBalance: string; // BigDecimal -> JSON string
     currentEntryId: string | null;
     nextDueDate: string | null;
-    nextDueAmount: number;
-    overdueAmount: number;
+    nextDueAmount: string;
+    overdueAmount: string;
     leaseStatus: string;
     unitNumber: string;
     propertyName: string;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: string;
+    depositAmount: string;
     recentPayments: TenantPaymentHistoryItem[];
 }
 
@@ -29,8 +30,8 @@ export interface TenantLeaseResponse {
     leaseNumber: string;
     startDate: string;
     endDate: string | null;
-    monthlyRent: number;
-    depositAmount: number;
+    monthlyRent: string;
+    depositAmount: string;
     status: string;
     unitNumber: string;
     unitLabel: string | null;
@@ -54,6 +55,22 @@ export interface TenantLeaseResponse {
     landlordSecondaryColor: string | null;
     billingMode: "COMMISSION" | "PREMIUM_MONTHLY" | null;
     subscriptionStatus: string | null;
+}
+
+export type DepositStatus = "UNPAID" | "HELD" | "PARTIALLY_REFUNDED" | "REFUNDED" | "FORFEITED";
+
+export interface DepositResponse {
+    id: string;
+    leaseId: string;
+    unitId: string;
+    tenantProfileId: string;
+    amountRequired: string; // BigDecimal -> JSON string
+    amountPaid: string;
+    amountRefunded: string;
+    currency: string;
+    status: DepositStatus;
+    paidAt: string | null;
+    refundedAt: string | null;
 }
 
 export function isPremiumLandlord(lease: Pick<TenantLeaseResponse, "billingMode" | "subscriptionStatus">): boolean {
@@ -85,23 +102,23 @@ export interface AnnouncementUnreadCountResponse {
 }
 
 export interface TenantPaymentSummaryResponse {
-    totalPaid: number;
-    totalDue: number;
-    currentBalance: number;
-    overdueAmount: number;
+    totalPaid: string; // BigDecimal -> JSON string
+    totalDue: string;
+    currentBalance: string;
+    overdueAmount: string;
     paymentsThisYear: number;
     lastPaymentDate: string | null;
-    lastPaymentAmount: number | null;
+    lastPaymentAmount: string | null;
 }
 
 export interface TenantPaymentHistoryItem {
     id: string;
     type: "RENT_CHARGE" | "PAYMENT" | "WAIVER" | "REFUND" | "CREDIT_APPLIED" | "ADJUSTMENT" | "DEPOSIT";
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     source: "MPESA" | "CASH" | "ADMIN_ADJUSTMENT" | "SYSTEM";
     externalReference: string | null;
     occurredAt: string;
-    status: "PAID" | "PARTIALLY_PAID" | "OVERDUE" | "DUE";
+    status: "PAID" | "PARTIALLY_PAID" | "OVERDUE" | "DUE" | "OVERPAID";
     billingPeriodStart: string;
     billingPeriodEnd: string;
     mpesaTransactionId: string | null;
@@ -122,7 +139,7 @@ export interface TenantPaymentReceiptResponse {
     transactionId: string;
     receiptNumber: string;
     paymentDate: string;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     mpesaTransactionId: string | null;
     tenantName: string;
     tenantPhone: string;
@@ -130,7 +147,7 @@ export interface TenantPaymentReceiptResponse {
     propertyName: string;
     billingPeriodStart: string;
     billingPeriodEnd: string;
-    balanceAfterPayment: number;
+    balanceAfterPayment: string;
     eTimsInvoiceNumber: string | null;
     eTimsQrCodeUrl: string | null;
 }
@@ -139,7 +156,8 @@ export interface RentPaymentRequestResponse {
     id: string;
     leaseId: string;
     rentLedgerEntryId: string;
-    amount: number;
+    /** BigDecimal -> JSON string. See shared/utils/money. */
+    amount: MoneyValue;
     status: "PENDING" | "PAID" | "FAILED";
     mpesaReceiptNumber: string | null;
     transactionId: string | null;
@@ -186,6 +204,7 @@ export interface AutoPaySettingsResponse {
     lastAutoPayDate: string | null;
     consecutiveFailures: number;
     lastAttemptAt: string | null;
+    lastFailureReason: string | null;
 }
 
 export interface ToggleAutoPayRequest {
@@ -213,6 +232,15 @@ export const tenantPortalApi = {
         const { token, tenantId } = await getAuthContext();
         return apiClient.get<TenantLeaseResponse>(
             tenantPortalEndpoints.lease(),
+            token,
+            tenantId
+        );
+    },
+
+    getDeposit: async (): Promise<DepositResponse | null> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<DepositResponse | null>(
+            tenantPortalEndpoints.deposit(),
             token,
             tenantId
         );

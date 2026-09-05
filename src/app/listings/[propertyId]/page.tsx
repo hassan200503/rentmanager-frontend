@@ -27,6 +27,7 @@ import { SummaryRail } from "@/features/public-listings/components/summary-rail"
 import { NotifyForm } from "@/features/public-listings/components/notify-form";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
 import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
+import { toMoneyNumber } from "@/shared/utils/money";
 
 export default function PropertyDetailPage() {
     const params = useParams<{ propertyId: string }>();
@@ -62,7 +63,7 @@ export default function PropertyDetailPage() {
         );
     }
 
-    const rents = (units?.content ?? []).map((u) => u.rentAmount).filter(Boolean);
+    const rents = (units?.content ?? []).map((u) => toMoneyNumber(u.rentAmount)).filter((r) => r > 0);
     const priceRange =
         rents.length > 0 ? { min: Math.min(...rents), max: Math.max(...rents) } : null;
     const hasUnits = !!units && !units.empty && !unitsLoading && !unitsError;

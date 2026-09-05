@@ -25,9 +25,7 @@ import { LeaseStatusBadge } from "@/features/lease/components/lease-status-badge
 import { LeaseActionType, TerminationType } from "@/features/lease/types/lease-request";
 import { daysUntil, isExpiringSoon } from "@/features/lease/utils/lease-date-utils";
 import {RentLedgerList} from "@/features/rentledger/components/rent-ledger-list";
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency } from "@/shared/utils/money";
 
 const formatDate = (isoDate: string) =>
     new Date(isoDate).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });

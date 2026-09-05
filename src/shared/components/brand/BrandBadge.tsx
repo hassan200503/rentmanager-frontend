@@ -18,8 +18,17 @@ const sizes = {
 export const ON_DARK_WORDMARK =
   "font-brand font-semibold tracking-[-0.01em] bg-gradient-to-r from-white via-white to-jade-300 bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(16,185,129,0.45)]";
 
-/* The wordmark over light surfaces — ink tokens track the theme. */
-const LIGHT_WORDMARK = "font-display font-semibold tracking-[-0.02em] text-fg dark:text-fg-dark";
+/* The wordmark over light surfaces — ink tokens track the theme.
+   font-brand (Fraunces), not font-display (Instrument Serif): Fraunces was
+   specifically chosen for its optical-size axis staying crisp at nav sizes
+   (see the font-brand-face load in layout.tsx); Instrument Serif is a thin
+   editorial display face meant for large hero type, and reads spindly/hard
+   to read at the 14–16px this wordmark actually renders at in every sidebar
+   and topbar in the product. Line 85 below already got this right for the
+   no-logo-configured badge text — this constant was the one inconsistent
+   spot, used by every "RentManager" wordmark next to an uploaded platform
+   logo. */
+export const LIGHT_WORDMARK = "font-brand font-semibold tracking-[-0.02em] text-fg dark:text-fg-dark";
 
 export function BadgeMark({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (

@@ -1,4 +1,5 @@
 import { Address, GeoLocation } from "@/features/property/types/property";
+import type { MoneyValue } from "@/shared/utils/money";
 
 export interface PublicPropertyResponse {
     propertyId: string;
@@ -9,6 +10,18 @@ export interface PublicPropertyResponse {
     description: string;
 
     images: string[];
+
+    /**
+     * How many units a renter could enquire about today. Absent (not zero)
+     * when the backend has nothing to report — every property returned by
+     * the public search has at least one vacant unit, so in practice this is
+     * always present, but the type stays optional rather than assuming that.
+     */
+    availableUnits?: number;
+
+    /** Asking rent of the cheapest and dearest available unit. */
+    minRent?: MoneyValue;
+    maxRent?: MoneyValue;
 }
 
 export interface PublicPropertyPageResponse {

@@ -38,7 +38,7 @@ export interface SubscriptionStatusResponse {
     subscriptionStatus: SubscriptionStatus | null;
     planCode: string | null;
     planName: string | null;
-    planMonthlyPrice: number | null;
+    planMonthlyPrice: string | null; // BigDecimal -> JSON string
     planStartDate: string | null;
     planEndDate: string | null;
     planGraceEndsAt: string | null;
@@ -57,7 +57,7 @@ export interface SwitchToPremiumRequest {
 export interface SubscriptionPaymentRequestResponse {
     id: string;
     subscriptionPlanId: string;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     purpose: SubscriptionPaymentPurpose;
     status: SubscriptionPaymentRequestStatus;
     mpesaPhone: string;
@@ -70,7 +70,7 @@ export interface RatibaSetupResponse {
     standingOrderStatus: StandingOrderStatus;
     paybillNumber: string;
     accountReference: string;
-    amount: number;
+    amount: string; // BigDecimal -> JSON string
     instructions: string;
 }
 
@@ -84,8 +84,8 @@ export interface SubscriptionPlan {
     maxUnits: number | null;
     maxUsers: number | null;
     maxStorageGb: number | null;
-    monthlyPrice: number | null;
-    yearlyPrice: number | null;
+    monthlyPrice: string | null; // BigDecimal -> JSON string
+    yearlyPrice: string | null;
     active: boolean;
     selfService: boolean;
 }

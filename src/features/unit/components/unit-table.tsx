@@ -8,18 +8,12 @@ import { UnitResponse } from "../types/unit-request";
 import { useUnitLifecycle } from "../hooks/use-unit-lifecycle";
 import { UnitStatus } from "../types/unit";
 import { Eye, PencilLine, CheckCircle2, PauseCircle, Home } from "lucide-react";
+import { formatCurrency } from "@/shared/utils/money";
 
 type UnitTableProps = {
     propertyId: string;
     params?: Partial<UnitFilterState>;
 };
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", {
-        style: "currency",
-        currency: "KES",
-        maximumFractionDigits: 0,
-    }).format(amount);
 
 const occupancyConfig: Record<string, { label: string; className: string; dot: string }> = {
     VACANT: {

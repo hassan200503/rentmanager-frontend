@@ -12,13 +12,11 @@ import {
     MapPin,
     Tag,
 } from "lucide-react";
+import { formatCurrency } from "@/shared/utils/money";
 
 type UnitDetailsProps = {
     unit: Unit;
 };
-
-const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(amount);
 
 const formatEnumLabel = (value: string) =>
     value

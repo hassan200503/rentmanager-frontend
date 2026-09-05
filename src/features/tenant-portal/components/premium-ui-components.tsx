@@ -7,6 +7,7 @@
 
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode, useId } from "react";
+import { formatCurrency, type MoneyValue } from "@/shared/utils/money";
 
 /* ══════════════════════════════════════════════════════════════
    MetricCard - Premium KPI Display Card
@@ -427,7 +428,11 @@ export const PaymentStateCard = ({
 
 export interface BalanceCardProps {
   label: string;
-  amount: number;
+  // MoneyValue, not number: the backend serializes every BigDecimal as a
+  // JSON string (see @/shared/utils/money), so a caller wiring this up from
+  // an API response should be able to pass that string straight through
+  // rather than coercing it first.
+  amount: MoneyValue;
   currency?: string;
   tone?: "clear" | "due" | "overdue";
   description?: string;
@@ -446,20 +451,13 @@ export const BalanceCard = ({
   icon: Icon,
   className = "",
 }: BalanceCardProps) => {
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-KE", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: Math.abs(value) < 1 ? 2 : 0,
-    }).format(value);
-
   return (
     <div className={`tenant-balance-card tenant-balance-card-premium is-${tone} ${className}`}>
       <div className="tenant-balance-gradient-overlay" />
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="tenant-balance-label">{label}</p>
-          <p className="tenant-balance-value">{formatCurrency(amount)}</p>
+          <p className="tenant-balance-value">{formatCurrency(amount, { currency })}</p>
         </div>
         {Icon && (
           <div className="tenant-balance-icon">

@@ -50,9 +50,10 @@ const defaultMetadata = {
 };
 
 export const metadata: Metadata = {
-    metadataBase: appConfig.appUrl
-        ? new URL(appConfig.appUrl)
-        : undefined,
+    // Always set: see appConfig.siteUrl for why an absolute fallback beats
+    // undefined here. Without it, every relative canonical / og:url in the
+    // app ships unresolved.
+    metadataBase: new URL(appConfig.siteUrl),
     title: {
         default: `${defaultMetadata.title} — Property Management Platform`,
         template: `%s — ${defaultMetadata.title}`,
@@ -79,10 +80,20 @@ export const metadata: Metadata = {
     },
     manifest: "/manifest.json",
     icons: {
-        icon: [
-            { url: "/icon", type: "image/x-icon" },
-            { url: "/favicon.svg", type: "image/svg+xml" },
-        ],
+        // /icon is the single source of truth for the browser-tab icon —
+        // it already reads and serves public/favicon.svg itself, inline,
+        // whenever the platform branding endpoint is unreachable or no logo
+        // is configured (see src/app/icon/route.ts). A second, separate
+        // `{ url: "/favicon.svg" }` entry used to sit here as a competing
+        // <link rel="icon">: always green, never updated, and — depending on
+        // the browser's own icon-selection heuristics — capable of winning
+        // over the correctly-branded /icon link even when /icon was serving
+        // the real (blue) configured logo. No `type` on /icon: its real
+        // Content-Type varies with whatever the owner has uploaded (PNG,
+        // SVG, whatever Cloudinary was given), and declaring a fixed type
+        // that doesn't match the response risks the same kind of silent
+        // browser fallback.
+        icon: [{ url: "/icon" }],
     },
 };
 
@@ -99,7 +110,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
+        <html lang="en-KE" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
         <body className="antialiased">
         <SkipLink />
         <QueryProvider>

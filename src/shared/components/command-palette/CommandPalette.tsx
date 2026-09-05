@@ -29,7 +29,7 @@ const commands: CommandItem[] = [
   { id: "payments", label: "Payments", icon: Receipt, href: "/dashboard/payments", section: "Navigation" },
   { id: "rent-ledger", label: "Rent Ledger", icon: ClipboardList, href: "/dashboard/rent-ledger", section: "Navigation" },
   { id: "tenants", label: "Tenants", icon: Users, href: "/dashboard/leases", section: "Navigation" },
-  { id: "mpesa", label: "M-Pesa Config", icon: Smartphone, href: "/daraja/config", section: "Navigation" },
+  { id: "mpesa", label: "Payment settings", icon: Smartphone, href: "/daraja/config", section: "Navigation" },
   { id: "settings", label: "Settings", icon: Settings, href: "/dashboard/settings", section: "Navigation" },
   { id: "archive", label: "Archive", icon: Home, href: "/dashboard/archive", section: "Navigation" },
   { id: "create-property", label: "Create Property", icon: Plus, href: "/dashboard/properties/create", section: "Actions" },

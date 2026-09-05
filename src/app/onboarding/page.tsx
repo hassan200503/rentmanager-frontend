@@ -21,8 +21,8 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-sm text-gray-500">Loading…</p>
+            <div className="flex items-center justify-center min-h-screen bg-canvas dark:bg-canvas-dark">
+                <p className="text-sm text-ink-muted dark:text-ink-muted-dark">Loading…</p>
             </div>
         );
     }
@@ -33,17 +33,19 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="max-w-lg mx-auto py-12 px-6">
-            <div className="mb-8">
-                <h1 className="text-2xl font-semibold text-gray-900">
-                    Set up your account
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                    Tell us a bit about your business to get started.
-                </p>
-            </div>
-            <div className="card bg-white p-6 rounded shadow">
-                <OnboardTenantForm />
+        <div className="min-h-screen bg-canvas dark:bg-canvas-dark">
+            <div className="max-w-lg mx-auto py-12 px-6">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-semibold text-ink dark:text-ink-dark">
+                        Set up your account
+                    </h1>
+                    <p className="text-sm text-ink-muted dark:text-ink-muted-dark mt-1">
+                        Tell us a bit about your business to get started.
+                    </p>
+                </div>
+                <div className="card">
+                    <OnboardTenantForm />
+                </div>
             </div>
         </div>
     );
