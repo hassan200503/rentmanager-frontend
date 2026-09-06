@@ -5,4 +5,5 @@ export const userEndpoints = {
     invite: `${base}/invite`,
     me: `${base}/me`,
     list: base,
+    member: (userId: string) => `${base}/${userId}`,
 };

@@ -28,6 +28,7 @@ import {
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { PlatformBrand, PlatformLogoMark } from "@/shared/components/brand";
 import { useUnviewedRequestsCountQuery } from "@/features/maintenance/hooks/use-maintenance-query";
+import { useUnsavedChanges } from "@/stores/unsaved-changes-store";
 
 interface NavItem {
   href: string;
@@ -83,10 +84,20 @@ function NavLink({
   const ariaLabel = showBadge
     ? `${item.label}, ${formatBadge(badge!)} unviewed`
     : undefined;
+
+  const handleClick = (e: React.MouseEvent) => {
+    const { isDirty, message } = useUnsavedChanges.getState();
+    if (isDirty && !window.confirm(message)) {
+      e.preventDefault();
+      return;
+    }
+    onNavigate?.();
+  };
+
   return (
     <Link
       href={item.href}
-      onClick={onNavigate}
+      onClick={handleClick}
       aria-current={active ? "page" : undefined}
       aria-label={ariaLabel}
       title={collapsed ? (showBadge ? `${item.label} (${formatBadge(badge!)})` : item.label) : undefined}

@@ -100,6 +100,7 @@ function DeferUntilNearViewport({
     if (!el) return;
 
     if (typeof IntersectionObserver === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
       return;
     }

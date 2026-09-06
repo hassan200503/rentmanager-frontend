@@ -21,6 +21,7 @@ import {
     ScrollText,
     Radio,
     Landmark,
+    Lock,
 } from "lucide-react";
 
 import { useProperty } from "@/features/property/hooks/use-property";
@@ -28,6 +29,9 @@ import { useUpdateProperty } from "@/features/property/hooks/use-update-property
 import { useActivateProperty } from "@/features/property/hooks/use-activate-property";
 import { useArchiveProperty } from "@/features/property/hooks/use-archive-property";
 import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
+import { useUnsavedChanges } from "@/stores/unsaved-changes-store";
 
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
@@ -78,6 +82,7 @@ export default function PropertyDetailPage() {
 
     const { data: property, isLoading } = useProperty(propertyId);
     const { data: unitsData } = useUnitsQuery({ propertyId, page: 0, size: 100 });
+    const canWrite = useHasRole(WRITE_ROLES);
 
     const { updateProperty, isLoading: isUpdating } = useUpdateProperty();
     const { activateProperty, isLoading: isActivating } = useActivateProperty();
@@ -98,15 +103,23 @@ export default function PropertyDetailPage() {
         setDescription("");
     };
 
+    const setDirty = useUnsavedChanges((s) => s.setDirty);
+
     useEffect(() => {
+        setDirty(hasUnsavedChanges);
         if (!hasUnsavedChanges) return;
         const handler = (e: BeforeUnloadEvent) => {
             e.preventDefault();
             e.returnValue = "";
         };
         window.addEventListener("beforeunload", handler);
-        return () => window.removeEventListener("beforeunload", handler);
-    }, [hasUnsavedChanges]);
+        return () => {
+            window.removeEventListener("beforeunload", handler);
+        };
+    }, [hasUnsavedChanges, setDirty]);
+
+    // Always clear the dirty flag when this page unmounts.
+    useEffect(() => () => setDirty(false), [setDirty]);
 
     const handleBackClick = () => {
         if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) {
@@ -183,6 +196,7 @@ export default function PropertyDetailPage() {
     const canActivate =
         property.status === PropertyStatus.DRAFT ||
         property.status === PropertyStatus.INACTIVE;
+    const canEdit = canWrite && !isArchived;
 
     const totalUnits = unitsData?.totalElements ?? 0;
     const vacantUnits = unitsData?.content?.filter(
@@ -234,28 +248,35 @@ export default function PropertyDetailPage() {
                     </div>
 
                     {!isArchived && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {canActivate && (
-                                <button
-                                    onClick={() => activateProperty(property.propertyId)}
-                                    disabled={isActivating}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
-                                >
-                                    <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
-                                    {isActivating ? "Activating…" : "Activate"}
-                                </button>
-                            )}
-                            {isActive && (
-                                <button
-                                    onClick={() => archiveProperty(property.propertyId)}
-                                    disabled={isArchiving}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.03] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Archive className="w-4 h-4" strokeWidth={2} />
-                                    {isArchiving ? "Archiving…" : "Archive"}
-                                </button>
-                            )}
-                        </div>
+                        canWrite ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {canActivate && (
+                                    <button
+                                        onClick={() => activateProperty(property.propertyId)}
+                                        disabled={isActivating}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
+                                        {isActivating ? "Activating…" : "Activate"}
+                                    </button>
+                                )}
+                                {isActive && (
+                                    <button
+                                        onClick={() => archiveProperty(property.propertyId)}
+                                        disabled={isArchiving}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.03] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Archive className="w-4 h-4" strokeWidth={2} />
+                                        {isArchiving ? "Archiving…" : "Archive"}
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-ink/[0.04] border border-border text-xs text-ink-muted">
+                                <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                                View only — owners and managers can change this property
+                            </div>
+                        )
                     )}
                 </div>
             </div>
@@ -312,7 +333,7 @@ export default function PropertyDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="animate-fade-in-up">
                     <SectionCard icon={ScrollText} title="Description" trailing={isDescriptionDirty && <UnsavedTag />}>
-                        {!isArchived ? (
+                        {canEdit ? (
                             <div className="space-y-2">
                                 <textarea
                                     value={description || property.description || ""}
@@ -346,7 +367,7 @@ export default function PropertyDetailPage() {
                         </div>
                     </SectionCard>
 
-                    {!isArchived && (
+                    {canEdit && (
                         <SectionCard icon={Tag} title="Name" trailing={isNameDirty && <UnsavedTag />}>
                             <input
                                 type="text"
@@ -371,22 +392,24 @@ export default function PropertyDetailPage() {
                             <p className="text-xs text-ink-muted">Manage units under this property</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() =>
-                            router.push(`/dashboard/properties/${propertyId}/units/create`)
-                        }
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20"
-                    >
-                        <Plus className="w-4 h-4" strokeWidth={2} />
-                        Add unit
-                    </button>
+                    {canWrite && (
+                        <button
+                            onClick={() =>
+                                router.push(`/dashboard/properties/${propertyId}/units/create`)
+                            }
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20"
+                        >
+                            <Plus className="w-4 h-4" strokeWidth={2} />
+                            Add unit
+                        </button>
+                    )}
                 </div>
 
                 <UnitTable propertyId={propertyId} params={{}} />
             </section>
 
             {/* Actions */}
-            {!isArchived && (
+            {canEdit && (
                 <div className="flex items-center gap-3 flex-wrap animate-fade-in-up pt-2">
                     <button
                         onClick={handleUpdate}

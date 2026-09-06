@@ -5,7 +5,7 @@ import {
     LeaseActionRequest,
     LeaseSearchParams,
 } from "../types/lease-request";
-import { LeaseResponse, LeaseDetailResponse, LeaseActionResponse, LeasePageResponse } from "../types/lease-response";
+import { LeaseResponse, LeaseDetailResponse, LeaseActionResponse, LeasePageResponse, LeaseStatsResponse } from "../types/lease-response";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 
@@ -13,6 +13,7 @@ const buildSearchQuery = (params?: LeaseSearchParams) => {
     const query = new URLSearchParams();
     if (params?.propertyId) query.set("propertyId", params.propertyId);
     if (params?.status) query.set("status", params.status);
+    if (params?.keyword) query.set("keyword", params.keyword);
     if (params?.fromDate) query.set("fromDate", params.fromDate);
     if (params?.toDate) query.set("toDate", params.toDate);
     query.set("page", String(params?.page ?? 0));
@@ -25,6 +26,12 @@ export const leaseApi = {
         const { token, tenantId } = await getAuthContext();
         const query = buildSearchQuery(params);
         return apiClient.get<LeasePageResponse>(`${leaseEndpoints.base}?${query}`, token, tenantId);
+    },
+
+    /** Portfolio-wide stat-card figures, unaffected by the table's page/filters. */
+    getStats: async (): Promise<LeaseStatsResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<LeaseStatsResponse>(leaseEndpoints.stats, token, tenantId);
     },
 
     get: async (id: string): Promise<LeaseDetailResponse> => {

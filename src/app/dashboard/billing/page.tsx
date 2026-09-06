@@ -213,7 +213,7 @@ function RatibaCard({
         setupRatiba.mutate(undefined, {
             onSuccess: () => {
                 setSetupResult(
-                    "We&apos;ve sent the automatic-payments request to your phone. Approve the M-Pesa prompt to finish setup."
+                    "We've sent the automatic-payments request to your phone. Approve the M-Pesa prompt to finish setup."
                 );
             },
         });

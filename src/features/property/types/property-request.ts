@@ -31,6 +31,9 @@ export interface UpdatePropertyRequest {
 export interface PropertyListParams {
     search?: string;
     status?: string;
+    propertyType?: string;
+    /** Spring Data sort expression, e.g. "name,asc" or "status,desc". */
+    sort?: string;
     page?: number;
     size?: number;
 }

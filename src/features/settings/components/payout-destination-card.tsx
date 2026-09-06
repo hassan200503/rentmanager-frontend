@@ -35,7 +35,9 @@ export function PayoutDestinationCard() {
         // Deliberately not prefilled from the API: it only ever returns a
         // masked number, and putting "*******5678" in an editable field would
         // either be submitted verbatim or have to be silently ignored.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setValue("");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTouched(false);
     }, [data?.maskedPhoneNumber]);
 

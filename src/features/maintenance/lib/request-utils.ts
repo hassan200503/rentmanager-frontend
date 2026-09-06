@@ -83,3 +83,29 @@ export function avgResponseHoursLabel(hours: number | null): string {
     }
     return `${hours.toFixed(1)} hrs`;
 }
+
+/**
+ * Humanises a wait in hours for the "longest wait" figure.
+ *
+ * Deliberately coarse and deliberately blunt. "528h" is technically accurate
+ * and completely fails to land; "22 days" is the number a landlord reacts to.
+ */
+export function waitingLabel(hours: number | null | undefined): string {
+    if (hours == null || hours < 0) return "—";
+    if (hours < 1) return "under an hour";
+    if (hours < 24) return `${Math.floor(hours)} hr${Math.floor(hours) === 1 ? "" : "s"}`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/**
+ * How overdue an unanswered request is, as a severity band the UI can style.
+ * 24h is the SLA the backend rates against, so it is the first threshold.
+ */
+export function waitSeverity(hours: number | null | undefined): "none" | "watch" | "late" | "critical" {
+    if (hours == null) return "none";
+    if (hours >= 72) return "critical";
+    if (hours >= 24) return "late";
+    if (hours >= 8) return "watch";
+    return "none";
+}

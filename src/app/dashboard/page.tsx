@@ -675,10 +675,10 @@ onClick={() => {
                   <TrendingUp className="h-5 w-5 text-brand dark:text-brand-300" strokeWidth={1.75} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-fg dark:text-fg-dark">Trends are not built yet</p>
+                  <p className="text-sm font-semibold text-fg dark:text-fg-dark">Portfolio history isn&apos;t tracked yet</p>
                   <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-fg-muted dark:text-fg-muted-dark">
-                    Nothing records portfolio history over time yet, so there is no trend to
-                    draw. Your rent ledger has every payment, dated, in the meantime.
+                    Nothing was recording it before, so there&apos;s nothing to chart yet.
+                    Your full payment history — every transaction, dated — lives in the Rent Ledger.
                   </p>
                 </div>
                 <Link href="/dashboard/rent-ledger" className="btn-secondary inline-flex items-center gap-1.5 !text-xs !py-2 !px-3.5">

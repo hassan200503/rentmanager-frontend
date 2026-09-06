@@ -89,7 +89,10 @@ export default function ArchivePage() {
 
     const { data: archivedProperties, isLoading: propsLoading } = useQuery({
         queryKey: ["properties", "archived"],
-        queryFn: () => propertyApi.list({ status: PropertyStatus.ARCHIVED }),
+        // This page paginates client-side over the full archived list below,
+        // so it needs every row in one response rather than the default
+        // page size.
+        queryFn: () => propertyApi.list({ status: PropertyStatus.ARCHIVED, size: 1000 }),
     });
 
     const { data: archivedUnits, isLoading: unitsLoading } = useQuery({
@@ -189,8 +192,8 @@ export default function ArchivePage() {
                             value={search}
                             onChange={(e) => {
                                 setSearch(e.target.value);
-                                setPropertyPage(0);
-                                setUnitPage(0);
+                                if (tab === "properties") setPropertyPage(0);
+                                else setUnitPage(0);
                             }}
                             placeholder={`Search ${tab === "properties" ? "properties" : "units"}...`}
                             className="form-input w-full !pl-10 text-sm"

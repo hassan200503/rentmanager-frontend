@@ -49,10 +49,21 @@ export interface MaintenanceRequestResponse {
 export interface MaintenanceSlaSummaryResponse {
     totalRequests: number;
     resolvedRequests: number;
+    /** How many requests got a first reply. The denominator for the two below. */
     respondedRequests: number;
+    /** Average first-reply time across ANSWERED requests only. */
     avgResponseHours: number;
     resolvedRequirementMet: boolean;
+    /**
+     * Punctuality among ANSWERED requests — of those replied to, how many
+     * within 24h. Not coverage: a landlord who answers two and ignores eight
+     * scores 100%. Never label this "response rate" on its own.
+     */
     responseRatePct: number | null;
+    /** Requests with no reply yet. Each one is a renter still waiting. */
+    awaitingFirstResponse: number;
+    /** Hours the longest-waiting unanswered request has been open; null when none. */
+    oldestAwaitingHours: number | null;
 }
 
 export interface MaintenanceListParams {

@@ -1,5 +1,6 @@
 // src/features/lease/utils/lease-csv-export.ts
-import {LeaseSummaryResponse} from "@/features/lease/types/lease-response";
+import { LeaseSummaryResponse } from "@/features/lease/types/lease-response";
+import { LeaseBalanceSummaryResponse } from "@/features/rentledger/types/rent-ledger-response";
 
 const escapeCsvCell = (value: string | number): string => {
     const str = String(value);
@@ -9,15 +10,32 @@ const escapeCsvCell = (value: string | number): string => {
     return str;
 };
 
-export const exportLeasesToCsv = (leases: LeaseSummaryResponse[], filename = "leases-export.csv") => {
-    const headers = ["Lease #", "Start Date", "End Date", "Rent (KES)", "Status"];
-    const rows = leases.map((lease) => [
-        lease.leaseNumber,
-        lease.startDate,
-        lease.endDate,
-        lease.rentAmount,
-        lease.status,
-    ]);
+export const exportLeasesToCsv = (
+    leases: LeaseSummaryResponse[],
+    filename = "leases-export.csv",
+    balanceByLease: Map<string, LeaseBalanceSummaryResponse> = new Map()
+) => {
+    const headers = [
+        "Tenant", "Phone", "Property", "Unit", "Lease #",
+        "Start Date", "End Date", "Rent (KES)", "Lease Status",
+        "Rent Status", "Outstanding (KES)",
+    ];
+    const rows = leases.map((lease) => {
+        const balance = balanceByLease.get(lease.id);
+        return [
+            lease.tenantFullName ?? "",
+            lease.tenantPhone ?? "",
+            lease.propertyName ?? "",
+            lease.unitLabel ?? "",
+            lease.leaseNumber,
+            lease.startDate,
+            lease.endDate,
+            lease.rentAmount,
+            lease.status,
+            balance?.status ?? (lease.status === "ACTIVE" || lease.status === "RENEWED" ? "PAID" : ""),
+            balance?.outstandingBalance ?? "0",
+        ];
+    });
 
     const csv = [headers, ...rows]
         .map((row) => row.map(escapeCsvCell).join(","))

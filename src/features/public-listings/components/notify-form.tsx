@@ -25,10 +25,10 @@ export function NotifyForm({ propertyName, id }: NotifyFormProps) {
                     <CheckCircle2 className="h-4.5 w-4.5" strokeWidth={2} />
                 </span>
                 <div className="min-w-0 text-left">
-                    <p className="text-sm font-semibold text-ink">You&apos;re on the list</p>
+                    <p className="text-sm font-semibold text-ink">Got it!</p>
                     <p className="mt-0.5 text-xs text-ink-muted leading-relaxed">
-                        We&apos;ll email <span className="font-medium text-ink">{email}</span> the
-                        moment a unit at {propertyName} opens up.
+                        We&apos;ll do our best to let you know when a unit opens at{" "}
+                        <span className="font-medium text-ink">{propertyName}</span>.
                     </p>
                 </div>
             </div>

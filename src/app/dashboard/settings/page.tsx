@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { useAuth, useUser } from "@clerk/nextjs";
 import {
@@ -75,9 +75,11 @@ export default function SettingsPage() {
     const { signOut } = useAuth();
     const { user: clerkUser } = useUser();
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
-
-    useState(() => { setMounted(true); });
+    const mounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
     if (isUserLoading) {
         return (

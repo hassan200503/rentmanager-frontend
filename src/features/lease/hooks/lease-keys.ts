@@ -5,4 +5,5 @@ export const leaseKeys = {
     all: ["leases"] as const,
     detail: (id: string) => ["leases", "detail", id],
     search: (params?: LeaseSearchParams) => ["leases", "search", params],
+    stats: ["leases", "stats"] as const,
 };

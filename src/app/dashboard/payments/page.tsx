@@ -37,6 +37,7 @@ import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { useDeleteTransaction } from "@/features/rentledger/hooks/use-delete-transaction";
 import { TaxComplianceBanner } from "@/features/settings/components/tax-compliance-banner";
+import { UnmatchedPaymentsPanel } from "@/features/rentledger/components/unmatched-payments-panel";
 import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
 
 const formatDate = (iso: string) => {
@@ -214,7 +215,9 @@ export default function PaymentsPage() {
     const [showSystem, setShowSystem] = useState(false);
     const [sortKey, setSortKey] = useState<SortKey>("occurredAt");
     const [sortDir, setSortDir] = useState<SortDir>("desc");
-    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [autoRefresh, setAutoRefresh] = useState(() => {
+        try { return localStorage.getItem("payments-auto-refresh") !== "false"; } catch { return true; }
+    });
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; amount: MoneyValue; date: string; tenantName: string | null } | null>(null);
     const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -390,7 +393,11 @@ export default function PaymentsPage() {
                             <input
                                 type="checkbox"
                                 checked={autoRefresh}
-                                onChange={(e) => setAutoRefresh(e.target.checked)}
+                                onChange={(e) => {
+                                    const val = e.target.checked;
+                                    setAutoRefresh(val);
+                                    try { localStorage.setItem("payments-auto-refresh", String(val)); } catch {}
+                                }}
                                 className="sr-only"
                             />
                             <span className={`relative inline-flex h-4 w-7 rounded-full transition-colors duration-300 ${autoRefresh ? "bg-brand" : "bg-ink/10"}`}>
@@ -410,6 +417,9 @@ export default function PaymentsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Unmatched Payments (owners/managers only) ── */}
+            {canDelete && <UnmatchedPaymentsPanel />}
 
             {/* ── Money Flow Pipeline ── */}
             <div className="bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden animate-fade-in-up">

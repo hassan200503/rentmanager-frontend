@@ -1,6 +1,6 @@
 // api/rent-ledger-api.ts
 import { rentLedgerEndpoints } from "./rent-ledger-endpoints";
-import { RentLedgerEntryResponse, RentLedgerStatus, RentTransactionResponse, RentTransactionSummaryResponse, UnmatchedPaymentResponse, ResolveUnmatchedPaymentRequest } from "../types/rent-ledger-response";
+import { LeaseBalanceSummaryResponse, RentLedgerEntryResponse, RentLedgerStatus, RentTransactionResponse, RentTransactionSummaryResponse, UnmatchedPaymentResponse, ResolveUnmatchedPaymentRequest } from "../types/rent-ledger-response";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { RentLedgerSummaryResponse } from "../types/rent-ledger-summary";
@@ -13,6 +13,20 @@ export const rentLedgerApi = {
     getSummary: async (): Promise<RentLedgerSummaryResponse> => {
         const { token } = await getAuthContext();
         return apiClient.get<RentLedgerSummaryResponse>(rentLedgerEndpoints.summary, token);
+    },
+
+    /**
+     * One entry per lease with money currently outstanding or an
+     * unresolved overpayment, for the whole tenant in one call — backs the
+     * Tenants page's rent-status column.
+     */
+    getBalanceByLease: async (): Promise<LeaseBalanceSummaryResponse[]> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<LeaseBalanceSummaryResponse[]>(
+            rentLedgerEndpoints.balanceByLease,
+            token,
+            tenantId
+        );
     },
 
     getById: async (entryId: string): Promise<RentLedgerEntryResponse> => {

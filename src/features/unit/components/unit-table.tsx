@@ -9,6 +9,8 @@ import { useUnitLifecycle } from "../hooks/use-unit-lifecycle";
 import { UnitStatus } from "../types/unit";
 import { Eye, PencilLine, CheckCircle2, PauseCircle, Home } from "lucide-react";
 import { formatCurrency } from "@/shared/utils/money";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
 
 type UnitTableProps = {
     propertyId: string;
@@ -42,6 +44,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
     const filters: UnitFilterState = { ...DEFAULT_UNIT_FILTERS, ...params };
     const { data, isLoading, error } = useUnitsQuery({ propertyId, ...filters });
     const router = useRouter();
+    const canWrite = useHasRole(WRITE_ROLES);
     const { activateUnit, deactivateUnit, isActivating, isDeactivating } =
         useUnitLifecycle();
 
@@ -138,7 +141,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                             </td>
                             <td className="px-5 py-4">
                                 <div className="flex items-center justify-end gap-1">
-                                    {canActivate && (
+                                    {canWrite && canActivate && (
                                         <button
                                             onClick={() => activateUnit(u.id)}
                                             disabled={isActivating}
@@ -148,7 +151,7 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                                             Activate
                                         </button>
                                     )}
-                                    {canDeactivate && (
+                                    {canWrite && canDeactivate && (
                                         <button
                                             onClick={() => deactivateUnit(u.id)}
                                             disabled={isDeactivating}
@@ -169,16 +172,18 @@ export const UnitTable = ({ propertyId, params }: UnitTableProps) => {
                                             <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
                                             <span className="text-xs font-medium">View</span>
                                         </button>
-                                        <button
-                                            onClick={() =>
-                                                router.push(`/dashboard/properties/${propertyId}/units/${u.id}/edit`)
-                                            }
-                                            className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-ink-muted hover:text-brand hover:bg-brand-50 transition-all duration-200 group"
-                                            title="Edit unit"
-                                        >
-                                            <PencilLine className="w-3.5 h-3.5" strokeWidth={1.5} />
-                                            <span className="text-xs font-medium">Edit</span>
-                                        </button>
+                                        {canWrite && (
+                                            <button
+                                                onClick={() =>
+                                                    router.push(`/dashboard/properties/${propertyId}/units/${u.id}/edit`)
+                                                }
+                                                className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-ink-muted hover:text-brand hover:bg-brand-50 transition-all duration-200 group"
+                                                title="Edit unit"
+                                            >
+                                                <PencilLine className="w-3.5 h-3.5" strokeWidth={1.5} />
+                                                <span className="text-xs font-medium">Edit</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </td>

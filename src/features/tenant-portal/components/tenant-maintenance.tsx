@@ -19,6 +19,7 @@ import {
     Search,
     Building2,
     MessageSquare,
+    MessageSquareText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -71,6 +72,69 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 const OPEN_STATUSES = new Set(["SUBMITTED", "IN_REVIEW", "SCHEDULED", "IN_PROGRESS"]);
 
 const isOpenStatus = (status: string) => OPEN_STATUSES.has(status);
+
+/**
+ * The journey a request travels, in order. CANCELLED is deliberately absent:
+ * it is an exit, not a stage, and drawing it as one would imply every request
+ * passes through it.
+ */
+const PROGRESS_STAGES = ["SUBMITTED", "IN_REVIEW", "SCHEDULED", "IN_PROGRESS", "COMPLETED"] as const;
+
+/**
+ * How far along a request is, 0-based, or null when the concept does not
+ * apply (cancelled).
+ *
+ * <p>The page has always promised "follow its progress through to completion"
+ * and then shown a single status word, which tells a renter where they are
+ * but not how far that is from done. A four-segment track answers "how much
+ * longer" at a glance, which is the actual question.
+ */
+function progressIndex(status: string): number | null {
+    const i = PROGRESS_STAGES.indexOf(status as (typeof PROGRESS_STAGES)[number]);
+    return i === -1 ? null : i;
+}
+
+/** Whole days since an ISO timestamp, floored. */
+function daysSince(iso: string): number {
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) return 0;
+    return Math.floor((Date.now() - parsed.getTime()) / 86_400_000);
+}
+
+/**
+ * A slim track showing how far a request has travelled.
+ *
+ * Segments rather than a percentage bar: the stages are discrete and named,
+ * and a smooth 60% would imply a precision the data does not have.
+ */
+function ProgressTrack({ status }: { status: string }) {
+    const index = progressIndex(status);
+    if (index == null) return null;
+
+    return (
+        <div
+            className="mt-2.5 flex items-center gap-1"
+            role="img"
+            aria-label={`Stage ${index + 1} of ${PROGRESS_STAGES.length}: ${STATUS_META[status]?.label ?? status}`}
+        >
+            {PROGRESS_STAGES.map((stage, i) => {
+                const done = i <= index;
+                return (
+                    <span
+                        key={stage}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                            done
+                                ? index === PROGRESS_STAGES.length - 1
+                                    ? "bg-ink-muted/40 dark:bg-white/20"
+                                    : "bg-brand dark:bg-brand-400"
+                                : "bg-ink/[0.07] dark:bg-white/[0.08]"
+                        }`}
+                    />
+                );
+            })}
+        </div>
+    );
+}
 
 /**
  * "PEST_CONTROL" -> "Pest control". Previously rendered via
@@ -139,6 +203,17 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
     const openCount = useMemo(() => ordered.filter((r) => isOpenStatus(r.status)).length, [ordered]);
     const resolvedCount = ordered.length - openCount;
 
+    // The longest anyone has been left without a reply. Shown because "5 still
+    // open" is a count, not a situation: five requests opened this morning and
+    // five untouched since August are the same number and completely
+    // different circumstances.
+    const longestWaitDays = useMemo(() => {
+        const waits = ordered
+            .filter((r) => isOpenStatus(r.status) && r.firstLandlordResponseAt == null)
+            .map((r) => daysSince(r.createdAt));
+        return waits.length ? Math.max(...waits) : 0;
+    }, [ordered]);
+
     const visible = useMemo(() => {
         if (filter === "open") return ordered.filter((r) => isOpenStatus(r.status));
         if (filter === "resolved") return ordered.filter((r) => !isOpenStatus(r.status));
@@ -202,11 +277,12 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                         <div
                             role="tablist"
                             aria-label="Filter requests by status"
-                            className="inline-flex items-center gap-1 rounded-xl p-1"
-                            style={{
-                                background: "color-mix(in srgb, var(--color-ink) 5%, transparent)",
-                                border: "1px solid rgba(0,0,0,0.06)",
-                            }}
+                            /* Was an inline style with a hardcoded
+                               rgba(0,0,0,0.06) border, which is invisible on a
+                               dark ground — inline styles cannot carry a
+                               dark: variant, so the control lost its edge
+                               entirely in dark mode. Tokens fix it in both. */
+                            className="inline-flex items-center gap-1 rounded-xl border border-ink/[0.06] bg-ink/[0.04] p-1 dark:border-white/[0.08] dark:bg-white/[0.05]"
                         >
                             {([
                                 { id: "all" as const, label: "All", count: ordered.length },
@@ -237,9 +313,21 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                         </div>
 
                         <p className="text-xs text-ink-muted dark:text-ink-muted-dark">
-                            {openCount === 0
-                                ? "Nothing outstanding"
-                                : `${openCount} still open`}
+                            {openCount === 0 ? (
+                                "Nothing outstanding"
+                            ) : (
+                                <>
+                                    {openCount} still open
+                                    {longestWaitDays >= 7 && (
+                                        <>
+                                            <span aria-hidden="true" className="mx-1.5 text-ink-subtle/50">·</span>
+                                            <span className="font-medium text-warning-dark dark:text-warning">
+                                                longest waiting {longestWaitDays} days
+                                            </span>
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </p>
                     </div>
 
@@ -265,19 +353,40 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                                 const open = isOpenStatus(req.status);
                                 const age = relativeAge(req.createdAt);
 
+                                // Whether anyone has actually come back to
+                                // them. Until now every row looked identical
+                                // whether the landlord had replied or had not
+                                // touched it in 34 days — the renter had to
+                                // open each request to find out, and a reply
+                                // could sit unread indefinitely.
+                                const replied = Boolean(req.notes?.trim());
+                                const awaitingReply =
+                                    req.firstLandlordResponseAt == null && open;
+                                const waitingDays = awaitingReply ? daysSince(req.createdAt) : 0;
+                                // A long silence earns visual weight. Amber,
+                                // not red: the renter has done nothing wrong,
+                                // and alarming them about their landlord's
+                                // delay helps nobody. It marks the row as
+                                // worth chasing, which is the useful signal.
+                                const overdue = awaitingReply && waitingDays >= 7;
+
                                 return (
                                     <button
                                         key={req.id}
                                         type="button"
                                         onClick={() => onSelect(req.id)}
-                                        className={`tenant-panel !p-4 w-full text-left flex items-center gap-4 transition-all duration-200 group hover:-translate-y-0.5 ${
+                                        className={`tenant-panel !p-4 w-full text-left flex items-start gap-4 transition-all duration-200 group hover:-translate-y-0.5 hover:shadow-card ${
                                             open ? "" : "opacity-[0.72] hover:opacity-100"
+                                        } ${
+                                            overdue
+                                                ? "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-warning"
+                                                : ""
                                         }`}
                                     >
                                         {/* Open requests get the brand-tinted icon; resolved ones
                                             go neutral so the eye lands on what still needs action. */}
                                         <div
-                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                                            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                                                 open
                                                     ? "bg-brand-50 text-brand dark:bg-brand-900/30 dark:text-brand-400"
                                                     : "bg-ink/[0.05] text-ink-muted dark:bg-white/[0.07] dark:text-ink-muted-dark"
@@ -300,9 +409,38 @@ function MaintenanceList({ onNew, onSelect }: { onNew: () => void; onSelect: (id
                                                     </>
                                                 )}
                                             </p>
+
+                                            {replied ? (
+                                                <p className="mt-1.5 flex items-start gap-1.5 text-xs text-brand dark:text-brand-400">
+                                                    <MessageSquareText className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                                                    <span className="line-clamp-1 font-medium">
+                                                        {req.notes?.trim()}
+                                                    </span>
+                                                </p>
+                                            ) : awaitingReply ? (
+                                                /* Quantified, not repeated. Four identical
+                                                   sentences reading "Waiting for your landlord
+                                                   to respond" told the renter nothing they
+                                                   could act on; the number of days is the part
+                                                   that decides whether to chase. */
+                                                <p
+                                                    className={`mt-1.5 inline-flex items-center gap-1.5 text-xs ${
+                                                        overdue
+                                                            ? "font-medium text-warning-dark dark:text-warning"
+                                                            : "text-ink-subtle dark:text-ink-subtle-dark"
+                                                    }`}
+                                                >
+                                                    <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                                                    {waitingDays < 1
+                                                        ? "No reply yet"
+                                                        : `No reply yet · ${waitingDays} day${waitingDays === 1 ? "" : "s"}`}
+                                                </p>
+                                            ) : null}
+
+                                            {open && <ProgressTrack status={req.status} />}
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-2">
+                                        <div className="flex shrink-0 items-center gap-2 pt-0.5">
                                             {/* Priority is only meaningful while something is still
                                                 open — on a closed request it is noise. */}
                                             {open && <span className={priorityMeta.className}>{priorityMeta.label}</span>}
@@ -534,12 +672,36 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                     )}
                 </div>
 
-                {request.notes && (
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark mb-2">Notes</p>
-                        <p className="text-sm text-fg dark:text-fg-dark leading-relaxed">{request.notes}</p>
+                {/* This is the landlord speaking to the renter, so it is
+                    labelled as such. "Notes" read like a filing annotation and
+                    buried the one part of the screen that answers the question
+                    the renter actually came with. */}
+                {request.notes?.trim() ? (
+                    <div className="rounded-xl border border-brand/25 bg-brand-50/60 p-4 dark:border-brand-400/25 dark:bg-brand-900/15">
+                        <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand dark:text-brand-400">
+                            <MessageSquareText className="h-3.5 w-3.5" strokeWidth={2} />
+                            Reply from your landlord
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg dark:text-fg-dark">
+                            {request.notes}
+                        </p>
+                        {request.firstLandlordResponseAt && (
+                            <p className="mt-2 text-xs text-fg-subtle dark:text-fg-subtle-dark">
+                                First responded {formatDate(request.firstLandlordResponseAt)}
+                            </p>
+                        )}
                     </div>
-                )}
+                ) : isOpenStatus(request.status) ? (
+                    /* Silence is information too. Without this the renter
+                       cannot tell "seen and being handled" from "nobody has
+                       looked at this in a month". */
+                    <div className="rounded-xl border border-border/70 bg-surface-sunk/40 p-4 dark:border-border-dark/70 dark:bg-white/[0.02]">
+                        <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
+                            Your landlord hasn&#39;t replied to this yet. You&#39;ll get an SMS as
+                            soon as they do.
+                        </p>
+                    </div>
+                ) : null}
             </div>
 
             {/* The "Timeline" panel that used to sit here has been removed. It

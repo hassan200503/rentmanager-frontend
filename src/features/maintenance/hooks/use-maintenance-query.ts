@@ -66,8 +66,8 @@ export const useMarkAllRequestsViewedMutation = () => {
 export const useUpdateMaintenanceStatusMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, status }: { id: string; status: string }) =>
-            maintenanceApi.updateStatus(id, status),
+        mutationFn: ({ id, status, note }: { id: string; status: string; note?: string }) =>
+            maintenanceApi.updateStatus(id, status, note),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: maintenanceKeys.all });
         },

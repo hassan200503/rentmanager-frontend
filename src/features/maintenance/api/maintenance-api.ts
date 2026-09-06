@@ -59,11 +59,20 @@ export const maintenanceApi = {
         return response.count;
     },
 
-    updateStatus: async (id: string, status: string): Promise<MaintenanceRequestResponse> => {
+    /**
+     * @param note optional message for the renter. It is delivered to them by
+     *             SMS and shown in their portal — it is the only way the
+     *             landlord can tell them anything beyond a status word.
+     */
+    updateStatus: async (
+        id: string,
+        status: string,
+        note?: string,
+    ): Promise<MaintenanceRequestResponse> => {
         const { token, tenantId } = await getAuthContext();
         return apiClient.patch<MaintenanceRequestResponse>(
             `${endpoints.maintenance}/${id}/status`,
-            { status },
+            { status, note: note?.trim() ? note.trim() : null },
             token,
             tenantId,
         );

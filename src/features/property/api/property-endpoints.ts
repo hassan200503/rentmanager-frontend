@@ -6,7 +6,6 @@ export const propertyEndpoints = {
     byId: (id: string) => `${base}/${id}`,
     // Added update endpoint – same as byId for PUT/PATCH requests
     update: (id: string) => `${base}/${id}`,
-    byStatus: (status: string) => `${base}/status/${status}`,
     activate: (id: string) => `${base}/${id}/activate`,
     archive: (id: string) => `${base}/${id}/archive`,
     remove: (id: string) => `${base}/${id}`,

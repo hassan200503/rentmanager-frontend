@@ -194,7 +194,42 @@ export default function LeaseDetailPage() {
                             date: formatDateTime(lease.renewedAt),
                             detail: undefined,
                         }
-                        : null;
+                        : lease.status === "SUSPENDED"
+                            ? {
+                                tone: "closed" as const,
+                                title: "Lease Suspended",
+                                date: null,
+                                detail: "Rent charges are paused while this lease is suspended.",
+                            }
+                            : lease.status === "DRAFT"
+                                ? {
+                                    tone: "info" as const,
+                                    title: "Draft",
+                                    date: null,
+                                    detail: "This lease is a draft. Use the actions above to approve it and move it through the workflow.",
+                                }
+                                : lease.status === "PENDING_APPROVAL"
+                                    ? {
+                                        tone: "info" as const,
+                                        title: "Pending approval",
+                                        date: null,
+                                        detail: "Waiting for review. Use the actions above to mark as Awaiting Deposit or reject.",
+                                    }
+                                    : lease.status === "AWAITING_DEPOSIT"
+                                        ? {
+                                            tone: "info" as const,
+                                            title: "Awaiting deposit",
+                                            date: null,
+                                            detail: "Activate this lease once the security deposit has been received.",
+                                        }
+                                        : lease.status === "PENDING_ACTIVATION"
+                                            ? {
+                                                tone: "info" as const,
+                                                title: "Pending activation",
+                                                date: null,
+                                                detail: "Activation will start the billing cycle and send the renter their welcome notice.",
+                                            }
+                                            : null;
 
     const initials = (lease.tenantFullName || "")
         .split(" ")
@@ -335,7 +370,9 @@ export default function LeaseDetailPage() {
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-ink">{statusNotice.title}</p>
-                        <p className="text-xs text-ink-muted mt-0.5">{statusNotice.date}</p>
+                        {statusNotice.date && (
+                            <p className="text-xs text-ink-muted mt-0.5">{statusNotice.date}</p>
+                        )}
                         {statusNotice.detail && (
                             <p className="text-sm text-ink mt-1.5">{statusNotice.detail}</p>
                         )}

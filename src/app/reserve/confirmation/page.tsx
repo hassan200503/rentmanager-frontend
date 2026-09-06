@@ -56,7 +56,7 @@ function depositLabel(status: ReservationStatus): { title: string; description: 
 
 export default function ReservationConfirmedPage() {
     return (
-        <Suspense fallback={<main className="min-h-screen bg-canvas" />}>
+        <Suspense fallback={<main className="min-h-screen bg-canvas dark:bg-canvas-dark" />}>
             <ReservationConfirmedContent />
         </Suspense>
     );
@@ -126,7 +126,7 @@ function ReservationConfirmedContent() {
 
     if (!reservationId) {
         return (
-            <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
+            <main className="min-h-screen bg-canvas dark:bg-canvas-dark py-12 px-4 flex items-center">
                 <div className="mx-auto max-w-md w-full">
                     <div className="card p-8 text-center">
                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-ink/[0.05]">
@@ -153,7 +153,7 @@ function ReservationConfirmedContent() {
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
+            <main className="min-h-screen bg-canvas dark:bg-canvas-dark py-12 px-4 flex items-center">
                 <div className="mx-auto max-w-md w-full">
                     <div className="card p-8 text-center">
                         <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand mb-4" strokeWidth={2} />
@@ -166,7 +166,7 @@ function ReservationConfirmedContent() {
 
     if (error || !detail) {
         return (
-            <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
+            <main className="min-h-screen bg-canvas dark:bg-canvas-dark py-12 px-4 flex items-center">
                 <div className="mx-auto max-w-md w-full">
                     <div className="card p-8 text-center">
                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10">
@@ -211,7 +211,7 @@ function ReservationConfirmedContent() {
     };
 
     return (
-        <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
+        <main className="min-h-screen bg-canvas dark:bg-canvas-dark py-12 px-4 flex items-center">
             <div className="mx-auto max-w-md w-full">
                 <div className="card p-8 text-center" role="status">
                     <div className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full ${bgMap[deposit.icon]}`}>

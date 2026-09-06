@@ -5,6 +5,7 @@ const base = "/rent-ledger";
 
 export const rentLedgerEndpoints = {
     summary: `${base}/summary`,
+    balanceByLease: `${base}/balance-by-lease`,
     byId: (entryId: string) => `${base}/entries/${entryId}`,
     byLease: (leaseId: string) => `${base}/leases/${leaseId}/entries`,
     byStatus: (status: RentLedgerStatus) => `${base}/entries/status/${status}`,
