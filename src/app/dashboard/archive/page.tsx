@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
     Archive,
@@ -94,6 +94,21 @@ export default function ArchivePage() {
         // page size.
         queryFn: () => propertyApi.list({ status: PropertyStatus.ARCHIVED, size: 1000 }),
     });
+
+    // Fetch all properties so archived units (which may belong to active
+    // properties) can show a human-readable name instead of a raw UUID.
+    const { data: allProperties } = useQuery({
+        queryKey: ["properties", "lookup"],
+        queryFn: () => propertyApi.list({ size: 1000 }),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const propertyNameMap = useMemo(() => {
+        const map = new Map<string, string>();
+        (allProperties?.content ?? []).forEach((p) => map.set(p.propertyId, p.name));
+        (archivedProperties?.content ?? []).forEach((p) => map.set(p.propertyId, p.name));
+        return map;
+    }, [allProperties, archivedProperties]);
 
     const { data: archivedUnits, isLoading: unitsLoading } = useQuery({
         queryKey: ["units", "archived"],
@@ -315,7 +330,7 @@ export default function ArchivePage() {
                                                     Unit {u.unitNumber}{u.label ? ` — ${u.label}` : ""}
                                                 </p>
                                                 <p className="text-xs text-ink-muted/70 mt-0.5">
-                                                    Property ID: {u.propertyId}
+                                                    {propertyNameMap.get(u.propertyId) ?? `Property ${u.propertyId.slice(0, 8)}…`}
                                                 </p>
                                             </div>
                                         </div>

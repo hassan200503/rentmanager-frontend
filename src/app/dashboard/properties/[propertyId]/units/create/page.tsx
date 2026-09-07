@@ -1,20 +1,34 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useRef } from "react";
 import { ArrowLeft, DoorOpen } from "lucide-react";
 import { useCreateUnit } from "@/features/unit/hooks/use-create-unit";
 import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest } from "@/features/unit/types/unit-request";
 import { ApiError } from "@/lib/api/errors";
+import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
+import Loading from "@/app/loading";
 
 export default function CreateUnitPage() {
     const router = useRouter();
     const params = useParams();
     const propertyId = params.propertyId as string;
-
+    const { isLoading: isUserLoading } = useCurrentUser();
+    const canWrite = useHasRole(WRITE_ROLES);
     const { createUnit, isLoading } = useCreateUnit();
     const setUnitNumberError = useRef<((msg: string) => void) | null>(null);
+
+    useEffect(() => {
+        if (!isUserLoading && !canWrite) {
+            router.replace(`/dashboard/properties/${propertyId}`);
+        }
+    }, [isUserLoading, canWrite, router, propertyId]);
+
+    if (isUserLoading) return <Loading />;
+    if (!canWrite) return null;
 
     const handleSubmit = async (data: CreateUnitRequest, imageFile?: File) => {
         try {

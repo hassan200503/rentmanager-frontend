@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { PropertyForm } from "@/features/property/components/property-form";
@@ -8,10 +9,25 @@ import { CreatePropertyRequest } from "@/features/property/types/property-reques
 import { propertyMediaApi } from "@/features/property/api/property-media-api";
 import { toast } from "sonner";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
+import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
+import Loading from "@/app/loading";
 
 export default function CreatePropertyPage() {
     const router = useRouter();
+    const { isLoading: isUserLoading } = useCurrentUser();
+    const canWrite = useHasRole(WRITE_ROLES);
     const { createProperty, isLoading } = useCreateProperty();
+
+    useEffect(() => {
+        if (!isUserLoading && !canWrite) {
+            router.replace("/dashboard/properties");
+        }
+    }, [isUserLoading, canWrite, router]);
+
+    if (isUserLoading) return <Loading />;
+    if (!canWrite) return null;
 
     const handleSubmit = async (data: CreatePropertyRequest, imageFile?: File) => {
         const result = await createProperty(data);

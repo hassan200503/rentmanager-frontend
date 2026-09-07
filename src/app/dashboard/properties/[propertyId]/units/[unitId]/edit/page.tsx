@@ -9,12 +9,23 @@ import { UnitForm } from "@/features/unit/components/unit-form";
 import { CreateUnitRequest, UpdateUnitRequest } from "@/features/unit/types/unit-request";
 import Loading from "@/app/loading";
 import { toMoneyNumber } from "@/shared/utils/money";
+import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
 
 export default function EditUnitPage() {
     const router = useRouter();
     const params = useParams();
     const propertyId = params.propertyId as string;
     const unitId = params.unitId as string;
+    const { isLoading: isUserLoading } = useCurrentUser();
+    const canWrite = useHasRole(WRITE_ROLES);
+
+    useEffect(() => {
+        if (!isUserLoading && !canWrite) {
+            router.replace(`/dashboard/properties/${propertyId}/units/${unitId}`);
+        }
+    }, [isUserLoading, canWrite, router, propertyId, unitId]);
     const {
         data: unit,
         isLoading: loadingUnit,

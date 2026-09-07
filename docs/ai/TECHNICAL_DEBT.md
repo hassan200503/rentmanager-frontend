@@ -108,10 +108,18 @@ autocomplete cannot revive it; only an explanatory comment remains in
 Declared, imported by nothing. Two state libraries remain, both used
 (React Query, Zustand).
 
-### TD-105 · gsap loads eagerly on the landing page (~107 KB)
-**Verified in browser** at `scrollY: 0`. Pulled in by `HowItWorksSection`,
-which sits high on the page. Deferring it changes an animation the owner may
-want — **needs a product decision, not an engineering one.**
+### TD-105 · RESOLVED 2026-09-07 — gsap deferred from the initial bundle
+
+`HowItWorksSection` called `gsap.registerPlugin(ScrollTrigger)` at module
+scope, so the static import pulled ~107 KB of gsap into the initial chunk
+regardless of scroll position.
+
+**Fixed:** `HowItWorksSection` is now a `next/dynamic` import (ssr: false)
+wrapped in `DeferUntilNearViewport` (rootMargin: "400px 0px"), matching the
+pattern already applied to the three.js map. The chunk is not fetched until
+the section is near the viewport; the 400 px pre-load buffer means it arrives
+before the user scrolls that far, so the animation is unaffected. A
+`save-data` visitor skips it entirely.
 
 ### TD-106 · RESOLVED 2026-09-02 — phantom `tenant_settings` cluster removed
 It was four dead classes, not one: the `@Entity` mapped to a table no
@@ -295,10 +303,8 @@ redefine "OWNER or MANAGER" again.
 
 | ID | Item | Why it is still open |
 |----|------|----------------------|
-| TD-105 | gsap loads eagerly on the landing page (~107 KB at `scrollY: 0`) | Deferring it changes an animation. **Product decision, not engineering.** |
-| TD-117 | Deposit path registers rent-ledger events and publishes none | Low blast radius; affects only webhooks and audit stream. Tax consequences unclear. |
-| TD-120 | Rent collection model is PLATFORM_CUSTODY — requires CBK authorisation | Licensing decision. UI correctly reads `collectionMode` from the API. |
-| TD-121 | No residency dimension — non-resident landlords filed at the wrong WHT rate | Product/legal decision needed before code is written. |
+| TD-120 | `PLATFORM_CUSTODY` mode requires CBK authorisation + Safaricom consent | Licensing decision. UI is now accurate: reads `collectionMode` from the API; payout card shows neutral info (not amber warning) for DIRECT landlords; daraja config subtitle is mode-neutral. |
+| TD-121 | No residency dimension — non-resident landlords filed at wrong WHT rate | Product/legal decision: residency field on landlord + rate-schedule dimension needed. UI now states the resident-only scope and directs non-residents to a tax advisor. |
 
 Previously open items now resolved as of 2026-09-07:
 - ~~TD-107~~ — frontend coverage: 103 tests; money and access-control paths covered
@@ -306,6 +312,9 @@ Previously open items now resolved as of 2026-09-07:
 - ~~TD-118~~ — `ClerkWebhookController` at `POST /api/v1/webhooks/clerk` (Svix-verified)
 - ~~TD-126~~ — IT suite wired (Maven Failsafe); `markAwaitingDeposit()` inserted in all 11 broken paths
 - ~~TD-128~~ — V91 + domain/DTO change to `Instant` (2026-09-06)
+- ~~TD-105~~ — `HowItWorksSection` (gsap + ScrollTrigger, ~107 KB) now deferred behind `DeferUntilNearViewport` + `next/dynamic`, same pattern as the three.js map
+- ~~TD-117~~ — deposit path drains `RentDuePosted` before `save()` and publishes it; `RentPaymentApplied` deliberately suppressed (deposits are not rental income — firing it would generate a tax invoice)
+- ~~PropertyCommandController STAFF gap~~ — `properties/create`, `properties/[id]/units/create`, and `properties/[id]/units/[id]/edit` redirect STAFF to the read-only view via `useHasRole(WRITE_ROLES)`
 
 
 ### TD-113 · RESOLVED 2026-09-02 — no CI existed in either repository
@@ -426,32 +435,21 @@ next door. `RentPaymentCallbackService` (two statements) and
 a phone or msisdn found no others.
 
 
-### TD-117 · OPEN — the deposit path registers rent-ledger events and publishes none
+### TD-117 · RESOLVED 2026-09-07 — deposit path now publishes RentDuePosted
 
-`RentLedgerApplicationService` (the block around lines 207-248, deposit
-posting) creates or loads an entry, applies a deposit transaction, and returns
-without ever calling `publish(...)`. Events registered on the aggregate by
-`RentLedgerEntry.create(...)` and `applyTransaction(...)` are therefore
-discarded when the object goes out of scope.
+`RentLedgerApplicationService.postDeposit` (the isEmpty branch) created a new
+`RentLedgerEntry` via `RentLedgerEntry.create()`, which registers
+`RentDuePosted` on the aggregate. `save()` returns a rehydrated instance with
+an empty event list, so the event was silently lost. The existing `postCharge`
+method already had the correct drain-before-save pattern.
 
-**Distinct from ADR-0022.** That fixed four sites that *tried* to publish and
-failed because they drained the wrong instance. This one never attempts to
-publish at all, which reads more like an omission than a bug — but it could
-equally be deliberate, since a deposit is not rent and firing
-`RentPaymentApplied` for it would generate a tax invoice against
-non-rental income.
-
-**Why it was left alone.** Deciding whether a deposit should raise the same
-events as a rent payment is a domain question with tax consequences
-(`RentPaymentAppliedTaxInvoiceListener` is downstream, and MRI applies to
-rental income, not refundable deposits). Wiring it up "to be consistent"
-could start generating tax invoices for money that is not income. That needs
-an answer before code.
-
-**Where to look:** `RentLedgerApplicationService` deposit path;
-`RentPaymentAppliedTaxInvoiceListener`; `MonthlyRentalFilingComputationService`
-and the `ResidentialRentPaymentAggregationPort` it reads through, which is
-what decides whether the deposit would land in an MRI filing.
+**Fixed:** `pending = entry.pullDomainEvents()` is called BEFORE `save()`,
+and `publish(entry, pending)` is called after all work. `RentPaymentApplied`
+is deliberately NOT published for deposits — it is downstream of
+`RentPaymentAppliedTaxInvoiceListener`, which generates an MRI tax invoice.
+Deposits are refundable and are not rental income; filing them would
+mis-state the landlord's tax position. `RentDuePosted` carries no tax
+consequence and is safe to emit.
 
 
 ### TD-118 · RESOLVED 2026-09-07 — ClerkWebhookController backfills email on user.updated
@@ -590,6 +588,13 @@ it the default.
    and passkey — so this is smaller than it sounds. Commission would then need
    collecting some other way.
 
+**Additional UI fixes 2026-09-07.** The unconfigured payout-number state is
+now shown as a neutral info banner (Info icon, muted border) rather than an
+amber warning (AlertTriangle), because a missing payout number is expected and
+correct for DIRECT landlords — the amber implied it was a problem to solve.
+The `/daraja/config` page subtitle was changed from hardcoded DIRECT-only copy
+to mode-neutral copy that does not imply a specific model.
+
 See `PRODUCTION_CHECKLIST.md` §1.
 
 
@@ -628,6 +633,14 @@ that is worse. The work is:
 **Until this exists, the honest position is that RentManager computes the
 resident MRI regime only**, and that should be stated to landlords rather than
 left implied.
+
+**UI disclosure added 2026-09-07.** `tax-compliance-card.tsx` and
+`tax-compliance-banner.tsx` now qualify every MRI rate mention with "resident
+landlords — Finance Act 2023" and add a sentence directing non-resident
+landlords to ITA section 6B and a tax advisor. No rate is asserted for the
+non-resident regime (the rate conflict between 10%, 30% and 15% in the
+official commentary means asserting one would likely be wrong). The system
+change (items 1–4 above) remains open and requires a product decision.
 
 
 ### TD-122 · RESOLVED 2026-09-04 — no JPA load of a Tenant could succeed

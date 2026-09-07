@@ -76,19 +76,14 @@ Summary of what changed, because several fixes are easy to undo by accident:
   `features/user/lib/roles.ts` and `<RequireRole>` from
   `features/user/components/require-role.tsx`, are the reusable pattern for
   hiding a write control a role can't use — reach for these instead of a new
-  ad hoc `isOwner`/`canX` boolean. `PropertyCommandController`'s equivalent
-  frontend gap is still unfixed (its buttons are still shown unconditionally
-  to STAFF); it should reuse `WRITE_ROLES` when it's picked up.
+  ad hoc `isOwner`/`canX` boolean. The `PropertyCommandController` frontend
+  gap is now fixed: `properties/create`, `properties/[id]/units/create`, and
+  `properties/[id]/units/[id]/edit` all redirect STAFF to the read-only view
+  via `useHasRole(WRITE_ROLES)`.
 
 Still open, and why:
 
-1. **The landing page still loads gsap eagerly (~107 KB at `scrollY: 0`)**,
-   via `HowItWorksSection`. The three.js map (~2.4 MB in production chunks) is
-   already deferred behind an IntersectionObserver and skipped under
-   `save-data`. Deferring gsap too would change an animation — that is a
-   product call.
-
-2. **Test coverage is thin** — 95 tests across ~500 source files. Money and
+1. **Test coverage is thin** — 95 tests across ~500 source files. Money and
    access-control paths first; coverage percentage is not the goal.
 
 ## How money actually moves (read before touching any payment UI)

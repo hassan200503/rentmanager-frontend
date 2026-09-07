@@ -48,9 +48,11 @@ function TaxComplianceForm({
                 Tax &amp; compliance
             </h2>
             <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                Your KRA identity for invoices and returns. Residential rent pays MRI
-                (7.5% final tax); commercial rent on VAT-registered accounts attracts
-                16% VAT.
+                Your KRA identity for invoices and returns. Residential rent pays MRI at
+                7.5% (final tax, resident landlords — Finance Act 2023). Non-resident
+                landlords are subject to a separate regime under ITA section 6B; confirm
+                your rate with a tax advisor. Commercial rent on VAT-registered accounts
+                attracts 16% VAT.
             </p>
 
             <div className="mt-4">

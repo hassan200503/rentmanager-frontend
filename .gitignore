@@ -53,6 +53,9 @@ next-env.d.ts
 
 session-ses_*.md
 
+# Audit/debug scripts and screenshots generated during dev sessions
+*-audit.mjs
+/screenshots/
 
 # Local docs — not tracked
 docs/

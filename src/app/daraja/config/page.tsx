@@ -28,8 +28,7 @@ function PageHeader() {
                 <div>
                     <h1 className="page-title mb-1">Payment settings</h1>
                     <p className="page-subtitle mb-0">
-                        Your renters&rsquo; payments go straight into your own M-Pesa. These
-                        are the credentials that make that work.
+                        Configure your M-Pesa credentials and payment routing.
                     </p>
                 </div>
             </div>
