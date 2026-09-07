@@ -479,20 +479,25 @@ export const TenantLandlordPage = () => {
                             tone="amber"
                             label="Emergency Contact"
                             value={
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono-nums text-sm font-medium text-fg dark:text-fg-dark">
+                                            {lease.emergencyContactPhone}
+                                        </span>
+                                        {lease.emergencyContact24h && (
+                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success ring-1 ring-inset ring-success/20">
+                                                <Clock className="h-2.5 w-2.5" strokeWidth={2.5} />
+                                                24/7
+                                            </span>
+                                        )}
+                                    </div>
                                     <a
                                         href={`tel:${lease.emergencyContactPhone}`}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-border dark:border-border-dark px-2.5 py-1.5 text-sm font-medium text-fg dark:text-fg-dark hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/40 dark:hover:bg-brand-900/15 transition-all"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-danger-bg dark:bg-danger-bg-dark border border-danger/20 dark:border-danger/30 px-3 py-1.5 text-xs font-semibold text-danger-dark dark:text-danger hover:bg-danger/15 dark:hover:bg-danger/20 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40 focus-visible:ring-offset-2"
                                     >
-                                        <PhoneCall className="h-3.5 w-3.5 text-success-dark dark:text-success" strokeWidth={2} />
-                                        {lease.emergencyContactPhone}
+                                        <Phone className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                        Call Now
                                     </a>
-                                    {lease.emergencyContact24h && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-success-dark dark:text-success">
-                                            <Clock className="h-3 w-3" strokeWidth={2} />
-                                            24/7
-                                        </span>
-                                    )}
                                 </div>
                             }
                         />
