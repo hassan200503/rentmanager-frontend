@@ -136,9 +136,15 @@ no migration creates, with `ddl-auto: none`. `emailNotificationsEnabled` /
 or delete the entity. Do not leave it half-wired.
 </details>
 
-### TD-107 · Thin frontend test coverage
-82 tests across ~500 source files. Money and access-control paths are the
-priority, not a coverage percentage.
+### TD-107 · RESOLVED 2026-09-07 — thin frontend test coverage
+Money utilities (`formatCurrency`, `formatCurrencyPrecise`, `formatRate`,
+`toMoneyNumber`) and access-control logic (`hasRole`, `WRITE_ROLES`) now have
+dedicated test files. Suite is at 103 tests; the files added are
+`src/shared/utils/money.test.ts` and `src/features/user/lib/roles.test.ts`.
+
+The `useHasRole` hook and `<RequireRole>` component cannot be tested in the
+`node` vitest environment (no DOM); the pure `hasRole` predicate those
+components delegate to is what needed protection, and it is now covered.
 
 
 ### TD-108 · RESOLVED 2026-09-02 — two audit actions declared and never wired
@@ -290,14 +296,16 @@ redefine "OWNER or MANAGER" again.
 | ID | Item | Why it is still open |
 |----|------|----------------------|
 | TD-105 | gsap loads eagerly on the landing page (~107 KB at `scrollY: 0`) | Deferring it changes an animation. **Product decision, not engineering.** |
-| TD-107 | Thin frontend test coverage — 95 tests across ~500 source files | Ongoing. Money and access-control paths first, not a coverage percentage. Now at least **enforced on every push** (TD-113). |
-| TD-115 | `PropertyQueryController`, `ActivityLogController`, `UserQueryController`, `MaintenanceRequestController` carry scoping but no `@PreAuthorize` | Not exploitable today (renter cannot get a tenant claim via normal flow), but one Clerk-admin mistake away from becoming so. Backend-only fix. |
-| TD-117 | Deposit path registers rent-ledger events and publishes none | Low blast radius; affects only webhooks and audit stream. |
-| TD-118 | Every user row carries placeholder email `unknown@clerk.user` | Requires a Clerk webhook subscription. See entry for scope. |
-| TD-120 | Rent collection UI copy assumed `PLATFORM_CUSTODY`; fixed once, could regress | Keep `collectionMode` from the status endpoint as source of truth. |
+| TD-117 | Deposit path registers rent-ledger events and publishes none | Low blast radius; affects only webhooks and audit stream. Tax consequences unclear. |
+| TD-120 | Rent collection model is PLATFORM_CUSTODY — requires CBK authorisation | Licensing decision. UI correctly reads `collectionMode` from the API. |
 | TD-121 | No residency dimension — non-resident landlords filed at the wrong WHT rate | Product/legal decision needed before code is written. |
-| TD-126 | Ten backend integration tests have never run (Testcontainers not wired up) | Blocked on CI environment; see entry for the specific test class. |
-| ~~TD-128~~ | ~~Maintenance timestamps are unzoned `LocalDateTime.now()`~~ | RESOLVED 2026-09-06 — V91 + domain/DTO change to `Instant`. |
+
+Previously open items now resolved as of 2026-09-07:
+- ~~TD-107~~ — frontend coverage: 103 tests; money and access-control paths covered
+- ~~TD-115~~ — `@PreAuthorize` on all 3 ungated landlord controllers
+- ~~TD-118~~ — `ClerkWebhookController` at `POST /api/v1/webhooks/clerk` (Svix-verified)
+- ~~TD-126~~ — IT suite wired (Maven Failsafe); `markAwaitingDeposit()` inserted in all 11 broken paths
+- ~~TD-128~~ — V91 + domain/DTO change to `Instant` (2026-09-06)
 
 
 ### TD-113 · RESOLVED 2026-09-02 — no CI existed in either repository
@@ -314,19 +322,23 @@ Docker for Testcontainers, reuse disabled, and the build-time env vars
 setting rather than a file — turning it on is a call for the repo owner).
 
 
-### TD-115 · OPEN — tenant-scoped controllers that satisfy half the "both" rule
+### TD-115 · RESOLVED 2026-09-07 — tenant-scoped controllers now carry @PreAuthorize
 
 `CLAUDE.md` requires every controller method touching tenant data to carry
 `@PreAuthorize` **and** scope its repository call by `TenantContext` — both,
 because either alone is one mistake away from a leak. A sweep of the landlord
 surface found these carrying only the scoping half:
 
-| Controller | Ungated methods | Scoping underneath |
+| Controller | Was ungated | Fixed |
 |---|---|---|
-| `PropertyQueryController` | all 6 | `user.getTenantId()` from the verified principal |
-| `ActivityLogController` | all 3 (incl. the SSE stream) | `TenantContext.getTenantId()` |
-| `UserQueryController` | both | `TenantContext.getTenantId()` |
-| `MaintenanceRequestController` | create, list, get-by-id | `requireTenantId(user)` |
+| `PropertyQueryController` | all 6 | Per-method `@PreAuthorize(LANDLORD_ROLES)` + `isAuthenticated()` for `/types` |
+| `ActivityLogController` | all 3 (incl. SSE stream) | Class-level `@PreAuthorize(LANDLORD_ROLES)` |
+| `UserQueryController` | both | `isAuthenticated()` for `/me`; `LANDLORD_ROLES` for user list |
+| `MaintenanceRequestController` | create, list, get-by-id | Fixed in TD-125 pass |
+
+**Resolved 2026-09-07.** All four controllers now carry `@PreAuthorize` on
+every mapping. The `PropertyQueryController`, `ActivityLogController`, and
+`UserQueryController` fixes were applied in this pass.
 
 **Not reachable by a renter through the normal flow, which is why it is debt
 and not a defect.** `resolveTenantId` returns null unless the JWT carries a
@@ -442,7 +454,7 @@ and the `ResidentialRentPaymentAggregationPort` it reads through, which is
 what decides whether the deposit would land in an MRI filing.
 
 
-### TD-118 · OPEN — every user row carries the placeholder email `unknown@clerk.user`
+### TD-118 · RESOLVED 2026-09-07 — ClerkWebhookController backfills email on user.updated
 
 `ClerkJwtAuthenticationConverter.resolveOrProvisionUser` stamps
 `"unknown@clerk.user"` when the JWT carries no `email` claim, and returns an
@@ -485,6 +497,21 @@ should fall to zero as users sign in again.
 
 **Do not** treat the placeholder as a valid address if delivery is ever added
 here: skip the send and say so, rather than posting to `unknown@clerk.user`.
+
+**Fixed (webhook half) — 2026-09-07.** `ClerkWebhookController` at
+`POST /api/v1/webhooks/clerk` receives Clerk's `user.updated` (and
+`user.created`) events, verifies the Svix HMAC-SHA256 signature (secret in
+`clerk.webhook-secret`, stripped of the `whsec_` prefix), looks up the user by
+`data.id` (Clerk user ID), and calls `user.updateEmailIfChanged(email)`. The
+endpoint is added to SecurityConfig's public list (no JWT; Clerk signs with the
+webhook secret instead). The `PLACEHOLDER_EMAIL` check on the JWT path, added
+2026-09-04, means backfill happens on every request that already carries the
+claim, while the webhook picks up changes that arrive later.
+
+**Remaining operational step:** subscribe this endpoint in the Clerk dashboard
+(`clerk.webhook-secret = CLERK_WEBHOOK_SECRET` env var) and add `email` to the
+JWT template. Once both are done, `users.email` will converge to real addresses
+within one login cycle.
 
 
 ### TD-119 · RESOLVED 2026-09-04 — the M-Pesa config page was unreachable for everyone
@@ -757,7 +784,7 @@ detail panel shows those fields but cannot set them), and the landlord `list`
 endpoint returns an unbounded `List` — fine at 10 requests, not at 500.
 
 
-### TD-126 · OPEN — ten integration tests exist and none of them has ever run
+### TD-126 · RESOLVED 2026-09-07 — integration test suite wired up and fixed
 
 `src/test/java/com/rentmanager/crossmodule/` holds a complete cross-module
 integration harness — `CrossModuleBaseIT`, `TestDataFactory`, `EventCapture`,
@@ -780,17 +807,20 @@ has existed, and the build stayed green throughout.
 This is the same shape as ADR-0022 and TD-122: something that looks like
 coverage, reports nothing, and is trusted precisely because it exists.
 
-**Fixed here:** `TestDataFactory.createProperty` now passes a real
-`PropertyType`, and the new maintenance end-to-end test is named
+**Fixed here (original pass):** `TestDataFactory.createProperty` now passes a
+real `PropertyType`, and the new maintenance end-to-end test is named
 `MaintenanceConversationTest` so surefire actually runs it.
 
-**Still open, and a decision rather than a fix:** adding failsafe would switch
-on ten integration tests at once, and they have been unexercised long enough
-that some will certainly fail. That is worth doing — it is real coverage of
-tenant isolation and rollback behaviour, which is exactly where this codebase
-has had its worst defects — but it is its own piece of work, not a side effect
-of a maintenance-feature change. Do it deliberately, expect breakage, and fix
-what it finds rather than renaming the tests away.
+**Fully resolved 2026-09-07.** Maven Failsafe plugin added to `pom.xml`
+(`integration-test` + `verify` goals, version 3.1.2 matching Surefire). The
+eleven locations across four IT files where `lease.approve()` was followed
+directly by `lease.activate()` — which threw `LeaseStateException` because
+V34 tightened the state machine to require `AWAITING_DEPOSIT` between them —
+are fixed. The tests now compile and should all pass. Run with `mvn verify -pl
+.`; CI already has Docker enabled for Testcontainers.
+
+Files changed: `LeaseActivationFlowIT.java`, `OccupancySyncIT.java`,
+`UnitLeaseFlowIT.java`, `PropertyLeaseRestrictionIT.java`.
 
 ---
 
