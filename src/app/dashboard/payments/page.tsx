@@ -120,6 +120,8 @@ const TYPE_FILTERS: { label: string; value: RentTransactionType | "" }[] = [
     { label: "Waivers", value: "WAIVER" },
     { label: "Refunds", value: "REFUND" },
     { label: "Adjustments", value: "ADJUSTMENT" },
+    { label: "Credits applied", value: "CREDIT_APPLIED" },
+    { label: "Reversals", value: "REVERSAL" },
 ];
 
 const PAGE_SIZE_OPTIONS = [15, 25, 50, 100] as const;
@@ -661,13 +663,13 @@ export default function PaymentsPage() {
                                             <td className="py-4 px-5">
                                                 <div className="flex flex-col">
                                                     <span className={`font-data text-sm font-bold tabular-nums leading-tight ${
-                                                        tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT"
+                                                        tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT" || tx.type === "REVERSAL"
                                                             ? "text-ink"
                                                             : tx.type === "DEPOSIT" || tx.type === "PAYMENT"
                                                                 ? "text-success-dark"
                                                                 : "text-warning-dark"
                                                     }`}>
-                                                        {tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT" ? "−" : "+"}{formatCurrency(tx.amount)}
+                                                        {tx.type === "REVERSAL" || tx.type === "ADJUSTMENT" ? "" : tx.type === "RENT_CHARGE" ? "−" : "+"}{formatCurrency(tx.amount)}
                                                     </span>
                                                     <span className={`text-[10px] font-medium mt-0.5 ${cfg.color}`}>{cfg.label}</span>
                                                 </div>
@@ -685,7 +687,7 @@ export default function PaymentsPage() {
                                             </td>
                                             <td className="py-4 px-5">
                                                 <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-ink/[0.03] group-hover:bg-ink/[0.05] transition-colors border border-transparent group-hover:border-border/40">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-success shadow-sm shadow-success/30" />
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${leaseStatusDot(tx.leaseStatus)}`} />
                                                     <span className="text-xs font-mono font-semibold text-ink/80 group-hover:text-ink transition-colors">
                                                         {tx.leaseNumber || <span className="text-ink-muted/20">&mdash;</span>}
                                                     </span>

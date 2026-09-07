@@ -34,6 +34,11 @@ export interface RentLedgerEntryResponse {
     status: RentLedgerStatus;
     prorated: boolean;
     version: number;
+    // Enriched by getByStatus(); null on getById/getByLease (slim factory).
+    tenantFullName: string | null;
+    unitNumber: string | null;
+    propertyName: string | null;
+    leaseNumber: string | null;
 }
 
 export type RentTransactionType =

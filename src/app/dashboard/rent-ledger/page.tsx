@@ -12,16 +12,17 @@ import {
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import MetricCard, { MetricCardSkeleton } from "@/shared/components/dashboard/MetricCard";
 import { useRentLedgerByStatusQuery } from "@/features/rentledger/hooks/use-rent-ledger-by-status-query";
+import { useRentLedgerSummaryQuery } from "@/features/rentledger/hooks/use-rent-ledger-summary";
 import { RentLedgerEntryRow } from "@/features/rentledger/components/rent-ledger-entry-row";
 import { RentLedgerTransactions } from "@/features/rentledger/components/rent-ledger-transactions";
-
 import { TaxComplianceNote } from "@/features/settings/components/tax-compliance-note";
+import { formatCurrency } from "@/shared/utils/money";
 
 function RentLedgerSkeleton() {
     return (
-        <div className="page-container">
-            <div className="skeleton h-8 w-48 mb-1" />
-            <div className="skeleton h-4 w-72 mb-6" />
+        <div className="page-container space-y-6">
+            <div className="skeleton h-8 w-48" />
+            <div className="skeleton h-4 w-72" />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)}
             </div>
@@ -54,6 +55,7 @@ function RentLedgerOverviewContent() {
     const due = useRentLedgerByStatusQuery("DUE");
     const partiallyPaid = useRentLedgerByStatusQuery("PARTIALLY_PAID");
     const overpaid = useRentLedgerByStatusQuery("OVERPAID");
+    const summary = useRentLedgerSummaryQuery();
 
     const isLoading = overdue.isLoading || due.isLoading || partiallyPaid.isLoading || overpaid.isLoading;
     const isError = overdue.isError || due.isError || partiallyPaid.isError || overpaid.isError;
@@ -97,10 +99,27 @@ function RentLedgerOverviewContent() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard icon={AlertTriangle} label="Overdue" value={overdueEntries.length} tone="danger" />
-                <MetricCard icon={Clock} label="Due" value={dueEntries.length} />
-                <MetricCard icon={AlertCircle} label="Partially paid" value={partiallyPaidEntries.length} tone="warning" />
-                <MetricCard icon={AlertCircle} label="Overpaid" value={overpaidEntries.length} tone="warning" />
+                <MetricCard
+                    icon={AlertTriangle}
+                    label="Overdue"
+                    value={overdueEntries.length}
+                    hint={summary.data?.overdueTotal ? formatCurrency(summary.data.overdueTotal) + " outstanding" : undefined}
+                    tone={overdueEntries.length > 0 ? "danger" : "neutral"}
+                />
+                <MetricCard icon={Clock} label="Due now" value={dueEntries.length} tone="neutral" />
+                <MetricCard
+                    icon={AlertCircle}
+                    label="Needs attention"
+                    value={needsAttention.length}
+                    tone={needsAttention.length > 0 ? "warning" : "neutral"}
+                />
+                <MetricCard
+                    icon={CheckCircle2}
+                    label="Collected this month"
+                    value={summary.data?.collectedThisMonth ? formatCurrency(summary.data.collectedThisMonth) : "—"}
+                    hint={summary.data?.currency}
+                    tone="success"
+                />
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -119,7 +138,7 @@ function RentLedgerOverviewContent() {
                         ) : (
                             <div className="divide-y divide-border dark:divide-border-dark">
                                 {overdueEntries.map((entry) => (
-                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} />
+                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} selected={selectedEntryId === entry.id} />
                                 ))}
                             </div>
                         )}
@@ -139,7 +158,7 @@ function RentLedgerOverviewContent() {
                         ) : (
                             <div className="divide-y divide-border dark:divide-border-dark">
                                 {dueEntries.map((entry) => (
-                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} />
+                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} selected={selectedEntryId === entry.id} />
                                 ))}
                             </div>
                         )}
@@ -159,32 +178,36 @@ function RentLedgerOverviewContent() {
                         ) : (
                             <div className="divide-y divide-border dark:divide-border-dark">
                                 {needsAttention.map((entry) => (
-                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} />
+                                    <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={setSelectedEntryId} selected={selectedEntryId === entry.id} />
                                 ))}
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="xl:col-span-2 xl:sticky xl:top-6 xl:self-start space-y-4">
-                    <div className="px-4 py-3 border-b border-border dark:border-border-dark">
-                        <h2 className="text-sm font-semibold text-fg dark:text-fg-dark inline-flex items-center gap-1.5">
-                            <Receipt className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
-                            Transactions
-                        </h2>
-                    </div>
-                    {selectedEntryId ? (
-                        <RentLedgerTransactions entryId={selectedEntryId} />
-                    ) : (
-                        <div className="card-sm flex flex-col items-center justify-center gap-2 py-10 text-center">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
-                                <MousePointerClick className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
-                            </div>
-                            <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                                Select a ledger entry to view its transactions.
-                            </p>
+                <div className="xl:col-span-2 xl:sticky xl:top-6 xl:self-start">
+                    <div className="card !p-0 animate-fade-in-up">
+                        <div className="px-4 py-3 border-b border-border dark:border-border-dark">
+                            <h2 className="text-sm font-semibold text-fg dark:text-fg-dark inline-flex items-center gap-1.5">
+                                <Receipt className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                                {selectedEntryId ? "Entry transactions" : "Transactions"}
+                            </h2>
                         </div>
-                    )}
+                        <div className="p-4">
+                            {selectedEntryId ? (
+                                <RentLedgerTransactions entryId={selectedEntryId} />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-border-subtle dark:bg-border-subtle-dark">
+                                        <MousePointerClick className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                                    </div>
+                                    <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
+                                        Select a ledger entry to view its transactions.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
