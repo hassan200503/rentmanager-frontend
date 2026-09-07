@@ -3,7 +3,7 @@
 
 import { useTenantDashboardQuery, useTenantLeaseQuery, useTenantPaymentSummaryQuery, useTenantAutoPaySettingsQuery, useTenantDepositQuery } from "../hooks/use-tenant-portal-queries";
 import { useToggleAutoPayMutation } from "../hooks/use-tenant-portal-mutations";
-import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileText, MapPin, User, Clock, Smartphone, Loader2, CheckCircle2, Bell, BellOff } from "lucide-react";
+import { AlertTriangle, Home, Mail, Phone, Calendar, CreditCard, Shield, FileText, MapPin, User, Clock, Smartphone, Loader2, CheckCircle2, Bell, BellOff, CalendarClock } from "lucide-react";
 import { formatDate } from "./tenant-format";
 import { formatCurrency } from "@/shared/utils/money";
 import { tenantPortalApi, type DepositStatus } from "../api/tenant-portal-api";
@@ -256,6 +256,36 @@ export const TenantLeasePage = () => {
                     <LeaseDetailItem icon={Shield} label="Lease #" value={leaseNumber} />
                 </div>
             </PortalCard>
+
+            {/* Lease expiry countdown — only shown when active and within 90 days */}
+            {status === "ACTIVE" && endDate && (() => {
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const end = new Date(endDate); end.setHours(0, 0, 0, 0);
+                const daysLeft = Math.round((end.getTime() - today.getTime()) / 86_400_000);
+                if (daysLeft > 90 || daysLeft < 0) return null;
+                const urgent = daysLeft <= 30;
+                return (
+                    <div className={`tenant-panel !p-4 sm:!p-5 flex items-start gap-3.5 border-l-4 ${urgent ? "border-l-danger" : "border-l-warning"}`}>
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${urgent ? "bg-danger-bg dark:bg-danger-bg-dark text-danger-dark dark:text-danger" : "bg-warning-bg dark:bg-warning-bg-dark text-warning-dark dark:text-warning"}`}>
+                            <CalendarClock className="h-4.5 w-4.5" strokeWidth={2} />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-fg dark:text-fg-dark">
+                                {daysLeft === 0
+                                    ? "Your lease expires today"
+                                    : daysLeft === 1
+                                        ? "Your lease expires tomorrow"
+                                        : `Your lease expires in ${daysLeft} days`}
+                            </p>
+                            <p className="mt-0.5 text-sm text-fg-muted dark:text-fg-muted-dark">
+                                {urgent
+                                    ? "Contact your landlord soon to confirm renewal or plan your move-out."
+                                    : "You have time to plan — reach out to your landlord to discuss renewal."}
+                            </p>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Pay Rent */}
             {canPay && payState === "idle" && (

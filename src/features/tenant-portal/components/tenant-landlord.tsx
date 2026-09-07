@@ -70,15 +70,16 @@ const DetailItem = ({ icon: Icon, label, value, tone = "brand" }: {
     );
 };
 
-const ContactAction = ({ href, icon: Icon, label, external = true }: {
+const ContactAction = ({ href, icon: Icon, label, iconClass, external = true }: {
     href: string | null;
     icon: React.ElementType;
     label: string;
+    iconClass?: string;
     external?: boolean;
 }) => {
     const inner = (
         <>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success transition-transform duration-200 group-hover:scale-105">
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105 ${iconClass ?? "bg-success-bg dark:bg-success-bg-dark text-success-dark dark:text-success"}`}>
                 {/* @ts-expect-error - React 19 ElementType inference issue */}
                 <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
@@ -331,7 +332,12 @@ export const TenantLandlordPage = () => {
                         </span>
                         Call
                     </a>
-                    <ContactAction href={waLink} icon={MessageCircle} label="WhatsApp" />
+                    <ContactAction
+                        href={waLink}
+                        icon={MessageCircle}
+                        label="WhatsApp"
+                        iconClass="bg-[#dcfce7] dark:bg-[#14532d]/40 text-[#15803d] dark:text-[#4ade80]"
+                    />
                     <a
                         href={landlordEmail ? `mailto:${landlordEmail}` : undefined}
                         className={`group flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border border-border dark:border-border-dark bg-surface/80 dark:bg-surface-dark/60 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface dark:focus-visible:ring-offset-surface-dark ${!landlordEmail ? "opacity-50 pointer-events-none" : ""}`}
@@ -371,11 +377,11 @@ export const TenantLandlordPage = () => {
                         tone="green"
                         label="Phone Number"
                         value={
-                            <span className="inline-flex items-center gap-2">
-                                <a href={`tel:${landlordPhone}`} className="hover:text-brand dark:hover:text-brand-300 transition-colors">
-                                    {landlordPhone ?? "—"}
-                                </a>
-                                {landlordPhone && (
+                            landlordPhone ? (
+                                <span className="inline-flex items-center gap-2">
+                                    <a href={`tel:${landlordPhone}`} className="hover:text-brand dark:hover:text-brand-300 transition-colors">
+                                        {landlordPhone}
+                                    </a>
                                     <button
                                         type="button"
                                         onClick={() => copyPhone(landlordPhone)}
@@ -388,8 +394,10 @@ export const TenantLandlordPage = () => {
                                             <Copy className="h-3.5 w-3.5" strokeWidth={2} />
                                         )}
                                     </button>
-                                )}
-                            </span>
+                                </span>
+                            ) : (
+                                <span className="text-fg-muted dark:text-fg-muted-dark italic text-xs">Not yet provided</span>
+                            )
                         }
                     />
                     <DetailItem
@@ -401,7 +409,9 @@ export const TenantLandlordPage = () => {
                                 <a href={`mailto:${landlordEmail}`} className="hover:text-brand dark:hover:text-brand-300 transition-colors break-all">
                                     {landlordEmail}
                                 </a>
-                            ) : "—"
+                            ) : (
+                                <span className="text-fg-muted dark:text-fg-muted-dark italic text-xs">Not yet provided</span>
+                            )
                         }
                     />
                     <DetailItem
@@ -410,19 +420,25 @@ export const TenantLandlordPage = () => {
                         label="Landlord ID"
                         value={landlordCode ? (
                             <span className="font-mono-nums text-[13px] tracking-wide">{landlordCode}</span>
-                        ) : "—"}
+                        ) : (
+                            <span className="text-fg-muted dark:text-fg-muted-dark italic text-xs">Not yet provided</span>
+                        )}
                     />
                     <DetailItem
                         icon={MapPin}
                         tone="amber"
                         label="Landlord Address"
-                        value={landlordAddress ?? "—"}
+                        value={landlordAddress ?? (
+                            <span className="text-fg-muted dark:text-fg-muted-dark italic text-xs">Not yet provided</span>
+                        )}
                     />
                     <DetailItem
                         icon={Home}
                         tone="brand"
                         label="Property Address"
-                        value={propertyAddress ?? "—"}
+                        value={propertyAddress ?? (
+                            <span className="text-fg-muted dark:text-fg-muted-dark italic text-xs">Not yet provided</span>
+                        )}
                     />
                     <DetailItem
                         icon={User}

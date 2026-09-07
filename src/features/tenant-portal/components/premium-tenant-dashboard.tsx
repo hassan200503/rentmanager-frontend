@@ -328,7 +328,7 @@ interface TransactionItemProps {
 }
 
 const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPeriod, index = 0 }: TransactionItemProps) => {
-    const isCredit = type === "PAYMENT" || type === "REFUND";
+    const isCredit = type === "PAYMENT" || type === "REFUND" || type === "WAIVER" || type === "CREDIT_APPLIED" || type === "DEPOSIT";
     const typeLabels: Record<string, string> = {
         RENT_CHARGE: "Rent Charge",
         PAYMENT: "Payment",

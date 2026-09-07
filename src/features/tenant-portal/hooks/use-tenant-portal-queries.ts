@@ -33,7 +33,8 @@ export const useTenantLeaseQuery = () => {
     return useQuery({
         queryKey: tenantPortalKeys.lease,
         queryFn: () => tenantPortalApi.getLease(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 30 * 1000, // 30s — landlord contact details must propagate quickly
+        refetchOnWindowFocus: true,
     });
 };
 

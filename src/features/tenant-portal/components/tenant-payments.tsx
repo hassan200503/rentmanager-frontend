@@ -396,20 +396,18 @@ export const TenantPaymentsPage = () => {
                                             <td className="text-sm text-fg-muted dark:text-fg-muted-dark">
                                                 {formatDate(p.billingPeriodStart)} – {formatDate(p.billingPeriodEnd)}
                                             </td>
-                                            {/* Was inverted: RENT_CHARGE (money the renter now owes
-                                                more of) got "+", everything else (PAYMENT included —
-                                                money reducing what they owe) got "−". The dashboard's
-                                                TransactionItem already has this the right way round
-                                                (isCredit = PAYMENT || REFUND); matched here for both
-                                                correctness and cross-page consistency. */}
                                             <td
                                                 className={`font-data font-semibold tabular-nums ${
-                                                    p.type === "PAYMENT" || p.type === "REFUND"
+                                                    p.type === "PAYMENT" || p.type === "REFUND" || p.type === "WAIVER" || p.type === "CREDIT_APPLIED" || p.type === "DEPOSIT"
                                                         ? "text-success-dark dark:text-success"
                                                         : "text-fg dark:text-fg-dark"
                                                 }`}
                                             >
-                                                {p.type === "PAYMENT" || p.type === "REFUND" ? "+" : "−"}
+                                                {p.type === "PAYMENT" || p.type === "REFUND" || p.type === "WAIVER" || p.type === "CREDIT_APPLIED" || p.type === "DEPOSIT"
+                                                    ? "+"
+                                                    : p.type === "ADJUSTMENT"
+                                                        ? ""
+                                                        : "−"}
                                                 {formatCurrency(p.amount)}
                                             </td>
                                             <td>
