@@ -19,7 +19,7 @@ export function TenantReviewsPage() {
     return (
         <PortalPage>
             {/* Hero */}
-            <div className="hero-card relative overflow-hidden p-6 sm:p-8">
+            <div className="tenant-hero-panel relative overflow-hidden !p-6 sm:!p-8">
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{

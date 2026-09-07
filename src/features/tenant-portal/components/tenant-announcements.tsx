@@ -12,7 +12,9 @@ import {
     useMarkAnnouncementReadMutation,
     useUpdateWhatsAppOptInMutation,
 } from "../hooks/use-tenant-portal-mutations";
-import { RenterAnnouncementResponse } from "../api/tenant-portal-api";
+import { tenantPortalApi, RenterAnnouncementResponse } from "../api/tenant-portal-api";
+import { useQueryClient } from "@tanstack/react-query";
+import { tenantPortalKeys } from "../hooks/use-tenant-portal-queries";
 import {
     PortalPage,
     PortalPageHeader,
@@ -22,13 +24,30 @@ import {
     PortalErrorState,
 } from "./portal-chrome";
 
+/** "just now" / "2 hours ago" / "yesterday" / falls back to absolute date */
+function relativeTime(iso: string): string {
+    const ms = Date.now() - new Date(iso).getTime();
+    if (ms < 0) return formatDate(iso);
+    const mins = Math.floor(ms / 60_000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days} days ago`;
+    return formatDate(iso);
+}
+
 export default function TenantAnnouncements() {
     const announcementsQuery = useTenantAnnouncementsQuery();
     const whatsAppOptInQuery = useWhatsAppOptInQuery();
     const markReadMutation = useMarkAnnouncementReadMutation();
     const optInMutation = useUpdateWhatsAppOptInMutation();
+    const queryClient = useQueryClient();
 
     const [openId, setOpenId] = useState<string | null>(null);
+    const [markingAll, setMarkingAll] = useState(false);
 
     const toggleAnnouncement = (item: RenterAnnouncementResponse) => {
         setOpenId((current) => (current === item.id ? null : item.id));
@@ -37,10 +56,23 @@ export default function TenantAnnouncements() {
         }
     };
 
-    const totalUnread = useMemo(
-        () => (announcementsQuery.data ?? []).filter((i) => !i.read).length,
+    const unreadItems = useMemo(
+        () => (announcementsQuery.data ?? []).filter((i) => !i.read),
         [announcementsQuery.data],
     );
+    const totalUnread = unreadItems.length;
+
+    const handleMarkAllRead = async () => {
+        if (markingAll || totalUnread === 0) return;
+        setMarkingAll(true);
+        try {
+            await Promise.all(unreadItems.map((i) => tenantPortalApi.markAnnouncementRead(i.id)));
+            queryClient.invalidateQueries({ queryKey: tenantPortalKeys.announcements() });
+            queryClient.invalidateQueries({ queryKey: tenantPortalKeys.unreadAnnouncementCount() });
+        } finally {
+            setMarkingAll(false);
+        }
+    };
 
     // Urgent+unread items are pinned above everything else.
     // Remaining items are sorted date-desc and bucketed into date groups.
@@ -88,18 +120,33 @@ export default function TenantAnnouncements() {
                 subtitle="Rent changes, maintenance schedules and notices — straight to your portal."
                 actions={
                     totalUnread > 0 ? (
-                        <span className="flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
-                            <Bell className="h-3 w-3" />
-                            {totalUnread} unread
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
+                                <Bell className="h-3 w-3" />
+                                {totalUnread} unread
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleMarkAllRead}
+                                disabled={markingAll}
+                                className="btn-ghost btn-sm text-xs gap-1.5 text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark"
+                            >
+                                {markingAll ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
+                                ) : (
+                                    <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                                )}
+                                Mark all read
+                            </button>
+                        </div>
                     ) : undefined
                 }
             />
 
             {/* ── WhatsApp opt-in ─────────────────────────────────── */}
             <div className="tenant-panel !p-4 sm:!p-5 flex items-center gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30">
-                    <MessageCircle className="h-5 w-5 text-brand dark:text-brand-300" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#dcfce7] dark:bg-[#14532d]/40 text-[#15803d] dark:text-[#4ade80]">
+                    <MessageCircle className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-fg dark:text-fg-dark">
@@ -120,7 +167,7 @@ export default function TenantAnnouncements() {
                             onChange={(e) => optInMutation.mutate(e.target.checked)}
                             disabled={optInMutation.isPending}
                         />
-                        <span className="h-6 w-11 rounded-full bg-border dark:bg-border-dark peer-checked:bg-brand transition-colors duration-200 after:content-[''] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5 peer-disabled:opacity-50" />
+                        <span className="h-6 w-11 rounded-full bg-border dark:bg-border-dark peer-checked:bg-[#15803d] dark:peer-checked:bg-[#4ade80] transition-colors duration-200 after:content-[''] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5 peer-disabled:opacity-50" />
                     </label>
                 )}
             </div>
@@ -139,7 +186,7 @@ export default function TenantAnnouncements() {
                     <PortalEmptyState
                         icon={Megaphone}
                         title="No announcements yet"
-                        description="When your landlord broadcasts a message, it will appear here. You'll receive it via in-app, SMS, and email."
+                        description="When your landlord broadcasts a message, it will appear here. You'll receive it via in-app and WhatsApp if enabled."
                     />
                 </PortalCard>
             ) : (
@@ -196,6 +243,13 @@ function AnnouncementRow({
     onToggle: () => void;
 }) {
     const isUrgent = item.priority === "URGENT";
+    const timeLabel = relativeTime(item.createdAt);
+    const showAbsoluteDate = timeLabel === formatDate(item.createdAt);
+    // eslint-disable-next-line react-hooks/purity
+    const nowMs = Date.now();
+    const expiryDaysLeft = item.expiresAt
+        ? Math.ceil((new Date(item.expiresAt).getTime() - nowMs) / 86_400_000)
+        : null;
 
     return (
         <button
@@ -233,8 +287,13 @@ function AnnouncementRow({
                             <span className="badge badge-emerald !text-[10px]">New</span>
                         )}
                         <span className="text-xs text-fg-muted dark:text-fg-muted-dark">
-                            {formatDate(item.createdAt)}
+                            {timeLabel}
                         </span>
+                        {!showAbsoluteDate && (
+                            <span className="text-xs text-fg-subtle dark:text-fg-subtle-dark">
+                                · {formatDate(item.createdAt)}
+                            </span>
+                        )}
                     </div>
                     <p
                         className={`text-sm whitespace-pre-wrap ${!isOpen ? "line-clamp-2" : ""} ${
@@ -247,6 +306,12 @@ function AnnouncementRow({
                     >
                         {item.message}
                     </p>
+                    {/* Expiry notice — only shown when open and within 30 days */}
+                    {isOpen && expiryDaysLeft !== null && expiryDaysLeft > 0 && expiryDaysLeft <= 30 && (
+                        <p className="text-[11px] text-warning-dark dark:text-warning font-medium">
+                            This notice expires in {expiryDaysLeft} day{expiryDaysLeft === 1 ? "" : "s"}.
+                        </p>
+                    )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                     {item.read ? (

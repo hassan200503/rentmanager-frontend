@@ -74,7 +74,7 @@ export function TenantReviewCard() {
     };
 
     return (
-        <div className="card-elevated p-6 sm:p-7">
+        <div className="tenant-panel !p-6 sm:!p-7">
             <div className="flex items-center gap-3 mb-1">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
                     <MessageSquareHeart className="h-5 w-5" strokeWidth={2} />
@@ -90,7 +90,7 @@ export function TenantReviewCard() {
             </div>
 
             {isLoading ? (
-                <div className="skeleton h-24 w-full mt-4" />
+                <div className="tenant-skeleton-premium h-24 w-full mt-4 rounded-xl" />
             ) : myReview ? (
                 <div className="mt-5 relative rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-4 sm:p-5 overflow-hidden">
                     <Quote className="absolute -top-1 -right-1 h-14 w-14 text-brand/10 dark:text-brand/15 rotate-180 pointer-events-none" strokeWidth={1.5} aria-hidden />

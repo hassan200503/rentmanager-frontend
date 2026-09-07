@@ -1,6 +1,6 @@
 "use client";
 
-import { useTenantMaintenanceRequestsQuery } from "../hooks/use-tenant-portal-queries";
+import { useTenantMaintenanceRequestsQuery, useTenantLeaseQuery } from "../hooks/use-tenant-portal-queries";
 import { useTenantDashboardQuery } from "../hooks/use-tenant-portal-queries";
 import { useMemo, useState } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -20,6 +20,8 @@ import {
     Building2,
     MessageSquare,
     MessageSquareText,
+    Phone,
+    MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -526,13 +528,18 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
 
             <form onSubmit={handleSubmit} className="tenant-panel !p-5 sm:!p-6 space-y-5">
                 <div className="space-y-1.5">
-                    <label className="form-label">Title *</label>
+                    <div className="flex items-center justify-between">
+                        <label className="form-label !mb-0">Title <span className="text-danger">*</span></label>
+                        <span className={`text-[11px] font-mono-nums ${title.length >= 180 ? "text-warning-dark dark:text-warning" : "text-fg-subtle dark:text-fg-subtle-dark"}`}>
+                            {title.length}/200
+                        </span>
+                    </div>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g. Leaking kitchen faucet"
-                        className="form-input"
+                        className="form-input mt-1"
                         required
                         maxLength={200}
                     />
@@ -586,6 +593,7 @@ function MaintenanceForm({ onBack }: { onBack: () => void }) {
 
 function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
     const { data: requests } = useTenantMaintenanceRequestsQuery();
+    const { data: lease } = useTenantLeaseQuery();
     const request = requests?.find((r) => r.id === id);
 
     if (!request) {
@@ -691,17 +699,43 @@ function MaintenanceDetail({ id, onBack }: { id: string; onBack: () => void }) {
                             </p>
                         )}
                     </div>
-                ) : isOpenStatus(request.status) ? (
-                    /* Silence is information too. Without this the renter
-                       cannot tell "seen and being handled" from "nobody has
-                       looked at this in a month". */
-                    <div className="rounded-xl border border-border/70 bg-surface-sunk/40 p-4 dark:border-border-dark/70 dark:bg-white/[0.02]">
-                        <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                            Your landlord hasn&#39;t replied to this yet. You&#39;ll get an SMS as
-                            soon as they do.
-                        </p>
-                    </div>
-                ) : null}
+                ) : isOpenStatus(request.status) ? (() => {
+                    const waitDays = daysSince(request.createdAt);
+                    const longWait = waitDays >= 7;
+                    return (
+                        <div className={`rounded-xl border p-4 ${longWait ? "border-warning/30 bg-warning-bg/40 dark:border-warning/20 dark:bg-warning-bg-dark/30" : "border-border/70 bg-surface-sunk/40 dark:border-border-dark/70 dark:bg-white/[0.02]"}`}>
+                            <p className={`text-sm ${longWait ? "text-warning-dark dark:text-warning font-medium" : "text-fg-muted dark:text-fg-muted-dark"}`}>
+                                {longWait
+                                    ? `No reply after ${waitDays} days — consider chasing your landlord directly.`
+                                    : "Your landlord hasn't replied to this yet. You'll be notified as soon as they respond."}
+                            </p>
+                            {longWait && (lease?.landlordPhone || lease?.landlordEmail) && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {lease.landlordPhone && (
+                                        <a
+                                            href={`tel:${lease.landlordPhone}`}
+                                            className="inline-flex items-center gap-1.5 rounded-lg border border-success/30 bg-success-bg dark:bg-success-bg-dark px-3 py-1.5 text-xs font-semibold text-success-dark dark:text-success hover:bg-success/10 transition-colors"
+                                        >
+                                            <Phone className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                            Call landlord
+                                        </a>
+                                    )}
+                                    {lease.landlordPhone && (
+                                        <a
+                                            href={`https://wa.me/${lease.landlordPhone.replace(/\D/g, "")}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#15803d]/30 bg-[#dcfce7] dark:bg-[#14532d]/30 px-3 py-1.5 text-xs font-semibold text-[#15803d] dark:text-[#4ade80] hover:bg-[#bbf7d0] dark:hover:bg-[#14532d]/50 transition-colors"
+                                        >
+                                            <MessageCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                            WhatsApp
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })() : null}
             </div>
 
             {/* The "Timeline" panel that used to sit here has been removed. It

@@ -16,14 +16,14 @@ export function TenantRatingsReceived() {
 
     if (summaryLoading || reviewsLoading) {
         return (
-            <div className="card-elevated p-6 sm:p-7">
+            <div className="tenant-panel !p-6 sm:!p-7">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" strokeWidth={2} />
                     </div>
                     <div className="space-y-1.5">
-                        <div className="skeleton h-4 w-32" />
-                        <div className="skeleton h-3 w-48" />
+                        <div className="tenant-skeleton-premium h-4 w-32 rounded" />
+                        <div className="tenant-skeleton-premium h-3 w-48 rounded" />
                     </div>
                 </div>
             </div>
@@ -35,7 +35,7 @@ export function TenantRatingsReceived() {
     }
 
     return (
-        <div className="card-elevated p-6 sm:p-7">
+        <div className="tenant-panel !p-6 sm:!p-7">
             <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
                     <Star className="h-5 w-5" strokeWidth={2} />
