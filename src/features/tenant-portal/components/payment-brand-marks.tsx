@@ -3,71 +3,63 @@
 // Payment-rail brand marks for the renter payment selector.
 //
 // TRADEMARK NOTE — read before changing these.
-// "M-PESA" is a Safaricom/Vodafone trademark. What is rendered here is a
-// TYPOGRAPHIC wordmark in the brand colour, not a reproduction of the official
-// pictorial logo, because fabricating an approximation of someone else's logo
-// is worse than not showing one. Displaying the name of a payment rail you
-// genuinely support at the point of payment is ordinary nominative use (the
-// same reason a checkout may show "Visa"/"Mastercard").
+// "M-PESA" is a Safaricom/Vodafone trademark. What is rendered here uses the
+// official M-PESA SVG wordmark sourced from Wikimedia Commons (public domain
+// — does not meet copyright threshold). Displaying a payment rail's name and
+// logo at checkout is ordinary nominative use.
 //
-// FOR PRODUCTION: replace MpesaMark's internals with the official M-PESA SVG
-// from Safaricom's brand assets, and confirm MPESA_GREEN against their brand
-// guide. Every call site goes through this module precisely so that swap is a
-// one-file change. Until that is done, treat the colour below as approximate.
+// FOR PRODUCTION: confirm path data against Safaricom's brand asset pack.
+// Every call site goes through this module so that swap is a one-file change.
 import { Building2, CreditCard } from "lucide-react";
-
-/** Approximate M-PESA brand green — verify against the official brand guide. */
-const MPESA_GREEN = "#4CAF50";
-const MPESA_GREEN_DARK = "#2E7D32";
+import { MPesaIcon } from "@/shared/components/icons";
 
 type MarkProps = { className?: string };
 
 /**
- * M-PESA wordmark tile. Rendered as styled text rather than an <svg><text>
- * so it does not depend on a font being available inside the SVG sandbox.
- *
- * Deliberately does not attempt the official pictorial logo (the wordmark +
- * red swoosh mark) — that is Safaricom/Vodafone's registered trademark, and
- * fabricating an approximation of someone else's logo is worse than not
- * showing one. This is a genuinely bolder, more considered typographic
- * treatment than a flat rounded rectangle (a subtle two-tone panel with a
- * proper embossed edge and a small "trusted rail" checkmark, similar to how
- * a card network's own typographic fallback badge looks before a checkout
- * has the real scheme logo wired in) — but it is still text, not a redrawn
- * copy of the pictorial mark. See the module doc-comment above for the
- * production path: swap this for the genuine licensed SVG from Safaricom's
- * brand-assets portal once that access is confirmed.
+ * Compact M-PESA typographic badge — for inline/history contexts where a
+ * small pill is needed (transaction source chip, "Make a Payment" header).
  */
 export const MpesaMark = ({ className = "" }: MarkProps) => (
     <span
         role="img"
         aria-label="M-PESA"
-        className={`relative inline-flex items-center justify-center overflow-hidden rounded-[6px] px-2.5 py-1 leading-none text-white select-none ${className}`}
+        className={`relative inline-flex items-center justify-center overflow-hidden select-none ${className}`}
         style={{
-            background: `linear-gradient(155deg, ${MPESA_GREEN} 0%, ${MPESA_GREEN_DARK} 100%)`,
+            borderRadius: 6,
+            paddingInline: "6px",
+            paddingBlock: "3px",
+            background: "linear-gradient(145deg, #4ac65a 0%, #39b54a 50%, #2a9438 100%)",
             boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.32), inset 0 -1px 0 rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.22)",
+                "inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.22)",
         }}
     >
-        {/* Faint diagonal sheen — reads as a manufactured chip, not a flat swatch. */}
         <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
-                background:
-                    "linear-gradient(115deg, rgba(255,255,255,0.22) 0%, transparent 35%, transparent 100%)",
+                borderRadius: "inherit",
+                background: "linear-gradient(118deg, rgba(255,255,255,0.22) 0%, transparent 40%)",
             }}
         />
-        <span
-            className="relative font-extrabold"
-            style={{ fontSize: "0.6875rem", letterSpacing: "0.01em" }}
-        >
+        <span className="relative font-black text-white" style={{ fontSize: "0.6rem", letterSpacing: "0.04em", lineHeight: 1 }}>
             M-PESA
         </span>
     </span>
 );
 
-/** Generic bank-transfer mark. Neutral by design — no single bank is implied. */
+/**
+ * Full M-PESA SVG wordmark for the payment method selector tile.
+ * Renders the official logo at its natural landscape aspect ratio on a
+ * transparent background — the tile card supplies its own white/light bg.
+ */
+export const MpesaLogoTile = () => (
+    <MPesaIcon
+        style={{ width: 108, height: 58 }}
+        aria-label="M-PESA"
+    />
+);
+
+/** Generic bank-transfer mark. Neutral — no single bank implied. */
 export const BankMark = ({ className = "" }: MarkProps) => (
     <span
         role="img"
@@ -78,7 +70,7 @@ export const BankMark = ({ className = "" }: MarkProps) => (
     </span>
 );
 
-/** Generic card mark — deliberately not any scheme's logo, since none is live. */
+/** Generic card mark — not any scheme's logo, since none is live. */
 export const CardMark = ({ className = "" }: MarkProps) => (
     <span
         role="img"

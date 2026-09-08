@@ -6,7 +6,7 @@ import {
     Users, Plus, AlertTriangle, ChevronRight,
     Search, Download, X, ArrowUpDown, ArrowUp, ArrowDown, Wallet,
     CheckCircle2, CalendarClock, ChevronLeft, Lock, Phone, MessageCircle,
-    Building2, AlertOctagon,
+    AlertOctagon,
 } from "lucide-react";
 import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { useLeaseStatsQuery } from "@/features/lease/hooks/use-lease-stats-query";
@@ -21,6 +21,8 @@ import { LeaseBalanceSummaryResponse } from "@/features/rentledger/types/rent-le
 import { formatCurrency, toMoneyNumber } from "@/shared/utils/money";
 import { useHasRole } from "@/features/user/hooks/use-has-role";
 import { WRITE_ROLES } from "@/features/user/lib/roles";
+import { usePropertiesQuery } from "@/features/property/queries/use-properties-query";
+import { daysUntil } from "@/features/lease/utils/lease-date-utils";
 
 const formatDate = (isoDate: string) =>
     new Date(isoDate).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" });
@@ -47,6 +49,14 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 type SortKey = "tenantFullName" | "endDate" | "rentAmount" | "status";
 type SortDir = "asc" | "desc";
+
+/** Deterministic pastel background + legible text colour from a name hash. */
+function avatarStyle(name: string): { backgroundColor: string; color: string } {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    const hue = h % 360;
+    return { backgroundColor: `hsl(${hue},58%,87%)`, color: `hsl(${hue},50%,26%)` };
+}
 
 function SortIcon({ column, activeKey, dir }: { column: SortKey; activeKey: SortKey | null; dir: SortDir }) {
     if (activeKey !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" strokeWidth={2} />;
@@ -86,6 +96,59 @@ function RentStatusCell({ lease, balance }: { lease: LeaseSummaryResponse; balan
     );
 }
 
+/** Property photo thumbnail, falling back to a coloured initial when no photo is set. */
+function PropertyIcon({
+    propertyId,
+    propertyName,
+    thumbnailByProperty,
+}: {
+    propertyId: string | null;
+    propertyName: string | null;
+    thumbnailByProperty: Map<string, string | null>;
+}) {
+    const thumb = propertyId ? thumbnailByProperty.get(propertyId) : null;
+    if (thumb) {
+        return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                src={thumb}
+                alt=""
+                aria-hidden
+                className="h-7 w-7 shrink-0 rounded-md object-cover mt-0.5 ring-1 ring-border dark:ring-border-dark"
+            />
+        );
+    }
+    return (
+        <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold mt-0.5 ring-1 ring-black/5 dark:ring-white/10"
+            style={avatarStyle(propertyName ?? "?")}
+            aria-hidden
+        >
+            {(propertyName ?? "?").slice(0, 1).toUpperCase()}
+        </div>
+    );
+}
+
+/** Days-remaining chip shown inside the Term column for live leases. */
+function DaysLeftChip({ endDate, status }: { endDate: string; status: LeaseStatus }) {
+    if (!LIVE_STATUSES.includes(status)) return null;
+    const days = daysUntil(endDate);
+    if (days < 0) return null;
+    if (days === 0) {
+        return <span className="mt-0.5 block text-[10px] font-semibold text-danger">Expires today</span>;
+    }
+    if (days <= 7) {
+        return <span className="mt-0.5 block text-[10px] font-mono-nums text-danger">{days}d left</span>;
+    }
+    if (days <= 30) {
+        return <span className="mt-0.5 block text-[10px] font-mono-nums text-warning-dark dark:text-warning">{days}d left</span>;
+    }
+    if (days <= 90) {
+        return <span className="mt-0.5 block text-[10px] font-mono-nums text-fg-subtle dark:text-fg-subtle-dark">{days}d left</span>;
+    }
+    return null;
+}
+
 export default function LeasesPage() {
     const router = useRouter();
     const canWrite = useHasRole(WRITE_ROLES);
@@ -118,12 +181,21 @@ export default function LeasesPage() {
     });
     const { data: stats } = useLeaseStatsQuery();
     const { data: balanceData } = useLeaseBalanceByLeaseQuery();
+    // size:200 fetches the full portfolio in one call — landlords rarely have more properties than that,
+    // and we need thumbnails for every property that could appear on this page.
+    const { data: propertiesData } = usePropertiesQuery({ size: 200 });
 
     const balanceByLease = useMemo(() => {
         const map = new Map<string, LeaseBalanceSummaryResponse>();
         balanceData?.forEach((b) => map.set(b.leaseId, b));
         return map;
     }, [balanceData]);
+
+    const thumbnailByProperty = useMemo(() => {
+        const map = new Map<string, string | null>();
+        propertiesData?.content.forEach((p) => map.set(p.propertyId, p.thumbnailUrl ?? null));
+        return map;
+    }, [propertiesData]);
 
     // Portfolio-wide (balanceByLease already is, independent of this page's
     // pagination/filters) — the single most actionable number on this page.
@@ -342,8 +414,64 @@ export default function LeasesPage() {
 
                 <div className="card animate-fade-in-up overflow-hidden !p-0">
                     {isLoading ? (
-                        <div className="p-4 space-y-2">
-                            {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-12 w-full rounded-lg" />)}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                <tr className="border-b border-border dark:border-border-dark text-left">
+                                    <th className="py-2.5 px-3 w-8" />
+                                    <th className="py-2.5 px-3 w-48" />
+                                    <th className="py-2.5 px-3 w-40" />
+                                    <th className="py-2.5 px-3 w-36" />
+                                    <th className="py-2.5 px-3 w-24" />
+                                    <th className="py-2.5 px-3 w-24" />
+                                    <th className="py-2.5 px-3 w-24" />
+                                    <th className="py-2.5 px-3 w-8" />
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {[0, 1, 2, 3, 4].map((i) => (
+                                    <tr key={i} className="border-b border-border-subtle dark:border-border-subtle-dark last:border-0">
+                                        <td className="py-3 px-3">
+                                            <div className="skeleton h-4 w-4 rounded" />
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="skeleton h-8 w-8 rounded-full shrink-0" />
+                                                <div className="space-y-1.5">
+                                                    <div className="skeleton h-3.5 w-28 rounded" />
+                                                    <div className="skeleton h-3 w-20 rounded" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="skeleton h-7 w-7 rounded-md shrink-0" />
+                                                <div className="space-y-1.5">
+                                                    <div className="skeleton h-3.5 w-24 rounded" />
+                                                    <div className="skeleton h-3 w-16 rounded" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="space-y-1.5">
+                                                <div className="skeleton h-3.5 w-36 rounded" />
+                                                <div className="skeleton h-3 w-14 rounded" />
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="skeleton h-3.5 w-16 rounded" />
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="skeleton h-5 w-16 rounded-full" />
+                                        </td>
+                                        <td className="py-3 px-3">
+                                            <div className="skeleton h-5 w-16 rounded-full" />
+                                        </td>
+                                        <td className="py-3 px-3 w-8" />
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : isError ? (
                         <div className="text-center py-12">
@@ -433,12 +561,17 @@ export default function LeasesPage() {
                                                     aria-label={`Select ${displayName(lease)}`}
                                                 />
                                             </td>
+
+                                            {/* Tenant */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 font-medium text-fg dark:text-fg-dark cursor-pointer"
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-800 text-[11px] font-semibold text-brand-dark dark:text-brand-200">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div
+                                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                                                        style={avatarStyle(lease.tenantFullName ?? lease.leaseNumber)}
+                                                    >
                                                         {(lease.tenantFullName ?? lease.leaseNumber).slice(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0">
@@ -463,9 +596,11 @@ export default function LeasesPage() {
                                                                         <Phone className="h-3 w-3" strokeWidth={2} />
                                                                     </a>
                                                                     <a
-                                                                        href={`sms:${lease.tenantPhone}`}
-                                                                        title={`Text ${lease.tenantPhone}`}
-                                                                        className="flex h-5 w-5 items-center justify-center rounded-md text-fg-muted dark:text-fg-muted-dark hover:text-brand hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors"
+                                                                        href={(() => { const d = lease.tenantPhone.replace(/\D/g, ""); return `https://wa.me/${d.startsWith("0") && d.length === 10 ? `254${d.slice(1)}` : d}`; })()}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        title={`WhatsApp ${lease.tenantPhone}`}
+                                                                        className="flex h-5 w-5 items-center justify-center rounded-md text-fg-muted dark:text-fg-muted-dark hover:text-[#15803d] hover:bg-[#dcfce7] dark:hover:bg-[#14532d]/40 transition-colors"
                                                                     >
                                                                         <MessageCircle className="h-3 w-3" strokeWidth={2} />
                                                                     </a>
@@ -475,15 +610,21 @@ export default function LeasesPage() {
                                                     </div>
                                                 </div>
                                             </td>
+
+                                            {/* Property / Unit */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 cursor-pointer"
                                             >
                                                 {lease.propertyName ? (
-                                                    <div className="flex items-start gap-1.5 min-w-0">
-                                                        <Building2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                                                    <div className="flex items-start gap-2 min-w-0">
+                                                        <PropertyIcon
+                                                            propertyId={lease.propertyId ?? null}
+                                                            propertyName={lease.propertyName}
+                                                            thumbnailByProperty={thumbnailByProperty}
+                                                        />
                                                         <div className="min-w-0">
-                                                            <p className="text-fg dark:text-fg-dark truncate">{lease.propertyName}</p>
+                                                            <p className="text-sm text-fg dark:text-fg-dark truncate">{lease.propertyName}</p>
                                                             {lease.unitLabel && (
                                                                 <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark truncate">{lease.unitLabel}</p>
                                                             )}
@@ -493,30 +634,40 @@ export default function LeasesPage() {
                                                     <span className="text-fg-subtle dark:text-fg-subtle-dark">—</span>
                                                 )}
                                             </td>
+
+                                            {/* Term */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 text-fg-muted dark:text-fg-muted-dark cursor-pointer whitespace-nowrap"
                                             >
-                                                {formatDate(lease.startDate)} – {formatDate(lease.endDate)}
+                                                <span className="text-xs">{formatDate(lease.startDate)} – {formatDate(lease.endDate)}</span>
+                                                <DaysLeftChip endDate={lease.endDate} status={lease.status} />
                                             </td>
+
+                                            {/* Rent amount */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 font-mono-nums text-fg-muted dark:text-fg-muted-dark cursor-pointer"
                                             >
                                                 {formatCurrency(lease.rentAmount)}
                                             </td>
+
+                                            {/* Lease status */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 cursor-pointer"
                                             >
                                                 <LeaseStatusBadge status={lease.status} />
                                             </td>
+
+                                            {/* Rent status */}
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 cursor-pointer"
                                             >
                                                 <RentStatusCell lease={lease} balance={balanceByLease.get(lease.id)} />
                                             </td>
+
                                             <td
                                                 onClick={() => router.push(`/dashboard/leases/${lease.id}`)}
                                                 className="py-3 px-3 cursor-pointer"

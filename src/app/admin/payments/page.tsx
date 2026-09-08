@@ -24,7 +24,16 @@ import type {
     PaymentRequestItem,
     RentPaymentRequestStatus,
 } from "@/features/admin/types/admin-types";
+import { AdminErrorBoundary } from "@/features/admin/components/AdminErrorBoundary";
 import { formatCurrency } from "@/features/admin/components/admin-ui";
+
+const maskPhone = (phone: string | null | undefined): string => {
+    if (!phone) return "—";
+    const s = phone.trim();
+    if (s.length <= 7) return s;
+    const keepStart = s.startsWith("+") ? 4 : 3;
+    return s.slice(0, keepStart) + "●".repeat(s.length - keepStart - 4) + s.slice(-4);
+};
 
 const STATUS_TABS: Array<{ label: string; value: RentPaymentRequestStatus | "ALL" }> = [
     { label: "All", value: "ALL" },
@@ -65,7 +74,7 @@ function formatWhen(iso: string): string {
           });
 }
 
-export default function AdminPaymentsPage() {
+function PaymentsContent() {
     // Defaults to FAILED: the alert panel links here precisely when payments
     // have failed, so landing on the full list would bury what was clicked.
     const [status, setStatus] = useState<RentPaymentRequestStatus | "ALL">("FAILED");
@@ -228,7 +237,7 @@ export default function AdminPaymentsPage() {
                                             <StatusBadge status={r.status} />
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 font-mono-nums text-xs text-fg-muted dark:text-fg-muted-dark">
-                                            {r.phoneNumber ?? "—"}
+                                            {maskPhone(r.phoneNumber)}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 font-mono-nums text-xs text-fg-muted dark:text-fg-muted-dark">
                                             {r.mpesaReceiptNumber ?? "—"}
@@ -270,5 +279,17 @@ export default function AdminPaymentsPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminPaymentsPage() {
+    return (
+        <AdminErrorBoundary>
+            <div className="min-h-screen bg-surface dark:bg-surface-dark">
+                <div className="max-w-7xl mx-auto p-6">
+                    <PaymentsContent />
+                </div>
+            </div>
+        </AdminErrorBoundary>
     );
 }

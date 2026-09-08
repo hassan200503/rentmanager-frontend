@@ -5,6 +5,7 @@ import {
     useTenantDashboardQuery,
     useTenantPaymentHistoryQuery,
     useTenantPaymentSummaryQuery,
+    useTenantLeaseQuery,
 } from "../hooks/use-tenant-portal-queries";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,13 +18,14 @@ import {
     ArrowRight,
     ArrowUpRight,
     BadgeCheck,
+    Building2,
     Calendar,
     CheckCircle2,
-    Clock,
     FileText,
     Home,
     Loader2,
     Lock,
+    MessageCircle,
     Phone,
     Receipt,
     Smartphone,
@@ -38,7 +40,7 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
-import { MpesaMark, BankMark, CardMark } from "./payment-brand-marks";
+import { MpesaMark, MpesaLogoTile, BankMark, CardMark } from "./payment-brand-marks";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // UTILITY FUNCTIONS
@@ -138,15 +140,6 @@ const StatusBadge = ({ status, onBrand = false }: { status: string; onBrand?: bo
         neutral: "bg-ink/5 text-ink-muted dark:bg-ink/10 border-ink/10",
     };
 
-    // For the hero, which sits on a fixed brand-green gradient in both
-    // themes: a monochrome white pill, no tone color at all — including the
-    // dot, previously hardcoded to the tone color regardless of context. The
-    // caller used to pass tone-colored classes as an override string
-    // concatenated after colorClasses[tone] in the same className; several
-    // of those utilities target the same CSS property (bg-success/10 vs.
-    // bg-white/10, text-success vs. text-white), so which one actually won
-    // depended on Tailwind's internal stylesheet ordering, not source order —
-    // an unpredictable way to guarantee legible white text on a green hero.
     return (
         <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -202,39 +195,24 @@ const MetricCard = ({ icon: Icon, label, value, hint, trend, tone = "neutral", l
         <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            whileHover={{ 
-                y: -4,
+            whileHover={{
+                y: -2,
                 transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
             }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            // Glass card: was a hardcoded rgba(255,255,255,...) inline style with
-            // no dark-mode counterpart, so it rendered a near-white pane on a dark
-            // page — the four cards a renter sees first, wrong in the one theme
-            // that should look most "premium." backdrop-blur/shadow stay inline
-            // (arbitrary values Tailwind can't express); color/border/shadow tint
-            // move to classes so dark: can actually apply.
-            className="group relative overflow-hidden rounded-xl p-5 transition-all duration-400 bg-white/[0.92] dark:bg-surface-dark/80 border border-white/60 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]"
-            style={{ backdropFilter: 'blur(16px) saturate(180%)' }}
+            className="group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 bg-white dark:bg-[#111112] border border-black/[0.055] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_20px_rgba(0,0,0,0.06),0_20px_40px_-12px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3),0_6px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.06),0_12px_32px_rgba(0,0,0,0.10),0_24px_48px_-16px_rgba(5,150,105,0.08),inset_0_1px_0_rgba(255,255,255,1)] dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.4),0_12px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-brand-100 dark:hover:border-brand-900/40"
         >
-            {/* Hover glow effect */}
-            <div 
+            <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
-                style={{
-                    background: 'radial-gradient(circle at center, rgba(5, 150, 105, 0.08) 0%, transparent 70%)'
-                }}
+                style={{ background: 'radial-gradient(circle at center, rgba(5, 150, 105, 0.08) 0%, transparent 70%)' }}
             />
-            
             <div className="relative">
                 <div className="flex items-start justify-between mb-3">
-                    <motion.div 
-                        className={`p-2.5 rounded-lg bg-gradient-to-br ${iconGradients[tone]} ${toneClasses[tone]} transition-transform duration-400`}
-                        whileHover={{ 
-                            rotate: 3,
-                            scale: 1.05,
-                            transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }
-                        }}
+                    <motion.div
+                        className={`p-2.5 rounded-xl bg-gradient-to-br ${iconGradients[tone]} ${toneClasses[tone]} shadow-[0_2px_6px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]`}
+                        whileHover={{ rotate: 4, scale: 1.08, transition: { duration: 0.35, ease: [0.34, 1.56, 0.64, 1] } }}
                     >
-                        <Icon className="w-4 h-4" />
+                        <Icon className="w-4.5 h-4.5" strokeWidth={2} />
                     </motion.div>
                     {trend && (
                         <div className={`flex items-center gap-1 text-xs font-medium ${trend.direction === "up" ? "text-success" : "text-danger"}`}>
@@ -243,27 +221,26 @@ const MetricCard = ({ icon: Icon, label, value, hint, trend, tone = "neutral", l
                         </div>
                     )}
                 </div>
-
                 <div className="space-y-1">
                     <p className="text-xs text-ink-muted dark:text-ink-muted-dark font-medium uppercase tracking-wider">{label}</p>
                     {loading ? (
                         <div className="h-8 w-24 tenant-skeleton rounded" />
                     ) : (
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-2xl font-semibold text-ink dark:text-ink-dark tabular-nums"
+                            className="tenant-metric-value mt-0.5"
                         >
                             {value}
                         </motion.p>
                     )}
                     {hint && (
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="text-xs text-ink-subtle dark:text-ink-subtle-dark"
+                            className="text-xs text-ink-muted/70 dark:text-ink-muted-dark/70 font-medium"
                         >
                             {hint}
                         </motion.p>
@@ -283,32 +260,14 @@ interface QuickActionProps {
 
 const QuickAction = ({ icon: Icon, label, href, variant = "secondary" }: QuickActionProps) => {
     const variantClasses = {
-        primary:
-            "bg-white text-brand-700 hover:bg-white/95 shadow-button hover:shadow-elevated",
-        secondary:
-            "bg-ink/5 text-ink hover:bg-ink/8 dark:bg-ink/10 dark:text-ink-dark dark:hover:bg-ink/15",
-        outline:
-            "bg-white/10 text-white border border-white/30 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm",
+        primary: "bg-white text-brand-700 hover:bg-white/95 shadow-button hover:shadow-elevated",
+        secondary: "bg-ink/5 text-ink hover:bg-ink/8 dark:bg-ink/10 dark:text-ink-dark dark:hover:bg-ink/15",
+        outline: "bg-white/10 text-white border border-white/30 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm",
     };
 
     return (
-        <motion.div
-            whileHover={{ 
-                scale: 1.02, 
-                y: -2 
-            }}
-            whileTap={{ 
-                scale: 0.98 
-            }}
-            transition={{
-                duration: 0.2,
-                ease: [0.16, 1, 0.3, 1]
-            }}
-        >
-            <Link
-                href={href}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${variantClasses[variant]}`}
-            >
+        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+            <Link href={href} className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${variantClasses[variant]}`}>
                 <Icon className="w-4 h-4" />
                 {label}
             </Link>
@@ -316,7 +275,6 @@ const QuickAction = ({ icon: Icon, label, href, variant = "secondary" }: QuickAc
     );
 };
 
-// Real, null-safe transaction row with receipt navigation.
 interface TransactionItemProps {
     type: string;
     amount: MoneyValue;
@@ -341,39 +299,50 @@ const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPe
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            style={{ animationDelay: `${index * 50}ms` }}
-            className="tenant-txn-card flex items-center justify-between p-4 group"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
+            className="flex items-center gap-3 px-4 py-3.5 hover:bg-ink/[0.018] dark:hover:bg-white/[0.028] transition-colors duration-150 group"
         >
-            <div className="flex items-start gap-4 min-w-0">
-                <div className={`tenant-txn-icon ${isCredit ? "credit" : "debit"} p-2.5 rounded-lg shrink-0`}>
-                    {isCredit ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+            {/* Icon */}
+            <div className={`tenant-txn-icon ${isCredit ? "credit" : "debit"} flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${isCredit ? "ring-success/[0.12]" : "ring-black/[0.05] dark:ring-white/[0.06]"}`}>
+                {isCredit
+                    ? <ArrowDownLeft className="w-[15px] h-[15px]" strokeWidth={2.5} />
+                    : <ArrowUpRight className="w-[15px] h-[15px]" strokeWidth={2.5} />}
+            </div>
+
+            {/* Label + meta */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-[3px]">
+                    <p className="text-[0.8125rem] font-semibold text-ink dark:text-ink-dark leading-none truncate">
+                        {typeLabels[type] || titleCaseStatus(type)}
+                    </p>
+                    {status && <StatusBadge status={status} />}
                 </div>
-                <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-ink dark:text-ink-dark">{typeLabels[type] || titleCaseStatus(type)}</p>
-                        {status && <StatusBadge status={status} />}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-ink-subtle dark:text-ink-subtle-dark">
-                        <Clock className="w-3.5 h-3.5 shrink-0" />
-                        <span>{formatDateTime(occurredAt)}</span>
-                        {mpesaRef && (
-                            <>
-                                <span className="text-ink/20">•</span>
-                                <span className="font-mono truncate">{mpesaRef}</span>
-                            </>
-                        )}
-                    </div>
-                    {billingPeriod && <p className="text-xs text-ink-muted dark:text-ink-muted-dark">{billingPeriod}</p>}
+                <div className="flex items-center gap-1 text-[11px] text-ink-muted/60 dark:text-ink-muted-dark/60 font-medium">
+                    <span className="whitespace-nowrap">{formatDateTime(occurredAt)}</span>
+                    {mpesaRef && (
+                        <>
+                            <span className="mx-0.5 opacity-40">·</span>
+                            <span className="font-mono text-[10px] tracking-tight bg-ink/[0.045] dark:bg-white/[0.06] px-1.5 py-px rounded-md truncate max-w-[7rem]">
+                                {mpesaRef}
+                            </span>
+                        </>
+                    )}
                 </div>
             </div>
 
-            <p className={`tenant-txn-amount ${isCredit ? "credit" : ""} text-sm font-semibold tabular-nums shrink-0 ${isCredit ? "text-success" : "text-ink dark:text-ink-dark"}`}>
-                {isCredit ? "+" : "-"}
-                {formatCurrency(Math.abs(toMoneyNumber(amount)))}
-            </p>
+            {/* Amount + period */}
+            <div className="shrink-0 text-right">
+                <p className={`tenant-txn-amount leading-none ${isCredit ? "credit" : "text-ink dark:text-ink-dark"}`}>
+                    {isCredit ? "+" : "−"}{formatCurrency(Math.abs(toMoneyNumber(amount)))}
+                </p>
+                {billingPeriod && (
+                    <p className="mt-1 text-[10px] font-medium text-ink-muted/45 dark:text-ink-muted-dark/45 whitespace-nowrap">
+                        {billingPeriod}
+                    </p>
+                )}
+            </div>
         </motion.div>
     );
 };
@@ -385,6 +354,8 @@ const TransactionItem = ({ type, amount, occurredAt, status, mpesaRef, billingPe
 type PayState = "idle" | "phone" | "processing" | "pending" | "error";
 
 const PAY_POLL_INTERVAL_MS = 5000;
+// 60 polls × 5 s = 5 minutes. After this we stop and tell the user to check manually.
+const PAY_POLL_MAX = 60;
 
 interface PaymentWidgetProps {
     currentBalance: number;
@@ -439,6 +410,9 @@ const PaymentWidget = ({
             stopPolling();
             queryClient.invalidateQueries({ queryKey: tenantPortalKeys.dashboard() });
             queryClient.invalidateQueries({ queryKey: tenantPortalKeys.paymentSummary() });
+            // Invalidate all payment history pages/sizes so both the dashboard
+            // activity feed and the payments page reflect the new transaction.
+            queryClient.invalidateQueries({ queryKey: tenantPortalKeys.paymentHistoryAll });
             router.push(`/portal/payment-success?requestId=${rid}`);
         },
         [router, queryClient, stopPolling],
@@ -486,9 +460,17 @@ const PaymentWidget = ({
 
             let polls = 0;
             pollRef.current = setInterval(async () => {
+                polls += 1;
+                if (polls >= PAY_POLL_MAX) {
+                    stopPolling();
+                    setPayState("error");
+                    setPayMessage(
+                        "The payment is taking longer than expected. If money was deducted from your M-Pesa it will be reconciled automatically — check your messages. Otherwise, please try again.",
+                    );
+                    return;
+                }
                 const done = await checkStatus(result.id);
                 if (!done) {
-                    polls += 1;
                     setPayMessage(
                         polls % 3 === 0
                             ? "Still awaiting confirmation. Check your M-Pesa messages for the prompt."
@@ -536,11 +518,6 @@ const PaymentWidget = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            // Was a `color-mix(in srgb, ..., white)` gradient — mixing with the
-            // literal color white, so this always rendered as a pale mint card
-            // even in dark mode. This is where a renter actually pays rent; a
-            // washed-out light panel breaking the dark theme on the one action
-            // that moves their money is the worst place for that bug to be.
             className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/25 dark:to-emerald-900/15 border-[1.5px] border-brand-200 dark:border-brand-800/60 shadow-[0_2px_12px_rgba(5,150,105,0.08),0_8px_32px_rgba(5,150,105,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2),0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]"
         >
             <div className="flex items-start justify-between mb-6">
@@ -567,24 +544,18 @@ const PaymentWidget = ({
             ) : (
                 <AnimatePresence mode="wait">
                     {payState === "idle" && (
-                        <motion.div
-                            key="idle"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.25 }}
-                        >
+                        <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
                             {/* Balance Due */}
                             <div className="mb-6">
-                                <p className="text-xs text-ink-muted dark:text-ink-muted-dark font-medium uppercase tracking-wider mb-2">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-muted/65 dark:text-ink-muted-dark/65 mb-1.5">
                                     {overdueAmount > 0 ? "Overdue Amount" : currentBalance > 0 ? "Balance Due" : "Advance Payment"}
                                 </p>
-                                <p className="text-4xl font-bold text-ink dark:text-ink-dark tabular-nums">
+                                <p className="tenant-pay-balance">
                                     {formatCurrency(suggestedAmount || 0)}
                                 </p>
                                 {currentBalance === 0 && (
-                                    <p className="text-sm text-success mt-2 flex items-center gap-1.5">
-                                        <CheckCircle2 className="w-4 h-4" />
+                                    <p className="text-sm text-success mt-2 flex items-center gap-1.5 font-medium">
+                                        <CheckCircle2 className="w-4 h-4" strokeWidth={2.5} />
                                         All clear. No balance due right now.
                                     </p>
                                 )}
@@ -596,27 +567,17 @@ const PaymentWidget = ({
                                     {suggestedAmount > 0 ? "Custom amount (optional)" : "Enter amount to pay"}
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted dark:text-ink-muted-dark font-medium">
-                                        KSh
-                                    </span>
-                                    {/* Was a fixed rgba(255,255,255,...) background with the
-                                        focus "grow + glow" effect done by directly mutating
-                                        e.target.style in onFocus/onBlur — invisible to React,
-                                        wrong every time the two handlers' values drifted from
-                                        the base style, and (like the surfaces above) permanently
-                                        light-mode. CSS :focus does the identical effect natively,
-                                        with a dark: counterpart, and can't drift out of sync. */}
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted dark:text-ink-muted-dark font-medium">KSh</span>
                                     <input
-                                        type="number"
-                                        min="1"
+                                        type="text"
                                         inputMode="numeric"
+                                        pattern="[0-9]*"
                                         value={customAmount}
-                                        onChange={(e) => setCustomAmount(e.target.value)}
+                                        onChange={(e) => setCustomAmount(e.target.value.replace(/[^0-9]/g, ""))}
                                         placeholder={suggestedAmount > 0 ? suggestedAmount.toString() : "0"}
                                         className="w-full pl-16 pr-4 py-3.5 text-lg font-bold tabular-nums rounded-lg transition-all duration-200 bg-white/95 dark:bg-surface-dark border-2 border-black/[0.08] dark:border-white/10 shadow-[0_2px_4px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(0,0,0,0.02)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(0,0,0,0.1)] text-ink dark:text-ink-dark focus:outline-none focus:scale-[1.01] focus:border-brand-500 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.08),0_4px_8px_rgba(0,0,0,0.06)] dark:focus:shadow-[0_0_0_4px_rgba(16,185,129,0.15),0_4px_8px_rgba(0,0,0,0.2)]"
                                     />
                                 </div>
-
                                 {quickAmounts.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-3">
                                         {quickAmounts.map((amount) => (
@@ -626,10 +587,7 @@ const PaymentWidget = ({
                                                 onClick={() => setCustomAmount(String(amount))}
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
-                                                transition={{
-                                                    duration: 0.2,
-                                                    ease: [0.34, 1.56, 0.64, 1]
-                                                }}
+                                                transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
                                                 className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 ${
                                                     customAmount === String(amount)
                                                         ? "border-2 border-brand-500 text-brand-700 dark:text-brand-400 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/40 dark:to-emerald-900/25 shadow-[0_0_0_4px_rgba(5,150,105,0.08)] dark:shadow-[0_0_0_4px_rgba(16,185,129,0.15)]"
@@ -641,7 +599,6 @@ const PaymentWidget = ({
                                         ))}
                                     </div>
                                 )}
-
                                 {currentBalance === 0 && customAmount && parseFloat(customAmount) > 0 && (
                                     <p className="text-xs text-ink-subtle dark:text-ink-subtle-dark mt-2 flex items-center gap-1.5">
                                         <Sparkles className="w-3.5 h-3.5 text-brand-600" />
@@ -652,11 +609,13 @@ const PaymentWidget = ({
 
                             {/* Payment Methods */}
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-ink dark:text-ink-dark mb-3">Payment Method</label>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-muted/60 dark:text-ink-muted-dark/60 mb-2.5">Payment Method</p>
                                 <div className="grid grid-cols-3 gap-2">
                                     {paymentMethods.map((method) => {
                                         const selected = selectedMethod === method.id;
                                         const { Mark } = method;
+                                        const isMpesa = method.id === "mpesa";
+
                                         return (
                                             <button
                                                 key={method.id}
@@ -665,38 +624,44 @@ const PaymentWidget = ({
                                                 disabled={method.comingSoon}
                                                 aria-pressed={selected}
                                                 title={method.comingSoon ? "Coming soon" : undefined}
-                                                // A real border rather than a 2px ring: at rest it is a
-                                                // hairline, selected it becomes a brand-tinted card that
-                                                // sits forward. (Was inline rgba(255,255,255,...) with no
-                                                // dark counterpart — a washed-out white tile in dark mode.)
-                                                className={`group relative flex flex-col items-center gap-2 rounded-xl px-3 pt-4 pb-3 transition-all duration-200 disabled:opacity-55 ${
-                                                    method.comingSoon
-                                                        ? "cursor-not-allowed"
-                                                        : "cursor-pointer hover:-translate-y-0.5"
+                                                className={`group relative flex flex-col items-center gap-1.5 rounded-xl px-2 pt-5 pb-3 transition-all duration-200 ${
+                                                    method.comingSoon ? "cursor-not-allowed opacity-50" : "cursor-pointer"
                                                 } ${
                                                     selected
-                                                        ? "bg-gradient-to-b from-brand-50 to-brand-100 dark:from-brand-900/35 dark:to-emerald-900/20 border border-brand-400 dark:border-brand-600 shadow-[0_0_0_3px_rgba(5,150,105,0.12),0_4px_12px_rgba(5,150,105,0.13)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18),0_4px_12px_rgba(0,0,0,0.25)]"
-                                                        : "bg-white/[0.72] dark:bg-white/5 border border-black/[0.07] dark:border-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
+                                                        ? isMpesa
+                                                            ? "bg-white dark:bg-[#0f1f13] border-2 border-[#39b54a] shadow-[0_0_0_3px_rgba(57,181,74,0.18),0_4px_16px_rgba(57,181,74,0.14)]"
+                                                            : "bg-white dark:bg-[#111112] border-2 border-brand-500 shadow-[0_0_0_3px_rgba(5,150,105,0.12),0_4px_12px_rgba(5,150,105,0.10)]"
+                                                        : "bg-white dark:bg-[#111112] border border-black/[0.07] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:border-black/[0.12] dark:hover:border-white/[0.14] hover:shadow-[0_3px_8px_rgba(0,0,0,0.08)]"
                                                 }`}
                                             >
+                                                {/* Popular badge */}
                                                 {method.popular && !method.comingSoon && (
-                                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-ink px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm dark:bg-white dark:text-ink">
+                                                    <span className="absolute -top-[9px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.07em] shadow-sm bg-[#39b54a] text-white">
                                                         Popular
                                                     </span>
                                                 )}
                                                 {method.comingSoon && (
-                                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-black/5 bg-ink/[0.07] px-2 py-[3px] text-[9px] font-bold uppercase tracking-[0.08em] text-ink-muted dark:bg-white/10 dark:text-ink-muted-dark">
+                                                    <span className="absolute -top-[9px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-black/[0.06] dark:border-white/[0.08] bg-ink/[0.06] dark:bg-white/[0.08] px-2 py-[3px] text-[9px] font-semibold uppercase tracking-[0.07em] text-ink-muted dark:text-ink-muted-dark">
                                                         Soon
                                                     </span>
                                                 )}
 
-                                                <span className="flex h-[26px] items-center">
-                                                    <Mark />
+                                                {/* Logo / icon */}
+                                                <span className="flex h-[52px] items-center justify-center">
+                                                    {isMpesa
+                                                        ? <MpesaLogoTile />
+                                                        : (
+                                                            <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${selected ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "bg-ink/[0.045] dark:bg-white/[0.07] text-ink-muted dark:text-ink-muted-dark"}`}>
+                                                                <Mark />
+                                                            </span>
+                                                        )
+                                                    }
                                                 </span>
-                                                <span className="text-[11px] font-semibold leading-none text-ink dark:text-ink-dark">
+
+                                                <span className={`text-[11px] font-semibold leading-none ${selected && isMpesa ? "text-[#2a9438] dark:text-[#39b54a]" : selected ? "text-brand-700 dark:text-brand-300" : "text-ink dark:text-ink-dark"}`}>
                                                     {method.label}
                                                 </span>
-                                                <span className="text-[10px] leading-none text-ink-subtle dark:text-ink-subtle-dark">
+                                                <span className="text-[10px] font-medium leading-none text-ink-muted/60 dark:text-ink-muted-dark/60">
                                                     {method.timing}
                                                 </span>
                                             </button>
@@ -710,35 +675,13 @@ const PaymentWidget = ({
                                 type="button"
                                 onClick={() => setPayState("phone")}
                                 disabled={!amountValid}
-                                whileHover={{ 
-                                    y: -2, 
-                                    scale: 1.01 
-                                }}
-                                whileTap={{ 
-                                    y: 0, 
-                                    scale: 0.99 
-                                }}
-                                transition={{
-                                    duration: 0.2,
-                                    ease: [0.16, 1, 0.3, 1]
-                                }}
-                                // Disabled background was rgba(0,0,0,0.1) — a 10% black tint
-                                // that reads as a faint dark button on a light card, but is
-                                // nearly invisible on the dark-mode card behind it, leaving
-                                // white text floating with almost no button shape at all.
+                                whileHover={{ y: -2, scale: 1.01 }}
+                                whileTap={{ y: 0, scale: 0.99 }}
+                                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                                 className={`tenant-btn-premium w-full py-4 font-bold rounded-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-                                    amountValid
-                                        ? "text-white"
-                                        : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
+                                    amountValid ? "text-white" : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
                                 }`}
-                                style={
-                                    amountValid
-                                        ? {
-                                              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-                                              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                                          }
-                                        : undefined
-                                }
+                                style={amountValid ? { background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)', boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)' } : undefined}
                             >
                                 <Zap className="w-5 h-5" />
                                 {displayAmount > 0 ? `Pay ${formatCurrency(displayAmount)}` : "Enter Amount"}
@@ -748,29 +691,16 @@ const PaymentWidget = ({
                     )}
 
                     {payState === "phone" && (
-                        <motion.div
-                            key="phone"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.25 }}
-                        >
+                        <motion.div key="phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
                             <div className="mb-6">
-                                <p className="text-xs text-ink-muted dark:text-ink-muted-dark font-medium uppercase tracking-wider mb-2">
-                                    Confirm payment
-                                </p>
-                                <p className="text-3xl font-bold text-ink dark:text-ink-dark tabular-nums">
-                                    {formatCurrency(displayAmount)}
-                                </p>
-                                <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1.5">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-muted/65 dark:text-ink-muted-dark/65 mb-1.5">Confirm payment</p>
+                                <p className="text-[2rem] font-extrabold text-ink dark:text-ink-dark tabular-nums tracking-tighter leading-none">{formatCurrency(displayAmount)}</p>
+                                <p className="text-xs text-ink-muted/70 dark:text-ink-muted-dark/70 mt-2 leading-relaxed">
                                     A one-time M-Pesa prompt will be sent to your phone. Enter your PIN to confirm.
                                 </p>
                             </div>
-
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-ink dark:text-ink-dark mb-2">
-                                    M-Pesa number
-                                </label>
+                                <label className="block text-sm font-medium text-ink dark:text-ink-dark mb-2">M-Pesa number</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted dark:text-ink-muted-dark">
                                         <Phone className="w-4 h-4" />
@@ -792,7 +722,6 @@ const PaymentWidget = ({
                                     </p>
                                 )}
                             </div>
-
                             <div className="grid grid-cols-[1fr_auto] gap-3">
                                 <motion.button
                                     type="button"
@@ -801,27 +730,14 @@ const PaymentWidget = ({
                                     whileHover={{ y: -2, scale: 1.01 }}
                                     whileTap={{ y: 0, scale: 0.99 }}
                                     className={`tenant-btn-premium py-4 font-bold rounded-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-                                        amountValid && phoneValid
-                                            ? "text-white"
-                                            : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
+                                        amountValid && phoneValid ? "text-white" : "bg-ink/10 dark:bg-white/10 text-ink-muted dark:text-ink-muted-dark"
                                     }`}
-                                    style={
-                                        amountValid && phoneValid
-                                            ? {
-                                                  background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-                                                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                                              }
-                                            : undefined
-                                    }
+                                    style={amountValid && phoneValid ? { background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)', boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25), 0 4px 16px rgba(5, 150, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)' } : undefined}
                                 >
                                     <Smartphone className="w-5 h-5" />
                                     Pay now
                                 </motion.button>
-                                <button
-                                    type="button"
-                                    onClick={resetPay}
-                                    className="px-5 py-4 bg-ink/5 hover:bg-ink/8 dark:bg-ink/10 dark:hover:bg-ink/15 text-ink dark:text-ink-dark font-semibold rounded-lg transition-all duration-200"
-                                >
+                                <button type="button" onClick={resetPay} className="px-5 py-4 bg-ink/5 hover:bg-ink/8 dark:bg-ink/10 dark:hover:bg-ink/15 text-ink dark:text-ink-dark font-semibold rounded-lg transition-all duration-200">
                                     Cancel
                                 </button>
                             </div>
@@ -829,68 +745,46 @@ const PaymentWidget = ({
                     )}
 
                     {payState === "processing" && (
-                        <motion.div
-                            key="processing"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="py-10 text-center"
-                        >
+                        <motion.div key="processing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-10 text-center">
                             <div className="relative w-16 h-16 mx-auto mb-5">
                                 <div className="absolute inset-0 rounded-full bg-brand-500/10 animate-ping" />
-                                <div className="absolute inset-0 rounded-full bg-brand-500/20" />
-                                <div className="absolute inset-2.5 rounded-full bg-brand-600 flex items-center justify-center">
-                                    <Loader2 className="w-6 h-6 text-white animate-spin" strokeWidth={2.5} />
+                                <div className="absolute inset-0 rounded-full bg-brand-500/15 dark:bg-brand-500/20" />
+                                <div className="absolute inset-2 rounded-full bg-brand-600 flex items-center justify-center shadow-[0_4px_12px_rgba(var(--color-brand-rgb),0.35)]">
+                                    <Loader2 className="w-5 h-5 text-white animate-spin" strokeWidth={2.5} />
                                 </div>
                             </div>
-                            <p className="text-sm font-semibold text-ink dark:text-ink-dark">Sending payment request…</p>
-                            <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1">
-                                Preparing your secure M-Pesa STK push
-                            </p>
+                            <p className="text-sm font-bold text-ink dark:text-ink-dark tracking-tight">Sending payment request…</p>
+                            <p className="text-xs font-medium text-ink-muted/70 dark:text-ink-muted-dark/70 mt-1.5">Preparing your secure M-Pesa STK push</p>
                         </motion.div>
                     )}
 
                     {payState === "pending" && (
-                        <motion.div
-                            key="pending"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            <div className="mb-6 flex items-start gap-4">
-                                <div className="relative w-14 h-14 shrink-0">
+                        <motion.div key="pending" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div className="mb-5 flex items-start gap-4">
+                                <div className="relative w-12 h-12 shrink-0">
                                     <div className="absolute inset-0 rounded-full bg-brand-500/10 animate-ping" />
-                                    <div className="absolute inset-2.5 rounded-full bg-brand-600 flex items-center justify-center">
-                                        <Smartphone className="w-5 h-5 text-white" strokeWidth={2.2} />
+                                    <div className="absolute inset-1.5 rounded-full bg-brand-600 flex items-center justify-center shadow-[0_3px_8px_rgba(var(--color-brand-rgb),0.3)]">
+                                        <Smartphone className="w-4 h-4 text-white" strokeWidth={2.2} />
                                     </div>
                                 </div>
-                                <div className="min-w-0 pt-1">
-                                    <p className="text-sm font-semibold text-ink dark:text-ink-dark">Awaiting M-Pesa confirmation</p>
-                                    <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1">{payMessage}</p>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className="text-sm font-bold text-ink dark:text-ink-dark tracking-tight">Awaiting M-Pesa confirmation</p>
+                                    <p className="text-xs font-medium text-ink-muted/70 dark:text-ink-muted-dark/70 mt-1">{payMessage}</p>
                                     {sentToPhone && (
-                                        <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1">
+                                        <p className="text-xs text-ink-muted/70 dark:text-ink-muted-dark/70 mt-1">
                                             Prompt sent to <span className="font-mono font-semibold text-ink dark:text-ink-dark">{sentToPhone}</span>
                                         </p>
                                     )}
                                     <p className="text-xs text-ink-subtle dark:text-ink-subtle-dark mt-2">
-                                        Your balance updates automatically once the payment is confirmed.
+                                        Balance updates automatically on confirmation.
                                     </p>
                                 </div>
                             </div>
-
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={refreshStatus}
-                                    className="flex-1 py-3 bg-ink/5 hover:bg-ink/8 dark:bg-ink/10 dark:hover:bg-ink/15 text-ink dark:text-ink-dark font-semibold rounded-lg transition-all duration-200"
-                                >
+                            <div className="flex gap-2.5">
+                                <button type="button" onClick={refreshStatus} className="flex-1 py-2.5 bg-ink/[0.05] hover:bg-ink/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-ink dark:text-ink-dark text-sm font-bold rounded-xl border border-black/[0.06] dark:border-white/[0.07] transition-all duration-200">
                                     Check status
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={resetPay}
-                                    className="px-5 py-3 text-sm font-medium text-ink-muted dark:text-ink-muted-dark hover:text-ink dark:hover:text-ink-dark rounded-lg transition-colors"
-                                >
+                                <button type="button" onClick={resetPay} className="px-4 py-2.5 text-xs font-semibold text-ink-muted/70 dark:text-ink-muted-dark/70 hover:text-ink dark:hover:text-ink-dark rounded-xl transition-colors">
                                     Cancel
                                 </button>
                             </div>
@@ -898,29 +792,18 @@ const PaymentWidget = ({
                     )}
 
                     {payState === "error" && (
-                        <motion.div
-                            key="error"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex items-start gap-4 p-4 bg-danger/5 border border-danger/20 rounded-lg"
-                        >
-                            <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+                        <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-3.5 p-4 bg-danger/5 border border-danger/15 rounded-xl">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10">
+                                <AlertCircle className="w-4 h-4 text-danger" strokeWidth={2} />
+                            </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-ink dark:text-ink-dark">Payment could not be completed</p>
-                                <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1">{payMessage}</p>
-                                <div className="flex gap-3 mt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPayState("idle")}
-                                        className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition-colors"
-                                    >
+                                <p className="text-sm font-bold text-ink dark:text-ink-dark tracking-tight">Payment could not be completed</p>
+                                <p className="text-xs font-medium text-ink-muted/70 dark:text-ink-muted-dark/70 mt-1">{payMessage}</p>
+                                <div className="flex gap-2.5 mt-4">
+                                    <button type="button" onClick={() => setPayState("idle")} className="btn-primary btn-sm">
                                         Try again
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={resetPay}
-                                        className="px-4 py-2.5 text-sm font-medium text-ink-muted dark:text-ink-muted-dark hover:text-ink dark:hover:text-ink-dark rounded-lg transition-colors"
-                                    >
+                                    <button type="button" onClick={resetPay} className="btn-outline btn-sm">
                                         Close
                                     </button>
                                 </div>
@@ -930,35 +813,22 @@ const PaymentWidget = ({
                 </AnimatePresence>
             )}
 
-            {/* Trust Signals -- every claim here must trace to real behavior
-                (see AGENTS.md: "No claim on a public page that you cannot
-                trace to working code"). This used to include a "PCI
-                Compliant" badge; removed because it was false -- this system
-                never processes card numbers, it sends an M-Pesa STK push and
-                the renter enters their PIN on their own phone. A fabricated
-                compliance claim actively undermines the trust it's meant to
-                build. The three claims below are each backed by real code:
-                the payment rail (M-Pesa STK push), the transport (HTTPS/TLS,
-                same as every page), and the append-only ledger + receipt
-                generation from this session's earlier hardening work. */}
-            <div className="mt-4 pt-4 border-t border-brand-200/40 dark:border-brand-800/20">
-                <div className="flex items-center justify-center gap-2 text-xs text-ink-subtle dark:text-ink-subtle-dark flex-wrap">
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
-                        <Smartphone className="w-3.5 h-3.5 text-brand-600" />
-                        <span>M-Pesa secured</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
-                        <Lock className="w-3.5 h-3.5 text-brand-600" />
-                        <span>Bank-grade encryption</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/10">
-                        <Receipt className="w-3.5 h-3.5 text-brand-600" />
-                        <span>Every payment recorded</span>
-                    </span>
+            {/* Trust Signals */}
+            <div className="mt-4 pt-3.5 border-t border-brand-200/35 dark:border-brand-800/20">
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                    {[
+                        { icon: Smartphone, label: "M-Pesa secured" },
+                        { icon: Lock, label: "Bank-grade TLS" },
+                        { icon: Receipt, label: "Instant receipt" },
+                    ].map(({ icon: TrustIcon, label }) => (
+                        <span key={label} className="flex items-center gap-1.5 text-[10px] font-semibold text-ink-muted/55 dark:text-ink-muted-dark/55 uppercase tracking-[0.06em]">
+                            <TrustIcon className="w-3 h-3 text-brand-500/70" />
+                            {label}
+                        </span>
+                    ))}
                 </div>
             </div>
 
-            {/* Auto-pay Nudge */}
             {suggestedAmount === 0 && (
                 <Link
                     href="/portal/lease?setup=autopay"
@@ -1001,17 +871,13 @@ const isPaymentOnTime = (p: TenantPaymentHistoryItem): boolean => {
 
 const computePaymentScore = (payments: TenantPaymentHistoryItem[]): PaymentScoreMetrics => {
     const paymentEntries = payments.filter((p) => p.type === "PAYMENT" || p.type === "DEPOSIT");
-
     if (paymentEntries.length === 0) {
         return { onTimeRate: 0, totalPayments: 0, latePayments: 0, currentStreakMonths: 0 };
     }
-
     const latePayments = paymentEntries.filter((p) => !isPaymentOnTime(p)).length;
     const onTime = paymentEntries.length - latePayments;
     const onTimeRate = Math.round((onTime / paymentEntries.length) * 100);
 
-    // Streak: walk consecutive months (ending at the most recent payment's month)
-    // and count months that have at least one on-time payment and no late payment.
     const byMonth = new Map<string, { onTime: number; late: number }>();
     for (const p of paymentEntries) {
         const date = new Date(p.occurredAt);
@@ -1029,7 +895,6 @@ const computePaymentScore = (payments: TenantPaymentHistoryItem[]): PaymentScore
         const bucket = byMonth.get(monthKeys[i])!;
         if (bucket.late > 0) break;
         if (bucket.onTime === 0) break;
-        // months must be consecutive
         if (i < monthKeys.length - 1) {
             const [curYear, curMonth] = monthKeys[i].split("-").map(Number);
             const [nextYear, nextMonth] = monthKeys[i + 1].split("-").map(Number);
@@ -1038,26 +903,187 @@ const computePaymentScore = (payments: TenantPaymentHistoryItem[]): PaymentScore
         }
         currentStreakMonths += 1;
     }
-
     return { onTimeRate, totalPayments: paymentEntries.length, latePayments, currentStreakMonths };
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MAIN DASHBOARD COMPONENT
+// NEW PREMIUM ADDITIONS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const HISTORY_FETCH_SIZE = 100;
+/** Compact lease progress strip rendered at the foot of the hero card. */
+const LeaseHealthBar = ({ pct, daysLeft }: { pct: number; daysLeft: number }) => {
+    const daysLabel =
+        daysLeft <= 0 ? "Lease ended" :
+        daysLeft === 1 ? "Last day" :
+        daysLeft <= 30 ? `${daysLeft} days left — expiring soon` :
+        `${daysLeft} days left`;
 
-// Shaped like the loaded layout below (hero, 4-metric grid, two-column
-// content) rather than a centered spinner, so nothing visibly jumps into
-// place once data arrives — the landlord and admin dashboards already do
-// this with the same .tenant-skeleton / .tenant-skeleton-hero shimmer
-// classes; this was the one renter-facing surface still using a spinner.
-// Exported so app/portal/page.tsx's Suspense fallback (the brief window
-// before this component's own code finishes loading) can show the same
-// shape too, instead of a different spinner flashing before this one.
+    return (
+        <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+            <div className="flex items-center justify-between mb-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.82)" }}>
+                <span>Lease progress</span>
+                <span className={daysLeft <= 30 && daysLeft > 0 ? "text-amber-200 font-semibold" : ""}>{daysLabel}</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.18)" }}>
+                <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: daysLeft <= 30 && daysLeft > 0 ? "rgba(251,191,36,0.9)" : "rgba(255,255,255,0.82)" }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.7 }}
+                />
+            </div>
+        </div>
+    );
+};
+
+/** Urgent alert strip — rendered between hero and metric grid when overdue. */
+const OverdueAlertBanner = ({ amount, onPayNow }: { amount: number; onPayNow: () => void }) => (
+    <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="flex items-center justify-between gap-4 rounded-xl px-4 py-3.5 bg-danger-bg dark:bg-danger-bg-dark border border-danger/20 shadow-sm"
+    >
+        <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10">
+                <AlertCircle className="h-4 w-4 text-danger" strokeWidth={2} />
+            </div>
+            <p className="text-sm text-ink dark:text-ink-dark min-w-0">
+                <span className="font-bold text-danger">{formatCurrency(amount)} overdue</span>
+                {" — "}paying now keeps your payment record clean.
+            </p>
+        </div>
+        <button
+            type="button"
+            onClick={onPayNow}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-white hover:bg-danger/90 active:scale-95 transition-all"
+        >
+            Pay now
+            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+        </button>
+    </motion.div>
+);
+
+/** Amber warning strip — rendered when the lease expires within 30 days. */
+const LeaseExpiryBanner = ({ daysLeft }: { daysLeft: number }) => (
+    <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+        className="flex items-center justify-between gap-4 rounded-xl px-4 py-3.5 bg-warning-bg dark:bg-warning-bg-dark border border-warning/20 shadow-sm"
+    >
+        <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+                <Calendar className="h-4 w-4 text-warning-dark dark:text-warning" strokeWidth={2} />
+            </div>
+            <p className="text-sm text-ink dark:text-ink-dark min-w-0">
+                <span className="font-bold text-warning-dark dark:text-warning">
+                    {daysLeft === 0 ? "Your lease expires today" : `Your lease expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
+                </span>
+                {" — "}contact your landlord to discuss renewal.
+            </p>
+        </div>
+        <Link
+            href="/portal/landlord"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-warning/30 bg-white/60 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold text-warning-dark dark:text-warning hover:bg-warning/10 active:scale-95 transition-all"
+        >
+            Contact landlord
+            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+        </Link>
+    </motion.div>
+);
+
+/** Landlord quick-contact card rendered in the right sidebar. */
+const LandlordContactCard = ({
+    name,
+    phone,
+    email,
+    logoUrl,
+    verified,
+}: {
+    name: string;
+    phone: string;
+    email: string;
+    logoUrl: string | null;
+    verified: boolean;
+}) => (
+    <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        className="relative overflow-hidden rounded-2xl p-5 bg-white/[0.92] dark:bg-surface-dark/80 border border-white/60 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]"
+        style={{ backdropFilter: "blur(16px) saturate(180%)" }}
+    >
+        {/* Kicker */}
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-subtle dark:text-ink-subtle-dark">
+            Your Landlord
+        </p>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+            {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={logoUrl}
+                    alt=""
+                    aria-hidden
+                    className="h-10 w-10 rounded-xl object-cover ring-1 ring-black/[0.07] dark:ring-white/10 shrink-0"
+                />
+            ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/35 dark:to-emerald-900/20 text-brand-600 dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
+                    <Building2 className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+            )}
+            <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink dark:text-ink-dark truncate">{name}</p>
+                {verified && (
+                    <p className="flex items-center gap-1 text-[11px] text-success mt-0.5">
+                        <BadgeCheck className="h-3 w-3" strokeWidth={2} />
+                        Verified landlord
+                    </p>
+                )}
+            </div>
+        </div>
+
+        {/* Contact actions */}
+        <div className="flex gap-2">
+            <a
+                href={`tel:${phone}`}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-success/25 bg-success/8 py-2.5 text-xs font-semibold text-success-dark dark:text-success hover:bg-success/15 active:scale-95 transition-all"
+            >
+                <Phone className="h-3.5 w-3.5" strokeWidth={2} />
+                Call
+            </a>
+            <a
+                href={(() => { const d = phone.replace(/\D/g, ""); return `https://wa.me/${d.startsWith("0") && d.length === 10 ? `254${d.slice(1)}` : d}`; })()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#15803d]/20 bg-[#dcfce7] dark:bg-[#14532d]/35 py-2.5 text-xs font-semibold text-[#15803d] dark:text-[#4ade80] hover:bg-[#bbf7d0] dark:hover:bg-[#14532d]/55 active:scale-95 transition-all"
+            >
+                <MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                WhatsApp
+            </a>
+        </div>
+
+        {email && (
+            <a
+                href={`mailto:${email}`}
+                className="mt-2 flex items-center justify-center w-full rounded-lg border border-border dark:border-border-dark bg-transparent py-2 text-xs text-ink-muted dark:text-ink-muted-dark hover:bg-ink/4 dark:hover:bg-white/5 active:scale-95 transition-all truncate"
+            >
+                {email}
+            </a>
+        )}
+
+    </motion.div>
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SKELETON
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export const TenantDashboardSkeleton = () => (
-    <div className="space-y-8 pb-12" aria-busy="true" aria-label="Loading your dashboard">
+    <div className="space-y-6 pb-12" aria-busy="true" aria-label="Loading your dashboard">
         <div className="tenant-skeleton-hero" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -1068,8 +1094,8 @@ export const TenantDashboardSkeleton = () => (
                 </div>
             ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
                 <div className="tenant-skeleton rounded-2xl h-[26rem]" />
                 <div className="space-y-3">
                     <div className="tenant-skeleton h-6 w-32 rounded" />
@@ -1078,31 +1104,55 @@ export const TenantDashboardSkeleton = () => (
                     ))}
                 </div>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-5">
                 <div className="tenant-skeleton rounded-2xl h-64" />
+                <div className="tenant-skeleton rounded-2xl h-36" />
                 <div className="tenant-skeleton rounded-2xl h-48" />
             </div>
         </div>
     </div>
 );
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MAIN DASHBOARD COMPONENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const HISTORY_FETCH_SIZE = 100;
+
 export const PremiumTenantDashboard = () => {
     const { data: dashboard, isLoading, error } = useTenantDashboardQuery();
     const { data: historyData } = useTenantPaymentHistoryQuery(0, HISTORY_FETCH_SIZE);
     const { data: summary } = useTenantPaymentSummaryQuery();
+    const { data: lease } = useTenantLeaseQuery();
     const router = useRouter();
 
     const score = useMemo(() => computePaymentScore(historyData?.content ?? []), [historyData]);
-
-    // The score is computed from one page of history (HISTORY_FETCH_SIZE), not
-    // the full ledger. For a long tenancy that silently understates a lifetime
-    // figure, so when the ledger is larger than the window the card says what
-    // the number actually covers instead of implying it is all-time.
     const scoreIsWindowed = (historyData?.totalElements ?? 0) > HISTORY_FETCH_SIZE;
 
-    if (isLoading) {
-        return <TenantDashboardSkeleton />;
-    }
+    // Lease progress bar — how far through the lease term is the renter?
+    const leaseProgress = useMemo(() => {
+        if (!lease?.startDate || !lease?.endDate) return null;
+        const start = new Date(lease.startDate).getTime();
+        const end = new Date(lease.endDate).getTime();
+        const now = new Date().getTime();
+        const total = end - start;
+        if (total <= 0) return null;
+        const elapsed = Math.max(0, now - start);
+        const pct = Math.min(100, Math.round((elapsed / total) * 100));
+        const daysLeft = Math.max(0, Math.round((end - now) / 86_400_000));
+        return { pct, daysLeft };
+    }, [lease]);
+
+    // Score tier label — human-readable band for the on-time rate ring.
+    const scoreTier = useMemo(() => {
+        if (score.totalPayments === 0) return null;
+        if (score.onTimeRate >= 90) return { label: "Excellent", cls: "text-success" };
+        if (score.onTimeRate >= 75) return { label: "Good standing", cls: "text-brand-600 dark:text-brand-400" };
+        if (score.onTimeRate >= 60) return { label: "Fair", cls: "text-warning-dark dark:text-warning" };
+        return { label: "Needs attention", cls: "text-danger" };
+    }, [score]);
+
+    if (isLoading) return <TenantDashboardSkeleton />;
 
     if (error || !dashboard) {
         return (
@@ -1113,10 +1163,7 @@ export const PremiumTenantDashboard = () => {
                     <p className="text-sm text-ink-muted dark:text-ink-muted-dark">
                         We encountered an error while loading your dashboard. Please refresh the page or try again later.
                     </p>
-                    <button
-                        onClick={() => router.refresh()}
-                        className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors"
-                    >
+                    <button onClick={() => router.refresh()} className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">
                         Refresh Page
                     </button>
                 </div>
@@ -1129,101 +1176,95 @@ export const PremiumTenantDashboard = () => {
     const overdueAmount = toMoneyNumber(dashboard.overdueAmount);
     const nextDueAmount = toMoneyNumber(dashboard.nextDueAmount);
     const monthlyRent = toMoneyNumber(dashboard.monthlyRent);
-
-    // Total paid comes from the server-side aggregate, not a client-side sum.
-    // This previously filtered historyData.content — one page of at most
-    // HISTORY_FETCH_SIZE rows — and was labelled "This year", so a renter with a
-    // long ledger would be shown a money figure that silently understated what
-    // they had actually paid. A displayed amount must never be a partial sum
-    // dressed up as a total; the backend already computes totalPaid across the
-    // whole ledger, so use that and label it for what it is.
     const totalPaid = summary?.totalPaid;
 
     const activity = recentPayments.length > 0 ? recentPayments : (historyData?.content ?? []).slice(0, 5);
 
+    // Alert states
+    const leaseExpiresIn = leaseProgress?.daysLeft ?? null;
+    const showExpiryAlert = leaseExpiresIn !== null && leaseExpiresIn <= 30 && leaseStatus === "ACTIVE";
+
+    const scrollToPayment = () => {
+        document.getElementById("payment")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     return (
-        <div className="space-y-8 pb-12">
-            {/* Hero Section */}
+        <div className="space-y-6 pb-12">
+            {/* ── Hero ─────────────────────────────────────────────── */}
             <motion.div
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                    duration: 0.6, 
-                    ease: [0.16, 1, 0.3, 1]
-                }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="relative overflow-hidden rounded-2xl p-8 shadow-elevated"
                 style={{
                     background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10B981 100%)',
                     backgroundSize: '200% 200%',
-                    animation: 'gradient-shift 12s ease infinite'
+                    animation: 'gradient-shift 12s ease infinite',
                 }}
             >
-                {/* Floating Orb Decorations */}
-                <div 
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: '500px',
-                        height: '500px',
-                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%)',
-                        borderRadius: '50%',
-                        top: '-20%',
-                        right: '-10%',
-                        animation: 'float-slow 20s ease-in-out infinite',
-                        filter: 'blur(60px)'
-                    }}
-                />
-                <div 
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: '400px',
-                        height: '400px',
-                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-                        borderRadius: '50%',
-                        bottom: '-15%',
-                        left: '-5%',
-                        animation: 'float-slow 25s ease-in-out infinite reverse',
-                        filter: 'blur(50px)'
-                    }}
-                />
+                {/* Property photo backdrop — visible only when a primary photo has been set.
+                    The green gradient overlay maintains full readability regardless of photo content. */}
+                {lease?.propertyThumbnailUrl && (
+                    <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={lease.propertyThumbnailUrl}
+                            alt=""
+                            aria-hidden
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
+                        {/* Brand-green wash — heavy left (where text lives), lighter right (lets photo breathe) */}
+                        <div
+                            aria-hidden
+                            className="absolute inset-0"
+                            style={{
+                                background:
+                                    'linear-gradient(105deg, rgba(4,120,87,0.94) 0%, rgba(5,150,105,0.87) 48%, rgba(16,185,129,0.72) 100%)',
+                            }}
+                        />
+                    </>
+                )}
+
+                {/* Ambient orbs */}
+                <div className="absolute pointer-events-none" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', borderRadius: '50%', top: '-20%', right: '-10%', filter: 'blur(60px)', animation: 'float-slow 20s ease-in-out infinite' }} />
+                <div className="absolute pointer-events-none" style={{ width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)', borderRadius: '50%', bottom: '-10%', left: '-5%', filter: 'blur(50px)', animation: 'float-slow 25s ease-in-out infinite reverse' }} />
 
                 <div className="relative z-10">
+                    {/* Top row: property chip + lease status */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                            duration: 0.5, 
-                            delay: 0.1,
-                            ease: [0.16, 1, 0.3, 1]
-                        }}
-                        className="flex items-start justify-between mb-8 gap-4 flex-wrap"
+                        transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex items-start justify-between mb-6 gap-4 flex-wrap"
                     >
                         <div>
-                            <motion.p 
+                            <motion.p
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-full text-sm font-medium"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.15)',
-                                    backdropFilter: 'blur(8px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    color: 'rgba(255, 255, 255, 0.95)'
-                                }}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 mb-3 rounded-full text-sm font-medium"
+                                style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.95)' }}
                             >
-                                <Home className="w-4 h-4" />
+                                {lease?.propertyThumbnailUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={lease.propertyThumbnailUrl}
+                                        alt=""
+                                        aria-hidden
+                                        className="w-[18px] h-[18px] rounded-[4px] object-cover ring-1 shrink-0"
+                                        style={{ boxShadow: '0 0 0 1.5px rgba(255,255,255,0.30)' }}
+                                    />
+                                ) : (
+                                    <Home className="w-4 h-4" />
+                                )}
                                 Unit {unitNumber} · {propertyName}
                             </motion.p>
-                            <motion.h1 
+                            <motion.h1
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                                 className="text-white font-bold"
-                                style={{
-                                    fontSize: 'clamp(2rem, 4vw, 3.5rem)',
-                                    letterSpacing: '-0.03em',
-                                    lineHeight: '1.1',
-                                    textShadow: '0 2px 12px rgba(0, 0, 0, 0.2)'
-                                }}
+                                style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', letterSpacing: '-0.03em', lineHeight: '1.1', textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
                             >
                                 Welcome back, {tenantName.split(" ")[0]}
                             </motion.h1>
@@ -1231,112 +1272,99 @@ export const PremiumTenantDashboard = () => {
                         <StatusBadge status={leaseStatus} onBrand />
                     </motion.div>
 
+                    {/* Balance display */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                            duration: 0.5, 
-                            delay: 0.4,
-                            ease: [0.16, 1, 0.3, 1]
-                        }}
-                        className="space-y-2 mb-6"
+                        transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="mb-6"
                     >
-                        <p className="text-sm font-medium uppercase tracking-wider"
-                            style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                        >
+                        <p className="text-sm font-medium uppercase tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
                             Account Balance
                         </p>
                         <div className="flex items-baseline gap-4 flex-wrap">
-                            <motion.p 
+                            <motion.p
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ 
-                                    duration: 0.6, 
-                                    delay: 0.5,
-                                    ease: [0.16, 1, 0.3, 1]
-                                }}
+                                transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
                                 className="text-white font-extrabold tabular-nums"
-                                style={{
-                                    fontSize: 'clamp(3rem, 6vw, 5rem)',
-                                    letterSpacing: '-0.04em',
-                                    lineHeight: '1',
-                                    textShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-                                    fontVariantNumeric: 'tabular-nums'
-                                }}
+                                style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4.5rem)', letterSpacing: '-0.04em', lineHeight: '1', textShadow: '0 4px 16px rgba(0,0,0,0.25)' }}
                             >
                                 {formatCurrency(currentBalance)}
                             </motion.p>
                             {currentBalance === 0 && (
-                                <motion.div 
+                                <motion.span
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-                                    className="flex items-center gap-1.5"
-                                    style={{ color: 'rgba(255, 255, 255, 0.95)' }}
+                                    transition={{ delay: 0.65, ease: [0.34, 1.56, 0.64, 1] }}
+                                    className="inline-flex items-center gap-1.5"
+                                    style={{ color: 'rgba(255,255,255,0.95)' }}
                                 >
                                     <CheckCircle2 className="w-5 h-5" />
-                                    <span className="text-sm font-medium">All clear</span>
-                                </motion.div>
+                                    <span className="text-sm font-semibold">All clear</span>
+                                </motion.span>
                             )}
                         </div>
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.7 }}
-                            style={{ color: 'rgba(255, 255, 255, 0.85)' }}
+                            className="mt-2 text-sm"
+                            style={{ color: 'rgba(255,255,255,0.85)' }}
                         >
                             {currentBalance > 0
                                 ? overdueAmount > 0
-                                    ? `${formatCurrency(overdueAmount)} overdue • Payment required`
+                                    ? `${formatCurrency(overdueAmount)} overdue — payment required`
                                     : dueSummary(nextDueDate)
-                                : "No balance due • Account settled"}
+                                : nextDueDate
+                                  ? `No balance due · Next rent ${dueSummary(nextDueDate).toLowerCase()}`
+                                  : "No balance due · Account settled"}
                         </motion.p>
                     </motion.div>
 
-                    {/* Quick Actions */}
-                    <motion.div 
+                    {/* Quick actions */}
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                            duration: 0.5, 
-                            delay: 0.8,
-                            ease: [0.16, 1, 0.3, 1]
-                        }}
+                        transition={{ duration: 0.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
                         className="flex flex-wrap gap-3"
                     >
                         <QuickAction icon={Wallet} label="Make Payment" href="#payment" variant="primary" />
                         <QuickAction icon={FileText} label="View Lease" href="/portal/lease" variant="outline" />
                         <QuickAction icon={Wrench} label="Maintenance" href="/portal/maintenance" variant="outline" />
                     </motion.div>
+
+                    {/* Lease progress bar */}
+                    {leaseProgress && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.0 }}
+                        >
+                            <LeaseHealthBar pct={leaseProgress.pct} daysLeft={leaseProgress.daysLeft} />
+                        </motion.div>
+                    )}
                 </div>
             </motion.div>
 
-            {/* Metrics Grid */}
+            {/* ── Alert Banners ──────────────────────────────────── */}
+            {overdueAmount > 0 && (
+                <OverdueAlertBanner amount={overdueAmount} onPayNow={scrollToPayment} />
+            )}
+            {showExpiryAlert && leaseExpiresIn !== null && (
+                <LeaseExpiryBanner daysLeft={leaseExpiresIn} />
+            )}
+
+            {/* ── Metric Cards ──────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                     icon={AlertCircle}
                     label="Overdue"
                     value={formatCurrency(overdueAmount)}
-                    hint={overdueAmount === 0 ? "No arrears" : "Immediate payment required"}
+                    hint={overdueAmount === 0 ? "Nothing outstanding" : "Immediate payment required"}
                     tone={overdueAmount > 0 ? "danger" : "success"}
                     loading={isLoading}
                 />
-                {/* "Not scheduled" used to be what almost every renter saw here.
-                    The backend only matched a ledger entry dated today or later,
-                    but RentChargeScheduler never posts ahead — so for most of
-                    every month no such entry existed. It now projects the next
-                    charge from the scheduler's own rule, and "Not scheduled" is
-                    left for the one case where it is true: a tenancy with no
-                    further rent to come.
-
-                    The hint carries the exact date as well as the amount —
-                    "when" and "how much" are the two things a renter opens this
-                    tile for, and a relative "Due in 27 days" alone can't be
-                    checked against their own calendar.
-
-                    Tone is amber only as the date approaches. Every active
-                    renter now always has a next due date, so a permanent
-                    warning colour would mean nothing at all. */}
                 <MetricCard
                     icon={Calendar}
                     label="Next Due"
@@ -1363,18 +1391,20 @@ export const PremiumTenantDashboard = () => {
                     icon={TrendingUp}
                     label="Total Paid"
                     value={totalPaid == null ? "—" : formatCurrency(totalPaid)}
-                    hint="All time"
+                    hint={
+                        summary?.paymentsThisYear != null && summary.paymentsThisYear > 0
+                            ? `${summary.paymentsThisYear} payment${summary.paymentsThisYear === 1 ? "" : "s"} this year`
+                            : "All time"
+                    }
                     tone="success"
-                    trend={score.totalPayments > 0 ? { value: score.onTimeRate, direction: "up" } : undefined}
                     loading={isLoading}
                 />
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Payment Widget + Analytics */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Payment Widget */}
+            {/* ── Main content grid ──────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Payment widget + activity feed */}
+                <div className="lg:col-span-2 space-y-6">
                     <div id="payment">
                         <PaymentWidget
                             currentBalance={currentBalance}
@@ -1386,38 +1416,35 @@ export const PremiumTenantDashboard = () => {
                         />
                     </div>
 
-                    {/* Recent Payments */}
+                    {/* Recent Activity */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold text-ink dark:text-ink-dark">Recent Activity</h2>
-                            <Link
-                                href="/portal/payments"
-                                className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center gap-1 group"
-                            >
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-muted/60 dark:text-ink-muted-dark/60 mb-0.5">Ledger</p>
+                                <h2 className="text-base font-bold text-ink dark:text-ink-dark tracking-tight">Recent Activity</h2>
+                            </div>
+                            <Link href="/portal/payments" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 px-3 py-1.5 rounded-full bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/25 dark:hover:bg-brand-900/40 border border-brand-200/60 dark:border-brand-700/30 transition-all duration-200 group">
                                 View all
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
 
                         {activity.length === 0 ? (
-                            <div className="tenant-txn-card p-10 text-center">
-                                <div className="relative w-14 h-14 mx-auto mb-4">
-                                    <div className="absolute inset-0 rounded-xl bg-brand-500/10 blur-lg" />
-                                    <div className="relative rounded-xl bg-gradient-to-br from-brand-500/15 to-brand-300/5 flex items-center justify-center">
-                                        <Receipt className="w-6 h-6 text-brand-600" strokeWidth={2} />
-                                    </div>
+                            <div className="bg-white dark:bg-[#111112] rounded-2xl border border-black/[0.055] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_20px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)] p-10 text-center">
+                                <div className="w-11 h-11 mx-auto mb-4 flex items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/12 to-brand-300/5 ring-1 ring-inset ring-brand-500/10">
+                                    <Receipt className="w-5 h-5 text-brand-600 dark:text-brand-400" strokeWidth={2} />
                                 </div>
-                                <p className="text-sm font-medium text-ink dark:text-ink-dark">No activity yet</p>
-                                <p className="text-xs text-ink-muted dark:text-ink-muted-dark mt-1 max-w-xs mx-auto">
-                                    Your ledger will populate here as soon as rent charges and payments are recorded.
+                                <p className="text-sm font-semibold text-ink dark:text-ink-dark">No activity yet</p>
+                                <p className="text-xs font-medium text-ink-muted/65 dark:text-ink-muted-dark/65 mt-1.5 max-w-[22ch] mx-auto leading-relaxed">
+                                    Rent charges and payments will appear here.
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="bg-white dark:bg-[#111112] rounded-2xl border border-black/[0.055] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_20px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)] overflow-hidden divide-y divide-black/[0.042] dark:divide-white/[0.05]">
                                 {activity.slice(0, 5).map((payment, index) => (
                                     <TransactionItem
                                         key={payment.id}
@@ -1429,7 +1456,7 @@ export const PremiumTenantDashboard = () => {
                                         mpesaRef={payment.mpesaTransactionId}
                                         billingPeriod={
                                             payment.billingPeriodStart && payment.billingPeriodEnd
-                                                ? `${formatDate(payment.billingPeriodStart)} - ${formatDate(payment.billingPeriodEnd)}`
+                                                ? `${formatDate(payment.billingPeriodStart)} – ${formatDate(payment.billingPeriodEnd)}`
                                                 : undefined
                                         }
                                     />
@@ -1439,8 +1466,8 @@ export const PremiumTenantDashboard = () => {
                     </motion.div>
                 </div>
 
-                {/* Right Column: Insights & Actions */}
-                <div className="space-y-6">
+                {/* Right: Score + Landlord contact + Quick links */}
+                <div className="space-y-5">
                     {/* Payment Score */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
@@ -1449,8 +1476,8 @@ export const PremiumTenantDashboard = () => {
                         className="tenant-score-card p-6"
                     >
                         <div className="mb-4">
-                            <h3 className="text-lg font-semibold text-ink dark:text-ink-dark flex items-center gap-2">
-                                <BadgeCheck className="w-5 h-5 text-brand-600" />
+                            <h3 className="text-base font-semibold text-ink dark:text-ink-dark flex items-center gap-2">
+                                <BadgeCheck className="w-[18px] h-[18px] text-brand-600" strokeWidth={2} />
                                 Payment Score
                             </h3>
                             {score.totalPayments > 0 && (
@@ -1462,115 +1489,113 @@ export const PremiumTenantDashboard = () => {
                             )}
                         </div>
 
-                        {/* First-run state. A 0% ring beside "Keep it up!" reads as a
-                            broken widget rather than a new account — there is no score
-                            to show until at least one payment exists, so say that
-                            instead of rendering a hollow zero. */}
                         {score.totalPayments === 0 ? (
                             <div className="py-2 text-center">
                                 <div className="relative mx-auto mb-4 h-24 w-24">
                                     <svg className="h-24 w-24 -rotate-90" aria-hidden="true">
-                                        <circle
-                                            cx="48"
-                                            cy="48"
-                                            r="40"
-                                            stroke="currentColor"
-                                            strokeWidth="7"
-                                            fill="none"
-                                            strokeDasharray="4 9"
-                                            strokeLinecap="round"
-                                            className="text-ink/12 dark:text-white/15"
-                                        />
+                                        <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="7" fill="none" strokeDasharray="4 9" strokeLinecap="round" className="text-ink/12 dark:text-white/15" />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <BadgeCheck className="h-8 w-8 text-ink/20 dark:text-white/25" strokeWidth={1.75} />
                                     </div>
                                 </div>
-                                <p className="text-sm font-semibold text-ink dark:text-ink-dark">
-                                    Your record starts here
-                                </p>
-                                {/* Only claims what ships today: payments are recorded and
-                                    each one has a downloadable receipt. Deliberately does NOT
-                                    promise a portable/exportable rental reference — that
-                                    feature does not exist yet (AGENTS.md: no claim you cannot
-                                    trace to working code). */}
+                                <p className="text-sm font-semibold text-ink dark:text-ink-dark">Your record starts here</p>
                                 <p className="mx-auto mt-1.5 max-w-[15rem] text-xs leading-relaxed text-ink-muted dark:text-ink-muted-dark">
-                                    Once you pay rent through the portal, every payment is recorded
-                                    here with a receipt you can download any time.
+                                    Once you pay rent through the portal, every payment is recorded here with a receipt you can download any time.
                                 </p>
                             </div>
                         ) : (
-                        <>
-                        <div className="flex items-center justify-center mb-4">
-                            <div className="relative w-32 h-32">
-                                <svg className="tenant-score-ring transform -rotate-90 w-32 h-32">
-                                    <defs>
-                                        <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stopColor="#10B981" />
-                                            <stop offset="100%" stopColor="#059669" />
-                                        </linearGradient>
-                                    </defs>
-                                    <circle
-                                        cx="64"
-                                        cy="64"
-                                        r="56"
-                                        stroke="currentColor"
-                                        strokeWidth="8"
-                                        fill="none"
-                                        className="text-ink/5 dark:text-ink/10"
-                                    />
-                                    <circle
-                                        cx="64"
-                                        cy="64"
-                                        r="56"
-                                        stroke="url(#score-gradient)"
-                                        strokeWidth="8"
-                                        fill="none"
-                                        strokeDasharray={`${2 * Math.PI * 56}`}
-                                        strokeDashoffset={`${2 * Math.PI * 56 * (1 - score.onTimeRate / 100)}`}
-                                        className="text-success transition-all duration-1000"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-3xl font-bold text-ink dark:text-ink-dark">{score.onTimeRate}%</span>
-                                    <span className="text-xs text-ink-muted dark:text-ink-muted-dark">On-time</span>
+                            <>
+                                {/* Score ring */}
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="relative w-32 h-32">
+                                        <svg className="tenant-score-ring transform -rotate-90 w-32 h-32">
+                                            <defs>
+                                                <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#10B981" />
+                                                    <stop offset="100%" stopColor="#059669" />
+                                                </linearGradient>
+                                            </defs>
+                                            <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" fill="none" className="text-ink/5 dark:text-ink/10" />
+                                            <circle
+                                                cx="64" cy="64" r="56"
+                                                stroke="url(#score-gradient)"
+                                                strokeWidth="8" fill="none"
+                                                strokeDasharray={`${2 * Math.PI * 56}`}
+                                                strokeDashoffset={`${2 * Math.PI * 56 * (1 - score.onTimeRate / 100)}`}
+                                                className="transition-all duration-1000"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+                                            <span className="text-[2.1rem] font-extrabold text-ink dark:text-ink-dark tracking-tighter tabular-nums leading-none">{score.onTimeRate}%</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-ink-muted/70 dark:text-ink-muted-dark/70">On-time</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="space-y-3">
-                            {[
-                                { label: "Total Payments", value: String(score.totalPayments), tone: "default" },
-                                { label: "Late Payments", value: String(score.latePayments), tone: score.latePayments > 0 ? "danger" : "success" },
-                                { label: "Current Streak", value: `${score.currentStreakMonths} month${score.currentStreakMonths === 1 ? "" : "s"}`, tone: "brand", streak: true },
-                            ].map((stat, i) => (
-                                <motion.div
-                                    key={stat.label}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.6 + i * 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                                    className="flex items-center justify-between text-sm row-fade"
-                                >
-                                    <span className="text-ink-muted dark:text-ink-muted-dark">{stat.label}</span>
-                                    <span className={`font-medium ${stat.tone === "danger" ? "text-danger" : stat.tone === "success" ? "text-success" : stat.tone === "brand" ? "text-brand-600" : "text-ink dark:text-ink-dark"} flex items-center gap-1`}>
-                                        {stat.streak && <Zap className="w-3.5 h-3.5" />}
-                                        {stat.value}
-                                    </span>
-                                </motion.div>
-                            ))}
-                        </div>
+                                {/* Score stats */}
+                                <div className="rounded-xl overflow-hidden border border-black/[0.05] dark:border-white/[0.06]">
+                                    {[
+                                        { label: "Total Payments", value: String(score.totalPayments), tone: "default" },
+                                        { label: "Late Payments", value: String(score.latePayments), tone: score.latePayments > 0 ? "danger" : "success" },
+                                        { label: "Current Streak", value: `${score.currentStreakMonths} month${score.currentStreakMonths === 1 ? "" : "s"}`, tone: "brand", streak: true },
+                                    ].map((stat, i) => (
+                                        <motion.div
+                                            key={stat.label}
+                                            initial={{ opacity: 0, x: -8 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.6 + i * 0.08, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                            className={`flex items-center justify-between px-3.5 py-2.5 ${i < 2 ? "border-b border-black/[0.045] dark:border-white/[0.05]" : ""} bg-white/50 dark:bg-white/[0.02]`}
+                                        >
+                                            <span className="text-xs font-medium text-ink-muted dark:text-ink-muted-dark">{stat.label}</span>
+                                            <span className={`text-xs font-bold flex items-center gap-1 ${stat.tone === "danger" ? "text-danger" : stat.tone === "success" ? "text-success" : stat.tone === "brand" ? "text-brand-600 dark:text-brand-400" : "text-ink dark:text-ink-dark"}`}>
+                                                {stat.streak && <Zap className="w-3 h-3" />}
+                                                {stat.value}
+                                            </span>
+                                        </motion.div>
+                                    ))}
+                                </div>
 
-                        <div className="mt-4 pt-4 border-t border-border/40 dark:border-border-dark/40">
-                            <p className="text-xs text-ink-subtle dark:text-ink-subtle-dark text-center">
-                                {score.latePayments === 0
-                                    ? "A clean payment history helps you secure better rentals in the future."
-                                    : "On-time payments strengthen the record you can show future landlords."}
-                            </p>
-                        </div>
-                        </>
+                                {/* Tier label */}
+                                {scoreTier && (
+                                    <div className="mt-3 flex items-center justify-center">
+                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${
+                                            scoreTier.cls === "text-success"
+                                                ? "bg-success/8 border-success/20 text-success"
+                                                : scoreTier.cls === "text-brand-600 dark:text-brand-400"
+                                                    ? "bg-brand-50 dark:bg-brand-900/25 border-brand-200 dark:border-brand-700/40 text-brand-700 dark:text-brand-300"
+                                                    : scoreTier.cls === "text-warning-dark dark:text-warning"
+                                                        ? "bg-warning/8 border-warning/20 text-warning-dark dark:text-warning"
+                                                        : "bg-danger/8 border-danger/20 text-danger"
+                                        }`}>
+                                            <BadgeCheck className="h-3 w-3" strokeWidth={2.5} />
+                                            {scoreTier.label} record
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="mt-3 pt-3 border-t border-black/[0.05] dark:border-white/[0.05]">
+                                    <p className="text-[10px] font-medium text-ink-muted/60 dark:text-ink-muted-dark/60 text-center leading-relaxed">
+                                        {score.latePayments === 0
+                                            ? "A clean payment history helps you secure better rentals in the future."
+                                            : "On-time payments strengthen the record you can show future landlords."}
+                                    </p>
+                                </div>
+                            </>
                         )}
                     </motion.div>
+
+                    {/* Landlord Contact Card */}
+                    {lease && lease.landlordPhone && (
+                        <LandlordContactCard
+                            name={lease.landlordName}
+                            phone={lease.landlordPhone}
+                            email={lease.landlordEmail}
+                            logoUrl={lease.landlordLogoUrl}
+                            verified={lease.landlordVerified}
+                        />
+                    )}
 
                     {/* Quick Links */}
                     <motion.div
@@ -1579,13 +1604,13 @@ export const PremiumTenantDashboard = () => {
                         transition={{ duration: 0.4, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
                         className="tenant-quicklinks-card p-6"
                     >
-                        <h3 className="text-lg font-semibold text-ink dark:text-ink-dark mb-4">Quick Links</h3>
-                        <div className="space-y-2">
+                        <h3 className="text-base font-semibold text-ink dark:text-ink-dark mb-3">Quick Links</h3>
+                        <div className="space-y-1">
                             {[
-                                { icon: Receipt, label: "Payment History", href: "/portal/payments" },
-                                { icon: FileText, label: "Lease Agreement", href: "/portal/lease" },
-                                { icon: Wrench, label: "Submit Maintenance Request", href: "/portal/maintenance" },
-                                { icon: Home, label: "Landlord Contact", href: "/portal/landlord" },
+                                { icon: Receipt,  label: "Payment History",     href: "/portal/payments",     iconCls: "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" },
+                                { icon: FileText, label: "Lease Agreement",     href: "/portal/lease",        iconCls: "bg-sky-50 dark:bg-sky-900/25 text-sky-600 dark:text-sky-400" },
+                                { icon: Wrench,   label: "Submit Maintenance",  href: "/portal/maintenance",  iconCls: "bg-amber-50 dark:bg-amber-900/25 text-amber-600 dark:text-amber-400" },
+                                { icon: Home,     label: "Landlord Contact",    href: "/portal/landlord",     iconCls: "bg-emerald-50 dark:bg-emerald-900/25 text-emerald-600 dark:text-emerald-400" },
                             ].map((link) => (
                                 <Link
                                     key={link.href}
@@ -1593,7 +1618,9 @@ export const PremiumTenantDashboard = () => {
                                     className="tenant-quick-link-item flex items-center justify-between p-3 group"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <link.icon className="tenant-qk-icon w-4 h-4 text-ink-muted dark:text-ink-muted-dark" />
+                                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${link.iconCls}`}>
+                                            <link.icon className="tenant-qk-icon w-3.5 h-3.5" strokeWidth={2} />
+                                        </div>
                                         <span className="text-sm font-medium text-ink dark:text-ink-dark">{link.label}</span>
                                     </div>
                                     <ArrowRight className="tenant-qk-arrow w-4 h-4 text-ink-subtle dark:text-ink-subtle-dark" />

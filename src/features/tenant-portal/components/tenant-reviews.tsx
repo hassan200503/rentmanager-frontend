@@ -40,7 +40,7 @@ export function TenantReviewsPage() {
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand dark:text-brand-300 ring-1 ring-brand-200/60 dark:ring-brand-700/40">
-                                <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400" strokeWidth={1.5} />
+                                <Star className="h-[18px] w-[18px] fill-amber-400 text-amber-400" strokeWidth={1.5} />
                             </div>
                             <p className="tenant-eyebrow !mt-0">Review center</p>
                         </div>

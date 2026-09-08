@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "../api/admin-api";
 import { adminKeys } from "./admin-keys";
+import { ApiError } from "@/lib/api/errors";
 
 export interface AdminLandlordsParams {
     search?: string;
@@ -16,7 +17,13 @@ export const usePlatformAdminInfoQuery = () => {
     return useQuery({
         queryKey: adminKeys.info(),
         queryFn: () => adminApi.getInfo(),
-        retry: false,
+        // 403 = backend confirmed this token is not a platform admin — no point retrying.
+        // Everything else (401 while Clerk hydrates, network blip, 5xx) is transient.
+        retry: (failureCount, err) => {
+            if (err instanceof ApiError && err.status === 403) return false;
+            return failureCount < 3;
+        },
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     });
 };
 

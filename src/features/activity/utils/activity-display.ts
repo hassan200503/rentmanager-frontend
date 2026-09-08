@@ -27,32 +27,25 @@ export const ENTITY_ICON: Record<string, typeof Building2> = {
 export function getActivityHref(activity: Activity): string | null {
     const entityId = activity.entityId;
 
-    // Property events: direct to the property detail page.
-    if (activity.entityType === "Property") {
-        return `/dashboard/properties/${entityId}`;
-    }
+    if (activity.entityType === "Property") return `/dashboard/properties/${entityId}`;
 
-    // Unit events: navigate to the unit within its parent property context.
-    // This is the most relevant page since units are managed inside properties.
     if (activity.entityType === "Unit") {
         const pid = activity.metadata?.propertyId;
-        if (pid && typeof pid === "string") {
-            return `/dashboard/properties/${pid}/units/${entityId}`;
-        }
+        if (pid && typeof pid === "string") return `/dashboard/properties/${pid}/units/${entityId}`;
         return `/dashboard/properties`;
     }
 
-    // Lease events: direct to the lease detail page.
-    if (activity.entityType === "Lease") {
-        return `/dashboard/leases/${entityId}`;
-    }
+    if (activity.entityType === "Lease") return `/dashboard/leases/${entityId}`;
 
-    // Maintenance-request events: the Requests hub is where they're handled.
-    if (activity.entityType === "MaintenanceRequest") {
-        return "/dashboard/requests";
-    }
+    if (activity.entityType === "MaintenanceRequest") return "/dashboard/requests";
 
     return null;
+}
+
+/** Extract the action suffix from a raw eventType string, e.g. UNIT_OCCUPANCY_CHANGED → OCCUPANCY_CHANGED */
+export function getActionKey(eventType: string): string {
+    const [, ...parts] = eventType.split("_");
+    return parts.join("_");
 }
 
 const ACTION_VERB: Record<string, string> = {
@@ -62,15 +55,63 @@ const ACTION_VERB: Record<string, string> = {
     UPDATED: "updated",
     TERMINATED: "terminated",
     OCCUPANCY_CHANGED: "changed the occupancy of",
-    REQUEST_SUBMITTED: "submitted",
+    REQUEST_SUBMITTED: "submitted a maintenance request for",
 };
 
-export function describe(activity: Activity): string {
-    const [, ...actionParts] = activity.eventType.split("_");
-    const action = actionParts.join("_");
-    const verb = ACTION_VERB[action];
-    if (!verb) {
-        return `${activity.actorName} — ${activity.entityName} was updated`;
+const OCCUPANCY_LABELS: Record<string, string> = {
+    VACANT: "Vacant",
+    OCCUPIED: "Occupied",
+    PARTIALLY_OCCUPIED: "Partially Occupied",
+    UNDER_MAINTENANCE: "Under Maintenance",
+};
+
+/** Semantic color per action type — drives dot and icon tint on the log page. */
+export const ACTION_COLOR: Record<string, string> = {
+    CREATED: "var(--color-success)",
+    ACTIVATED: "var(--color-brand)",
+    UPDATED: "var(--color-info)",
+    ARCHIVED: "var(--color-fg-muted)",
+    TERMINATED: "var(--color-danger)",
+    OCCUPANCY_CHANGED: "var(--color-warning)",
+    REQUEST_SUBMITTED: "var(--color-warning)",
+};
+
+export function getActionColor(eventType: string): string {
+    return ACTION_COLOR[getActionKey(eventType)] ?? "var(--color-brand)";
+}
+
+function formatActor(activity: Activity, currentUserId?: string): string {
+    if (!activity.actorId) return "System";
+    if (currentUserId && activity.actorId === currentUserId) return "You";
+    const name = activity.actorName ?? "";
+    // actorName is currently an email (spec §7.3) — abbreviate to local part only.
+    if (name.includes("@")) return name.split("@")[0];
+    return name || "Someone";
+}
+
+/**
+ * Produces a human-readable sentence for an activity entry.
+ *
+ * Pass currentUserId to get "You" instead of an email abbreviation for
+ * self-actions. Omitting it is safe — the dashboard components call this
+ * without it and render correctly.
+ */
+export function describe(activity: Activity, currentUserId?: string): string {
+    const actor = formatActor(activity, currentUserId);
+    const action = getActionKey(activity.eventType);
+
+    // Enrich occupancy changes with the direction if the backend supplied it.
+    if (action === "OCCUPANCY_CHANGED") {
+        const rawOcc = activity.metadata?.newOccupancy ?? activity.metadata?.occupancy;
+        const newOcc = typeof rawOcc === "string" ? rawOcc : undefined;
+        if (newOcc) {
+            const label = OCCUPANCY_LABELS[newOcc] ?? newOcc.toLowerCase().replace(/_/g, " ");
+            return `${actor} marked ${activity.entityName} as ${label}`;
+        }
+        return `${actor} changed the occupancy of ${activity.entityName}`;
     }
-    return `${activity.actorName} ${verb} ${activity.entityName}`;
+
+    const verb = ACTION_VERB[action];
+    if (!verb) return `${actor} updated ${activity.entityName}`;
+    return `${actor} ${verb} ${activity.entityName}`;
 }

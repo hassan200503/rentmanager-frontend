@@ -232,6 +232,7 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
 
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkArchiving, setIsBulkArchiving] = useState(false);
+    const [confirmingBulkArchive, setConfirmingBulkArchive] = useState(false);
 
     const occupancyByProperty = useMemo(() => {
         const map = new Map<string, { totalUnits: number; occupiedUnits: number; occupancyPercent: number | null }>();
@@ -281,10 +282,8 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
     const handleBulkArchive = async () => {
         const ids = Array.from(selectedIds);
         if (ids.length === 0) return;
-        if (!window.confirm(`Archive ${ids.length} propert${ids.length === 1 ? "y" : "ies"}? They'll be hidden from public listings and can be reactivated later.`)) {
-            return;
-        }
 
+        setConfirmingBulkArchive(false);
         setIsBulkArchiving(true);
         const results = await Promise.allSettled(ids.map((id) => archiveProperty(id)));
         setIsBulkArchiving(false);
@@ -350,16 +349,37 @@ export const PropertyTable = ({ params, onFilterChange }: PropertyTableProps) =>
                         {selectedIds.size} selected
                     </span>
                     <div className="flex items-center gap-2">
+                        {confirmingBulkArchive ? (
+                            <>
+                                <span className="text-xs text-ink-muted">
+                                    Archive {selectedIds.size} propert{selectedIds.size === 1 ? "y" : "ies"}?
+                                </span>
+                                <button
+                                    onClick={handleBulkArchive}
+                                    disabled={isBulkArchiving}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger text-white text-xs font-medium hover:bg-danger-dark transition-colors disabled:opacity-50"
+                                >
+                                    {isBulkArchiving ? "Archiving…" : "Confirm archive"}
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingBulkArchive(false)}
+                                    className="px-2 py-1.5 rounded-lg text-xs text-ink-muted hover:text-ink transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setConfirmingBulkArchive(true)}
+                                disabled={isBulkArchiving}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-xs font-medium text-ink border border-border hover:border-danger/40 hover:text-danger transition-colors disabled:opacity-50"
+                            >
+                                <Archive className="h-3.5 w-3.5" strokeWidth={2} />
+                                Archive selected
+                            </button>
+                        )}
                         <button
-                            onClick={handleBulkArchive}
-                            disabled={isBulkArchiving}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-xs font-medium text-ink border border-border hover:border-danger/40 hover:text-danger transition-colors disabled:opacity-50"
-                        >
-                            <Archive className="h-3.5 w-3.5" strokeWidth={2} />
-                            {isBulkArchiving ? "Archiving…" : "Archive selected"}
-                        </button>
-                        <button
-                            onClick={() => setSelectedIds(new Set())}
+                            onClick={() => { setSelectedIds(new Set()); setConfirmingBulkArchive(false); }}
                             className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-ink-muted hover:text-ink transition-colors"
                         >
                             <X className="h-3.5 w-3.5" strokeWidth={2} />

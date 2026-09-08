@@ -55,11 +55,15 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      // connect-src: 'self' covers the Next origin; `https:` covers
-      // production backends/CDNs; `http:` is needed for the dev backend on
-      // http://localhost:8080 (the app calls NEXT_PUBLIC_API_URL directly
-      // from the browser). ws/wss: dev HMR.
-      "connect-src 'self' http: https: ws: wss:",
+      // connect-src: restrict to known origins in production. In development
+      // we still need http://localhost:* for the Spring Boot backend and
+      // ws://localhost:* for HMR; broad http:/https: would be overly permissive
+      // in prod so we tighten it to Clerk and Cloudinary only.
+      // Note: all /api/v1/* backend calls are proxied through Next.js rewrites
+      // so the browser only sees 'self' for those — no BACKEND_URL needed here.
+      process.env.NODE_ENV === "development"
+        ? "connect-src 'self' http://localhost:* https: ws://localhost:* wss:"
+        : "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://res.cloudinary.com wss:",
       "frame-src 'self' https://*.clerk.accounts.dev",
       "worker-src 'self' blob:",
       "media-src 'self' blob:",

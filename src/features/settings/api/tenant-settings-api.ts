@@ -13,6 +13,16 @@ import { TenantSettingsResponse, UpdateTenantSettingsRequest } from "../types/te
 const settingsUrl = (tenantId: string) =>
     `/tenants/${tenantId}/settings`;
 
+const profileUrl = (tenantId: string) =>
+    `/tenants/${tenantId}/profile`;
+
+export interface UpdateTenantProfileRequest {
+    name?: string;
+    email?: string;
+    phoneNumber?: string | null;
+    address?: string | null;
+}
+
 export const tenantSettingsApi = {
     get: async (tenantId: string): Promise<TenantSettingsResponse> => {
         const { token } = await getAuthContext();
@@ -22,5 +32,10 @@ export const tenantSettingsApi = {
     update: async (tenantId: string, payload: UpdateTenantSettingsRequest): Promise<TenantSettingsResponse> => {
         const { token } = await getAuthContext();
         return apiClient.put<TenantSettingsResponse>(settingsUrl(tenantId), payload, token);
+    },
+
+    updateProfile: async (tenantId: string, payload: UpdateTenantProfileRequest): Promise<void> => {
+        const { token } = await getAuthContext();
+        return apiClient.patch<void>(profileUrl(tenantId), payload, token);
     },
 };

@@ -40,6 +40,7 @@ import {
     useRetryDisbursementMutation,
 } from "@/features/admin/hooks/use-admin-mutations";
 import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
+import { toast } from "sonner";
 
 function InfoRow({ label, value }: { label: string; value: ReactNode }) {
     return (
@@ -56,6 +57,7 @@ function CommissionPanel({ landlordId }: { landlordId: string }) {
     const setCommission = useSetLandlordCommissionMutation();
     const clearCommission = useClearLandlordCommissionMutation();
     const [rate, setRate] = useState("");
+    const [confirmClear, setConfirmClear] = useState(false);
 
     if (isPending) {
         return (
@@ -69,7 +71,7 @@ function CommissionPanel({ landlordId }: { landlordId: string }) {
     const onSave = () => {
         const value = Number(rate);
         if (!Number.isFinite(value) || value < 0 || value > 100) {
-            window.alert("Rate must be between 0 and 100 percent.");
+            toast.error("Rate must be between 0 and 100 percent.");
             return;
         }
         setCommission.mutate({ landlordId, ratePercent: value });
@@ -118,17 +120,32 @@ function CommissionPanel({ landlordId }: { landlordId: string }) {
                         {commission?.source === "OVERRIDE" ? "Update" : "Set override"}
                     </button>
                     {commission?.source === "OVERRIDE" && (
-                        <button
-                            onClick={() => {
-                                if (!window.confirm("Remove this override and fall back to the platform default?")) return;
-                                clearCommission.mutate(landlordId);
-                            }}
-                            disabled={clearCommission.isPending}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50 transition-colors"
-                        >
-                            <X className="h-3.5 w-3.5" strokeWidth={2} />
-                            Clear
-                        </button>
+                        confirmClear ? (
+                            <span className="inline-flex items-center gap-1.5">
+                                <button
+                                    onClick={() => clearCommission.mutate(landlordId, { onSuccess: () => setConfirmClear(false) })}
+                                    disabled={clearCommission.isPending}
+                                    className="inline-flex items-center px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50 transition-colors"
+                                >
+                                    Confirm clear
+                                </button>
+                                <button
+                                    onClick={() => setConfirmClear(false)}
+                                    className="px-2 py-2 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </span>
+                        ) : (
+                            <button
+                                onClick={() => setConfirmClear(true)}
+                                disabled={clearCommission.isPending}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50 transition-colors"
+                            >
+                                <X className="h-3.5 w-3.5" strokeWidth={2} />
+                                Clear
+                            </button>
+                        )
                     )}
                 </div>
             ) : (
@@ -146,6 +163,8 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
     const { data, isPending, isError } = useAdminLandlordDetailQuery(landlordId);
     const updateStatus = useUpdateLandlordStatusMutation();
     const retryDisbursement = useRetryDisbursementMutation();
+    const [confirmingToggle, setConfirmingToggle] = useState(false);
+    const [confirmingRetryId, setConfirmingRetryId] = useState<string | null>(null);
 
     if (isPending) {
         return (
@@ -168,13 +187,6 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
         );
     }
 
-    const onToggleStatus = () => {
-        const target = data.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
-        const t = target === "SUSPENDED" ? "suspend" : "reactivate";
-        if (!window.confirm(`Are you sure you want to ${t} "${data.name}"?`)) return;
-        updateStatus.mutate({ landlordId: data.id, status: target });
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -192,9 +204,28 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                     </div>
                 </div>
                 {isPlatformOwner && (
-                    data.status === "SUSPENDED" ? (
+                    confirmingToggle ? (
+                        <span className="inline-flex items-center gap-1.5">
+                            <button
+                                onClick={() => {
+                                    const target = data.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
+                                    updateStatus.mutate({ landlordId: data.id, status: target });
+                                    setConfirmingToggle(false);
+                                }}
+                                className="inline-flex items-center px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setConfirmingToggle(false)}
+                                className="px-2 py-2 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </span>
+                    ) : data.status === "SUSPENDED" ? (
                         <button
-                            onClick={onToggleStatus}
+                            onClick={() => setConfirmingToggle(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-success/30 text-xs font-medium text-success-dark dark:text-success hover:bg-success/10 transition-colors"
                         >
                             <UserCheck className="h-4 w-4" strokeWidth={2} />
@@ -202,7 +233,7 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                         </button>
                     ) : (
                         <button
-                            onClick={onToggleStatus}
+                            onClick={() => setConfirmingToggle(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
                         >
                             <Ban className="h-4 w-4" strokeWidth={2} />
@@ -331,17 +362,34 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                                         </td>
                                         <td className="px-3 py-2 text-right">
                                             {isPlatformOwner && d.status === "FAILED" && !d.requiresManualAttention && (
-                                                <button
-                                                    onClick={() => {
-                                                        if (!window.confirm("Retry this disbursement now?")) return;
-                                                        retryDisbursement.mutate(d.id);
-                                                    }}
-                                                    disabled={retryDisbursement.isPending}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
-                                                >
-                                                    <RefreshCw className="h-3 w-3" strokeWidth={2} />
-                                                    Retry
-                                                </button>
+                                                confirmingRetryId === d.id ? (
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={() => {
+                                                                retryDisbursement.mutate(d.id);
+                                                                setConfirmingRetryId(null);
+                                                            }}
+                                                            className="inline-flex items-center px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
+                                                        >
+                                                            Confirm
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setConfirmingRetryId(null)}
+                                                            className="px-1.5 py-1 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setConfirmingRetryId(d.id)}
+                                                        disabled={retryDisbursement.isPending}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        <RefreshCw className="h-3 w-3" strokeWidth={2} />
+                                                        Retry
+                                                    </button>
+                                                )
                                             )}
                                         </td>
                                     </tr>

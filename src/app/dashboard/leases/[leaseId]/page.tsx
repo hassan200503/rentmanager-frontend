@@ -100,6 +100,7 @@ export default function LeaseDetailPage() {
     const [showHistory, setShowHistory] = useState(false);
     const [submittingAction, setSubmittingAction] = useState<LeaseActionType | null>(null);
     const [copied, setCopied] = useState(false);
+    const [pendingDestructive, setPendingDestructive] = useState<{ action: LeaseActionType; needsReason?: boolean; needsTermination?: boolean; label: string } | null>(null);
 
     if (isLoading) {
         return (
@@ -239,17 +240,8 @@ export default function LeaseDetailPage() {
         .slice(0, 2)
         .padEnd(2, "\u00A0");
 
-    const handleAction = async (actionType: LeaseActionType, needsReason?: boolean, needsTermination?: boolean, label?: string) => {
+    const executeAction = async (actionType: LeaseActionType, needsReason?: boolean, needsTermination?: boolean) => {
         if (!user?.userId) return;
-        if (needsReason && !reason.trim()) return;
-
-        if (DESTRUCTIVE_ACTIONS.includes(actionType)) {
-            const confirmed = window.confirm(
-                `${label ?? "This action"} cannot be undone. Are you sure you want to continue?`
-            );
-            if (!confirmed) return;
-        }
-
         setSubmittingAction(actionType);
         try {
             await performAction(leaseId, {
@@ -264,6 +256,16 @@ export default function LeaseDetailPage() {
         } finally {
             setSubmittingAction(null);
         }
+    };
+
+    const handleAction = (actionType: LeaseActionType, needsReason?: boolean, needsTermination?: boolean, label?: string) => {
+        if (!user?.userId) return;
+        if (needsReason && !reason.trim()) return;
+        if (DESTRUCTIVE_ACTIONS.includes(actionType)) {
+            setPendingDestructive({ action: actionType, needsReason, needsTermination, label: label ?? "This action" });
+            return;
+        }
+        void executeAction(actionType, needsReason, needsTermination);
     };
 
     const handleCopyLeaseNumber = async () => {
@@ -509,6 +511,33 @@ export default function LeaseDetailPage() {
                             );
                         })}
                     </div>
+
+                    {pendingDestructive && (
+                        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3">
+                            <AlertTriangle className="h-4 w-4 text-danger shrink-0" strokeWidth={2} />
+                            <p className="flex-1 text-sm text-danger-dark dark:text-danger">
+                                {pendingDestructive.label} cannot be undone. Continue?
+                            </p>
+                            <button
+                                onClick={() => {
+                                    const { action, needsReason, needsTermination } = pendingDestructive;
+                                    setPendingDestructive(null);
+                                    void executeAction(action, needsReason, needsTermination);
+                                }}
+                                disabled={isActing}
+                                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-danger text-white text-xs font-medium hover:bg-danger-dark disabled:opacity-50 transition-colors"
+                            >
+                                {isActing && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />}
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setPendingDestructive(null)}
+                                className="h-8 px-3 rounded-lg text-xs text-ink-muted hover:text-ink transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

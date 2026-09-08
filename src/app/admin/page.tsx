@@ -22,6 +22,7 @@ import {
     UserPlus,
     ArrowUpRight,
     Plug,
+    RotateCw,
 } from "lucide-react";import {
     BarChart,
     Bar,
@@ -430,7 +431,7 @@ function OverviewContent() {
 }
 
 function AdminConsolePage() {
-    const { isPlatformAdmin, isLoading, isDenied } = usePlatformRole();
+    const { isPlatformAdmin, isLoading, isDenied, isLoadError, refetch } = usePlatformRole();
 
     return (
         <AdminErrorBoundary>
@@ -439,6 +440,28 @@ function AdminConsolePage() {
                     <div className="flex items-center justify-center gap-2 py-24 text-sm text-fg-muted dark:text-fg-muted-dark">
                         <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                         Checking credentials…
+                    </div>
+                ) : isLoadError ? (
+                    <div className="max-w-md mx-auto text-center p-8 mt-10">
+                        <div className="flex items-center justify-center mb-6">
+                            <div className="h-20 w-20 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <h1 className="text-xl font-bold text-fg dark:text-fg-dark mb-3">
+                            Couldn&#39;t reach the admin console
+                        </h1>
+                        <p className="text-sm text-fg-muted dark:text-fg-muted-dark mb-6">
+                            There was a problem verifying your credentials. This is usually a
+                            temporary network issue — try again in a moment.
+                        </p>
+                        <button
+                            onClick={() => void refetch()}
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand hover:bg-brand-600 text-white font-medium transition-colors"
+                        >
+                            <RotateCw className="h-4 w-4" strokeWidth={2} />
+                            Try again
+                        </button>
                     </div>
                 ) : isDenied || !isPlatformAdmin ? (
                     <div className="max-w-md mx-auto text-center p-8 mt-10">

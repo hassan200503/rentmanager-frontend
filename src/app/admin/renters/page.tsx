@@ -25,6 +25,23 @@ import {
 
 const PAGE_SIZE = 10;
 
+// Show only the last 4 characters of a national ID to limit PII exposure in
+// table views. The full value is stored server-side and accessible via detail.
+const maskId = (id: string | null): string => {
+    if (!id) return "—";
+    if (id.length <= 4) return "●".repeat(id.length);
+    return "●".repeat(id.length - 4) + id.slice(-4);
+};
+
+// Preserve country prefix (first 3–4 chars) and last 4 digits; mask the rest.
+const maskPhone = (phone: string | null | undefined): string => {
+    if (!phone) return "—";
+    const s = phone.trim();
+    if (s.length <= 7) return s;
+    const keepStart = s.startsWith("+") ? 4 : 3;
+    return s.slice(0, keepStart) + "●".repeat(s.length - keepStart - 4) + s.slice(-4);
+};
+
 function RentersContent() {
     const [search, setSearch] = useState("");
     const [debounced, setDebounced] = useState("");
@@ -130,16 +147,16 @@ function RentersContent() {
                                             <Mail className="h-3 w-3 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
                                             {r.email || "—"}
                                         </p>
-                                        <p className="flex items-center gap-1.5">
+                                        <p className="flex items-center gap-1.5 font-mono tracking-wider">
                                             <Phone className="h-3 w-3 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
-                                            {r.phone || "—"}
+                                            {maskPhone(r.phone)}
                                         </p>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-fg-muted dark:text-fg-muted-dark">
                                         {r.nationalId ? (
-                                            <span className="flex items-center gap-1.5">
+                                            <span className="flex items-center gap-1.5 font-mono tracking-wider">
                                                 <IdCard className="h-3.5 w-3.5 text-fg-subtle dark:text-fg-subtle-dark" strokeWidth={2} />
-                                                {r.nationalId}
+                                                {maskId(r.nationalId)}
                                             </span>
                                         ) : (
                                             "—"

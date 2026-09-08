@@ -8,7 +8,10 @@ import {
     Lock,
     Building2,
     Trash2,
+    Check,
+    X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { AdminErrorBoundary } from "@/features/admin/components/AdminErrorBoundary";
 import {
     EmptyState,
@@ -59,7 +62,7 @@ function DefaultCommissionCard() {
     const onSave = () => {
         const value = Number(rate);
         if (!Number.isFinite(value) || value < 0 || value > 100) {
-            window.alert("Rate must be between 0 and 100 percent.");
+            toast.error("Rate must be between 0 and 100 percent.");
             return;
         }
         setDefault.mutate({ ratePercent: value });
@@ -121,6 +124,9 @@ function LandlordOverrides() {
     const [search, setSearch] = useState("");
     const [debounced, setDebounced] = useState("");
     const [page, setPage] = useState(0);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingRate, setEditingRate] = useState("");
+    const [confirmClearId, setConfirmClearId] = useState<string | null>(null);
     const setOverride = useSetLandlordCommissionMutation();
     const clearOverride = useClearLandlordCommissionMutation();
 
@@ -206,36 +212,87 @@ function LandlordOverrides() {
                                     </td>
                                     <td className="px-4 py-3 text-right whitespace-nowrap">
                                         {isPlatformOwner ? (
-                                            <>
-                                                <button
-                                                    onClick={() => {
-                                                        const input = window.prompt(`Commission rate for ${l.name} (%)`, String(l.effectiveCommissionRate ?? ""));
-                                                        if (input === null) return;
-                                                        const value = Number(input);
-                                                        if (!Number.isFinite(value) || value < 0 || value > 100) {
-                                                            window.alert("Rate must be between 0 and 100 percent.");
-                                                            return;
-                                                        }
-                                                        setOverride.mutate({ landlordId: l.id, ratePercent: value });
-                                                    }}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
-                                                >
-                                                    <Wallet className="h-3 w-3" strokeWidth={2} />
-                                                    Override
-                                                </button>
-                                                {l.effectiveCommissionRate !== null && l.effectiveCommissionRate !== undefined && (
+                                            editingId === l.id ? (
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        max={100}
+                                                        step={0.5}
+                                                        value={editingRate}
+                                                        onChange={(e) => setEditingRate(e.target.value)}
+                                                        placeholder="Rate %"
+                                                        autoFocus
+                                                        onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+                                                        className="w-20 rounded-lg border border-border dark:border-border-dark bg-white dark:bg-surface-dark px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                                    />
                                                     <button
                                                         onClick={() => {
-                                                            if (!window.confirm(`Remove the commission override for ${l.name}?`)) return;
-                                                            clearOverride.mutate(l.id);
+                                                            const value = Number(editingRate);
+                                                            if (!Number.isFinite(value) || value < 0 || value > 100) {
+                                                                toast.error("Rate must be between 0 and 100 percent.");
+                                                                return;
+                                                            }
+                                                            setOverride.mutate(
+                                                                { landlordId: l.id, ratePercent: value },
+                                                                { onSuccess: () => setEditingId(null) }
+                                                            );
                                                         }}
-                                                        className="ml-1.5 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
+                                                        disabled={setOverride.isPending}
+                                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-success/30 text-xs font-medium text-success-dark dark:text-success hover:bg-success/10 disabled:opacity-50 transition-colors"
                                                     >
-                                                        <Trash2 className="h-3 w-3" strokeWidth={2} />
-                                                        Clear
+                                                        {setOverride.isPending ? <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} /> : <Check className="h-3 w-3" strokeWidth={2} />}
+                                                        Save
                                                     </button>
-                                                )}
-                                            </>
+                                                    <button
+                                                        onClick={() => setEditingId(null)}
+                                                        className="inline-flex items-center px-2 py-1.5 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                                    >
+                                                        <X className="h-3 w-3" strokeWidth={2} />
+                                                    </button>
+                                                </span>
+                                            ) : confirmClearId === l.id ? (
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Remove override?</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            clearOverride.mutate(l.id, { onSuccess: () => setConfirmClearId(null) });
+                                                        }}
+                                                        disabled={clearOverride.isPending}
+                                                        className="inline-flex items-center px-2.5 py-1.5 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmClearId(null)}
+                                                        className="px-2 py-1.5 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingRate(String(l.effectiveCommissionRate ?? ""));
+                                                            setEditingId(l.id);
+                                                        }}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
+                                                    >
+                                                        <Wallet className="h-3 w-3" strokeWidth={2} />
+                                                        Override
+                                                    </button>
+                                                    {l.effectiveCommissionRate !== null && l.effectiveCommissionRate !== undefined && (
+                                                        <button
+                                                            onClick={() => setConfirmClearId(l.id)}
+                                                            className="ml-1.5 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
+                                                        >
+                                                            <Trash2 className="h-3 w-3" strokeWidth={2} />
+                                                            Clear
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )
                                         ) : (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-subtle dark:text-fg-subtle-dark bg-border-subtle dark:bg-border-subtle-dark">
                                                 <Lock className="h-3 w-3" strokeWidth={2} />
