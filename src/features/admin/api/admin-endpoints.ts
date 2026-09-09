@@ -2,7 +2,6 @@ const base = "/admin";
 
 export const adminEndpoints = {
     info: () => base + "/info",
-    defaultCommission: () => base + "/commission/default",
     overview: () => base + "/overview",
     settings: () => base + "/settings",
     settingsLogo: () => base + "/settings/logo",
@@ -10,7 +9,6 @@ export const adminEndpoints = {
     landlords: (params?: string) => base + "/landlords" + (params ? `?${params}` : ""),
     landlord: (landlordId: string) => `${base}/landlords/${landlordId}`,
     landlordStatus: (landlordId: string) => `${base}/landlords/${landlordId}/status`,
-    landlordCommission: (landlordId: string) => `${base}/landlords/${landlordId}/commission`,
     properties: (params?: string) => base + "/properties" + (params ? `?${params}` : ""),
     property: (propertyId: string) => `${base}/properties/${propertyId}`,
     renters: (params?: string) => base + "/renters" + (params ? `?${params}` : ""),
@@ -21,4 +19,8 @@ export const adminEndpoints = {
     reviewStats: () => base + "/reviews/stats",
     reviewDecision: (type: string, reviewId: string, action: "approve" | "hide") =>
         `${base}/reviews/${type}/${reviewId}/${action}`,
+    subscriptionPlans: () => "/tenants/subscription-plans",
+    subscriptionPlan: (id: string) => `/tenants/subscription-plans/${id}`,
+    subscriptionPlanDeactivate: (id: string) => `/tenants/subscription-plans/${id}/deactivate`,
+    landlordSubscriptionActivate: (landlordId: string) => `${base}/landlords/${landlordId}/subscription/activate`,
 };

@@ -1,10 +1,10 @@
 import { adminEndpoints } from "./admin-endpoints";
 import type {
+    AdminActivateSubscriptionRequest,
     AdminOverviewResponse,
     DisbursementItem,
     PaymentRequestItem,
     PaymentRequestQueryParams,
-    LandlordCommission,
     LandlordDetailResponse,
     LandlordSummary,
     PlatformAdminInfo,
@@ -16,11 +16,12 @@ import type {
     PropertyDetailResponse,
     PropertySummary,
     RenterSummary,
-    SetLandlordCommissionRequest,
     SpringPage,
     UpdatePlatformSettingsRequest,
     DisbursementQueryParams,
+    SubscriptionPlanAdminRequest,
 } from "../types/admin-types";
+import type { SubscriptionPlan } from "@/features/subscription/types/subscription-types";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 
@@ -75,26 +76,6 @@ export const adminApi = {
     getLandlordDetail: async (landlordId: string): Promise<LandlordDetailResponse> => {
         const { token } = await getAuthContext();
         return apiClient.get<LandlordDetailResponse>(adminEndpoints.landlord(landlordId), token);
-    },
-    getDefaultCommission: async (): Promise<LandlordCommission> => {
-        const { token } = await getAuthContext();
-        return apiClient.get<LandlordCommission>(adminEndpoints.defaultCommission(), token);
-    },
-    setDefaultCommission: async (request: SetLandlordCommissionRequest): Promise<LandlordCommission> => {
-        const { token } = await getAuthContext();
-        return apiClient.put<LandlordCommission>(adminEndpoints.defaultCommission(), request, token);
-    },
-    getLandlordCommission: async (landlordId: string): Promise<LandlordCommission> => {
-        const { token } = await getAuthContext();
-        return apiClient.get<LandlordCommission>(adminEndpoints.landlordCommission(landlordId), token);
-    },
-    setLandlordCommission: async (landlordId: string, request: SetLandlordCommissionRequest): Promise<LandlordCommission> => {
-        const { token } = await getAuthContext();
-        return apiClient.put<LandlordCommission>(adminEndpoints.landlordCommission(landlordId), request, token);
-    },
-    clearLandlordCommission: async (landlordId: string): Promise<void> => {
-        const { token } = await getAuthContext();
-        await apiClient.delete<void>(adminEndpoints.landlordCommission(landlordId), token);
     },
     updateLandlordStatus: async (landlordId: string, status: "ACTIVE" | "SUSPENDED"): Promise<void> => {
         const { token } = await getAuthContext();
@@ -162,5 +143,21 @@ export const adminApi = {
     reviewHide: async (type: PlatformReviewType, reviewId: string): Promise<void> => {
         const { token } = await getAuthContext();
         await apiClient.patch<void>(adminEndpoints.reviewDecision(type, reviewId, "hide"), {}, token);
+    },
+    createSubscriptionPlan: async (request: SubscriptionPlanAdminRequest): Promise<SubscriptionPlan> => {
+        const { token } = await getAuthContext();
+        return apiClient.post<SubscriptionPlan>(adminEndpoints.subscriptionPlans(), request, token);
+    },
+    updateSubscriptionPlan: async (id: string, request: Omit<SubscriptionPlanAdminRequest, "code">): Promise<SubscriptionPlan> => {
+        const { token } = await getAuthContext();
+        return apiClient.put<SubscriptionPlan>(adminEndpoints.subscriptionPlan(id), request, token);
+    },
+    deactivateSubscriptionPlan: async (id: string): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.put<void>(adminEndpoints.subscriptionPlanDeactivate(id), undefined, token);
+    },
+    activateLandlordSubscription: async (landlordId: string, request: AdminActivateSubscriptionRequest): Promise<void> => {
+        const { token } = await getAuthContext();
+        await apiClient.post<void>(adminEndpoints.landlordSubscriptionActivate(landlordId), request, token);
     },
 };

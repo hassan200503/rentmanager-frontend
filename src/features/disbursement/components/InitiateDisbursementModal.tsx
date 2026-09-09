@@ -128,8 +128,8 @@ export default function InitiateDisbursementModal({ open, onClose }: Props) {
                             <p className="mt-1 text-xs text-danger dark:text-danger-dark">{errors.amount}</p>
                         )}
                         <p className="mt-1 text-xs text-fg-muted dark:text-fg-muted-dark">
-                            Capped at what this charge has collected, less commission and anything
-                            already paid out.
+                            Capped at what this charge has collected, less any fees already
+                            deducted and anything already paid out.
                         </p>
                     </div>
 

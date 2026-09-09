@@ -267,7 +267,7 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
                 <p className="mt-3 text-xs text-fg-muted dark:text-fg-muted-dark">
                     {isDirectMode
                         ? "Rent and deposits land directly in your Till or Paybill. RentManager never holds the money."
-                        : "Rent is collected by RentManager and paid out to your payout number after commission."
+                        : "Rent is collected by RentManager and paid out to your payout number. Your monthly subscription fee is charged separately."
                     }{" "}
                     For security, stored credentials are never displayed — the backend
                     doesn&#39;t return them once saved. To change them, update below.

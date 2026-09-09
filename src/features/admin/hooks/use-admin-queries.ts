@@ -49,13 +49,6 @@ export const useAdminPropertyDetailQuery = (propertyId: string) => {
     });
 };
 
-export const useAdminDefaultCommissionQuery = () => {
-    return useQuery({
-        queryKey: adminKeys.defaultCommission(),
-        queryFn: () => adminApi.getDefaultCommission(),
-    });
-};
-
 export const useAdminLandlordsQuery = (params: AdminLandlordsParams) => {
     return useQuery({
         queryKey: adminKeys.landlords(params),
@@ -68,14 +61,6 @@ export const useAdminLandlordDetailQuery = (landlordId: string) => {
     return useQuery({
         queryKey: adminKeys.landlord(landlordId),
         queryFn: () => adminApi.getLandlordDetail(landlordId),
-        enabled: !!landlordId,
-    });
-};
-
-export const useAdminLandlordCommissionQuery = (landlordId: string) => {
-    return useQuery({
-        queryKey: adminKeys.landlordCommission(landlordId),
-        queryFn: () => adminApi.getLandlordCommission(landlordId),
         enabled: !!landlordId,
     });
 };

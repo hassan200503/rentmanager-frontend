@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Crown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PRICING_PLANS, LANDLORD_PLAN_META, FALLBACK_LANDLORD_PLANS } from "@/features/landing/data/content";
 import { SectionHeader } from "./SectionHeader";
@@ -234,6 +234,65 @@ function PlanCard({ plan, billing }: { plan: RenderPlan; billing: Billing }) {
     );
 }
 
+const ENTERPRISE_FEATURES = [
+    "Everything in Portfolio, 75+ units",
+    "Dedicated account manager",
+    "Custom integrations and API access",
+    "White-label branding on all documents",
+    "Priority response SLA",
+];
+
+function EnterpriseCard() {
+    const meta = LANDLORD_PLAN_META["ENTERPRISE"];
+    const features = meta?.features ?? ENTERPRISE_FEATURES;
+
+    return (
+        <div className="relative flex h-full flex-col p-8 rounded-3xl bg-gradient-to-b from-amber-500/[0.10] via-white/[0.03] to-white/[0.01] border border-amber-400/30 backdrop-blur-sm hover:border-amber-400/55 hover:-translate-y-1.5 hover:shadow-[0_0_80px_-20px_rgba(245,158,11,0.4)] transition-all duration-300 group">
+            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.14em] bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/40 ring-1 ring-amber-300/40 inline-flex items-center gap-1.5 whitespace-nowrap">
+                <Crown className="w-3 h-3" strokeWidth={2.5} />
+                Enterprise
+            </span>
+
+            <h3 className="font-display text-xl font-medium text-white">Enterprise</h3>
+            <p className="text-sm text-white/50 mt-1.5">
+                {meta?.tagline ?? "For property managers & large portfolios"}
+            </p>
+
+            <div className="mt-6 flex items-baseline gap-2">
+                <span className="font-data text-4xl font-semibold text-white tracking-tight">Custom</span>
+                <span className="text-sm text-white/45 font-medium">pricing</span>
+            </div>
+
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase text-amber-300/90">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                Unlimited units
+            </p>
+
+            <ul className="mt-8 space-y-3.5 flex-1">
+                {features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5 text-sm text-white/70">
+                        <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
+                            <Check className="w-3 h-3" strokeWidth={3} aria-hidden="true" />
+                        </span>
+                        {feature}
+                    </li>
+                ))}
+            </ul>
+
+            <div className="mt-8">
+                <Button
+                    href="mailto:hello@rentmanager.co.ke?subject=Enterprise%20plan%20inquiry"
+                    variant="outline"
+                    size="lg"
+                    fullWidth
+                >
+                    Contact sales
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 function SkeletonCard() {
     return (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 space-y-4 animate-pulse">
@@ -315,7 +374,7 @@ export function PricingSection() {
                 <SectionHeader
                     eyebrow="Pricing"
                     title="Simple, transparent pricing"
-                    description="Free for renters. One flat rate for landlords — no percentage cuts, no per-tenant fees."
+                    description="Free for renters. One flat monthly rate for landlords — no commission on rent, no per-payment fees."
                 />
 
                 <div className="flex flex-wrap items-center justify-center gap-3 -mt-6 mb-12">
@@ -336,9 +395,11 @@ export function PricingSection() {
                     {!isSkeleton && <BillingToggle billing={billing} onChange={setBilling} />}
                 </div>
 
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 max-w-6xl mx-auto">
                     {isSkeleton ? (
                         <>
+                            <SkeletonCard />
+                            <SkeletonCard />
                             <SkeletonCard />
                             <SkeletonCard />
                             <SkeletonCard />
@@ -349,12 +410,13 @@ export function PricingSection() {
                             {landlordPlans.map((plan) => (
                                 <PlanCard key={plan.key} plan={plan} billing={billing} />
                             ))}
+                            <EnterpriseCard />
                         </>
                     )}
                 </div>
 
                 <p className="text-center text-xs text-white/40 mt-10 flex items-center justify-center gap-1.5">
-                    All landlord plans come with a 14-day free trial. No credit card required.
+                    All landlord plans come with a 30-day free trial. No credit card required.
                 </p>
             </div>
         </section>

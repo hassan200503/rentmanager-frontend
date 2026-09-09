@@ -20,7 +20,6 @@ import {
     TableSkeleton,
     formatCurrency,
     formatDate,
-    formatRate,
 } from "@/features/admin/components/admin-ui";
 import {
     useAdminLandlordsQuery,
@@ -119,7 +118,6 @@ function LandlordsContent() {
                                 <th className="px-4 py-3">Billing</th>
                                 <th className="px-4 py-3">Portfolio</th>
                                 <th className="px-4 py-3">GMV</th>
-                                <th className="px-4 py-3">Commission</th>
                                 <th className="px-4 py-3">Joined</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
@@ -151,9 +149,6 @@ function LandlordsContent() {
                                     </td>
                                     <td className="px-4 py-3 text-sm font-medium text-fg dark:text-fg-dark">
                                         {formatCurrency(l.gmvAmount)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-fg-muted dark:text-fg-muted-dark">
-                                        {formatRate(l.effectiveCommissionRate)}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-fg-muted dark:text-fg-muted-dark">
                                         {formatDate(l.createdAt)}

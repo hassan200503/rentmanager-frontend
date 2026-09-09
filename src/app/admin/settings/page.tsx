@@ -62,6 +62,7 @@ const inputCls =
 
 function toForm(initial: PlatformSettingsResponse): UpdatePlatformSettingsRequest {
     return {
+        trialDurationDays: initial.billing.trialDurationDays,
         premiumGraceDays: initial.billing.premiumGraceDays,
         subscriptionPaymentExpiryMinutes: initial.billing.subscriptionPaymentExpiryMinutes,
         disbursementMaxRetryAttempts: initial.disbursement.maxRetryAttempts,
@@ -112,8 +113,22 @@ function BillingPanel({ form, set, disabled }: FormPanelProps) {
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field
+                    label="New-landlord trial duration (days)"
+                    hint="How long a newly onboarded landlord gets to try RentManager for free. Applied at account creation — does not retroactively extend existing trials. Min 7, max 90."
+                >
+                    <input
+                        type="number"
+                        min={7}
+                        max={90}
+                        disabled={disabled}
+                        value={form.trialDurationDays}
+                        onChange={(e) => set({ trialDurationDays: Number(e.target.value) })}
+                        className={inputCls}
+                    />
+                </Field>
+                <Field
                     label="Premium grace period (days)"
-                    hint="Days a landlord keeps premium benefits after the paid period ends, before reverting to per-payment commission."
+                    hint="Days a landlord keeps full access after their paid period ends before the subscription lapses."
                 >
                     <input
                         type="number"
@@ -173,7 +188,7 @@ function RevenuePanel({ form, set, disabled }: FormPanelProps) {
         <SectionCard
             icon={<Wallet className="h-4 w-4 text-emerald-500 dark:text-emerald-400" strokeWidth={2} />}
             title="Platform revenue collection"
-            hint="M-Pesa shortcodes used to collect the platform commission revenue share."
+            hint="M-Pesa shortcodes used to collect subscription payments from landlords."
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Business shortcode" hint="STK push shortcode (e.g. 174379).">
@@ -320,7 +335,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
                     <Lock className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={2} />
                     <p>
                         You have read access to platform settings. Only the platform owner can modify
-                        branding, commission, grace periods, disbursement retries or revenue collection details.
+                        branding, subscription grace periods, disbursement retries or revenue collection details.
                     </p>
                 </div>
             )}

@@ -227,16 +227,10 @@ function OverviewContent() {
 
     const gmvCurrentMonth = toMoneyNumber(payments.gmvCurrentMonth);
     const gmvPreviousMonth = toMoneyNumber(payments.gmvPreviousMonth);
-    const commissionCurrentMonth = toMoneyNumber(payments.commissionCurrentMonth);
-    const commissionPreviousMonth = toMoneyNumber(payments.commissionPreviousMonth);
 
     const gmvDelta =
         gmvPreviousMonth > 0
             ? ((gmvCurrentMonth - gmvPreviousMonth) / gmvPreviousMonth) * 100
-            : null;
-    const commissionDelta =
-        commissionPreviousMonth > 0
-            ? ((commissionCurrentMonth - commissionPreviousMonth) / commissionPreviousMonth) * 100
             : null;
 
     const paymentTotal = payments.paymentRequestsPending + payments.paymentRequestsPaid + payments.paymentRequestsFailed;
@@ -244,7 +238,6 @@ function OverviewContent() {
 
     const revenueData = [
         { label: "GMV", current: gmvCurrentMonth, previous: gmvPreviousMonth },
-        { label: "Commission", current: commissionCurrentMonth, previous: commissionPreviousMonth },
     ];
 
     const pipelineData = [
@@ -272,7 +265,7 @@ function OverviewContent() {
     return (
         <div className="space-y-6">
             {/* Primary KPI band */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     label="GMV this month"
                     value={formatCurrency(payments.gmvCurrentMonth)}
@@ -280,14 +273,6 @@ function OverviewContent() {
                     tone="emerald"
                     delta={gmvDelta}
                     hint="Gross rental volume vs last month"
-                />
-                <StatCard
-                    label="Platform commission"
-                    value={formatCurrency(payments.commissionCurrentMonth)}
-                    icon={Wallet}
-                    tone="violet"
-                    delta={commissionDelta}
-                    hint="Revenue share collected this month"
                 />
                 <StatCard
                     label="Active landlords"
@@ -422,7 +407,7 @@ function OverviewContent() {
                     <ModuleCard title="Properties" description="Platform-wide property and unit inventory" icon={Home} tone="violet" href="/admin/properties" />
                     <ModuleCard title="Disbursements" description="Monitor and retry MPESA payout batches" icon={Send} tone="blue" href="/admin/disbursements" />
                     <ModuleCard title="Integrations" description="Configure M-Pesa, SMS, WhatsApp, email, storage and auth providers" icon={Plug} tone="teal" href="/admin/integrations" />
-                    <ModuleCard title="Commission policy" description="Default and per-landlord commission rates" icon={Wallet} tone="amber" href="/admin/commission" />
+                    <ModuleCard title="Subscription plans" description="Platform pricing catalogue and plan details" icon={Wallet} tone="amber" href="/admin/subscription-plans" />
                     <ModuleCard title="Platform settings" description="Branding, environment and configuration" icon={Settings} tone="rose" href="/admin/settings" />
                 </div>
             </div>

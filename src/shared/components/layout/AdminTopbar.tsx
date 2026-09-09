@@ -24,7 +24,7 @@ const PAGE_CRUMBS: { prefix: string; label: string }[] = [
     { prefix: "/admin/reviews", label: "Reviews" },
     { prefix: "/admin/disbursements", label: "Disbursements" },
     { prefix: "/admin/integrations", label: "Integrations" },
-    { prefix: "/admin/commission", label: "Commission policy" },
+    { prefix: "/admin/subscription-plans", label: "Subscription plans" },
     { prefix: "/admin/settings", label: "Platform settings" },
 ];
 

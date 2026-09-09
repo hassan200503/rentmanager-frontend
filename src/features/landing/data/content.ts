@@ -210,6 +210,16 @@ export const LANDLORD_PLAN_META: Record<
       "Verified tenant reviews on your listings",
     ],
   },
+  ENTERPRISE: {
+    tagline: "For property managers and large portfolios",
+    features: [
+      "Everything in Portfolio, 75+ units",
+      "Dedicated account manager",
+      "Custom integrations and API access",
+      "White-label branding on all documents",
+      "Priority response SLA",
+    ],
+  },
 };
 
 /**
@@ -229,6 +239,12 @@ export const FALLBACK_LANDLORD_PLANS = [
     name: "Growth",
     monthlyPrice: 5500,
     maxUnits: 30 as number | null,
+  },
+  {
+    code: "PORTFOLIO",
+    name: "Portfolio",
+    monthlyPrice: 9500,
+    maxUnits: 75 as number | null,
   },
 ] as const;
 

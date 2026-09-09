@@ -47,6 +47,9 @@ export interface SubscriptionStatusResponse {
     accountReference: string | null;
     ratibaEnabled: boolean;
     standingOrderStatus: StandingOrderStatus | null;
+    /** ISO-8601 timestamp when the 90-day free trial window closes. Null for
+     *  landlords who activated a premium plan before V92. */
+    freeTrialEndsAt: string | null;
 }
 
 export interface SwitchToPremiumRequest {

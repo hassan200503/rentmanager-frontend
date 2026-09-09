@@ -1,5 +1,6 @@
 export type TenantStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "DEACTIVATED";
 export type BillingMode = "COMMISSION" | "PREMIUM_MONTHLY";
+export type SubscriptionStatus = "TRIAL" | "ACTIVE" | "LAPSED" | "CANCELLED" | "PAST_DUE" | "GRACE_PERIOD";
 export type DisbursementStatus = "INITIATED" | "PENDING" | "SUCCESS" | "FAILED";
 export type RentPaymentRequestStatus = "PENDING" | "PAID" | "FAILED";
 export type RentTransactionSource = "MPESA" | "CASH" | "ADMIN_ADJUSTMENT" | "SYSTEM";
@@ -22,7 +23,6 @@ export type PropertyType =
   | "APARTMENT" | "BEDSITTER" | "STUDIO" | "MAISONETTE" | "VILLA"
   | "COMMERCIAL" | "OFFICE" | "WAREHOUSE" | "HOSTEL" | "AIRBNB";
 export type PremisesType = "RESIDENTIAL" | "COMMERCIAL" | "MIXED_USE";
-export type CommissionSource = "OVERRIDE" | "DEFAULT";
 
 export interface PlatformAdminInfo {
   platformRole: "OWNER" | "ADMIN";
@@ -38,14 +38,11 @@ export interface AdminOverviewPlatformStats {
   totalUnits: number;
   activeLeases: number;
   totalRenters: number;
-  platformDefaultCommissionRate: string | null; // BigDecimal -> JSON string
 }
 
 export interface AdminOverviewPaymentStats {
   gmvCurrentMonth: string;
   gmvPreviousMonth: string;
-  commissionCurrentMonth: string;
-  commissionPreviousMonth: string;
   paymentRequestsPending: number;
   paymentRequestsPaid: number;
   paymentRequestsFailed: number;
@@ -84,9 +81,7 @@ export interface LandlordSummary {
   activeLeasesCount: number;
   rentersCount: number;
   gmvAmount: string; // BigDecimal -> JSON string
-  commissionAmount: string;
   lastActivityAt: string | null;
-  effectiveCommissionRate: string | null;
 }
 
 export interface SpringPage<T> {
@@ -150,7 +145,6 @@ export interface LandlordDetailDisbursement {
 export interface LandlordDetailTransaction {
   id: string;
   amount: string;
-  commissionAmount: string | null;
   source: RentTransactionSource;
   occurredAt: string;
 }
@@ -166,9 +160,11 @@ export interface LandlordDetailResponse {
   createdAt: string;
   lastActivityAt: string | null;
   gmvAmount: string; // BigDecimal -> JSON string
-  commissionAmount: string;
-  effectiveCommissionRate: string | null;
-  commissionSource: CommissionSource;
+  subscriptionStatus: SubscriptionStatus | null;
+  subscriptionPlanId: string | null;
+  planStartDate: string | null;
+  planEndDate: string | null;
+  freeTrialEndsAt: string | null;
   properties: LandlordDetailProperty[];
   renters: LandlordDetailRenter[];
   leases: LandlordDetailLease[];
@@ -177,16 +173,9 @@ export interface LandlordDetailResponse {
   recentTransactions: LandlordDetailTransaction[];
 }
 
-export interface LandlordCommission {
-  landlordOrgId: string;
-  ratePercent: string | null; // BigDecimal -> JSON string
-  source: CommissionSource;
-  effectiveFrom: string | null;
-  updatedAt: string | null;
-}
-
-export interface SetLandlordCommissionRequest {
-  ratePercent: number;
+export interface AdminActivateSubscriptionRequest {
+  planCode: string;
+  periodMonths: number;
 }
 
 export interface DisbursementItem {
@@ -321,6 +310,7 @@ export type PlatformEnvironment = "SANDBOX" | "PRODUCTION";
 export interface PlatformSettingsBilling {
   premiumGraceDays: number;
   subscriptionPaymentExpiryMinutes: number;
+  trialDurationDays: number;
 }
 
 export interface PlatformSettingsDisbursement {
@@ -353,6 +343,7 @@ export interface PlatformSettingsResponse {
 }
 
 export interface UpdatePlatformSettingsRequest {
+  trialDurationDays: number;
   premiumGraceDays: number;
   subscriptionPaymentExpiryMinutes: number;
   disbursementMaxRetryAttempts: number;
@@ -434,4 +425,14 @@ export interface PaymentRequestQueryParams {
   status?: RentPaymentRequestStatus;
   page?: number;
   size?: number;
+}
+
+export interface SubscriptionPlanAdminRequest {
+  code: string;
+  name: string;
+  description?: string | null;
+  billingCycle: "MONTHLY" | "YEARLY" | "QUARTERLY";
+  maxUnits?: number | null;
+  monthlyPrice?: number | null;
+  yearlyPrice?: number | null;
 }

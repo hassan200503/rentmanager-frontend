@@ -41,7 +41,7 @@ const WORKSPACE_NAV: AdminNavItem[] = [
     { label: "Reviews", href: "/admin/reviews", icon: Star },
     { label: "Disbursements", href: "/admin/disbursements", icon: Send },
     { label: "Integrations", href: "/admin/integrations", icon: Plug },
-    { label: "Commission policy", href: "/admin/commission", icon: Wallet },
+    { label: "Subscription plans", href: "/admin/subscription-plans", icon: Wallet },
     { label: "Platform settings", href: "/admin/settings", icon: Settings },
 ];
 

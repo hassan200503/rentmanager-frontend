@@ -25,6 +25,7 @@ import { LeaseStatusBadge } from "@/features/lease/components/lease-status-badge
 import { LeaseActionType, TerminationType } from "@/features/lease/types/lease-request";
 import { daysUntil, isExpiringSoon } from "@/features/lease/utils/lease-date-utils";
 import {RentLedgerList} from "@/features/rentledger/components/rent-ledger-list";
+import { DepositSection } from "@/features/deposit/components/DepositSection";
 import { formatCurrency } from "@/shared/utils/money";
 
 const formatDate = (isoDate: string) =>
@@ -550,6 +551,15 @@ export default function LeaseDetailPage() {
                     </p>
                 </div>
             )}
+
+            {/* ── Security Deposit Section ── */}
+            <section className="animate-fade-in-up space-y-3">
+                <div className="flex items-center gap-3">
+                    <h2 className="section-header mb-0">Security Deposit</h2>
+                    <div className="h-px flex-1 bg-gradient-to-r from-border/80 to-transparent" />
+                </div>
+                <DepositSection leaseId={leaseId} canManage={canManageLease} />
+            </section>
 
             {/* ── Rent Ledger Section ── */}
             <section className="animate-fade-in-up space-y-3">
