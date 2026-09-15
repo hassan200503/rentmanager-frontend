@@ -18,6 +18,7 @@ import {
   Archive,
   CreditCard,
   Star,
+  Landmark,
   Menu,
   X,
   Sun,
@@ -46,7 +47,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard/reviews", label: "Reviews", icon: Star },
   { href: "/dashboard/announcements", label: "Announcements", icon: Megaphone },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/disbursements", label: "Disbursements", icon: Send },
+  { href: "/dashboard/tax", label: "Tax & KRA", icon: Landmark },
+  { href: "/dashboard/disbursements", label: "Refund Deposit", icon: Send },
   { href: "/dashboard/team", label: "Team", icon: UserCog },
 ];
 

@@ -125,8 +125,8 @@ function SubscriptionSection({
 
             <div className="space-y-2">
                 <div className="flex items-center justify-between py-1.5">
-                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Billing mode</span>
-                    <BillingModeBadge mode={billingMode as "COMMISSION" | "PREMIUM_MONTHLY"} />
+                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Plan tier</span>
+                    <BillingModeBadge mode={billingMode as "COMMISSION" | "PREMIUM_MONTHLY"} subscriptionStatus={subscriptionStatus} />
                 </div>
 
                 {statusMeta && (
@@ -297,7 +297,7 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-bold text-fg dark:text-fg-dark">{data.name}</h1>
                             <TenantStatusBadge status={data.status} />
-                            <BillingModeBadge mode={data.billingMode} />
+                            <BillingModeBadge mode={data.billingMode} subscriptionStatus={data.subscriptionStatus} />
                         </div>
                         <p className="text-xs text-fg-muted dark:text-fg-muted-dark">@{data.slug}</p>
                     </div>

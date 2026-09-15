@@ -4,6 +4,7 @@ import {
     TenantResponse,
     OnboardingTenantRequest,
     OnboardingTenantResponse,
+    OnboardingProgressResponse,
 } from "../types/tenant-types";
 import { apiClient } from "@/lib/api/client";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
@@ -33,6 +34,25 @@ export const tenantApi = {
         return apiClient.post<OnboardingTenantResponse>(
             tenantEndpoints.onboard,
             payload,
+            token,
+            tenantId
+        );
+    },
+
+    getOnboardingProgress: async (): Promise<OnboardingProgressResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<OnboardingProgressResponse>(
+            tenantEndpoints.onboardingProgress,
+            token,
+            tenantId
+        );
+    },
+
+    completeOnboarding: async (): Promise<OnboardingProgressResponse> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.post<OnboardingProgressResponse>(
+            tenantEndpoints.onboardingComplete,
+            undefined,
             token,
             tenantId
         );

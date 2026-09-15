@@ -290,6 +290,38 @@ function OverviewContent() {
                 />
             </div>
 
+            {/* Subscription funnel — the platform's revenue health */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <StatCard
+                    label="MRR"
+                    value={formatCurrency(platform.mrrAmount)}
+                    icon={Wallet}
+                    tone="emerald"
+                    hint={`${platform.premiumLandlords} active subscriber${platform.premiumLandlords === 1 ? "" : "s"} · excludes Enterprise`}
+                />
+                <StatCard
+                    label="Paying subscribers"
+                    value={platform.premiumLandlords.toLocaleString()}
+                    icon={CheckCircle2}
+                    tone="brand"
+                    hint="Billing mode: PREMIUM_MONTHLY, status: ACTIVE"
+                />
+                <StatCard
+                    label="On free trial"
+                    value={platform.trialLandlords.toLocaleString()}
+                    icon={Clock}
+                    tone="blue"
+                    hint="Convert before trial expires to grow MRR"
+                />
+                <StatCard
+                    label="Lapsed"
+                    value={platform.lapsedLandlords.toLocaleString()}
+                    icon={AlertTriangle}
+                    tone="rose"
+                    hint="Subscription expired — win-back opportunity"
+                />
+            </div>
+
             {/* Secondary platform stats */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <StatCard label="Total properties" value={platform.totalProperties.toLocaleString()} icon={Home} tone="brand" />

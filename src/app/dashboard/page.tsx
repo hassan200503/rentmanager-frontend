@@ -48,6 +48,7 @@ import FinancialOverview from "@/shared/components/dashboard/FinancialOverview";
 import InsightsEngine from "@/shared/components/dashboard/InsightsEngine";
 import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
 import { useOrgStore } from "@/stores/org-store";
+import { SetupChecklist } from "@/features/tenant/components/SetupChecklist";
 
 function DashboardSkeleton() {
   return (
@@ -350,6 +351,9 @@ function DashboardContent({ tenantId }: { tenantId: string }) {
 
   return (
     <div className="page-container space-y-8">
+
+      {/* Setup checklist — visible only while onboarding_completed = false */}
+      <SetupChecklist />
 
       {/* ═══════════════════════════════════════════════════════════
          LEVEL 1: Executive Hero — Portfolio Health, Revenue, Occupancy

@@ -142,7 +142,7 @@ function LandlordsContent() {
                                         <TenantStatusBadge status={l.status} />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <BillingModeBadge mode={l.billingMode} />
+                                        <BillingModeBadge mode={l.billingMode} subscriptionStatus={l.subscriptionStatus} />
                                     </td>
                                     <td className="px-4 py-3 text-sm text-fg-muted dark:text-fg-muted-dark">
                                         {l.propertiesCount} props · {l.unitsCount} units

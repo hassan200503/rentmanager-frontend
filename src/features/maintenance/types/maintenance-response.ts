@@ -44,6 +44,8 @@ export interface MaintenanceRequestResponse {
     version: number | null;
     createdAt: string;
     updatedAt: string;
+    /** Statuses this request may move to next, decided by the backend (TD-132). */
+    allowedNextStatuses?: MaintenanceStatus[];
 }
 
 export interface MaintenanceSlaSummaryResponse {

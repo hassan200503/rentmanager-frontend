@@ -21,6 +21,13 @@ export interface DepositResponse {
     deductionReason: string | null;
     refundReference: string | null;
     refundRemarks: string | null;
+    // STK push pending state
+    hasPendingRefund: boolean;
+    pendingRefundPhone: string | null;
+    pendingRefundInitiatedAt: string | null;
+    // Renter info enriched by the server
+    renterName: string | null;
+    renterPhone: string | null;
 }
 
 export interface RefundDepositRequest {
@@ -28,4 +35,11 @@ export interface RefundDepositRequest {
     deductionReason?: string | null;
     refundReference?: string | null;
     refundRemarks?: string | null;
+}
+
+export interface InitiateDepositRefundRequest {
+    landlordPhone: string;
+    deductionAmount: number;
+    deductionReason?: string | null;
+    remarks?: string | null;
 }

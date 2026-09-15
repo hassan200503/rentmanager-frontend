@@ -316,6 +316,10 @@ Previously open items now resolved as of 2026-09-07:
 - ~~TD-117~~ — deposit path drains `RentDuePosted` before `save()` and publishes it; `RentPaymentApplied` deliberately suppressed (deposits are not rental income — firing it would generate a tax invoice)
 - ~~PropertyCommandController STAFF gap~~ — `properties/create`, `properties/[id]/units/create`, and `properties/[id]/units/[id]/edit` redirect STAFF to the read-only view via `useHasRole(WRITE_ROLES)`
 
+Resolved 2026-09-15:
+- `ReservationFulfillmentOrchestrator` — `TenantProfileCreatedEvent` and `ReservationCompletedEvent` were silently lost. Both services call `repository.save()` which reconstructs via `toDomain()` / `rehydrate()` — a fresh aggregate with an empty transient `domainEvents` list. The fix: pull events from the original in-memory aggregate **before** `save()`, then publish from the captured list. Pattern: `List<DomainEvent> events = x.pullDomainEvents(); x = repo.save(x); publisher.publishAll(events);`
+- `AfricasTalkingSmsService` — lacked `@ConditionalOnProperty`, so it was always registered as a Spring bean. When `LoggingSmsService` (conditional on `africastalking.enabled=false/missing`) was added, both were present in the test context simultaneously, causing `NoUniqueBeanDefinitionException` and breaking every `@SpringBootTest` that loaded `NotificationDispatchService`. Fixed by adding `@ConditionalOnProperty(prefix = "africastalking", name = "enabled", havingValue = "true")` to `AfricasTalkingSmsService`.
+
 
 ### TD-113 · RESOLVED 2026-09-02 — no CI existed in either repository
 Neither repo had GitHub Actions, a Jenkinsfile, or any other pipeline. 1,355
@@ -923,3 +927,130 @@ for both columns.
 
 26 tests pass (3 integration against real Postgres, 13 unit against the query
 service, 10 domain-model).
+
+---
+
+## Mobile app — backend and web changes (2026-09-15)
+
+Made while building `C:\JavaProjects\rentmanager-mobile` (Expo). Full reasoning
+in that repo's `docs/mobile/decision-log.md`. All uncommitted at time of writing.
+
+### TD-129 · RESOLVED 2026-09-15 — renters on 01XX numbers could not pay rent
+
+Backend `@Pattern`s and three renter-portal helpers accepted only `07…`
+numbers. Safaricom's `0110–0115` lines are M-Pesa capable, so those renters
+were rejected before Safaricom was ever called — rent, reservations and payout.
+
+**Fixed:** one rule, `shared/phone/KenyanMsisdn` (21 tests), used by
+`InitiatePortalPaymentRequest`, `InitiateRentPaymentRequest`,
+`InitiateReservationRequest`, `UpdatePayoutDestinationRequest` and
+`TenantPortalService`. Web: `lib/mpesa/phone.ts` (10 tests) replaces the three
+duplicated helpers. `payout-destination-card.tsx` and `app/dashboard/billing`
+still carry their own regexes — not changed, check before reusing.
+
+### TD-130 · RESOLVED 2026-09-15 — OpenAPI said money was a number
+
+`JacksonConfig` sends every `BigDecimal` as a string; springdoc published
+`type: number`. **Fixed:** `shared/config/OpenApiMoneySchemaConfig`. Any client
+generated from `/v3/api-docs` now gets `string/decimal`.
+
+### TD-131 · RESOLVED 2026-09-15 — no push channel; clients inferred persona from claims
+
+- `GET /api/v1/users/me/access` — authorities for routing (`SessionAccessResolverTest`).
+- Push: V97 `push_devices`, `/api/v1/devices/push` (+`/unregister`),
+  `NotificationChannel.PUSH` in the existing outbox, `PushNotificationListener`
+  on `RentPaymentApplied`, `MaintenanceRequestStatusChanged`,
+  `MaintenanceRequestSubmitted`. Ownership re-checked at send time. 16 tests.
+- `NotificationDispatchService` gained a constructor argument.
+
+### TD-132 · RESOLVED 2026-09-15 — maintenance status has no state machine
+
+`MaintenanceRequest.changeStatus` accepts any transition (Completed → Submitted,
+Cancelled → In progress), each texting the renter. Web dropdown exposed all of
+them. **Fixed:** transitions on `MaintenanceRequestStatus` (nothing back to
+SUBMITTED, CANCELLED terminal, COMPLETED reopens only to IN_PROGRESS), 409 on
+refusal, `allowedNextStatuses` on the response; web dropdown and mobile render
+from it. `MaintenanceStatusTransitionTest` (16).
+
+### TD-133 · RESOLVED 2026-09-15 — Expo push receipts not polled
+
+**Fixed:** V99 `push_tickets` + `PushReceiptService` (15-minute sweep, 24h
+retention, revokes dead devices). `PushReceiptServiceTest`.
+
+### TD-134 · RESOLVED 2026-09-15 — cash payments could be recorded twice
+
+No external reference meant no duplicate guard; retries/double taps recorded
+cash twice in the append-only ledger. V98 `Idempotency-Key` + unique partial
+index + trigger. The web has no manual-recording UI today (it only reads
+transactions); any future one must send one key per submission, as mobile does.
+
+### TD-135 · RESOLVED 2026-09-15 — renter portal crashed after moving landlords; renewed leases couldn't pay
+
+`findByClerkUserId` (Optional) threw for two profiles; ACTIVE-only checks
+refused RENEWED leases that are still billed. `TenantPortalCurrentTenancyTest`.
+
+### TD-136 · RESOLVED 2026-09-15 — cross-organisation ids on POST /maintenance
+
+`LandlordMaintenanceSubmissionGuard`; `createdBy` from token.
+
+### TD-137 · RESOLVED 2026-09-15 — lease cancel/actor/performedBy
+
+Cancel limited to not-yet-live leases (RENEWED could be cancelled);
+terminate/renew actor from token; `allowedActions` + `LeaseActionPolicyTest`.
+
+### TD-138 · RESOLVED 2026-09-15 — multipart limit and repair photos
+
+Spring's 1 MB default blocked 5 MB media uploads (now 5 MB + 413). V102 private
+maintenance attachments with magic-byte validation.
+
+### TD-139 · OPEN — account deletion: legal review and web URL
+
+V101 in-app deletion exists (owners → PENDING_REVIEW). Needs: legal review of
+what renter data landlords must erase on request (Kenya DPA 2019); a web
+deletion page for store listings; an ops process for PENDING_REVIEW rows.
+
+### TD-140 · CLOSED 2026-09-15 — `/v3/api-docs` and Swagger UI were public in production
+
+`API_DOCS_ENABLED` (default true for local client generation) is false in the
+production image; `DeploymentSafetyGuard` refuses to start a strict deployment
+with it on, and Caddy returns 404 for the paths. Verified against a strict boot:
+disabled docs return 404 (previously 500 — see TD-143).
+
+### TD-141 · CLOSED 2026-09-15 — Backend refused to boot without provider credentials
+
+`application.yml` gave Cloudinary and Daraja callback settings no default, so
+startup failed although the code already degrades gracefully. Now optional;
+blank callback secrets are rejected by every callback (deposit refund and B2C
+previously accepted a blank-vs-blank match). `UnconfiguredCallbackSecretTest`.
+
+### TD-142 · CLOSED 2026-09-15 — Public reservation rate limit keyed on a spoofable header
+
+`ReservationController.clientIp` took the left-most X-Forwarded-For entry,
+which the caller writes: a fresh per-IP bucket per request. Now
+`getRemoteAddr()` with `server.forward-headers-strategy=native` (Tomcat trusts
+only private-network proxy hops). The deploy stack publishes only Caddy.
+
+### TD-143 · CLOSED 2026-09-15 — Caller mistakes answered 500 and wrote error_events rows
+
+Unknown paths under permitted prefixes (`/api/v1/public/<anything>`), wrong
+methods, malformed UUIDs and missing parameters fell into the generic handler:
+500 plus a tracked error per request, from unauthenticated callers. Now 4xx
+and untracked. `ClientRequestMistakeHandlingTest`.
+
+### TD-144 · CLOSED 2026-09-15 — Web CSP would block a production Clerk instance
+
+The production CSP allowed only `*.clerk.accounts.dev`; `pk_live_` instances
+serve from `clerk.<domain>`, so sign-in would fail at launch. `next.config.ts`
+derives the Frontend API origin from the publishable key and allows Turnstile.
+
+### TD-145 · CLOSED 2026-09-15 — Two integration tests stale; CI `mvn verify` red
+
+`TenantApiIT` used `/api/tenants` (controller is `/api/v1/tenants`);
+`CrossModuleRollbackIT` queried JPQL entity `Property`, which is a domain class.
+Fixed without changing assertions.
+
+### TD-146 · OPEN — Off-server backups and a tested restore
+
+`deploy/backup.sh` keeps 14 days of dumps on the same host. Copying them off
+the machine and rehearsing a restore are operator steps in `deploy/README.md`;
+not automated because the storage target is not chosen.

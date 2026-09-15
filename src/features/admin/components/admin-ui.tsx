@@ -13,6 +13,7 @@ import type {
     DisbursementStatus,
     RentPaymentRequestStatus,
     BillingMode,
+    SubscriptionStatus,
 } from "../types/admin-types";
 import { formatCurrency as formatMoneyValue, formatRate as formatRateValue, type MoneyValue } from "@/shared/utils/money";
 
@@ -61,17 +62,54 @@ export function TenantStatusBadge({ status }: { status: TenantStatus }) {
     );
 }
 
-export function BillingModeBadge({ mode }: { mode: BillingMode }) {
+export function BillingModeBadge({
+    mode,
+    subscriptionStatus,
+}: {
+    mode: BillingMode;
+    subscriptionStatus?: SubscriptionStatus | null;
+}) {
     if (mode === "PREMIUM_MONTHLY") {
         return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-brand-50 text-brand-700 border-brand/20">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-brand-50 text-brand-700 border-brand/20 dark:bg-brand-900/30 dark:text-brand-300 dark:border-brand/30">
                 Premium
             </span>
         );
     }
+    // COMMISSION billing mode = not on a paid subscription (see V89 + Tenant.java).
+    // Under DIRECT collection mode, commission is never deducted from rent.
+    // Show subscription lifecycle label rather than the internal enum name.
+    if (subscriptionStatus === "TRIAL") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-info/10 text-info-dark border-info/20 dark:text-info dark:border-info/30">
+                Trial
+            </span>
+        );
+    }
+    if (subscriptionStatus === "LAPSED") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-danger/10 text-danger border-danger/20 dark:border-danger/30">
+                Lapsed
+            </span>
+        );
+    }
+    if (subscriptionStatus === "PAST_DUE") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/30">
+                Past due
+            </span>
+        );
+    }
+    if (subscriptionStatus === "CANCELLED") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-border-subtle text-fg-muted border-border dark:bg-border-subtle-dark dark:text-fg-muted-dark dark:border-border-dark">
+                Cancelled
+            </span>
+        );
+    }
     return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-border-subtle text-fg-muted border-border">
-            Commission
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-border-subtle text-fg-muted border-border dark:bg-border-subtle-dark dark:text-fg-muted-dark dark:border-border-dark">
+            Free tier
         </span>
     );
 }
@@ -108,21 +146,6 @@ export function PaymentStatusBadge({ status }: { status: RentPaymentRequestStatu
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${meta.chip}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
             {meta.label}
-        </span>
-    );
-}
-
-export function CommissionSourceBadge({ source }: { source: "OVERRIDE" | "DEFAULT" }) {
-    if (source === "OVERRIDE") {
-        return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-brand-50 text-brand-700 border-brand/20">
-                Override
-            </span>
-        );
-    }
-    return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-border-subtle text-fg-muted border-border">
-            Default
         </span>
     );
 }

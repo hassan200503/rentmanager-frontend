@@ -41,6 +41,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
 import { MpesaMark, MpesaLogoTile, BankMark, CardMark } from "./payment-brand-marks";
+import { isValidMpesaPhone, normalizeMpesaPhone } from "@/lib/mpesa/phone";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // UTILITY FUNCTIONS
@@ -113,19 +114,7 @@ const statusTone = (status: string) => {
     return "neutral";
 };
 
-// Normalize a Kenyan mobile number to 2547XXXXXXXX form.
-export const normalizeMpesaPhone = (raw: string): string => {
-    const digits = raw.replace(/\D/g, "");
-    if (digits.length === 9 && digits.startsWith("7")) return `254${digits}`;
-    if (digits.length === 10 && digits.startsWith("07")) return `254${digits.slice(1)}`;
-    if (digits.length === 12 && digits.startsWith("2547")) return digits;
-    return digits;
-};
-
-export const isValidMpesaPhone = (raw: string): boolean => {
-    const normalized = normalizeMpesaPhone(raw);
-    return /^2547\d{8}$/.test(normalized);
-};
+export { isValidMpesaPhone, normalizeMpesaPhone };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PREMIUM COMPONENTS
@@ -443,9 +432,9 @@ const PaymentWidget = ({
     const initiatePayment = useCallback(async () => {
         if (!amountValid) return;
         const phone = normalizeMpesaPhone(effectivePhone);
-        if (!/^2547\d{8}$/.test(phone)) {
+        if (!isValidMpesaPhone(phone)) {
             setPayState("error");
-            setPayMessage("Enter a valid M-Pesa number, e.g. 0712345678.");
+            setPayMessage("Enter a valid M-Pesa number, e.g. 0712345678 or 0112345678.");
             return;
         }
 

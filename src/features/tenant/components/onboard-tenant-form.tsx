@@ -5,31 +5,19 @@ import { z } from "zod";
 import { useOnboardTenantMutation } from "../queries/use-onboard-tenant-mutation";
 import { TenantType } from "../types/tenant-types";
 
-// Mirrors OnboardingTenantRequest (tenant-types.ts). `address` optional there,
-// so optional here too — not enforcing a stricter frontend rule than the DTO.
-//
-// NOTE: zod v4 (see package.json: "zod": "^4.4.3") renamed the custom-message
-// option on z.nativeEnum from `errorMap` to `error`. Using `error` below.
 const onboardTenantSchema = z.object({
-    name: z.string().min(2, "Company name is required"),
-    email: z.string().email("Enter a valid email"),
+    name: z.string().min(2, "Organisation name must be at least 2 characters"),
+    email: z.string().email("Enter a valid business email"),
     phoneNumber: z
         .string()
         .min(7, "Enter a valid phone number")
         .max(20, "Enter a valid phone number"),
     address: z.string().optional(),
-    tenantType: z.nativeEnum(TenantType, {
-        error: () => "Select an account type",
-    }),
 });
 
 type OnboardTenantFormValues = z.infer<typeof onboardTenantSchema>;
 
-// Manual resolver replacing @hookform/resolvers/zod, which is NOT present
-// in package.json (only bare `zod` + `react-hook-form` are listed — confirmed
-// by the TS2307 module-not-found error). Avoids adding an unrequested
-// dependency. If @hookform/resolvers gets installed later, this can be
-// swapped back for `zodResolver(onboardTenantSchema)` with no other changes.
+// Manual resolver — @hookform/resolvers is not in package.json.
 const resolver: Resolver<OnboardTenantFormValues> = async (values) => {
     const result = onboardTenantSchema.safeParse(values);
 
@@ -57,29 +45,28 @@ export function OnboardTenantForm() {
         formState: { errors },
     } = useForm<OnboardTenantFormValues>({
         resolver,
-        defaultValues: {
-            name: "",
-            email: "",
-            phoneNumber: "",
-            address: "",
-            tenantType: TenantType.TRIAL,
-        },
+        defaultValues: { name: "", email: "", phoneNumber: "", address: "" },
     });
 
     const onSubmit = (values: OnboardTenantFormValues) => {
-        mutation.mutate(values);
+        // All new landlords start on the free trial; plan selection happens
+        // after they experience the product — not during initial setup.
+        mutation.mutate({ ...values, tenantType: TenantType.TRIAL });
     };
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-                <label className="form-label">
-                    Company / organization name
+                <label className="form-label" htmlFor="org-name">
+                    Organisation name
                 </label>
                 <input
+                    id="org-name"
                     {...register("name")}
                     className="form-input"
                     placeholder="Acme Rentals"
+                    autoFocus
+                    autoComplete="organization"
                 />
                 {errors.name && (
                     <p className="text-sm text-danger-dark dark:text-danger mt-1">{errors.name.message}</p>
@@ -87,14 +74,16 @@ export function OnboardTenantForm() {
             </div>
 
             <div>
-                <label className="form-label">
+                <label className="form-label" htmlFor="org-email">
                     Business email
                 </label>
                 <input
+                    id="org-email"
                     {...register("email")}
                     type="email"
                     className="form-input"
                     placeholder="you@company.com"
+                    autoComplete="email"
                 />
                 {errors.email && (
                     <p className="text-sm text-danger-dark dark:text-danger mt-1">{errors.email.message}</p>
@@ -102,13 +91,15 @@ export function OnboardTenantForm() {
             </div>
 
             <div>
-                <label className="form-label">
+                <label className="form-label" htmlFor="org-phone">
                     Phone number
                 </label>
                 <input
+                    id="org-phone"
                     {...register("phoneNumber")}
                     className="form-input"
                     placeholder="+254700000000"
+                    autoComplete="tel"
                 />
                 {errors.phoneNumber && (
                     <p className="text-sm text-danger-dark dark:text-danger mt-1">
@@ -118,43 +109,29 @@ export function OnboardTenantForm() {
             </div>
 
             <div>
-                <label className="form-label">
-                    Address <span className="text-ink-muted dark:text-ink-muted-dark">(optional)</span>
+                <label className="form-label" htmlFor="org-address">
+                    Address <span className="text-fg-muted dark:text-fg-muted-dark font-normal">(optional)</span>
                 </label>
                 <input
+                    id="org-address"
                     {...register("address")}
                     className="form-input"
                     placeholder="123 Main St, Nairobi"
+                    autoComplete="street-address"
                 />
-            </div>
-
-            <div>
-                <label className="form-label">
-                    Account type
-                </label>
-                <select
-                    {...register("tenantType")}
-                    className="form-input"
-                >
-                    <option value={TenantType.TRIAL}>Trial</option>
-                    <option value={TenantType.STANDARD}>Standard</option>
-                    <option value={TenantType.PREMIUM}>Premium</option>
-                    <option value={TenantType.ENTERPRISE}>Enterprise</option>
-                </select>
-                {errors.tenantType && (
-                    <p className="text-sm text-danger-dark dark:text-danger mt-1">
-                        {errors.tenantType.message}
-                    </p>
-                )}
             </div>
 
             <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="btn btn-primary w-full"
+                className="btn btn-primary w-full mt-2"
             >
-                {mutation.isPending ? "Setting up your account…" : "Create my account"}
+                {mutation.isPending ? "Creating your workspace…" : "Create workspace"}
             </button>
+
+            <p className="text-xs text-center text-fg-muted dark:text-fg-muted-dark">
+                Free 30-day trial &mdash; no credit card required.
+            </p>
         </form>
     );
 }

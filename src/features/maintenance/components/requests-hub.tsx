@@ -68,6 +68,18 @@ const STATUS_ORDER: MaintenanceStatus[] = [
 const ALL_STATUSES = STATUS_ORDER;
 
 /**
+ * The statuses a landlord can pick for this request: its current one (a note
+ * alone is a reply) plus whatever the backend says may come next. Falls back
+ * to the full list only for a response from an older backend without the field.
+ */
+function selectableStatuses(req: MaintenanceRequestResponse, includeCancel: boolean): MaintenanceStatus[] {
+    const next = req.allowedNextStatuses ?? STATUS_ORDER;
+    return STATUS_ORDER.filter(
+        (s) => (s === req.status || next.includes(s)) && (includeCancel || s !== "CANCELLED" || s === req.status),
+    );
+}
+
+/**
  * A metric tile.
  *
  * `tone` is semantic, not decorative: "alert" is reserved for figures that
@@ -214,7 +226,7 @@ function RequestDetail({
                                 className="form-input !w-auto !py-1.5 !text-xs"
                                 aria-label="Set status"
                             >
-                                {STATUS_ORDER.map((st) => (
+                                {selectableStatuses(req, true).map((st) => (
                                     <option key={st} value={st}>{STATUS_LABEL[st]}</option>
                                 ))}
                             </select>
@@ -659,7 +671,7 @@ export function RequestsHub() {
                                                         className="form-input !w-auto !py-1.5 !text-xs"
                                                         aria-label={`Update status of ${req.title}`}
                                                     >
-                                                        {STATUS_ORDER.filter((s) => s !== "CANCELLED").map((s) => (
+                                                        {selectableStatuses(req, false).map((s) => (
                                                             <option key={s} value={s}>{STATUS_LABEL[s]}</option>
                                                         ))}
                                                     </select>

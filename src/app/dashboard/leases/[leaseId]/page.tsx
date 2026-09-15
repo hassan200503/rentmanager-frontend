@@ -567,7 +567,7 @@ export default function LeaseDetailPage() {
                     <h2 className="section-header mb-0">Rent Ledger</h2>
                     <div className="h-px flex-1 bg-gradient-to-r from-border/80 to-transparent" />
                 </div>
-                <RentLedgerList leaseId={leaseId} onSelectEntry={() => router.push(`/dashboard/leases/${leaseId}/ledger`)} />
+                <RentLedgerList leaseId={leaseId} tenantFullName={lease.tenantFullName} onSelectEntry={() => router.push(`/dashboard/leases/${leaseId}/ledger`)} />
             </section>
         </div>
     );

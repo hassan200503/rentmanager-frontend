@@ -32,6 +32,8 @@ import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
 import { useHasRole } from "@/features/user/hooks/use-has-role";
 import { WRITE_ROLES } from "@/features/user/lib/roles";
 import { useUnsavedChanges } from "@/stores/unsaved-changes-store";
+import { usePropertyRegistrationQuery, useInitiateRegistrationMutation } from "@/features/tax/hooks/use-tax-queries";
+import { toast } from "sonner";
 
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
@@ -73,6 +75,83 @@ function UnsavedTag() {
             <Circle className="h-1.5 w-1.5 fill-current" />
             Unsaved
         </span>
+    );
+}
+
+function EritsRegistrationCard({ propertyId, canWrite }: { propertyId: string; canWrite: boolean }) {
+    const { data: reg, isLoading } = usePropertyRegistrationQuery(propertyId);
+    const initiate = useInitiateRegistrationMutation();
+
+    const handleInitiate = async () => {
+        try {
+            await initiate.mutateAsync(propertyId);
+            toast.success("eRITS registration initiated. Complete registration on the KRA portal.");
+        } catch {
+            toast.error("Failed to initiate registration.");
+        }
+    };
+
+    const statusLabel: Record<string, string> = {
+        PENDING: "Pending",
+        READY_FOR_MANUAL: "Register manually on eRITS",
+        TRANSMITTED: "Submitted to KRA",
+        ACCEPTED: "Registered",
+        REJECTED: "Rejected by KRA",
+    };
+
+    return (
+        <div className="animate-fade-in-up bg-surface rounded-2xl border border-border shadow-sm p-5 space-y-3">
+            <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
+                        <Landmark className="w-3.5 h-3.5 text-brand-600" strokeWidth={2} />
+                    </div>
+                    eRITS Registration
+                </h3>
+            </div>
+
+            {isLoading ? (
+                <div className="skeleton h-8 rounded-xl" />
+            ) : reg ? (
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        reg.status === "ACCEPTED"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            : reg.status === "REJECTED"
+                                ? "bg-danger/10 text-danger"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                    }`}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {statusLabel[reg.status] ?? reg.status}
+                    </span>
+                    {reg.krPropertyRegistrationId && (
+                        <span className="text-xs font-mono text-ink-muted">
+                            KRA ref: {reg.krPropertyRegistrationId}
+                        </span>
+                    )}
+                    {reg.lastError && (
+                        <span className="text-xs text-danger">{reg.lastError}</span>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-ink-muted">
+                        Not registered on eRITS. Required for monthly MRI filing.
+                    </p>
+                    {canWrite && (
+                        <button
+                            type="button"
+                            onClick={handleInitiate}
+                            disabled={initiate.isPending}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand text-white text-xs font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
+                        >
+                            <Landmark className="w-3.5 h-3.5" strokeWidth={2} />
+                            {initiate.isPending ? "Initiating…" : "Register on eRITS"}
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -379,6 +458,9 @@ export default function PropertyDetailPage() {
                     )}
                 </div>
             </div>
+
+            {/* eRITS Registration */}
+            <EritsRegistrationCard propertyId={propertyId} canWrite={canWrite} />
 
             {/* Units Section */}
             <section className="animate-fade-in-up space-y-5">

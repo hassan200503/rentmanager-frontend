@@ -3,10 +3,11 @@ import { RentLedgerEntryRow } from "./rent-ledger-entry-row";
 
 interface RentLedgerListProps {
     leaseId: string;
+    tenantFullName?: string | null;
     onSelectEntry?: (entryId: string) => void;
 }
 
-export const RentLedgerList = ({ leaseId, onSelectEntry }: RentLedgerListProps) => {
+export const RentLedgerList = ({ leaseId, tenantFullName, onSelectEntry }: RentLedgerListProps) => {
     const { data: entries, isLoading, isError } = useRentLedgerByLeaseQuery(leaseId);
 
     if (isLoading) {
@@ -28,7 +29,11 @@ export const RentLedgerList = ({ leaseId, onSelectEntry }: RentLedgerListProps) 
     return (
         <div className="space-y-2">
             {entries.map((entry) => (
-                <RentLedgerEntryRow key={entry.id} entry={entry} onSelect={onSelectEntry} />
+                <RentLedgerEntryRow
+                    key={entry.id}
+                    entry={{ ...entry, tenantFullName: entry.tenantFullName ?? tenantFullName ?? null }}
+                    onSelect={onSelectEntry}
+                />
             ))}
         </div>
     );

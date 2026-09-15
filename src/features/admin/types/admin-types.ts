@@ -38,6 +38,11 @@ export interface AdminOverviewPlatformStats {
   totalUnits: number;
   activeLeases: number;
   totalRenters: number;
+  // Subscription funnel
+  trialLandlords: number;
+  premiumLandlords: number;
+  lapsedLandlords: number;
+  mrrAmount: string; // BigDecimal -> JSON string
 }
 
 export interface AdminOverviewPaymentStats {
@@ -74,6 +79,7 @@ export interface LandlordSummary {
   slug: string;
   email: string;
   billingMode: BillingMode;
+  subscriptionStatus: SubscriptionStatus | null;
   status: TenantStatus;
   createdAt: string;
   propertiesCount: number;

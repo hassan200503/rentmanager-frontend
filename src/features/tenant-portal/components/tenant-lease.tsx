@@ -56,19 +56,12 @@ import {
     PortalErrorState,
 } from "./portal-chrome";
 import { MpesaMark } from "./payment-brand-marks";
+import { isValidMpesaPhone, normalizeMpesaPhone } from "@/lib/mpesa/phone";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HELPERS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const normalizeMpesaPhone = (raw: string): string => {
-    const d = raw.replace(/\D/g, "");
-    if (d.length === 9 && d.startsWith("7")) return `254${d}`;
-    if (d.length === 10 && d.startsWith("07")) return `254${d.slice(1)}`;
-    if (d.length === 12 && d.startsWith("2547")) return d;
-    return d;
-};
-const isValidMpesaPhone = (raw: string) => /^2547\d{8}$/.test(normalizeMpesaPhone(raw));
 
 /** Whole days from today to iso. Negative once passed. */
 const daysUntil = (iso: string | null): number => {
