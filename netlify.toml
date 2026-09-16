@@ -1,0 +1,23 @@
+# Netlify hosts the web app on the free plan (no card, commercial use allowed).
+#
+# API calls stay same-origin: next.config.ts rewrites /api/v1/* to BACKEND_URL,
+# which Netlify supplies at build time (Site settings → Environment):
+#   BACKEND_URL = https://<your-api>.onrender.com
+# Same origin is what keeps the Content-Security-Policy at connect-src 'self'
+# and avoids CORS entirely. netlify.toml cannot expand variables, so the
+# forwarding lives in next.config.ts rather than in a redirect rule here.
+#
+# Also set, as in .env.example: NEXT_PUBLIC_API_URL (https://<site>/api/v1),
+# NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_APP_ENV=production, NEXT_PUBLIC_APP_NAME,
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
+# CLERK_WEBHOOK_SIGNING_SECRET.
+
+[build]
+  command = "npm run build"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NEXT_TELEMETRY_DISABLED = "1"

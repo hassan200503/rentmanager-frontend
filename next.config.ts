@@ -45,8 +45,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
 
-  // Self-contained server bundle (node server.js) for the container image.
-  output: "standalone",
+  // Self-contained server bundle (node server.js) for the container image only.
+  // Netlify's Next runtime packages the app itself and does not want it.
+  output: process.env.NEXT_OUTPUT_STANDALONE === "1" ? "standalone" : undefined,
 
   images: {
     // Property photos are stored on Cloudinary (secure_url returned by the

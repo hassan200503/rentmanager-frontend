@@ -1054,3 +1054,30 @@ Fixed without changing assertions.
 `deploy/backup.sh` keeps 14 days of dumps on the same host. Copying them off
 the machine and rehearsing a restore are operator steps in `deploy/README.md`;
 not automated because the storage target is not chosen.
+
+### TD-147 · OPEN — Free-tier hosting: 9-minute cold start, single instance
+
+Measured 2026-09-16 in a container limited to Render's free resources (512 MB,
+0.1 CPU): the API starts in 528 s and uses 336 MB; warm responses are 13–100 ms.
+So the free tier works, but only while the service never sleeps — a cron ping
+every 10 minutes is structural, not a nicety, because a sleeping instance drops
+M-Pesa callbacks and stalls the `@Scheduled` outbox sweeps. Every deploy or
+platform restart is a ~9-minute outage. Fixed by paying for a CPU (Render
+Starter ~US$7/month) or a free student-credit VM; until then, deploy at night.
+
+### TD-148 · OPEN — Client IP behind a managed proxy
+
+`server.tomcat.remoteip.internal-proxies` defaults to private ranges, which is
+correct for the self-hosted Caddy stack. On Render the proxy has a public
+address, so until `TRUSTED_PROXIES` is set to its range every request appears to
+come from one address and the per-IP limit on the public reservation endpoint
+becomes a single shared bucket. The per-phone limit still applies. Never widen
+it to `.*`: a caller could then forge `X-Forwarded-For` and mint a fresh bucket
+per request.
+
+### TD-149 · OPEN — Sign-in caps growth at 100 users
+
+A Clerk development instance allows 100 users, renters included, so roughly
+three landlords. A production instance is free to 50,000 monthly users but needs
+a domain we control. Options and costs are in `deploy/FREE_NO_CARD.md` §7.
+
