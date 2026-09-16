@@ -55,6 +55,7 @@ export interface TenantLeaseResponse {
     landlordSecondaryColor: string | null;
     billingMode: "COMMISSION" | "PREMIUM_MONTHLY" | null;
     subscriptionStatus: string | null;
+    propertyThumbnailUrl: string | null;
 }
 
 export type DepositStatus = "UNPAID" | "HELD" | "PARTIALLY_REFUNDED" | "REFUNDED" | "FORFEITED";

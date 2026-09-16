@@ -8,12 +8,14 @@
 import { useState } from "react";
 import {
     AlertTriangle,
+    CheckCircle2,
+    Clock,
+    EyeOff,
     MessageSquarePlus,
     Quote,
     Sparkles,
     Star,
     UserRound,
-    Users,
 } from "lucide-react";
 import {
     useMyPlatformReviewQuery,
@@ -25,6 +27,7 @@ import {
 import { ReviewStatusBadge } from "./review-status-badge";
 import { PlatformReviewCard } from "./platform-review-card";
 import { RateRenterCard } from "./rate-renter-card";
+import { MetricCard } from "@/features/tenant-portal/components/premium-ui-components";
 import { reviewStatusOrder, type PlatformReviewResponse, type ReviewStatus } from "../types/review-response";
 
 const formatDate = (iso: string) =>
@@ -66,7 +69,7 @@ function RenterReviewCard({ comment, rating, renterName, createdAt, status }: Re
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">
                         <UserRound className="h-4 w-4" strokeWidth={2} />
                     </span>
-                    <p className="truncate text-sm font-medium text-fg dark:text-fg-dark">
+                    <p className="truncate text-sm font-medium text-ink">
                         {renterName || "Verified renter"}
                     </p>
                 </div>
@@ -76,11 +79,11 @@ function RenterReviewCard({ comment, rating, renterName, createdAt, status }: Re
                 </div>
             </div>
             {comment && (
-                <p className="relative mt-2 text-sm leading-relaxed text-fg-muted dark:text-fg-muted-dark">
+                <p className="relative mt-2 text-sm leading-relaxed text-ink-muted">
                     {comment}
                 </p>
             )}
-            <p className="relative mt-2 text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
+            <p className="relative mt-2 text-[11px] text-ink-muted/60">
                 {formatDate(createdAt)}
             </p>
         </div>
@@ -97,13 +100,13 @@ function PlatformReviewRow({ review }: { review: PlatformReviewResponse }) {
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-600 text-white shadow-sm shadow-brand/20">
                         <Sparkles className="h-4 w-4" strokeWidth={2} />
                     </span>
-                    <p className="truncate text-sm font-medium text-fg dark:text-fg-dark">
+                    <p className="truncate text-sm font-medium text-ink">
                         RentManager
-                        <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand dark:text-brand-400">
+                        <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wider text-brand">
                             The platform
                         </span>
                     </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted/60">
                         {review.reviewerType === "RENTER"
                             ? "Rated as a renter"
                             : review.reviewerType === "LANDLORD"
@@ -117,10 +120,11 @@ function PlatformReviewRow({ review }: { review: PlatformReviewResponse }) {
                 </div>
             </div>
             {review.comment && (
-                <p className="relative mt-2 text-sm leading-relaxed text-fg-muted dark:text-fg-muted-dark">
+                <p className="relative mt-2 text-sm leading-relaxed text-ink-muted">
                     {review.comment}
                 </p>
-            )}            <p className="relative mt-2 text-[11px] text-fg-subtle dark:text-fg-subtle-dark">
+            )}
+            <p className="relative mt-2 text-[11px] text-ink-muted/60">
                 {formatDate(review.createdAt)}
             </p>
         </div>
@@ -165,9 +169,12 @@ export function ReviewsPage() {
     };
 
     const showAverage = summary?.averageShown === true && summary.averageRating != null;
+    const receivedCount = summary?.reviewCount ?? 0;
 
-    // Moderation state spans BOTH review directions: renter reviews
-    // (backend counts) plus this account's platform review.
+    // The backend's /reviews/counts already combines both directions
+    // (reviews received from renters + reviews given to renters); the
+    // account's platform review lives in a separate table entirely, so it's
+    // folded in here rather than in the backend aggregate.
     const platformStatus = myPlatformReview?.status ?? null;
     const moderationCounts = {
         approved: (counts?.approvedCount ?? 0) + (platformStatus === "APPROVED" ? 1 : 0),
@@ -180,74 +187,65 @@ export function ReviewsPage() {
     const platformShown = myPlatformReview != null && (filter === "ALL" || myPlatformReview.status === filter);
     const givenTotal = given.length + (myPlatformReview ? 1 : 0);
 
+    const ratingsHint = receivedCount === 0
+        ? "No reviews yet"
+        : showAverage
+          ? `${receivedCount} ${receivedCount === 1 ? "review" : "reviews"}`
+          : `${receivedCount}/3 reviews — average shown at 3`;
+
     return (
         <div className="space-y-6">
             {/* Error / loading banner */}
             {anyError ? (
-                <div className="card p-6 text-center">
+                <div className="tenant-review-panel p-6 text-center">
                     <AlertTriangle className="mx-auto h-10 w-10 text-danger" strokeWidth={1.5} />
-                    <p className="mt-3 text-sm font-medium text-fg dark:text-fg-dark">Failed to load reviews</p>
-                    <button onClick={refetchAll} className="mt-2 btn-outline btn-sm">
+                    <p className="mt-3 text-sm font-medium text-ink">Failed to load reviews</p>
+                    <button onClick={refetchAll} className="tenant-secondary-action mt-3 inline-flex">
                         Retry
                     </button>
                 </div>
             ) : loading ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="skeleton h-28" />
-                    <div className="skeleton h-28" />
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="tenant-kpi-card">
+                            <div className="skeleton h-9 w-9 rounded-xl" />
+                            <div className="min-w-0 space-y-2">
+                                <div className="skeleton h-3 w-16" />
+                                <div className="skeleton h-6 w-10" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {/* Ratings received */}
-                    <div className="card p-5">
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
-                                    Ratings received
-                                </p>
-                                <div className="mt-1 flex items-center gap-2 text-3xl font-semibold text-fg dark:text-fg-dark">
-                                    {showAverage ? summary!.averageRating!.toFixed(1) : "—"}
-                                    <Stars value={showAverage ? summary!.averageRating! : 0} size="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="rounded-xl bg-brand-50 dark:bg-brand-900/30 px-3 py-2 text-brand-700 dark:text-brand-300">
-                                <p className="flex items-center gap-1.5 text-2xl font-semibold">
-                                    <Users className="h-5 w-5" strokeWidth={2} />
-                                    {summary?.reviewCount ?? 0}
-                                </p>
-                                <p className="text-[10px] font-medium uppercase tracking-wider">
-                                    {summary?.reviewCount === 1 ? "review" : "reviews"}
-                                </p>
-                            </div>
-                        </div>
-                        {!showAverage && (summary?.reviewCount ?? 0) >= 1 && (summary?.reviewCount ?? 0) < 3 && (
-                            <p className="mt-3 text-xs text-fg-subtle dark:text-fg-subtle-dark">
-                                Your average is revealed once you reach 3 approved reviews.
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Moderation state — both directions */}
-                    <div className="card p-5">
-                        <p className="text-xs font-medium uppercase tracking-wider text-fg-subtle dark:text-fg-subtle-dark">
-                            Moderation state
-                        </p>
-                        <div className="mt-3 grid grid-cols-3 gap-3">
-                            {reviewStatusOrder.map((status) => (
-                                <div key={status} className="rounded-xl border border-border dark:border-border-dark bg-surface dark:bg-surface-dark p-3 text-center">
-                                    <p className="text-2xl font-semibold text-fg dark:text-fg-dark">
-                                        {status === "APPROVED" ? moderationCounts.approved : status === "PENDING" ? moderationCounts.pending : moderationCounts.hidden}
-                                    </p>
-                                    <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-fg-muted dark:text-fg-muted-dark">
-                                        {reviewMetaLabel(status)}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                        <p className="mt-3 text-[11px] leading-relaxed text-fg-subtle dark:text-fg-subtle-dark">
-                            Covers your renter reviews and your RentManager review. Reviews go live only after platform approval.
-                        </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <MetricCard
+                        icon={Star}
+                        label="Ratings received"
+                        value={showAverage ? summary!.averageRating!.toFixed(1) : "—"}
+                        hint={ratingsHint}
+                        tone="brand"
+                    />
+                    <MetricCard
+                        icon={CheckCircle2}
+                        label="Approved"
+                        value={moderationCounts.approved}
+                        hint="live on public surfaces"
+                        tone="success"
+                    />
+                    <MetricCard
+                        icon={Clock}
+                        label="Pending"
+                        value={moderationCounts.pending}
+                        hint="awaiting moderation"
+                        tone="warning"
+                    />
+                    <MetricCard
+                        icon={EyeOff}
+                        label="Hidden"
+                        value={moderationCounts.hidden}
+                        hint="removed from public view"
+                        tone="neutral"
+                    />
                 </div>
             )}
 
@@ -255,7 +253,7 @@ export function ReviewsPage() {
             <section className="pt-1">
                 <div className="mb-3 flex items-center gap-3">
                     <span className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-border dark:via-border-dark dark:to-border-dark" aria-hidden="true" />
-                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-subtle dark:text-fg-subtle-dark">
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted/70">
                         <Sparkles className="h-3 w-3 text-brand" strokeWidth={2.5} aria-hidden="true" />
                         Rate &amp; review
                     </span>
@@ -283,7 +281,7 @@ export function ReviewsPage() {
                             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                                 tab === t.key
                                     ? "bg-brand text-white shadow-sm"
-                                    : "text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark"
+                                    : "text-ink-muted hover:text-ink"
                             }`}
                         >
                             {t.label}
@@ -300,7 +298,7 @@ export function ReviewsPage() {
                                 className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                                     filter === f.key
                                         ? "bg-brand text-white shadow-sm"
-                                        : "text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark"
+                                        : "text-ink-muted hover:text-ink"
                                 }`}
                             >
                                 {f.label}
@@ -314,10 +312,10 @@ export function ReviewsPage() {
             {tab === "received" ? (
                 <div className="space-y-3">
                     {(reviews ?? []).length === 0 ? (
-                        <div className="card p-8 text-center">
-                            <Quote className="mx-auto h-8 w-8 text-fg-subtle opacity-60" strokeWidth={1.5} />
-                            <p className="mt-3 text-sm font-medium text-fg dark:text-fg-dark">No reviews yet</p>
-                            <p className="mt-1 text-sm text-fg-muted dark:text-fg-muted-dark">
+                        <div className="tenant-empty-state p-8 text-center">
+                            <Quote className="mx-auto h-8 w-8 text-ink-muted/50" strokeWidth={1.5} />
+                            <p className="mt-3 text-sm font-medium text-ink">No reviews yet</p>
+                            <p className="mt-1 text-sm text-ink-muted">
                                 Verified renters can review you from the tenant portal.
                             </p>
                         </div>
@@ -350,12 +348,12 @@ export function ReviewsPage() {
                         />
                     ))}
                     {givenFiltered.length === 0 && !platformShown && (
-                        <div className="card p-8 text-center">
-                            <MessageSquarePlus className="mx-auto h-8 w-8 text-fg-subtle opacity-60" strokeWidth={1.5} />
-                            <p className="mt-3 text-sm font-medium text-fg dark:text-fg-dark">
+                        <div className="tenant-empty-state p-8 text-center">
+                            <MessageSquarePlus className="mx-auto h-8 w-8 text-ink-muted/50" strokeWidth={1.5} />
+                            <p className="mt-3 text-sm font-medium text-ink">
                                 {filter === "ALL" ? "You haven't reviewed anyone yet" : `No ${reviewMetaLabel(filter).toLowerCase()} reviews`}
                             </p>
-                            <p className="mt-1 text-sm text-fg-muted dark:text-fg-muted-dark">
+                            <p className="mt-1 text-sm text-ink-muted">
                                 Rate a renter — or RentManager — from the cards above.
                             </p>
                         </div>

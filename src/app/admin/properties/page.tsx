@@ -28,6 +28,7 @@ const propertyStatusMeta: Record<string, { label: string; chip: string; dot: str
     DRAFT: { label: "Draft", chip: "bg-border-subtle text-fg-muted border-border", dot: "bg-fg-subtle" },
     INACTIVE: { label: "Inactive", chip: "bg-border-subtle text-fg-muted border-border", dot: "bg-fg-subtle" },
     UNDER_MAINTENANCE: { label: "Maintenance", chip: "bg-warning/10 text-warning-dark border-warning/20", dot: "bg-warning" },
+    ARCHIVED: { label: "Archived", chip: "bg-border-subtle text-fg-muted border-border", dot: "bg-fg-subtle" },
 };
 
 function PropertiesContent() {

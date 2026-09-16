@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Activity } from "@/features/activity/types/activity";
+import { getActivityHref } from "@/features/activity/utils/activity-display";
 
 export interface AppNotification {
   id: string;
@@ -12,6 +13,14 @@ export interface AppNotification {
   color: string;
   createdAt: string;
   read: boolean;
+}
+
+function formatActorName(raw: string): string {
+  if (!raw.includes("@")) return raw;
+  return raw
+    .split("@")[0]
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function getNotificationColor(eventType: string): string {
@@ -58,9 +67,10 @@ function activityToNotification(a: Activity): AppNotification {
   const isMaintenanceRequest = a.eventType === "MAINTENANCE_REQUEST_SUBMITTED";
   const unitNumber =
     typeof a.metadata?.unitNumber === "string" ? a.metadata.unitNumber : null;
+  const actor = formatActorName(a.actorName);
   const description = isMaintenanceRequest
-    ? `submitted by ${a.actorName}${unitNumber ? ` · Unit ${unitNumber}` : ""}`
-    : `${verb} by ${a.actorName}`;
+    ? `submitted by ${actor}${unitNumber ? ` · Unit ${unitNumber}` : ""}`
+    : `${verb} by ${actor}`;
 
   return {
     id: a.id,
@@ -68,7 +78,7 @@ function activityToNotification(a: Activity): AppNotification {
     description,
     entityType: a.entityType,
     entityId: a.entityId,
-    href: null,
+    href: getActivityHref(a),
     icon: getNotificationIcon(a.eventType),
     color: getNotificationColor(a.eventType),
     createdAt: a.createdAt,
@@ -80,6 +90,7 @@ interface NotificationState {
   notifications: AppNotification[];
   unreadCount: number;
   isOpen: boolean;
+  isConnected: boolean;
 
   setActivities: (activities: Activity[]) => void;
   mergeActivity: (activity: Activity) => void;
@@ -87,6 +98,7 @@ interface NotificationState {
   markAllAsRead: () => void;
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
+  setConnected: (connected: boolean) => void;
   clear: () => void;
 }
 
@@ -96,6 +108,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   isOpen: false,
+  isConnected: false,
 
   setActivities: (activities) => {
     const notifications = activities
@@ -140,6 +153,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   setOpen: (open) => set({ isOpen: open }),
 
   toggleOpen: () => set((s) => ({ isOpen: !s.isOpen })),
+
+  setConnected: (connected) => set({ isConnected: connected }),
 
   clear: () => set({ notifications: [], unreadCount: 0 }),
 }));

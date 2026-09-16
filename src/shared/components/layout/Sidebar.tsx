@@ -18,6 +18,7 @@ import {
   Archive,
   CreditCard,
   Star,
+  Landmark,
   Menu,
   X,
   Sun,
@@ -28,6 +29,7 @@ import {
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { PlatformBrand, PlatformLogoMark } from "@/shared/components/brand";
 import { useUnviewedRequestsCountQuery } from "@/features/maintenance/hooks/use-maintenance-query";
+import { useUnsavedChanges } from "@/stores/unsaved-changes-store";
 
 interface NavItem {
   href: string;
@@ -45,7 +47,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard/reviews", label: "Reviews", icon: Star },
   { href: "/dashboard/announcements", label: "Announcements", icon: Megaphone },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/disbursements", label: "Disbursements", icon: Send },
+  { href: "/dashboard/tax", label: "Tax & KRA", icon: Landmark },
+  { href: "/dashboard/disbursements", label: "Refund Deposit", icon: Send },
   { href: "/dashboard/team", label: "Team", icon: UserCog },
 ];
 
@@ -83,10 +86,20 @@ function NavLink({
   const ariaLabel = showBadge
     ? `${item.label}, ${formatBadge(badge!)} unviewed`
     : undefined;
+
+  const handleClick = (e: React.MouseEvent) => {
+    const { isDirty, message } = useUnsavedChanges.getState();
+    if (isDirty && !window.confirm(message)) {
+      e.preventDefault();
+      return;
+    }
+    onNavigate?.();
+  };
+
   return (
     <Link
       href={item.href}
-      onClick={onNavigate}
+      onClick={handleClick}
       aria-current={active ? "page" : undefined}
       aria-label={ariaLabel}
       title={collapsed ? (showBadge ? `${item.label} (${formatBadge(badge!)})` : item.label) : undefined}

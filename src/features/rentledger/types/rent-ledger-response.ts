@@ -6,6 +6,19 @@ export type RentLedgerStatus =
     | "PAID"
     | "OVERPAID";
 
+/**
+ * Per-lease rent status, from GET /rent-ledger/balance-by-lease. Only
+ * leases with money currently outstanding or an unresolved overpayment
+ * appear here — a lease absent from this list has nothing owed right now,
+ * not "unknown". See LeaseBalanceSummaryResponse on the backend.
+ */
+export interface LeaseBalanceSummaryResponse {
+    leaseId: string;
+    outstandingBalance: string; // BigDecimal -> JSON string
+    status: RentLedgerStatus;
+    oldestUnpaidDueDate: string | null; // LocalDate -> ISO date string
+}
+
 export interface RentLedgerEntryResponse {
     id: string;
     leaseId: string;
@@ -21,6 +34,11 @@ export interface RentLedgerEntryResponse {
     status: RentLedgerStatus;
     prorated: boolean;
     version: number;
+    // Enriched by getByStatus(); null on getById/getByLease (slim factory).
+    tenantFullName: string | null;
+    unitNumber: string | null;
+    propertyName: string | null;
+    leaseNumber: string | null;
 }
 
 export type RentTransactionType =

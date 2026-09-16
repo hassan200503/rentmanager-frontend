@@ -6,29 +6,35 @@ export interface PropertyFilterState {
     status?: PropertyStatus;
     occupancyStatus?: OccupancyStatus;
     propertyType?: PropertyType;
+    /** Spring Data sort expression, e.g. "name,asc". */
+    sort?: string;
     page?: number;
     size?: number;
 }
 
+const DEFAULT_FILTERS: PropertyFilterState = {
+    page: 0,
+    size: 10,
+};
+
 export const usePropertyFilters = () => {
-    const [filters, setFilters] = useState<PropertyFilterState>({
-        page: 0,
-        size: 10,
-    });
+    const [filters, setFilters] = useState<PropertyFilterState>(DEFAULT_FILTERS);
 
     const updateFilter = (patch: Partial<PropertyFilterState>) => {
         setFilters((prev) => ({
             ...prev,
             ...patch,
-            page: patch.search !== undefined || patch.status !== undefined ? 0 : prev.page,
+            page:
+                patch.search !== undefined ||
+                patch.status !== undefined ||
+                patch.propertyType !== undefined
+                    ? 0
+                    : (patch.page ?? prev.page),
         }));
     };
 
     const resetFilters = () => {
-        setFilters({
-            page: 0,
-            size: 10,
-        });
+        setFilters(DEFAULT_FILTERS);
     };
 
     return {

@@ -8,7 +8,10 @@ export const tenantPortalKeys = {
     lease: ["tenant-portal", "lease"] as const,
     deposit: ["tenant-portal", "deposit"] as const,
     paymentSummary: ["tenant-portal", "payment-summary"] as const,
-    paymentHistory: (page: number) => ["tenant-portal", "payment-history", page] as const,
+    // size is part of the key so dashboard (100) and payments page (20) don't share cache.
+    paymentHistory: (page: number, size: number = 20) =>
+        ["tenant-portal", "payment-history", page, size] as const,
+    paymentHistoryAll: ["tenant-portal", "payment-history"] as const,
     paymentReceipt: (transactionId: string) => ["tenant-portal", "receipt", transactionId] as const,
     maintenance: () => [...tenantPortalKeys.all, "maintenance"] as const,
     autoPay: () => [...tenantPortalKeys.all, "auto-pay"] as const,
@@ -33,7 +36,8 @@ export const useTenantLeaseQuery = () => {
     return useQuery({
         queryKey: tenantPortalKeys.lease,
         queryFn: () => tenantPortalApi.getLease(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 30 * 1000, // 30s — landlord contact details must propagate quickly
+        refetchOnWindowFocus: true,
     });
 };
 
@@ -55,7 +59,7 @@ export const useTenantPaymentSummaryQuery = () => {
 
 export const useTenantPaymentHistoryQuery = (page: number = 0, size: number = 20) => {
     return useQuery({
-        queryKey: tenantPortalKeys.paymentHistory(page),
+        queryKey: tenantPortalKeys.paymentHistory(page, size),
         queryFn: () => tenantPortalApi.getPaymentHistory(page, size),
         staleTime: 60 * 1000,
     });

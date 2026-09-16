@@ -21,6 +21,7 @@ import {
     ScrollText,
     Radio,
     Landmark,
+    Lock,
 } from "lucide-react";
 
 import { useProperty } from "@/features/property/hooks/use-property";
@@ -28,6 +29,11 @@ import { useUpdateProperty } from "@/features/property/hooks/use-update-property
 import { useActivateProperty } from "@/features/property/hooks/use-activate-property";
 import { useArchiveProperty } from "@/features/property/hooks/use-archive-property";
 import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
+import { useHasRole } from "@/features/user/hooks/use-has-role";
+import { WRITE_ROLES } from "@/features/user/lib/roles";
+import { useUnsavedChanges } from "@/stores/unsaved-changes-store";
+import { usePropertyRegistrationQuery, useInitiateRegistrationMutation } from "@/features/tax/hooks/use-tax-queries";
+import { toast } from "sonner";
 
 import { PropertyStatusBadge } from "@/features/property/components/property-status-badge";
 import { UnitTable } from "@/features/unit/components/unit-table";
@@ -72,12 +78,90 @@ function UnsavedTag() {
     );
 }
 
+function EritsRegistrationCard({ propertyId, canWrite }: { propertyId: string; canWrite: boolean }) {
+    const { data: reg, isLoading } = usePropertyRegistrationQuery(propertyId);
+    const initiate = useInitiateRegistrationMutation();
+
+    const handleInitiate = async () => {
+        try {
+            await initiate.mutateAsync(propertyId);
+            toast.success("eRITS registration initiated. Complete registration on the KRA portal.");
+        } catch {
+            toast.error("Failed to initiate registration.");
+        }
+    };
+
+    const statusLabel: Record<string, string> = {
+        PENDING: "Pending",
+        READY_FOR_MANUAL: "Register manually on eRITS",
+        TRANSMITTED: "Submitted to KRA",
+        ACCEPTED: "Registered",
+        REJECTED: "Rejected by KRA",
+    };
+
+    return (
+        <div className="animate-fade-in-up bg-surface rounded-2xl border border-border shadow-sm p-5 space-y-3">
+            <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
+                        <Landmark className="w-3.5 h-3.5 text-brand-600" strokeWidth={2} />
+                    </div>
+                    eRITS Registration
+                </h3>
+            </div>
+
+            {isLoading ? (
+                <div className="skeleton h-8 rounded-xl" />
+            ) : reg ? (
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        reg.status === "ACCEPTED"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            : reg.status === "REJECTED"
+                                ? "bg-danger/10 text-danger"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                    }`}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {statusLabel[reg.status] ?? reg.status}
+                    </span>
+                    {reg.krPropertyRegistrationId && (
+                        <span className="text-xs font-mono text-ink-muted">
+                            KRA ref: {reg.krPropertyRegistrationId}
+                        </span>
+                    )}
+                    {reg.lastError && (
+                        <span className="text-xs text-danger">{reg.lastError}</span>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-ink-muted">
+                        Not registered on eRITS. Required for monthly MRI filing.
+                    </p>
+                    {canWrite && (
+                        <button
+                            type="button"
+                            onClick={handleInitiate}
+                            disabled={initiate.isPending}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand text-white text-xs font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
+                        >
+                            <Landmark className="w-3.5 h-3.5" strokeWidth={2} />
+                            {initiate.isPending ? "Initiating…" : "Register on eRITS"}
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function PropertyDetailPage() {
     const { propertyId } = useParams<{ propertyId: string }>();
     const router = useRouter();
 
     const { data: property, isLoading } = useProperty(propertyId);
     const { data: unitsData } = useUnitsQuery({ propertyId, page: 0, size: 100 });
+    const canWrite = useHasRole(WRITE_ROLES);
 
     const { updateProperty, isLoading: isUpdating } = useUpdateProperty();
     const { activateProperty, isLoading: isActivating } = useActivateProperty();
@@ -98,15 +182,23 @@ export default function PropertyDetailPage() {
         setDescription("");
     };
 
+    const setDirty = useUnsavedChanges((s) => s.setDirty);
+
     useEffect(() => {
+        setDirty(hasUnsavedChanges);
         if (!hasUnsavedChanges) return;
         const handler = (e: BeforeUnloadEvent) => {
             e.preventDefault();
             e.returnValue = "";
         };
         window.addEventListener("beforeunload", handler);
-        return () => window.removeEventListener("beforeunload", handler);
-    }, [hasUnsavedChanges]);
+        return () => {
+            window.removeEventListener("beforeunload", handler);
+        };
+    }, [hasUnsavedChanges, setDirty]);
+
+    // Always clear the dirty flag when this page unmounts.
+    useEffect(() => () => setDirty(false), [setDirty]);
 
     const handleBackClick = () => {
         if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) {
@@ -183,6 +275,7 @@ export default function PropertyDetailPage() {
     const canActivate =
         property.status === PropertyStatus.DRAFT ||
         property.status === PropertyStatus.INACTIVE;
+    const canEdit = canWrite && !isArchived;
 
     const totalUnits = unitsData?.totalElements ?? 0;
     const vacantUnits = unitsData?.content?.filter(
@@ -234,28 +327,35 @@ export default function PropertyDetailPage() {
                     </div>
 
                     {!isArchived && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {canActivate && (
-                                <button
-                                    onClick={() => activateProperty(property.propertyId)}
-                                    disabled={isActivating}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
-                                >
-                                    <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
-                                    {isActivating ? "Activating…" : "Activate"}
-                                </button>
-                            )}
-                            {isActive && (
-                                <button
-                                    onClick={() => archiveProperty(property.propertyId)}
-                                    disabled={isArchiving}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.03] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Archive className="w-4 h-4" strokeWidth={2} />
-                                    {isArchiving ? "Archiving…" : "Archive"}
-                                </button>
-                            )}
-                        </div>
+                        canWrite ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {canActivate && (
+                                    <button
+                                        onClick={() => activateProperty(property.propertyId)}
+                                        disabled={isActivating}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
+                                        {isActivating ? "Activating…" : "Activate"}
+                                    </button>
+                                )}
+                                {isActive && (
+                                    <button
+                                        onClick={() => archiveProperty(property.propertyId)}
+                                        disabled={isArchiving}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-ink-muted hover:text-danger hover:border-danger/30 hover:bg-danger/[0.03] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Archive className="w-4 h-4" strokeWidth={2} />
+                                        {isArchiving ? "Archiving…" : "Archive"}
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-ink/[0.04] border border-border text-xs text-ink-muted">
+                                <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                                View only — owners and managers can change this property
+                            </div>
+                        )
                     )}
                 </div>
             </div>
@@ -312,7 +412,7 @@ export default function PropertyDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="animate-fade-in-up">
                     <SectionCard icon={ScrollText} title="Description" trailing={isDescriptionDirty && <UnsavedTag />}>
-                        {!isArchived ? (
+                        {canEdit ? (
                             <div className="space-y-2">
                                 <textarea
                                     value={description || property.description || ""}
@@ -346,7 +446,7 @@ export default function PropertyDetailPage() {
                         </div>
                     </SectionCard>
 
-                    {!isArchived && (
+                    {canEdit && (
                         <SectionCard icon={Tag} title="Name" trailing={isNameDirty && <UnsavedTag />}>
                             <input
                                 type="text"
@@ -358,6 +458,9 @@ export default function PropertyDetailPage() {
                     )}
                 </div>
             </div>
+
+            {/* eRITS Registration */}
+            <EritsRegistrationCard propertyId={propertyId} canWrite={canWrite} />
 
             {/* Units Section */}
             <section className="animate-fade-in-up space-y-5">
@@ -371,22 +474,24 @@ export default function PropertyDetailPage() {
                             <p className="text-xs text-ink-muted">Manage units under this property</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() =>
-                            router.push(`/dashboard/properties/${propertyId}/units/create`)
-                        }
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20"
-                    >
-                        <Plus className="w-4 h-4" strokeWidth={2} />
-                        Add unit
-                    </button>
+                    {canWrite && (
+                        <button
+                            onClick={() =>
+                                router.push(`/dashboard/properties/${propertyId}/units/create`)
+                            }
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-sm font-medium hover:bg-brand-700 transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-brand/20"
+                        >
+                            <Plus className="w-4 h-4" strokeWidth={2} />
+                            Add unit
+                        </button>
+                    )}
                 </div>
 
                 <UnitTable propertyId={propertyId} params={{}} />
             </section>
 
             {/* Actions */}
-            {!isArchived && (
+            {canEdit && (
                 <div className="flex items-center gap-3 flex-wrap animate-fade-in-up pt-2">
                     <button
                         onClick={handleUpdate}

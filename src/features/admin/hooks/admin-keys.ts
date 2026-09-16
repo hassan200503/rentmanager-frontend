@@ -4,11 +4,9 @@ export const adminKeys = {
     overview: () => [...adminKeys.all, "overview"] as const,
     settings: () => [...adminKeys.all, "settings"] as const,
     branding: () => [...adminKeys.all, "branding"] as const,
-    defaultCommission: () => [...adminKeys.all, "default-commission"] as const,
     landlords: (params?: object) =>
         [...adminKeys.all, "landlords", params ?? {}] as const,
     landlord: (landlordId: string) => [...adminKeys.all, "landlord", landlordId] as const,
-    landlordCommission: (landlordId: string) => [...adminKeys.all, "commission", landlordId] as const,
     disbursements: (params?: object) =>
         [...adminKeys.all, "disbursements", params ?? {}] as const,
     properties: (params?: object) =>
@@ -19,4 +17,5 @@ export const adminKeys = {
     reviews: (params?: object) =>
         [...adminKeys.all, "reviews", params ?? {}] as const,
     reviewStats: () => [...adminKeys.all, "reviews", "stats"] as const,
+    subscriptionPlans: () => [...adminKeys.all, "subscription-plans"] as const,
 };

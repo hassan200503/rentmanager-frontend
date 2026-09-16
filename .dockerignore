@@ -1,0 +1,17 @@
+# Never send secrets or local state into the build context.
+.env
+.env.*
+!.env.example
+.clerk/
+node_modules/
+.next/
+.git/
+.github/
+.idea/
+.claude/
+.agents/
+coverage/
+screenshots/
+*.log
+tsconfig.tsbuildinfo
+Unified diff

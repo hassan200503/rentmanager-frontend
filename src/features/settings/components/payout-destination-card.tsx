@@ -14,7 +14,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Banknote, Check, Loader2, ShieldCheck } from "lucide-react";
+import { Banknote, Check, Info, Loader2, ShieldCheck } from "lucide-react";
 import {
     usePayoutDestinationQuery,
     useUpdatePayoutDestinationMutation,
@@ -35,6 +35,7 @@ export function PayoutDestinationCard() {
         // Deliberately not prefilled from the API: it only ever returns a
         // masked number, and putting "*******5678" in an editable field would
         // either be submitted verbatim or have to be silently ignored.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setValue("");
         setTouched(false);
     }, [data?.maskedPhoneNumber]);
@@ -92,8 +93,8 @@ export function PayoutDestinationCard() {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-start gap-2.5 rounded-xl border border-warning/30 bg-warning-bg/60 px-3.5 py-3 mb-4">
-                            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-warning" strokeWidth={2} />
+                        <div className="flex items-start gap-2.5 rounded-xl border border-border dark:border-border-dark bg-border-subtle/50 dark:bg-border-subtle-dark/30 px-3.5 py-3 mb-4">
+                            <Info className="h-4 w-4 mt-0.5 shrink-0 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
                             <div className="min-w-0">
                                 <p className="text-sm font-medium text-fg dark:text-fg-dark">
                                     No payout number set

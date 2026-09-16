@@ -40,3 +40,11 @@ export interface OnboardingTenantResponse {
     slug: string;
     status: string;
 }
+
+/** Mirrors OnboardingController.OnboardingProgressResponse */
+export interface OnboardingProgressResponse {
+    onboardingCompleted: boolean;
+    tenantStatus: string;
+    hasProperties: boolean;
+    paymentConfigured: boolean;
+}

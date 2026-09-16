@@ -159,7 +159,6 @@ function ReviewRow({ review }: { review: PlatformReviewResponse }) {
     };
 
     const handleHide = () => {
-        if (!window.confirm("Hide this review? It will no longer be public.")) return;
         hide.mutate(
             { type: review.type, reviewId: review.reviewId },
             {
@@ -252,9 +251,12 @@ function ReviewRow({ review }: { review: PlatformReviewResponse }) {
     );
 }
 
+const QUEUE_PAGE_SIZE = 50;
+
 export function ReviewsAdmin() {
     const [queue, setQueue] = useState<QueueStatus>("PENDING");
-    const { data: reviews, isPending, isError, refetch } = useAdminReviewsQuery(queue, 50);
+    const [limit, setLimit] = useState(QUEUE_PAGE_SIZE);
+    const { data: reviews, isPending, isError, refetch } = useAdminReviewsQuery(queue, limit);
 
     const showApproveQueue = queue === "PENDING" || queue === "HIDDEN";
 
@@ -270,7 +272,10 @@ export function ReviewsAdmin() {
                             <button
                                 key={t.key}
                                 type="button"
-                                onClick={() => setQueue(t.key)}
+                                onClick={() => {
+                                    setQueue(t.key);
+                                    setLimit(QUEUE_PAGE_SIZE);
+                                }}
                                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                                     queue === t.key
                                         ? "bg-brand text-white shadow-sm"
@@ -302,6 +307,15 @@ export function ReviewsAdmin() {
                         {reviews.map((review) => (
                             <ReviewRow key={`${review.type}-${review.reviewId}`} review={review} />
                         ))}
+                        {reviews.length >= limit && (
+                            <button
+                                type="button"
+                                onClick={() => setLimit((l) => l + QUEUE_PAGE_SIZE)}
+                                className="w-full py-2.5 rounded-xl border border-dashed border-border dark:border-border-dark text-xs font-medium text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark hover:border-solid transition-colors"
+                            >
+                                Load more
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="card">

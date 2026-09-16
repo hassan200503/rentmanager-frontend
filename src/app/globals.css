@@ -1509,6 +1509,16 @@ body {
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes pulseOnce {
+  0%   { background-color: var(--color-brand-100, #dbeafe); }
+  60%  { background-color: var(--color-brand-100, #dbeafe); }
+  100% { background-color: transparent; }
+}
+
+.animate-pulse-once {
+  animation: pulseOnce 2s ease-out forwards;
+}
+
 /* ── Premium Donut Animation ──────────────────────────────────── */
 @keyframes donutFill {
   from { stroke-dasharray: 0 9999; opacity: 0; }
@@ -2668,7 +2678,8 @@ section[id], div[id] {
   .animate-fade-in-up,
   .animate-slide-up,
   .animate-scale-in,
-  .animate-live-pulse {
+  .animate-live-pulse,
+  .animate-pulse-once {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
   }
@@ -6288,46 +6299,30 @@ section[id], div[id] {
    TENANT PORTAL PREMIUM — TRANSACTION ROWS, SCORE, QUICK LINKS
    ────────────────────────────────────────────────────────────── */
 
-/* Transaction row glass card */
-.tenant-txn-card {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 0.875rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  transition: transform 300ms var(--ease-settle), border-color 300ms var(--ease-settle), box-shadow 300ms var(--ease-settle), background 300ms var(--ease-settle);
-}
-.dark .tenant-txn-card {
-  background: rgba(24, 24, 27, 0.72);
-  border-color: rgba(255, 255, 255, 0.06);
-}
-.tenant-txn-card:hover {
-  transform: translateX(4px);
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(5, 150, 105, 0.25);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(5, 150, 105, 0.12);
-}
-.dark .tenant-txn-card:hover {
-  background: rgba(24, 24, 27, 0.92);
-  border-color: rgba(16, 185, 129, 0.25);
-}
+/* Transaction row icon */
 .tenant-txn-icon {
-  transition: transform 300ms var(--ease-spring);
-}
-.tenant-txn-card:hover .tenant-txn-icon {
-  transform: rotate(-6deg) scale(1.08);
+  flex-shrink: 0;
+  transition: opacity 200ms ease;
 }
 .tenant-txn-icon.credit {
-  background: linear-gradient(135deg, rgba(22, 163, 74, 0.16), rgba(16, 185, 129, 0.08));
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.08) 100%);
   color: var(--color-success);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .tenant-txn-icon.debit {
-  background: linear-gradient(135deg, rgba(100, 116, 139, 0.12), rgba(148, 163, 184, 0.05));
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.10) 0%, rgba(148, 163, 184, 0.04) 100%);
   color: var(--color-fg-muted);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-.dark .tenant-txn-icon.credit { background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(6, 78, 59, 0.1)); }
-.dark .tenant-txn-icon.debit { background: linear-gradient(135deg, rgba(161, 161, 170, 0.14), rgba(82, 82, 91, 0.06)); }
-.tenant-txn-amount.credit { text-shadow: 0 0 10px rgba(22, 163, 74, 0.25); }
+.dark .tenant-txn-icon.credit {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.26) 0%, rgba(6, 78, 59, 0.12) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.dark .tenant-txn-icon.debit {
+  background: linear-gradient(135deg, rgba(161, 161, 170, 0.14) 0%, rgba(82, 82, 91, 0.06) 100%);
+  box-shadow: none;
+}
+.tenant-txn-amount.credit { text-shadow: 0 0 10px rgba(22, 163, 74, 0.20); }
 
 /* Payment score card */
 .tenant-score-card {
@@ -6393,3 +6388,171 @@ section[id], div[id] {
   background: linear-gradient(90deg, rgba(4, 120, 87, 0.28), rgba(4, 120, 87, 0.1));
 }
 .dark .tenant-quick-link-item:hover .tenant-qk-icon { color: var(--color-brand-400); }
+
+/* ══════════════════════════════════════════════════════════════
+   FORM CONTROLS — in @layer components so Tailwind utilities
+   (pl-*, pr-*, text-*, etc.) override these defaults cleanly.
+   ══════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .input-field {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid rgba(15, 23, 42, 0.10);
+    background: rgba(255, 255, 255, 0.97);
+    color: var(--color-fg);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.03),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .dark .input-field {
+    border-color: rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-fg-dark);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.20);
+  }
+
+  .input-field::placeholder { color: var(--color-fg-subtle); }
+  .dark .input-field::placeholder { color: var(--color-fg-subtle-dark); }
+
+  .input-field:hover:not(:disabled):not(:focus) {
+    border-color: rgba(5, 150, 105, 0.28);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.03),
+      0 0 0 3px rgba(5, 150, 105, 0.04);
+  }
+
+  .dark .input-field:hover:not(:disabled):not(:focus) {
+    border-color: rgba(16, 185, 129, 0.22);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.20);
+  }
+
+  .input-field:focus {
+    border-color: var(--color-brand-500);
+    background: #ffffff;
+    box-shadow:
+      0 0 0 4px rgba(5, 150, 105, 0.10),
+      inset 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+
+  .dark .input-field:focus {
+    border-color: var(--color-brand-400);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+  }
+
+  .input-field:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  /* Label sitting above an .input-field */
+  .label-text {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+    margin-bottom: 0.375rem;
+  }
+
+  .dark .label-text { color: var(--color-fg-muted-dark); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TENANT PORTAL VISUAL POLISH — bank-grade refinements
+   ══════════════════════════════════════════════════════════════ */
+
+/* Score ring: softer ambient glow */
+.tenant-score-ring {
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.28)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+/* Score card: add a very subtle top highlight */
+.tenant-score-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.85);
+}
+.dark .tenant-score-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Quick links card: top highlight and tighter inner dividers */
+.tenant-quicklinks-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.85);
+}
+.dark .tenant-quicklinks-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.tenant-quick-link-item + .tenant-quick-link-item {
+  border-top: 1px solid rgba(15, 23, 42, 0.045);
+}
+.dark .tenant-quick-link-item + .tenant-quick-link-item {
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Metric card: premium amount typography token */
+.tenant-metric-value {
+  font-family: var(--font-data);
+  font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg);
+}
+.dark .tenant-metric-value { color: var(--color-fg-dark); }
+
+/* Transaction amount: bank-statement weight */
+.tenant-txn-amount {
+  font-family: var(--font-data);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.tenant-txn-amount.credit {
+  color: var(--color-success-dark);
+  text-shadow: 0 0 12px rgba(22, 163, 74, 0.20);
+}
+.dark .tenant-txn-amount.credit {
+  color: #6ee7b7;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.30);
+}
+
+/* Tenant portal score dial — suppress the override above to keep glow */
+.tenant-score-ring circle { /* intentionally left empty — keeps rule stable */ }
+
+/* Hero balance value typography */
+.tenant-hero-balance {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-weight: 850;
+}
+
+/* Pay widget idle-state balance typography */
+.tenant-pay-balance {
+  font-family: var(--font-data);
+  font-size: clamp(1.875rem, 4vw, 2.625rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg);
+}
+.dark .tenant-pay-balance { color: var(--color-fg-dark); }

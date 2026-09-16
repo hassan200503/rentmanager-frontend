@@ -109,7 +109,7 @@ function IntegrationsContent() {
 }
 
 export default function IntegrationsPage() {
-    const { isPlatformAdmin, isLoading, isDenied } = usePlatformRole();
+    const { isPlatformAdmin, isLoading, isDenied, isLoadError, refetch } = usePlatformRole();
 
     return (
         <AdminErrorBoundary>
@@ -118,6 +118,28 @@ export default function IntegrationsPage() {
                     <div className="flex items-center justify-center gap-2 py-24 text-sm text-fg-muted dark:text-fg-muted-dark">
                         <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                         Checking credentials…
+                    </div>
+                ) : isLoadError ? (
+                    <div className="mx-auto max-w-md p-8 pt-10 text-center">
+                        <div className="mb-6 flex items-center justify-center">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
+                                <ShieldCheck className="h-10 w-10 text-amber-600 dark:text-amber-400" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <h1 className="mb-3 text-xl font-bold text-fg dark:text-fg-dark">
+                            Couldn&#39;t reach the admin console
+                        </h1>
+                        <p className="mb-6 text-sm text-fg-muted dark:text-fg-muted-dark">
+                            There was a problem verifying your credentials. This is usually a
+                            temporary network issue — try again in a moment.
+                        </p>
+                        <button
+                            onClick={() => void refetch()}
+                            className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 font-medium text-white transition-colors hover:bg-brand-600"
+                        >
+                            <RefreshCw className="h-4 w-4" strokeWidth={2} />
+                            Try again
+                        </button>
                     </div>
                 ) : isDenied || !isPlatformAdmin ? (
                     <div className="mx-auto max-w-md p-8 pt-10 text-center">

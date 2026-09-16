@@ -22,6 +22,7 @@ import {
     UserPlus,
     ArrowUpRight,
     Plug,
+    RotateCw,
 } from "lucide-react";import {
     BarChart,
     Bar,
@@ -226,16 +227,10 @@ function OverviewContent() {
 
     const gmvCurrentMonth = toMoneyNumber(payments.gmvCurrentMonth);
     const gmvPreviousMonth = toMoneyNumber(payments.gmvPreviousMonth);
-    const commissionCurrentMonth = toMoneyNumber(payments.commissionCurrentMonth);
-    const commissionPreviousMonth = toMoneyNumber(payments.commissionPreviousMonth);
 
     const gmvDelta =
         gmvPreviousMonth > 0
             ? ((gmvCurrentMonth - gmvPreviousMonth) / gmvPreviousMonth) * 100
-            : null;
-    const commissionDelta =
-        commissionPreviousMonth > 0
-            ? ((commissionCurrentMonth - commissionPreviousMonth) / commissionPreviousMonth) * 100
             : null;
 
     const paymentTotal = payments.paymentRequestsPending + payments.paymentRequestsPaid + payments.paymentRequestsFailed;
@@ -243,7 +238,6 @@ function OverviewContent() {
 
     const revenueData = [
         { label: "GMV", current: gmvCurrentMonth, previous: gmvPreviousMonth },
-        { label: "Commission", current: commissionCurrentMonth, previous: commissionPreviousMonth },
     ];
 
     const pipelineData = [
@@ -271,7 +265,7 @@ function OverviewContent() {
     return (
         <div className="space-y-6">
             {/* Primary KPI band */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     label="GMV this month"
                     value={formatCurrency(payments.gmvCurrentMonth)}
@@ -279,14 +273,6 @@ function OverviewContent() {
                     tone="emerald"
                     delta={gmvDelta}
                     hint="Gross rental volume vs last month"
-                />
-                <StatCard
-                    label="Platform commission"
-                    value={formatCurrency(payments.commissionCurrentMonth)}
-                    icon={Wallet}
-                    tone="violet"
-                    delta={commissionDelta}
-                    hint="Revenue share collected this month"
                 />
                 <StatCard
                     label="Active landlords"
@@ -301,6 +287,38 @@ function OverviewContent() {
                     icon={CircleDashed}
                     tone="amber"
                     hint={`${payments.paymentRequestsPending} pending · ${payments.paymentRequestsFailed} failed`}
+                />
+            </div>
+
+            {/* Subscription funnel — the platform's revenue health */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <StatCard
+                    label="MRR"
+                    value={formatCurrency(platform.mrrAmount)}
+                    icon={Wallet}
+                    tone="emerald"
+                    hint={`${platform.premiumLandlords} active subscriber${platform.premiumLandlords === 1 ? "" : "s"} · excludes Enterprise`}
+                />
+                <StatCard
+                    label="Paying subscribers"
+                    value={platform.premiumLandlords.toLocaleString()}
+                    icon={CheckCircle2}
+                    tone="brand"
+                    hint="Billing mode: PREMIUM_MONTHLY, status: ACTIVE"
+                />
+                <StatCard
+                    label="On free trial"
+                    value={platform.trialLandlords.toLocaleString()}
+                    icon={Clock}
+                    tone="blue"
+                    hint="Convert before trial expires to grow MRR"
+                />
+                <StatCard
+                    label="Lapsed"
+                    value={platform.lapsedLandlords.toLocaleString()}
+                    icon={AlertTriangle}
+                    tone="rose"
+                    hint="Subscription expired — win-back opportunity"
                 />
             </div>
 
@@ -421,7 +439,7 @@ function OverviewContent() {
                     <ModuleCard title="Properties" description="Platform-wide property and unit inventory" icon={Home} tone="violet" href="/admin/properties" />
                     <ModuleCard title="Disbursements" description="Monitor and retry MPESA payout batches" icon={Send} tone="blue" href="/admin/disbursements" />
                     <ModuleCard title="Integrations" description="Configure M-Pesa, SMS, WhatsApp, email, storage and auth providers" icon={Plug} tone="teal" href="/admin/integrations" />
-                    <ModuleCard title="Commission policy" description="Default and per-landlord commission rates" icon={Wallet} tone="amber" href="/admin/commission" />
+                    <ModuleCard title="Subscription plans" description="Platform pricing catalogue and plan details" icon={Wallet} tone="amber" href="/admin/subscription-plans" />
                     <ModuleCard title="Platform settings" description="Branding, environment and configuration" icon={Settings} tone="rose" href="/admin/settings" />
                 </div>
             </div>
@@ -430,7 +448,7 @@ function OverviewContent() {
 }
 
 function AdminConsolePage() {
-    const { isPlatformAdmin, isLoading, isDenied } = usePlatformRole();
+    const { isPlatformAdmin, isLoading, isDenied, isLoadError, refetch } = usePlatformRole();
 
     return (
         <AdminErrorBoundary>
@@ -439,6 +457,28 @@ function AdminConsolePage() {
                     <div className="flex items-center justify-center gap-2 py-24 text-sm text-fg-muted dark:text-fg-muted-dark">
                         <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                         Checking credentials…
+                    </div>
+                ) : isLoadError ? (
+                    <div className="max-w-md mx-auto text-center p-8 mt-10">
+                        <div className="flex items-center justify-center mb-6">
+                            <div className="h-20 w-20 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <h1 className="text-xl font-bold text-fg dark:text-fg-dark mb-3">
+                            Couldn&#39;t reach the admin console
+                        </h1>
+                        <p className="text-sm text-fg-muted dark:text-fg-muted-dark mb-6">
+                            There was a problem verifying your credentials. This is usually a
+                            temporary network issue — try again in a moment.
+                        </p>
+                        <button
+                            onClick={() => void refetch()}
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand hover:bg-brand-600 text-white font-medium transition-colors"
+                        >
+                            <RotateCw className="h-4 w-4" strokeWidth={2} />
+                            Try again
+                        </button>
                     </div>
                 ) : isDenied || !isPlatformAdmin ? (
                     <div className="max-w-md mx-auto text-center p-8 mt-10">

@@ -33,7 +33,7 @@ export default function ReservationWaitingPage() {
     // useSearchParams requires a Suspense boundary in the App Router,
     // otherwise the production build fails on static generation.
     return (
-        <Suspense fallback={<main className="min-h-screen bg-canvas" />}>
+        <Suspense fallback={<main className="min-h-screen bg-canvas dark:bg-canvas-dark" />}>
             <ReservationWaitingContent />
         </Suspense>
     );
@@ -256,7 +256,7 @@ function ReservationWaitingContent() {
     };
 
     return (
-        <main className="min-h-screen bg-canvas py-12 px-4 flex items-center">
+        <main className="min-h-screen bg-canvas dark:bg-canvas-dark py-12 px-4 flex items-center">
             <div className="mx-auto max-w-md w-full">
                 <div className="card p-8 text-center" role="status" aria-live="polite">
                     {renderContent()}

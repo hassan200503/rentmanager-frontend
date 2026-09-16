@@ -28,6 +28,14 @@ import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
 
 const PAGE_SIZE = 10;
 
+const maskPhone = (phone: string | null | undefined): string => {
+    if (!phone) return "—";
+    const s = phone.trim();
+    if (s.length <= 7) return s;
+    const keepStart = s.startsWith("+") ? 4 : 3;
+    return s.slice(0, keepStart) + "●".repeat(s.length - keepStart - 4) + s.slice(-4);
+};
+
 const STATUS_OPTIONS = [
     { value: "", label: "All statuses" },
     { value: "INITIATED", label: "Initiated" },
@@ -41,6 +49,7 @@ function DisbursementsContent() {
     const [status, setStatus] = useState("");
     const [attentionOnly, setAttentionOnly] = useState(false);
     const [page, setPage] = useState(0);
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
     const retry = useRetryDisbursementMutation();
 
     const params: AdminDisbursementsParams = {
@@ -151,7 +160,7 @@ function DisbursementsContent() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <p className="text-sm font-medium text-fg dark:text-fg-dark">{d.recipientName ?? "—"}</p>
-                                            <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark">{d.recipientPhone}</p>
+                                            <p className="text-[11px] font-mono tracking-wider text-fg-muted dark:text-fg-muted-dark">{maskPhone(d.recipientPhone)}</p>
                                         </td>
                                         <td className="px-4 py-3">
                                             <DisbursementStatusBadge status={d.status} />
@@ -175,21 +184,38 @@ function DisbursementsContent() {
                                                     Attention
                                                 </span>
                                             ) : isPlatformOwner && d.status === "FAILED" ? (
-                                                <button
-                                                    onClick={() => {
-                                                        if (!window.confirm(`Retry KES ${Number(d.amount).toLocaleString()} payout now?`)) return;
-                                                        retry.mutate(d.id);
-                                                    }}
-                                                    disabled={retry.isPending}
-                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
-                                                >
-                                                    {retry.isPending ? (
-                                                        <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
-                                                    ) : (
-                                                        <RefreshCw className="h-3 w-3" strokeWidth={2} />
-                                                    )}
-                                                    Retry
-                                                </button>
+                                                confirmingId === d.id ? (
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={() => {
+                                                                retry.mutate(d.id);
+                                                                setConfirmingId(null);
+                                                            }}
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
+                                                        >
+                                                            Confirm retry
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setConfirmingId(null)}
+                                                            className="px-2 py-1.5 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setConfirmingId(d.id)}
+                                                        disabled={retry.isPending}
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {retry.isPending ? (
+                                                            <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+                                                        ) : (
+                                                            <RefreshCw className="h-3 w-3" strokeWidth={2} />
+                                                        )}
+                                                        Retry
+                                                    </button>
+                                                )
                                             ) : isPlatformOwner ? null : (
                                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-fg-subtle dark:text-fg-subtle-dark bg-border-subtle dark:bg-border-subtle-dark">
                                                     <Lock className="h-3 w-3" strokeWidth={2} />

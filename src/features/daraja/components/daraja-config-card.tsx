@@ -217,6 +217,10 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
     }
 
     if (isConfigured && mode === "view") {
+        // Absent means DIRECT — the safe default per AGENTS.md.
+        const mode_ = statusQuery.data?.collectionMode ?? "DIRECT";
+        const isDirectMode = mode_ === "DIRECT";
+
         return (
             <div className="card animate-fade-in-up">
                 <div className="flex items-center justify-between">
@@ -242,12 +246,29 @@ export function DarajaConfigCard({ tenantId }: { tenantId: string }) {
                         <span className="text-fg-muted dark:text-fg-muted-dark">Shortcode</span>
                         <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                     </div>
-                    <div className="flex justify-between pb-2">
+                    <div className="flex justify-between border-b border-border dark:border-border-dark pb-2">
                         <span className="text-fg-muted dark:text-fg-muted-dark">Passkey</span>
                         <span className="font-mono text-fg dark:text-fg-dark">••••••••</span>
                     </div>
+                    <div className="flex items-center justify-between pb-2">
+                        <span className="text-fg-muted dark:text-fg-muted-dark">Collection mode</span>
+                        <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                                isDirectMode
+                                    ? "bg-success/10 text-success-dark border-success/25 dark:bg-success-bg-dark dark:text-success dark:border-success/20"
+                                    : "bg-warning/10 text-warning-dark border-warning/25 dark:bg-warning-bg-dark dark:text-warning dark:border-warning/20"
+                            }`}
+                        >
+                            <span className={`h-1.5 w-1.5 rounded-full ${isDirectMode ? "bg-success" : "bg-warning"}`} />
+                            {isDirectMode ? "Non-custodial · Direct to your M-Pesa" : "Custodial · Via platform paybill"}
+                        </span>
+                    </div>
                 </div>
                 <p className="mt-3 text-xs text-fg-muted dark:text-fg-muted-dark">
+                    {isDirectMode
+                        ? "Rent and deposits land directly in your Till or Paybill. RentManager never holds the money."
+                        : "Rent is collected by RentManager and paid out to your payout number. Your monthly subscription fee is charged separately."
+                    }{" "}
                     For security, stored credentials are never displayed — the backend
                     doesn&#39;t return them once saved. To change them, update below.
                 </p>

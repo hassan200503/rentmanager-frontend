@@ -41,4 +41,9 @@ export const userApi = {
             tenantId
         );
     },
+
+    remove: async (userId: string): Promise<void> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.delete<void>(userEndpoints.member(userId), token, tenantId);
+    },
 };

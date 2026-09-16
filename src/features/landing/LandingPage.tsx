@@ -8,7 +8,6 @@ import { HeroSection } from "./components/HeroSection";
 import { TrustBar } from "./components/TrustBar";
 import { AudiencePathsSection } from "./components/AudiencePathsSection";
 import { ProblemSolutionSection } from "./components/ProblemSolutionSection";
-import { HowItWorksSection } from "./components/HowItWorksSection";
 import { FeaturedPropertiesSection } from "./components/FeaturedPropertiesSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { StatsSection } from "./components/StatsSection";
@@ -36,6 +35,29 @@ import { publicUnitApi } from "@/features/public-listings/api/public-unit-api";
  * megabyte, so that is their money, not ours. Deferred() below now holds the
  * import back until the section is actually near the viewport.
  */
+/**
+ * gsap + ScrollTrigger deferred the same way the three.js map is.
+ * The module-scope gsap.registerPlugin() in HowItWorksSection runs as a
+ * side-effect at bundle parse time when statically imported, pulling ~107 KB
+ * into the initial chunk. dynamic() + DeferUntilNearViewport hold the fetch
+ * until the section is 400px from the viewport — the animation is unaffected
+ * because the chunk arrives before the user scrolls that far.
+ */
+const HowItWorksSection = dynamic(
+  () =>
+    import("./components/HowItWorksSection").then(
+      (m) => m.HowItWorksSection
+    ),
+  {
+    ssr: false,
+    loading: () => <HowItWorksPlaceholder />,
+  }
+);
+
+function HowItWorksPlaceholder() {
+  return <section className="relative py-24 md:py-32" aria-hidden="true" />;
+}
+
 const Premium3DKenyaMapSection = dynamic(
   () =>
     import("./components/Premium3DKenyaMapSection").then(
@@ -100,6 +122,7 @@ function DeferUntilNearViewport({
     if (!el) return;
 
     if (typeof IntersectionObserver === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
       return;
     }
@@ -153,7 +176,9 @@ export function LandingPage() {
         <TrustBar />
         <AudiencePathsSection />
         <ProblemSolutionSection />
-        <HowItWorksSection />
+        <DeferUntilNearViewport placeholder={<HowItWorksPlaceholder />}>
+          <HowItWorksSection />
+        </DeferUntilNearViewport>
         <FeaturedPropertiesSection
           isLoading={propertiesQuery.isLoading}
           isError={propertiesQuery.isError}

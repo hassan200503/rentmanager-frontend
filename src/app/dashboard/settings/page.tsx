@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import {
     User,
     Palette,
@@ -16,6 +16,7 @@ import {
     ShieldCheck,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { AccountCard } from "@/features/settings/components/account-card";
 import { BrandingCard } from "@/features/settings/components/branding-card";
 import { EmergencyContactCard } from "@/features/settings/components/emergency-contact-card";
 import { TaxComplianceCard } from "@/features/settings/components/tax-compliance-card";
@@ -73,11 +74,12 @@ export default function SettingsPage() {
     const { user, isOwner, isLoading: isUserLoading } = useCurrentUser();
     const { theme, setTheme } = useTheme();
     const { signOut } = useAuth();
-    const { user: clerkUser } = useUser();
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
-
-    useState(() => { setMounted(true); });
+    const mounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
     if (isUserLoading) {
         return (
@@ -94,7 +96,6 @@ export default function SettingsPage() {
     }
 
     const themeValue = mounted ? theme ?? "system" : "system";
-    const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Account";
 
     return (
         <div className="page-container max-w-2xl space-y-6">
@@ -104,49 +105,13 @@ export default function SettingsPage() {
             </div>
 
             {/* ── Account ──────────────────────────────────────── */}
-            <SectionCard icon={User} label="Account">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-800 text-lg font-semibold text-brand-dark dark:text-brand-200">
-                            {fullName.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-fg dark:text-fg-dark">{fullName}</p>
-                            <p className="text-xs text-fg-muted dark:text-fg-muted-dark">{user?.email ?? clerkUser?.primaryEmailAddress?.emailAddress ?? ""}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="form-label">First name</label>
-                            <input
-                                value={user?.firstName ?? ""}
-                                readOnly
-                                className="form-input opacity-70 cursor-not-allowed"
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Last name</label>
-                            <input
-                                value={user?.lastName ?? ""}
-                                readOnly
-                                className="form-input opacity-70 cursor-not-allowed"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="form-label">Email</label>
-                        <input
-                            value={user?.email ?? clerkUser?.primaryEmailAddress?.emailAddress ?? ""}
-                            readOnly
-                            className="form-input opacity-70 cursor-not-allowed"
-                        />
-                        <p className="mt-1 text-xs text-fg-muted dark:text-fg-muted-dark">
-                            Managed by your auth provider (Clerk). Update your name and email from your Clerk profile.
-                        </p>
-                    </div>
-                </div>
-            </SectionCard>
+            <div>
+                <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-fg-muted dark:text-fg-muted-dark mb-3 px-1">
+                    <User className="h-3.5 w-3.5" strokeWidth={2} />
+                    Account
+                </h2>
+                <AccountCard />
+            </div>
 
             {/* ── Branding (Premium) ─────────────────────────── */}
             <BrandingCard />

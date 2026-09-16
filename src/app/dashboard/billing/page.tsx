@@ -15,6 +15,9 @@ import {
     ArrowRight,
     Loader2,
     XCircle,
+    Clock,
+    Crown,
+    ExternalLink,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import {
@@ -41,9 +44,6 @@ const dateFmt = new Intl.DateTimeFormat("en-KE", {
     year: "numeric",
 });
 
-// "—" for genuinely absent data rather than the "Ksh 0" formatCurrency would
-// otherwise render for null/undefined — this page's own deliberate choice,
-// not something the shared formatter should assume for every caller.
 function formatMoney(amount: MoneyValue): string {
     if (amount === null || amount === undefined) return "—";
     return formatCurrency(amount);
@@ -65,6 +65,18 @@ function normalizeMpesaPhone(raw: string): string {
 }
 
 const isValidMpesaPhone = (raw: string) => /^254\d{9}$/.test(normalizeMpesaPhone(raw));
+
+/** Returns days remaining (floored), or 0 if expired / no date. */
+function trialDaysRemaining(freeTrialEndsAt: string | null | undefined): number {
+    if (!freeTrialEndsAt) return 0;
+    const ms = new Date(freeTrialEndsAt).getTime() - Date.now();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
+
+function isTrialActive(freeTrialEndsAt: string | null | undefined): boolean {
+    if (!freeTrialEndsAt) return false;
+    return new Date(freeTrialEndsAt).getTime() > Date.now();
+}
 
 // ----------------------------------------------------------------
 // Status chips
@@ -95,7 +107,7 @@ const SUBSCRIPTION_STATUS_META: Record<
         className: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     },
     TRIAL: {
-        label: "Trial",
+        label: "Free trial",
         className: "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300",
     },
 };
@@ -213,7 +225,7 @@ function RatibaCard({
         setupRatiba.mutate(undefined, {
             onSuccess: () => {
                 setSetupResult(
-                    "We&apos;ve sent the automatic-payments request to your phone. Approve the M-Pesa prompt to finish setup."
+                    "We've sent the automatic-payments request to your phone. Approve the M-Pesa prompt to finish setup."
                 );
             },
         });
@@ -223,7 +235,7 @@ function RatibaCard({
         <SectionCard icon={Smartphone} label="Automatic payments (M-Pesa Ratiba)">
             <div className="space-y-4">
                 <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                    Your premium fee is collected automatically every month through
+                    Your subscription fee is collected automatically every month through
                     M-Pesa Paybill — no manual payments needed.
                 </p>
 
@@ -270,7 +282,7 @@ function RatibaCard({
                     <div className="flex items-start gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3">
                         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
                         <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                            Automatic payments are active. Your premium period renews
+                            Automatic payments are active. Your subscription renews
                             automatically every month.
                         </p>
                     </div>
@@ -306,10 +318,10 @@ function RatibaCard({
 }
 
 // ----------------------------------------------------------------
-// Switch-to-premium card (commission billing)
+// Subscribe card (shown when not yet on a paid plan)
 // ----------------------------------------------------------------
 
-function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusResponse }) {
+function SubscribeCard({ currentStatus }: { currentStatus: SubscriptionStatusResponse }) {
     const plans = useSubscriptionPlansQuery();
     const switchToPremium = useSwitchToPremiumMutation();
     const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -399,15 +411,19 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/40">
                     <CreditCard className="h-4 w-4 text-brand dark:text-brand-300" strokeWidth={2} />
                 </span>
-                <h2 className="font-display text-xl font-semibold tracking-tight text-fg dark:text-fg-dark">Go premium</h2>
+                <h2 className="font-display text-xl font-semibold tracking-tight text-fg dark:text-fg-dark">
+                    Choose a plan
+                </h2>
             </div>
             <div className="space-y-5">
                 <div className="flex items-start gap-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50/70 dark:bg-brand-900/20 px-4 py-3">
                     <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand dark:text-brand-300" strokeWidth={2} />
                     <p className="text-sm text-fg dark:text-fg-dark">
-                        Pay a flat monthly fee instead of per-payment commission. Rent
-                        payments to your tenants settle at{" "}
-                        <span className="font-semibold text-brand-700 dark:text-brand-300">100% — zero commission</span>.
+                        Subscribe to a monthly plan and get full access to RentManager.
+                        Rent payments go{" "}
+                        <span className="font-semibold text-brand-700 dark:text-brand-300">
+                            directly to your M-Pesa — we never touch your money.
+                        </span>
                     </p>
                 </div>
 
@@ -416,7 +432,7 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                         <div className="flex items-start gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3">
                             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
                             <div className="text-sm text-emerald-900 dark:text-emerald-100">
-                                <p className="font-semibold">Payment received — you&apos;re now on premium.</p>
+                                <p className="font-semibold">Payment received — you&apos;re now subscribed.</p>
                                 <p className="mt-1 text-emerald-800/80 dark:text-emerald-200/80">
                                     Your plan has been activated. This page will update shortly.
                                 </p>
@@ -492,16 +508,8 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                                     </button>
                                 </div>
                             </div>
-                        ) : availablePlans.length === 0 ? (
-                            <div className="flex items-start gap-3 rounded-xl border border-border dark:border-border-dark bg-border-subtle/50 dark:bg-border-subtle-dark/50 px-4 py-3">
-                                <Info className="mt-0.5 h-4 w-4 shrink-0 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
-                                <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                                    No self-service plans are available yet — contact
-                                    support for pricing.
-                                </p>
-                            </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Choose a plan">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" role="radiogroup" aria-label="Choose a plan">
                                 {availablePlans.map((plan) => {
                                     const active = plan.code === selectedCode;
                                     const popular = plan.name?.toLowerCase() === "growth";
@@ -533,7 +541,7 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                                                     {plan.name}
                                                 </p>
                                                 <p className="mt-0.5 text-xs text-fg-muted dark:text-fg-muted-dark">
-                                                    {plan.description || `${plan.maxUnits ?? "Unlimited"} units`}
+                                                    {plan.description || `Up to ${plan.maxUnits ?? "unlimited"} units`}
                                                 </p>
                                             </div>
                                             <p className="font-data text-lg font-semibold tabular-nums text-fg dark:text-fg-dark">
@@ -545,6 +553,31 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                                         </label>
                                     );
                                 })}
+
+                                {/* Enterprise — not self-service; contact sales */}
+                                <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-amber-200/60 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10 p-4">
+                                    <span className="absolute right-3 top-3 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" strokeWidth={2.5} />
+                                        Enterprise
+                                    </span>
+                                    <div className="flex-1 pt-1">
+                                        <p className="text-sm font-semibold text-fg dark:text-fg-dark">Enterprise</p>
+                                        <p className="mt-0.5 text-xs text-fg-muted dark:text-fg-muted-dark">
+                                            75+ units · custom integrations
+                                        </p>
+                                    </div>
+                                    <p className="font-data text-lg font-semibold text-fg dark:text-fg-dark">
+                                        Custom
+                                        <span className="text-xs font-medium text-fg-muted dark:text-fg-muted-dark"> pricing</span>
+                                    </p>
+                                    <a
+                                        href="mailto:hello@rentmanager.co.ke?subject=Enterprise%20plan%20inquiry"
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                                    >
+                                        <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                                        Contact sales
+                                    </a>
+                                </div>
                             </div>
                         )}
 
@@ -590,7 +623,7 @@ function SwitchCard({ currentStatus }: { currentStatus: SubscriptionStatusRespon
                             {switchToPremium.isPending
                                 ? "Sending M-Pesa prompt…"
                                 : selectedPlan
-                                  ? `Pay ${formatMoney(selectedPlan.monthlyPrice)} & switch`
+                                  ? `Pay ${formatMoney(selectedPlan.monthlyPrice)} & subscribe`
                                   : "Choose a plan"}
                         </button>
 
@@ -673,9 +706,21 @@ export default function BillingPage() {
     }
 
     const isPremium = data.billingMode === "PREMIUM_MONTHLY";
+    // Treat as trial if subscriptionStatus is "TRIAL" OR if freeTrialEndsAt is
+    // in the future — the latter covers landlords created before V92 whose
+    // subscriptionStatus column was not back-filled, but who do have a valid
+    // trial window set.
+    const isTrial = data.billingMode === "COMMISSION" && (
+        data.subscriptionStatus === "TRIAL" || isTrialActive(data.freeTrialEndsAt)
+    );
+    const isTrialExpired = data.billingMode === "COMMISSION" &&
+        data.subscriptionStatus === "TRIAL" &&
+        !isTrialActive(data.freeTrialEndsAt);
     const isGrace = data.subscriptionStatus === "GRACE_PERIOD";
     const isLapsed = data.subscriptionStatus === "LAPSED";
     const canManage = isOwner !== false;
+
+    const daysLeft = trialDaysRemaining(data.freeTrialEndsAt);
 
     return (
         <div className="page-container max-w-3xl space-y-6">
@@ -684,26 +729,58 @@ export default function BillingPage() {
                 <p className="page-subtitle">Your plan, automatic payments, and subscription status.</p>
             </div>
 
-            {isGrace && (
-                <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 animate-fade-in-up">
-                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
-                    <div className="text-sm text-amber-800 dark:text-amber-200">
-                        <p className="font-semibold">Your premium period ended on {formatDate(data.planEndDate)}.</p>
-                        <p className="mt-1">
-                            Premium benefits continue until {formatDate(data.planGraceEndsAt)}.
-                            Pay now to renew — otherwise you&apos;ll automatically return to
-                            commission billing, with no lockout.
+            {/* ── Free trial countdown ─────────────────────────── */}
+            {isTrial && !isTrialExpired && (
+                <div className="flex items-start gap-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/30 px-4 py-3 animate-fade-in-up">
+                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand dark:text-brand-400" strokeWidth={2} />
+                    <div className="text-sm text-brand-900 dark:text-brand-100">
+                        <p className="font-semibold">
+                            {daysLeft > 0
+                                ? `Free trial — ${daysLeft} day${daysLeft === 1 ? "" : "s"} remaining`
+                                : "Free trial — ending today"}
+                        </p>
+                        <p className="mt-1 text-brand-800/80 dark:text-brand-200/80">
+                            Subscribe before{" "}
+                            {data.freeTrialEndsAt ? formatDate(data.freeTrialEndsAt) : "your trial ends"}{" "}
+                            to keep full access to RentManager.
                         </p>
                     </div>
                 </div>
             )}
 
+            {/* ── Trial expired ────────────────────────────────── */}
+            {isTrialExpired && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 animate-fade-in-up">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+                    <div className="text-sm text-amber-800 dark:text-amber-200">
+                        <p className="font-semibold">Your free trial has ended.</p>
+                        <p className="mt-1">
+                            Subscribe to a plan below to continue using RentManager.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Grace period warning ─────────────────────────── */}
+            {isGrace && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 animate-fade-in-up">
+                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+                    <div className="text-sm text-amber-800 dark:text-amber-200">
+                        <p className="font-semibold">Your subscription ended on {formatDate(data.planEndDate)}.</p>
+                        <p className="mt-1">
+                            Full access continues until {formatDate(data.planGraceEndsAt)}.
+                            Renew now to avoid any interruption.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Subscription lapsed ──────────────────────────── */}
             {isLapsed && (
                 <div className="flex items-start gap-3 rounded-xl border border-border dark:border-border-dark bg-border-subtle/50 dark:bg-border-subtle-dark/50 px-4 py-3 animate-fade-in-up">
                     <Info className="mt-0.5 h-4 w-4 shrink-0 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
                     <p className="text-sm text-fg-muted dark:text-fg-muted-dark">
-                        Your premium subscription lapsed and you&apos;re back on commission
-                        billing — you can switch back to premium any time.
+                        Your subscription has lapsed — subscribe again any time to restore full access.
                     </p>
                 </div>
             )}
@@ -724,20 +801,28 @@ export default function BillingPage() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
                             <p className="text-lg font-semibold tracking-tight text-fg dark:text-fg-dark">
-                                {isPremium ? (data.planName ?? "Premium monthly") : "Commission billing"}
+                                {isPremium
+                                    ? (data.planName ?? "Subscription")
+                                    : isTrial
+                                      ? "Free trial"
+                                      : "No active subscription"}
                             </p>
                             <p className="mt-0.5 text-sm text-fg-muted dark:text-fg-muted-dark">
                                 {isPremium
-                                    ? `Flat ${formatMoney(data.planMonthlyPrice)}/month — zero commission on rent payments`
-                                    : "Pay per rent payment — no monthly commitment"}
+                                    ? `Flat ${formatMoney(data.planMonthlyPrice)}/month — rent payments go directly to your M-Pesa`
+                                    : isTrial && !isTrialExpired
+                                      ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} remaining · subscribe before ${data.freeTrialEndsAt ? formatDate(data.freeTrialEndsAt) : "trial ends"}`
+                                      : "Choose a plan below to subscribe"}
                             </p>
                         </div>
                         {isPremium ? (
                             <StatusChip status={data.subscriptionStatus} />
+                        ) : isTrial ? (
+                            <StatusChip status="TRIAL" />
                         ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger dark:bg-danger/20 dark:text-red-300">
                                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                                Active
+                                Inactive
                             </span>
                         )}
                     </div>
@@ -755,6 +840,16 @@ export default function BillingPage() {
                             <KeyValueRow label="Plan code" value={data.planCode ?? "—"} />
                         </dl>
                     )}
+
+                    {isTrial && !isTrialExpired && (
+                        <dl className="divide-y divide-border dark:divide-border-dark rounded-xl border border-border dark:border-border-dark px-4">
+                            <KeyValueRow label="Trial ends" value={data.freeTrialEndsAt ? formatDate(data.freeTrialEndsAt) : "—"} />
+                            <KeyValueRow label="Rent collection" value="Direct to your M-Pesa — no custody, no delays" />
+                            <KeyValueRow label="Leases" value="Unlimited digital leases with e-signing" />
+                            <KeyValueRow label="M-Pesa receipts" value="Automated on every payment" />
+                            <KeyValueRow label="After trial" value="Subscribe to any plan below to keep full access" />
+                        </dl>
+                    )}
                 </div>
             </SectionCard>
 
@@ -770,21 +865,21 @@ export default function BillingPage() {
                 />
             )}
 
-            {/* ── Switch to premium ────────────────────────────── */}
+            {/* ── Subscribe / plan selection ───────────────────── */}
             {canManage && (
-                <SwitchCard currentStatus={data} />
+                <SubscribeCard currentStatus={data} />
             )}
 
-            {/* ── Cancel premium ───────────────────────────────── */}
+            {/* ── Cancel subscription ───────────────────────────── */}
             {canManage && isPremium && (
                 <div className="card animate-fade-in-up border-danger/20 dark:border-danger/20">
                     <h2 className="section-header inline-flex items-center gap-2 text-danger">
                         <AlertTriangle className="h-4 w-4" strokeWidth={2} />
-                        Cancel premium
+                        Cancel subscription
                     </h2>
                     <p className="text-sm text-fg-muted dark:text-fg-muted-dark mb-4">
-                        Premium benefits continue until the end of your paid period —
-                        auto-renewal stops and you return to commission billing then.
+                        Your subscription stays active until the end of the paid period —
+                        auto-renewal stops and your plan lapses after that date.
                     </p>
                     {!confirmCancel ? (
                         <button
@@ -792,7 +887,7 @@ export default function BillingPage() {
                             onClick={() => setConfirmCancel(true)}
                             className="btn-danger"
                         >
-                            Cancel premium subscription
+                            Cancel subscription
                         </button>
                     ) : (
                         <div className="flex flex-wrap items-center gap-3">
@@ -806,14 +901,14 @@ export default function BillingPage() {
                                 disabled={cancelPremium.isPending}
                                 className="btn-danger"
                             >
-                                {cancelPremium.isPending ? "Cancelling…" : "Yes, cancel premium"}
+                                {cancelPremium.isPending ? "Cancelling…" : "Yes, cancel subscription"}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setConfirmCancel(false)}
                                 className="btn-secondary"
                             >
-                                Keep premium
+                                Keep subscription
                             </button>
                         </div>
                     )}

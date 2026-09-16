@@ -31,7 +31,8 @@ export function TaxComplianceBanner() {
                     <p className="font-semibold text-ink dark:text-fg-dark">Complete your KRA tax profile</p>
                     <p className="mt-0.5 text-ink-muted dark:text-fg-muted">
                         Add your KRA PIN to enable e-invoicing. Residential rent is MRI-eligible
-                        (7.5% final tax); commercial rent attracts 16% VAT when you&apos;re VAT-registered.
+                        (7.5% final tax for resident landlords); non-resident landlords should confirm
+                        their rate with a tax advisor. Commercial rent attracts 16% VAT when VAT-registered.
                     </p>
                 </div>
                 <Link
@@ -64,7 +65,9 @@ export function TaxComplianceBanner() {
                     )}
                 </p>
                 <p className="mt-0.5 text-ink-muted dark:text-fg-muted">
-                    Residential rent is MRI-eligible (7.5% final tax).{" "}
+                    Residential rent is MRI-eligible (7.5% final tax, resident landlords).
+                    Non-resident landlords are subject to a separate regime — confirm with a
+                    tax advisor.{" "}
                     {vatRegistered
                         ? "Commercial rent is charged 16% VAT on your account."
                         : "Commercial rent stays VAT-exempt until you confirm VAT registration."}

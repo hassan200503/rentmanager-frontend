@@ -55,6 +55,8 @@ export interface LeaseActionRequest {
 export interface LeaseSearchParams {
     propertyId?: string;
     status?: LeaseStatus;
+    /** Matches lease number, tenant full name, or tenant phone. */
+    keyword?: string;
     fromDate?: string;
     toDate?: string;
     page?: number;

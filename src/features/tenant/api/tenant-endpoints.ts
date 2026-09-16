@@ -14,4 +14,6 @@ export const tenantEndpoints = {
     // pattern userEndpoints.me presumably follows for /api/v1/users/me). Not verified against
     // app-config.ts directly — confirm if this 404s.
     onboard: "/onboarding/tenant",
+    onboardingProgress: "/onboarding/progress",
+    onboardingComplete: "/onboarding/complete",
 };

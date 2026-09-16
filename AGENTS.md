@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Backend test command
 - Run specific test: `mvn test -f "C:\JavaProjects\rentmanager-backend" -Dtest="ClassName" -pl .`
 - Run full suite: `mvn test -f "C:\JavaProjects\rentmanager-backend" -pl .`
-- Status (2026-09-04): full suite is green — 1,445 tests, 0 failures, 0 errors. Treat any new failure as caused by your change.
+- Status (2026-09-07): full suite is green — 1,464 tests, 0 failures, 0 errors. Treat any new failure as caused by your change.
 
 # Test conventions for new tests
 - Do NOT use `@Mock`/`@InjectMocks`/`@ExtendWith(MockitoExtension.class)` or `@Nested` — Mockito's strict stubbing causes `UnnecessaryStubbingException` when tests override shared `@BeforeEach` stubs.
@@ -76,19 +76,14 @@ Summary of what changed, because several fixes are easy to undo by accident:
   `features/user/lib/roles.ts` and `<RequireRole>` from
   `features/user/components/require-role.tsx`, are the reusable pattern for
   hiding a write control a role can't use — reach for these instead of a new
-  ad hoc `isOwner`/`canX` boolean. `PropertyCommandController`'s equivalent
-  frontend gap is still unfixed (its buttons are still shown unconditionally
-  to STAFF); it should reuse `WRITE_ROLES` when it's picked up.
+  ad hoc `isOwner`/`canX` boolean. The `PropertyCommandController` frontend
+  gap is now fixed: `properties/create`, `properties/[id]/units/create`, and
+  `properties/[id]/units/[id]/edit` all redirect STAFF to the read-only view
+  via `useHasRole(WRITE_ROLES)`.
 
 Still open, and why:
 
-1. **The landing page still loads gsap eagerly (~107 KB at `scrollY: 0`)**,
-   via `HowItWorksSection`. The three.js map (~2.4 MB in production chunks) is
-   already deferred behind an IntersectionObserver and skipped under
-   `save-data`. Deferring gsap too would change an animation — that is a
-   product call.
-
-2. **Test coverage is thin** — 95 tests across ~500 source files. Money and
+1. **Test coverage is thin** — 95 tests across ~500 source files. Money and
    access-control paths first; coverage percentage is not the goal.
 
 ## How money actually moves (read before touching any payment UI)
@@ -126,6 +121,20 @@ Consequences for UI work:
 Whether the `PLATFORM_CUSTODY` model is worth licensing is a business
 decision — see `docs/ai/TECHNICAL_DEBT.md` TD-120 and
 `docs/ai/PRODUCTION_CHECKLIST.md` §1.
+
+## Running the backend suite on this machine
+
+Use `mvn clean test`, not `mvn test`, for a full run. Incremental full-suite
+runs here intermittently fail with a wall of `cannot access <unrelated class>`
+or `ClassNotFoundException: TenantContext` — `target/classes` left half-written,
+usually after a `spring-boot:run` JVM was stopped or two Maven invocations
+overlapped. It happened five times in one session. It is **not** a code failure:
+re-running with `clean` clears it every time.
+
+Two rules that follow: never start a build (or `spring-boot:run`) while the
+suite is running, and never diagnose one of those walls as a real break — read
+one of the errors first, and if it names classes your change never touched,
+it is this.
 
 ## Rules
 

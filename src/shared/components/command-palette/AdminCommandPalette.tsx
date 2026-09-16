@@ -30,7 +30,7 @@ const commands: CommandItem[] = [
     { id: "properties", label: "Properties", icon: Home, href: "/admin/properties", section: "Management" },
     { id: "reviews", label: "Reviews", icon: Star, href: "/admin/reviews", section: "Management" },
     { id: "disbursements", label: "Disbursements", icon: Send, href: "/admin/disbursements", section: "Management" },
-    { id: "commission", label: "Commission policy", icon: Wallet, href: "/admin/commission", section: "Management" },
+    { id: "subscription-plans", label: "Subscription plans", icon: Wallet, href: "/admin/subscription-plans", section: "Management" },
     { id: "settings", label: "Platform settings", icon: Settings, href: "/admin/settings", section: "Management" },
 ];
 

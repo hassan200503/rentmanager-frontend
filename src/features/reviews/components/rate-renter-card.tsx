@@ -67,8 +67,15 @@ function StarRating({ rating, onSelect, onHover }: {
     );
 }
 
+// Every lease the landlord has ever had, regardless of status — the
+// eligibility filter below needs the full history (a renter can be
+// reviewable from an EXPIRED/TERMINATED lease, not just an active one).
+// Matches the "give me everything" safety-net size used elsewhere in this
+// codebase (see dashboard/archive/page.tsx) rather than true pagination.
+const RENTER_OPTIONS_PAGE_SIZE = 1000;
+
 export function RateRenterCard() {
-    const { data: leases, isLoading: leasesLoading } = useLeaseSearchQuery({ size: 100 });
+    const { data: leases, isLoading: leasesLoading } = useLeaseSearchQuery({ size: RENTER_OPTIONS_PAGE_SIZE });
     const { data: renterReviews, isLoading: reviewsLoading, refetch } = useRenterReviewsQuery();
     const submit = useSubmitRenterReviewMutation();
 

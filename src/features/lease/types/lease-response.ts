@@ -83,6 +83,19 @@ export interface LeaseSummaryResponse {
     tenantProfileId: string | null;
     tenantFullName: string | null;
     tenantPhone: string | null;
+    propertyId: string | null;
+    // Null if the property was deleted out from under an old lease.
+    propertyName: string | null;
+    unitId: string | null;
+    unitLabel: string | null;
+}
+
+/** Portfolio-wide stat-card figures — see LeaseController#stats on why these are never paginated or filtered. */
+export interface LeaseStatsResponse {
+    totalTenants: number;
+    activeCount: number;
+    expiringSoonCount: number;
+    monthlyRent: string; // BigDecimal -> JSON string
 }
 
 export interface LeaseActionResponse {

@@ -13,26 +13,10 @@ const buildPageQuery = (params?: PropertyListParams) => {
     const query = new URLSearchParams();
     query.set("page", String(params?.page ?? 0));
     query.set("size", String(params?.size ?? 10));
-    return query.toString();
-};
-
-const toPage = (
-    content: PropertyResponse[],
-    params?: PropertyListParams
-): PropertyPageResponse => {
-    const page = params?.page ?? 0;
-    const size = params?.size ?? content.length;
-
-    return {
-        content,
-        totalElements: content.length,
-        totalPages: content.length === 0 ? 0 : 1,
-        number: page,
-        size,
-        first: page === 0,
-        last: true,
-        empty: content.length === 0,
-    };
+    if (params?.sort) {
+        query.set("sort", params.sort);
+    }
+    return query;
 };
 
 export const propertyApi = {
@@ -40,24 +24,31 @@ export const propertyApi = {
         const { token: contextToken, tenantId } = await getAuthContext();
         const token = preloadedToken ?? contextToken;
 
-        if (params?.status) {
-            const result = await apiClient.get<PropertyResponse[] | PropertyPageResponse>(
-                propertyEndpoints.byStatus(params.status),
+        const query = buildPageQuery(params);
+        const hasFilter = Boolean(params?.search || params?.status || params?.propertyType);
+
+        if (!hasFilter) {
+            return apiClient.get<PropertyPageResponse>(
+                `${propertyEndpoints.base}?${query.toString()}`,
                 token,
                 tenantId
             );
-            if (Array.isArray(result)) {
-                return toPage(result, params);
-            }
-            return result;
         }
 
-        const query = buildPageQuery(params);
-        const endpoint = params?.search
-            ? `${propertyEndpoints.search}?keyword=${encodeURIComponent(params.search)}&${query}`
-            : `${propertyEndpoints.base}?${query}`;
+        // /properties/search takes keyword, status and propertyType together,
+        // all optional and combinable — this is the one endpoint that lets a
+        // free-text search and a status/type filter apply at the same time,
+        // always paginated server-side (unlike /properties/status/{status},
+        // which returns every matching row unpaginated).
+        if (params?.search) query.set("keyword", params.search);
+        if (params?.status) query.set("status", params.status);
+        if (params?.propertyType) query.set("propertyType", params.propertyType);
 
-        return apiClient.get<PropertyPageResponse>(endpoint, token, tenantId);
+        return apiClient.get<PropertyPageResponse>(
+            `${propertyEndpoints.search}?${query.toString()}`,
+            token,
+            tenantId
+        );
     },
 
     get: async (id: string): Promise<PropertyResponse> => {

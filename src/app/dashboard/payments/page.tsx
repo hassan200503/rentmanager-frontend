@@ -37,6 +37,7 @@ import { useLeaseSearch } from "@/features/lease/hooks/use-lease-search";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
 import { useDeleteTransaction } from "@/features/rentledger/hooks/use-delete-transaction";
 import { TaxComplianceBanner } from "@/features/settings/components/tax-compliance-banner";
+import { UnmatchedPaymentsPanel } from "@/features/rentledger/components/unmatched-payments-panel";
 import { formatCurrency, toMoneyNumber, type MoneyValue } from "@/shared/utils/money";
 
 const formatDate = (iso: string) => {
@@ -119,6 +120,8 @@ const TYPE_FILTERS: { label: string; value: RentTransactionType | "" }[] = [
     { label: "Waivers", value: "WAIVER" },
     { label: "Refunds", value: "REFUND" },
     { label: "Adjustments", value: "ADJUSTMENT" },
+    { label: "Credits applied", value: "CREDIT_APPLIED" },
+    { label: "Reversals", value: "REVERSAL" },
 ];
 
 const PAGE_SIZE_OPTIONS = [15, 25, 50, 100] as const;
@@ -214,7 +217,9 @@ export default function PaymentsPage() {
     const [showSystem, setShowSystem] = useState(false);
     const [sortKey, setSortKey] = useState<SortKey>("occurredAt");
     const [sortDir, setSortDir] = useState<SortDir>("desc");
-    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [autoRefresh, setAutoRefresh] = useState(() => {
+        try { return localStorage.getItem("payments-auto-refresh") !== "false"; } catch { return true; }
+    });
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; amount: MoneyValue; date: string; tenantName: string | null } | null>(null);
     const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -390,7 +395,11 @@ export default function PaymentsPage() {
                             <input
                                 type="checkbox"
                                 checked={autoRefresh}
-                                onChange={(e) => setAutoRefresh(e.target.checked)}
+                                onChange={(e) => {
+                                    const val = e.target.checked;
+                                    setAutoRefresh(val);
+                                    try { localStorage.setItem("payments-auto-refresh", String(val)); } catch {}
+                                }}
                                 className="sr-only"
                             />
                             <span className={`relative inline-flex h-4 w-7 rounded-full transition-colors duration-300 ${autoRefresh ? "bg-brand" : "bg-ink/10"}`}>
@@ -410,6 +419,9 @@ export default function PaymentsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Unmatched Payments (owners/managers only) ── */}
+            {canDelete && <UnmatchedPaymentsPanel />}
 
             {/* ── Money Flow Pipeline ── */}
             <div className="bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden animate-fade-in-up">
@@ -651,13 +663,13 @@ export default function PaymentsPage() {
                                             <td className="py-4 px-5">
                                                 <div className="flex flex-col">
                                                     <span className={`font-data text-sm font-bold tabular-nums leading-tight ${
-                                                        tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT"
+                                                        tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT" || tx.type === "REVERSAL"
                                                             ? "text-ink"
                                                             : tx.type === "DEPOSIT" || tx.type === "PAYMENT"
                                                                 ? "text-success-dark"
                                                                 : "text-warning-dark"
                                                     }`}>
-                                                        {tx.type === "RENT_CHARGE" || tx.type === "ADJUSTMENT" ? "−" : "+"}{formatCurrency(tx.amount)}
+                                                        {tx.type === "REVERSAL" || tx.type === "ADJUSTMENT" ? "" : tx.type === "RENT_CHARGE" ? "−" : "+"}{formatCurrency(tx.amount)}
                                                     </span>
                                                     <span className={`text-[10px] font-medium mt-0.5 ${cfg.color}`}>{cfg.label}</span>
                                                 </div>
@@ -675,7 +687,7 @@ export default function PaymentsPage() {
                                             </td>
                                             <td className="py-4 px-5">
                                                 <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-ink/[0.03] group-hover:bg-ink/[0.05] transition-colors border border-transparent group-hover:border-border/40">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-success shadow-sm shadow-success/30" />
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${leaseStatusDot(tx.leaseStatus)}`} />
                                                     <span className="text-xs font-mono font-semibold text-ink/80 group-hover:text-ink transition-colors">
                                                         {tx.leaseNumber || <span className="text-ink-muted/20">&mdash;</span>}
                                                     </span>

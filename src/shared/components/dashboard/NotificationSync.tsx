@@ -43,15 +43,15 @@ function sendBrowserNotification(title: string, body: string) {
     new Notification(title, {
       body,
       icon: "/favicon.svg",
-      tag: "rentmanager-notification",
+      tag: `rentmanager-${Date.now()}`,
     });
   } catch {}
 }
 
 export default function NotificationSync() {
   const tenantId = useOrgStore((s) => s.tenantId);
-  const { activities, isLoading } = useActivityFeed(tenantId ?? undefined);
-  const { setActivities, mergeActivity, unreadCount } = useNotificationStore();
+  const { activities, isConnected, isLoading } = useActivityFeed(tenantId ?? undefined);
+  const { setActivities, mergeActivity, setConnected, unreadCount } = useNotificationStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const processedIds = useRef(new Set<string>());
@@ -60,6 +60,11 @@ export default function NotificationSync() {
   useEffect(() => {
     requestBrowserPermission();
   }, []);
+
+  // Sync SSE connection state into the store so the panel can show it
+  useEffect(() => {
+    setConnected(isConnected);
+  }, [isConnected, setConnected]);
 
   // Sync full activity list to notification store on load
   useEffect(() => {

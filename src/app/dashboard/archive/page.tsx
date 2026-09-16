@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
     Archive,
@@ -89,8 +89,26 @@ export default function ArchivePage() {
 
     const { data: archivedProperties, isLoading: propsLoading } = useQuery({
         queryKey: ["properties", "archived"],
-        queryFn: () => propertyApi.list({ status: PropertyStatus.ARCHIVED }),
+        // This page paginates client-side over the full archived list below,
+        // so it needs every row in one response rather than the default
+        // page size.
+        queryFn: () => propertyApi.list({ status: PropertyStatus.ARCHIVED, size: 1000 }),
     });
+
+    // Fetch all properties so archived units (which may belong to active
+    // properties) can show a human-readable name instead of a raw UUID.
+    const { data: allProperties } = useQuery({
+        queryKey: ["properties", "lookup"],
+        queryFn: () => propertyApi.list({ size: 1000 }),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const propertyNameMap = useMemo(() => {
+        const map = new Map<string, string>();
+        (allProperties?.content ?? []).forEach((p) => map.set(p.propertyId, p.name));
+        (archivedProperties?.content ?? []).forEach((p) => map.set(p.propertyId, p.name));
+        return map;
+    }, [allProperties, archivedProperties]);
 
     const { data: archivedUnits, isLoading: unitsLoading } = useQuery({
         queryKey: ["units", "archived"],
@@ -189,8 +207,8 @@ export default function ArchivePage() {
                             value={search}
                             onChange={(e) => {
                                 setSearch(e.target.value);
-                                setPropertyPage(0);
-                                setUnitPage(0);
+                                if (tab === "properties") setPropertyPage(0);
+                                else setUnitPage(0);
                             }}
                             placeholder={`Search ${tab === "properties" ? "properties" : "units"}...`}
                             className="form-input w-full !pl-10 text-sm"
@@ -312,7 +330,7 @@ export default function ArchivePage() {
                                                     Unit {u.unitNumber}{u.label ? ` — ${u.label}` : ""}
                                                 </p>
                                                 <p className="text-xs text-ink-muted/70 mt-0.5">
-                                                    Property ID: {u.propertyId}
+                                                    {propertyNameMap.get(u.propertyId) ?? `Property ${u.propertyId.slice(0, 8)}…`}
                                                 </p>
                                             </div>
                                         </div>

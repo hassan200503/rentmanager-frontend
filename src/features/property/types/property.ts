@@ -124,6 +124,9 @@ export interface Property {
     dimensions: PropertyDimensions | null;
 
     description?: string;
+
+    /** Primary property photo (set via the media manager). Null until one is uploaded and marked primary. */
+    thumbnailUrl?: string | null;
 }
 
 /** Backend GET /properties/types taxonomy descriptor (single source of truth). */

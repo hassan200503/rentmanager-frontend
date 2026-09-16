@@ -41,24 +41,37 @@ export function PortalPage({
  * The page header every route was missing. Eyebrow + title + optional subtitle,
  * with an optional right-hand action slot — matching the dashboard hero's
  * typographic hierarchy (kicker above, display title, muted supporting line).
+ *
+ * When `thumbnailUrl` is supplied it takes precedence over `icon` — the slot
+ * renders the actual property photo instead of a generic icon placeholder.
  */
 export function PortalPageHeader({
     eyebrow,
     title,
     subtitle,
     icon: Icon,
+    thumbnailUrl,
     actions,
 }: {
     eyebrow?: string;
     title: string;
     subtitle?: string;
     icon?: LucideIcon;
+    thumbnailUrl?: string | null;
     actions?: ReactNode;
 }) {
     return (
         <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
-                {Icon && (
+                {thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={thumbnailUrl}
+                        alt=""
+                        aria-hidden
+                        className="mt-0.5 hidden sm:block h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-black/[0.08] dark:ring-white/10 shadow-sm"
+                    />
+                ) : Icon ? (
                     <span
                         className="mt-0.5 hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                         style={{
@@ -70,7 +83,7 @@ export function PortalPageHeader({
                     >
                         <Icon className="h-[18px] w-[18px] text-brand-700 dark:text-brand-300" strokeWidth={2} />
                     </span>
-                )}
+                ) : null}
                 <div className="min-w-0">
                     {eyebrow && <p className="tenant-eyebrow">{eyebrow}</p>}
                     <h1 className="tenant-hero-title tenant-hero-title-premium !text-[1.5rem] sm:!text-[1.75rem] mb-0">

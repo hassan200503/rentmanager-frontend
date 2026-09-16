@@ -13,33 +13,33 @@ import {
     UserCheck,
     Mail,
     Phone,
-    Wallet,
     RefreshCw,
-    Lock,
-    X,
+    CreditCard,
+    Crown,
+    CheckCircle2,
+    Clock,
+    CalendarDays,
 } from "lucide-react";
 import { AdminErrorBoundary } from "@/features/admin/components/AdminErrorBoundary";
 import {
     BillingModeBadge,
     TenantStatusBadge,
     DisbursementStatusBadge,
-    CommissionSourceBadge,
     formatCurrency,
     formatDate,
     formatDateTime,
-    formatRate,
 } from "@/features/admin/components/admin-ui";
 import {
     useAdminLandlordDetailQuery,
-    useAdminLandlordCommissionQuery,
 } from "@/features/admin/hooks/use-admin-queries";
 import {
-    useSetLandlordCommissionMutation,
-    useClearLandlordCommissionMutation,
     useUpdateLandlordStatusMutation,
     useRetryDisbursementMutation,
+    useActivateLandlordSubscriptionMutation,
 } from "@/features/admin/hooks/use-admin-mutations";
 import { usePlatformRole } from "@/features/admin/hooks/use-platform-role";
+import { useSubscriptionPlansQuery } from "@/features/subscription/queries/use-subscription-queries";
+import type { SubscriptionStatus } from "@/features/admin/types/admin-types";
 
 function InfoRow({ label, value }: { label: string; value: ReactNode }) {
     return (
@@ -50,92 +50,208 @@ function InfoRow({ label, value }: { label: string; value: ReactNode }) {
     );
 }
 
-function CommissionPanel({ landlordId }: { landlordId: string }) {
-    const { isPlatformOwner } = usePlatformRole();
-    const { data: commission, isPending } = useAdminLandlordCommissionQuery(landlordId);
-    const setCommission = useSetLandlordCommissionMutation();
-    const clearCommission = useClearLandlordCommissionMutation();
-    const [rate, setRate] = useState("");
+const SUB_STATUS_META: Record<SubscriptionStatus, { label: string; color: string }> = {
+    TRIAL: { label: "Free trial", color: "text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30" },
+    ACTIVE: { label: "Active", color: "text-success-dark dark:text-success bg-success/10 dark:bg-success/20" },
+    GRACE_PERIOD: { label: "Grace period", color: "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30" },
+    LAPSED: { label: "Lapsed", color: "text-danger bg-danger/10 dark:bg-danger/20" },
+    CANCELLED: { label: "Cancelled", color: "text-fg-muted dark:text-fg-muted-dark bg-border-subtle dark:bg-border-subtle-dark" },
+    PAST_DUE: { label: "Past due", color: "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30" },
+};
 
-    if (isPending) {
-        return (
-            <div className="card flex items-center justify-center gap-2 py-8 text-sm text-fg-muted dark:text-fg-muted-dark">
-                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                Loading commission…
-            </div>
+function SubscriptionSection({
+    landlordId,
+    isPlatformOwner,
+    subscriptionStatus,
+    subscriptionPlanId,
+    planStartDate,
+    planEndDate,
+    freeTrialEndsAt,
+    billingMode,
+}: {
+    landlordId: string;
+    isPlatformOwner: boolean;
+    subscriptionStatus: SubscriptionStatus | null;
+    subscriptionPlanId: string | null;
+    planStartDate: string | null;
+    planEndDate: string | null;
+    freeTrialEndsAt: string | null;
+    billingMode: string;
+}) {
+    const plans = useSubscriptionPlansQuery();
+    const activate = useActivateLandlordSubscriptionMutation();
+    const [showForm, setShowForm] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState("");
+    const [periodMonths, setPeriodMonths] = useState(12);
+    const [confirmActivate, setConfirmActivate] = useState(false);
+
+    const currentPlan = plans.data?.find((p) => p.id === subscriptionPlanId);
+    const activePlans = (plans.data ?? []).filter((p) => p.active);
+
+    const statusMeta = subscriptionStatus ? SUB_STATUS_META[subscriptionStatus] : null;
+
+    const handleActivate = () => {
+        if (!selectedPlan) return;
+        activate.mutate(
+            { landlordId, request: { planCode: selectedPlan, periodMonths } },
+            {
+                onSuccess: () => {
+                    setShowForm(false);
+                    setConfirmActivate(false);
+                    setSelectedPlan("");
+                    setPeriodMonths(12);
+                },
+            }
         );
-    }
-
-    const onSave = () => {
-        const value = Number(rate);
-        if (!Number.isFinite(value) || value < 0 || value > 100) {
-            window.alert("Rate must be between 0 and 100 percent.");
-            return;
-        }
-        setCommission.mutate({ landlordId, ratePercent: value });
     };
 
     return (
-        <div className="card p-5 space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
-                    <h3 className="text-sm font-semibold text-fg dark:text-fg-dark">Commission rate</h3>
-                </div>
-                <CommissionSourceBadge source={commission?.source ?? "DEFAULT"} />
-            </div>
-            <div className="text-3xl font-bold text-fg dark:text-fg-dark">
-                {formatRate(commission?.ratePercent)}
-                {commission?.source === "OVERRIDE" && (
-                    <span className="ml-2 text-xs font-medium text-fg-subtle dark:text-fg-subtle-dark">
-                        {commission?.effectiveFrom ? `since ${formatDate(commission.effectiveFrom)}` : "override"}
-                    </span>
+        <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-fg dark:text-fg-dark flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-fg-muted dark:text-fg-muted-dark" strokeWidth={2} />
+                    Subscription
+                </h3>
+                {isPlatformOwner && !showForm && (
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
+                    >
+                        <Crown className="h-3 w-3" strokeWidth={2} />
+                        Assign plan
+                    </button>
                 )}
             </div>
-            {isPlatformOwner ? (
-                <div className="flex items-end gap-2 pt-1">
-                    <div className="flex-1">
-                        <label className="block text-xs text-fg-muted dark:text-fg-muted-dark mb-1">
-                            Rate (%)
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between py-1.5">
+                    <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Plan tier</span>
+                    <BillingModeBadge mode={billingMode as "COMMISSION" | "PREMIUM_MONTHLY"} subscriptionStatus={subscriptionStatus} />
+                </div>
+
+                {statusMeta && (
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Status</span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusMeta.color}`}>
+                            {statusMeta.label}
+                        </span>
+                    </div>
+                )}
+
+                {currentPlan && (
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Plan</span>
+                        <span className="text-sm font-medium text-fg dark:text-fg-dark">{currentPlan.name}</span>
+                    </div>
+                )}
+
+                {planStartDate && planEndDate && (
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark inline-flex items-center gap-1">
+                            <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                            Period
+                        </span>
+                        <span className="text-xs font-medium text-fg dark:text-fg-dark">
+                            {formatDate(planStartDate)} → {formatDate(planEndDate)}
+                        </span>
+                    </div>
+                )}
+
+                {subscriptionStatus === "TRIAL" && freeTrialEndsAt && (
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3" strokeWidth={2} />
+                            Trial ends
+                        </span>
+                        <span className="text-xs font-medium text-fg dark:text-fg-dark">{formatDate(freeTrialEndsAt)}</span>
+                    </div>
+                )}
+            </div>
+
+            {isPlatformOwner && showForm && (
+                <div className="mt-4 rounded-xl border border-border dark:border-border-dark bg-border-subtle/30 dark:bg-border-subtle-dark/30 p-4 space-y-3">
+                    <p className="text-xs font-semibold text-fg dark:text-fg-dark">Assign premium plan</p>
+                    <p className="text-[11px] text-fg-muted dark:text-fg-muted-dark">
+                        Bypasses M-Pesa payment — use for Enterprise and negotiated plans.
+                        Auto-renew is disabled; the plan must be manually renewed.
+                    </p>
+
+                    <div>
+                        <label className="block text-xs font-medium text-fg-muted dark:text-fg-muted-dark mb-1">Plan</label>
+                        <select
+                            value={selectedPlan}
+                            onChange={(e) => setSelectedPlan(e.target.value)}
+                            className="form-input text-sm"
+                        >
+                            <option value="">Select a plan…</option>
+                            {activePlans.map((p) => (
+                                <option key={p.id} value={p.code}>
+                                    {p.name}{p.selfService ? "" : " (Enterprise)"}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-fg-muted dark:text-fg-muted-dark mb-1">
+                            Period (months)
                         </label>
                         <input
                             type="number"
-                            min={0}
-                            max={100}
-                            step={0.5}
-                            value={rate}
-                            onChange={(e) => setRate(e.target.value)}
-                            placeholder="e.g. 5.0"
-                            className="w-full rounded-lg border border-border dark:border-border-dark bg-white dark:bg-surface-dark px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            min={1}
+                            max={24}
+                            value={periodMonths}
+                            onChange={(e) => setPeriodMonths(Number(e.target.value))}
+                            className="form-input text-sm w-28"
                         />
                     </div>
-                    <button
-                        onClick={onSave}
-                        disabled={setCommission.isPending}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand hover:bg-brand-600 text-white text-xs font-medium disabled:opacity-50 transition-colors"
-                    >
-                        {setCommission.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />}
-                        {commission?.source === "OVERRIDE" ? "Update" : "Set override"}
-                    </button>
-                    {commission?.source === "OVERRIDE" && (
-                        <button
-                            onClick={() => {
-                                if (!window.confirm("Remove this override and fall back to the platform default?")) return;
-                                clearCommission.mutate(landlordId);
-                            }}
-                            disabled={clearCommission.isPending}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50 transition-colors"
-                        >
-                            <X className="h-3.5 w-3.5" strokeWidth={2} />
-                            Clear
-                        </button>
+
+                    {activate.isError && (
+                        <p className="text-xs text-danger">
+                            {(activate.error as Error)?.message ?? "Failed to activate subscription"}
+                        </p>
+                    )}
+
+                    {!confirmActivate ? (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setConfirmActivate(true)}
+                                disabled={!selectedPlan}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
+                                Activate plan
+                            </button>
+                            <button
+                                onClick={() => { setShowForm(false); setConfirmActivate(false); }}
+                                className="px-3 py-1.5 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 items-center">
+                            <button
+                                onClick={handleActivate}
+                                disabled={activate.isPending}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
+                            >
+                                {activate.isPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+                                ) : (
+                                    <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
+                                )}
+                                {activate.isPending ? "Activating…" : "Confirm"}
+                            </button>
+                            <button
+                                onClick={() => setConfirmActivate(false)}
+                                className="px-2 py-1.5 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                            >
+                                Back
+                            </button>
+                        </div>
                     )}
                 </div>
-            ) : (
-                <p className="flex items-center gap-1.5 text-xs text-fg-subtle dark:text-fg-subtle-dark">
-                    <Lock className="h-3 w-3" strokeWidth={2} />
-                    Changing commission rates requires platform owner access.
-                </p>
             )}
         </div>
     );
@@ -146,6 +262,8 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
     const { data, isPending, isError } = useAdminLandlordDetailQuery(landlordId);
     const updateStatus = useUpdateLandlordStatusMutation();
     const retryDisbursement = useRetryDisbursementMutation();
+    const [confirmingToggle, setConfirmingToggle] = useState(false);
+    const [confirmingRetryId, setConfirmingRetryId] = useState<string | null>(null);
 
     if (isPending) {
         return (
@@ -168,13 +286,6 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
         );
     }
 
-    const onToggleStatus = () => {
-        const target = data.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
-        const t = target === "SUSPENDED" ? "suspend" : "reactivate";
-        if (!window.confirm(`Are you sure you want to ${t} "${data.name}"?`)) return;
-        updateStatus.mutate({ landlordId: data.id, status: target });
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -186,15 +297,34 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-bold text-fg dark:text-fg-dark">{data.name}</h1>
                             <TenantStatusBadge status={data.status} />
-                            <BillingModeBadge mode={data.billingMode} />
+                            <BillingModeBadge mode={data.billingMode} subscriptionStatus={data.subscriptionStatus} />
                         </div>
                         <p className="text-xs text-fg-muted dark:text-fg-muted-dark">@{data.slug}</p>
                     </div>
                 </div>
                 {isPlatformOwner && (
-                    data.status === "SUSPENDED" ? (
+                    confirmingToggle ? (
+                        <span className="inline-flex items-center gap-1.5">
+                            <button
+                                onClick={() => {
+                                    const target = data.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
+                                    updateStatus.mutate({ landlordId: data.id, status: target });
+                                    setConfirmingToggle(false);
+                                }}
+                                className="inline-flex items-center px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setConfirmingToggle(false)}
+                                className="px-2 py-2 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </span>
+                    ) : data.status === "SUSPENDED" ? (
                         <button
-                            onClick={onToggleStatus}
+                            onClick={() => setConfirmingToggle(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-success/30 text-xs font-medium text-success-dark dark:text-success hover:bg-success/10 transition-colors"
                         >
                             <UserCheck className="h-4 w-4" strokeWidth={2} />
@@ -202,7 +332,7 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                         </button>
                     ) : (
                         <button
-                            onClick={onToggleStatus}
+                            onClick={() => setConfirmingToggle(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
                         >
                             <Ban className="h-4 w-4" strokeWidth={2} />
@@ -219,8 +349,10 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                     <p className="text-xl font-bold text-fg dark:text-fg-dark">{formatCurrency(data.gmvAmount)}</p>
                 </div>
                 <div className="card p-4">
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-1">Platform commission</p>
-                    <p className="text-xl font-bold text-fg dark:text-fg-dark">{formatCurrency(data.commissionAmount)}</p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-1">Active leases</p>
+                    <p className="text-xl font-bold text-fg dark:text-fg-dark">
+                        {data.leases.filter((l) => l.status === "ACTIVE").length}
+                    </p>
                 </div>
                 <div className="card p-4">
                     <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-1">Properties / Units</p>
@@ -229,10 +361,8 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                     </p>
                 </div>
                 <div className="card p-4">
-                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-1">Renters / Active leases</p>
-                    <p className="text-xl font-bold text-fg dark:text-fg-dark">
-                        {data.renters.length} / {data.leases.filter((l) => l.status === "ACTIVE").length}
-                    </p>
+                    <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-1">Renters</p>
+                    <p className="text-xl font-bold text-fg dark:text-fg-dark">{data.renters.length}</p>
                 </div>
             </div>
 
@@ -256,12 +386,6 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                     </div>
                     <InfoRow label="Joined" value={formatDate(data.createdAt)} />
                     <InfoRow label="Last activity" value={formatDateTime(data.lastActivityAt)} />
-                    <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-fg-muted dark:text-fg-muted-dark">Effective commission</span>
-                        <span className="text-sm font-semibold text-fg dark:text-fg-dark">
-                            {formatRate(data.effectiveCommissionRate)}
-                        </span>
-                    </div>
                 </div>
 
                 {/* Properties */}
@@ -292,8 +416,17 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                     )}
                 </div>
 
-                {/* Commission */}
-                <CommissionPanel landlordId={data.id} />
+                {/* Subscription */}
+                <SubscriptionSection
+                    landlordId={data.id}
+                    isPlatformOwner={isPlatformOwner}
+                    subscriptionStatus={data.subscriptionStatus}
+                    subscriptionPlanId={data.subscriptionPlanId}
+                    planStartDate={data.planStartDate}
+                    planEndDate={data.planEndDate}
+                    freeTrialEndsAt={data.freeTrialEndsAt}
+                    billingMode={data.billingMode}
+                />
             </div>
 
             {/* Disbursements */}
@@ -331,17 +464,34 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                                         </td>
                                         <td className="px-3 py-2 text-right">
                                             {isPlatformOwner && d.status === "FAILED" && !d.requiresManualAttention && (
-                                                <button
-                                                    onClick={() => {
-                                                        if (!window.confirm("Retry this disbursement now?")) return;
-                                                        retryDisbursement.mutate(d.id);
-                                                    }}
-                                                    disabled={retryDisbursement.isPending}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
-                                                >
-                                                    <RefreshCw className="h-3 w-3" strokeWidth={2} />
-                                                    Retry
-                                                </button>
+                                                confirmingRetryId === d.id ? (
+                                                    <span className="inline-flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={() => {
+                                                                retryDisbursement.mutate(d.id);
+                                                                setConfirmingRetryId(null);
+                                                            }}
+                                                            className="inline-flex items-center px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 transition-colors"
+                                                        >
+                                                            Confirm
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setConfirmingRetryId(null)}
+                                                            className="px-1.5 py-1 rounded-lg text-xs text-fg-muted dark:text-fg-muted-dark hover:text-fg dark:hover:text-fg-dark transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setConfirmingRetryId(d.id)}
+                                                        disabled={retryDisbursement.isPending}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-brand/30 text-xs font-medium text-brand-700 dark:text-brand-300 hover:bg-brand/10 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        <RefreshCw className="h-3 w-3" strokeWidth={2} />
+                                                        Retry
+                                                    </button>
+                                                )
                                             )}
                                         </td>
                                     </tr>
@@ -367,7 +517,6 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                                     <th className="px-3 py-2">Date</th>
                                     <th className="px-3 py-2">Source</th>
                                     <th className="px-3 py-2">Amount</th>
-                                    <th className="px-3 py-2">Commission</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/60 dark:divide-border-dark/60">
@@ -379,9 +528,6 @@ function LandlordDetailContent({ landlordId }: { landlordId: string }) {
                                         <td className="px-3 py-2 text-sm text-fg dark:text-fg-dark">{t.source}</td>
                                         <td className="px-3 py-2 text-sm font-medium text-fg dark:text-fg-dark">
                                             {formatCurrency(t.amount)}
-                                        </td>
-                                        <td className="px-3 py-2 text-sm text-fg-muted dark:text-fg-muted-dark">
-                                            {t.commissionAmount != null ? formatCurrency(t.commissionAmount) : "—"}
                                         </td>
                                     </tr>
                                 ))}
