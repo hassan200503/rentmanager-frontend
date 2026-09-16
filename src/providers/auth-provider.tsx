@@ -82,6 +82,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             signUpUrl="/public/sign-up"
             signInFallbackRedirectUrl="/continue"
             afterSignOutUrl="/"
+            // Our sign-in/up pages already show the RentManager brand mark above
+            // Clerk's form. Clerk's own logo is whatever image is stored in the
+            // Clerk dashboard, which had drifted from the brand; one mark, owned
+            // by this codebase, is the only way the two cannot disagree.
+            appearance={{ options: { logoPlacement: "none" } }}
         >
             <OrgStoreSync>{children}</OrgStoreSync>
         </ClerkProvider>
