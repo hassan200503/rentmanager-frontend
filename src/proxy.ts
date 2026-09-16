@@ -129,7 +129,17 @@ export default clerkMiddleware(
         case "redirect":
             return NextResponse.redirect(new URL(decision.to, req.url));
     }
-});
+    },
+    {
+        // Our own branded sign-in/sign-up pages. Set here rather than only in
+        // NEXT_PUBLIC_CLERK_SIGN_IN_URL / _SIGN_UP_URL: those existed in local
+        // .env files but not on the hosting platform, so signed-out visitors on
+        // the live site were sent to Clerk's hosted Account Portal instead —
+        // a different page with a different logo. Code cannot drift that way.
+        signInUrl: "/public/sign-in",
+        signUpUrl: "/public/sign-up",
+    }
+);
 
 export const config = {
     // Run the RBAC proxy on app routes only. Static assets served from
