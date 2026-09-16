@@ -58,6 +58,16 @@ export interface UserPageResponse {
 
 }
 
-
-
-
+/**
+ * What this signed-in session is authorised for, from GET /users/me/access,
+ * derived by the backend from the same authorities method security enforces.
+ * Route on this, never on Clerk metadata or a self-declared persona.
+ */
+export interface SessionAccess {
+    userId: string | null;
+    landlordRole: "OWNER" | "MANAGER" | "STAFF" | null;
+    landlordTenantId: string | null;
+    renter: boolean;
+    pendingOnboarding: boolean;
+    platformAdmin: boolean;
+}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlatformBrand } from "@/shared/components/brand";
-import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
+import { SIGNIN_HREF } from "@/lib/auth/signin-links";
 import { SIGNUP_LANDLORD_HREF } from "@/lib/auth/signup-links";
 
 const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
@@ -12,12 +12,12 @@ const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
   ],
   "Renters": [
     { label: "Browse Properties", href: "/listings" },
-    { label: "Renter sign in", href: SIGNIN_RENTER_HREF },
+    { label: "Sign in", href: SIGNIN_HREF },
     { label: "Create an account", href: "/public/sign-up" },
   ],
   "For landlords": [
     { label: "List a property", href: SIGNUP_LANDLORD_HREF },
-    { label: "Landlord sign in", href: SIGNIN_LANDLORD_HREF },
+    { label: "Sign in", href: SIGNIN_HREF },
     { label: "Dashboard", href: "/dashboard" },
   ],
 };

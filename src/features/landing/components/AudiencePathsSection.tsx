@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, Home } from "lucide-react";
 import { SIGNUP_LANDLORD_HREF, SIGNUP_RENTER_HREF } from "@/lib/auth/signup-links";
-import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-links";
+import { SIGNIN_HREF } from "@/lib/auth/signin-links";
 
 /**
  * The fork in the road, placed high on the page.
@@ -23,12 +23,10 @@ import { SIGNIN_LANDLORD_HREF, SIGNIN_RENTER_HREF } from "@/lib/auth/signin-link
  * claims send them there, never because a link invited them.
  *
  * <h2>Intent is a hint, not a permission</h2>
- * These links carry {@code intent=renter} / {@code intent=landlord} so the
- * sign-up flow can seed the right persona and Clerk can send the user to the
- * right home afterwards. That is all they do. The proxy routes on verified
- * claims and corrects anyone who picked the wrong door — a renter who clicks
- * the landlord path still lands in {@code /portal}. See the security contract
- * at the top of {@code lib/auth/signin-links.ts}.
+ * The sign-up links carry {@code intent=renter} / {@code intent=landlord} so
+ * a new account is taken to the right first step (the renter portal, or
+ * organisation setup). Sign-in carries no intent at all: everyone signs in the
+ * same way and /continue routes from what the API says the account is.
  */
 
 type Path = {
@@ -60,11 +58,6 @@ const PATHS: readonly Path[] = [
         secondary: { label: "See pricing", href: "#pricing" },
         accent: "amber",
     },
-];
-
-const SIGN_IN_LINKS = [
-    { label: "renter", href: SIGNIN_RENTER_HREF },
-    { label: "landlord", href: SIGNIN_LANDLORD_HREF },
 ];
 
 export function AudiencePathsSection() {
@@ -138,18 +131,14 @@ export function AudiencePathsSection() {
                 </div>
 
                 <p className="mt-8 text-center text-sm text-white/45">
-                    Already have an account? Sign in as a{" "}
-                    {SIGN_IN_LINKS.map((link, i) => (
-                        <span key={link.label}>
-                            <Link
-                                href={link.href}
-                                className="text-white/70 underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded"
-                            >
-                                {link.label}
-                            </Link>
-                            {i === 0 ? " or " : "."}
-                        </span>
-                    ))}
+                    Already have an account?{" "}
+                    <Link
+                        href={SIGNIN_HREF}
+                        className="text-white/70 underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded"
+                    >
+                        Sign in
+                    </Link>
+                    .
                 </p>
             </div>
         </section>

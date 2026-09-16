@@ -74,6 +74,27 @@ const PUBLIC_PATHS = [
     "/reserve(.*)",
 ];
 
+/**
+ * Reachable by ANY signed-in user, whatever the session claims say. Both pages
+ * decide where the person belongs from the backend (database truth), which is
+ * the authority; the proxy's claim-derived persona can be stale.
+ *
+ * Why this matters: Clerk metadata (userType, org membership) and the database
+ * can disagree — an organisation created in Clerk but never provisioned, a
+ * fresh database behind an existing Clerk instance, a deleted tenant. The old
+ * rule redirected a "landlord" away from /onboarding to /dashboard, while the
+ * dashboard, reading the database, had no organisation to show: a dead end
+ * ("Restricted page") with no way forward, and a redirect loop as soon as the
+ * dashboard pointed back to onboarding.
+ *
+ *   /continue   — post-sign-in router: asks the API what this account is.
+ *   /onboarding — sends an already-provisioned landlord on to /dashboard itself.
+ *
+ * Neither page renders any tenant data, so admitting every signed-in user
+ * grants nothing; the backend still authorises every call.
+ */
+const ANY_SIGNED_IN_PATHS = ["/continue", "/onboarding"];
+
 /** Pages a signed-in, tenant-less (pending onboarding/verification) user is still allowed to reach. */
 const PENDING_PATHS = ["/onboarding", "/pending-review", "/account(.*)", "/support"];
 
@@ -93,6 +114,8 @@ const pathMatches = (pathname: string, pattern: string) => {
 const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((p) => pathMatches(pathname, p));
 
 const isPendingPath = (pathname: string) => PENDING_PATHS.some((p) => pathMatches(pathname, p));
+
+const isAnySignedInPath = (pathname: string) => ANY_SIGNED_IN_PATHS.includes(pathname);
 
 const startsWithTree = (pathname: string, tree: string) =>
     pathname === tree || pathname.startsWith(`${tree}/`);
@@ -151,6 +174,10 @@ export function resolveRoutePolicy(ctx: RoutePolicyContext): RouteDecision {
         return { action: "sign-in" };
     }
 
+    if (isAnySignedInPath(pathname)) {
+        return { action: "next" };
+    }
+
     const persona = effectivePersona(userType, tenantId, platformRole);
 
     // ── Platform admin console (super admin) ──────────────────────────
@@ -202,9 +229,8 @@ export function resolveRoutePolicy(ctx: RoutePolicyContext): RouteDecision {
         persona === "landlord" || (persona === "admin" && !!tenantId);
 
     if (isLandlordOrDualAdmin) {
-        if (startsWithTree(pathname, "/onboarding")) {
-            return { action: "redirect", to: DASHBOARD_TREE };
-        }
+        // /onboarding is handled above (ANY_SIGNED_IN_PATHS): the page itself
+        // forwards a provisioned landlord to /dashboard from database truth.
         return { action: "next" };
     }
 

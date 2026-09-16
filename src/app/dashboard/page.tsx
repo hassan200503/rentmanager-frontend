@@ -49,6 +49,7 @@ import InsightsEngine from "@/shared/components/dashboard/InsightsEngine";
 import { ScrollReveal } from "@/shared/components/motion/MotionComponents";
 import { useOrgStore } from "@/stores/org-store";
 import { SetupChecklist } from "@/features/tenant/components/SetupChecklist";
+import { RedirectToOnboarding } from "@/features/tenant/components/RedirectToOnboarding";
 
 function DashboardSkeleton() {
   return (
@@ -223,11 +224,16 @@ function OccupancyBadge({ status }: { status: string }) {
 }
 
 export default function DashboardPage() {
-  const { user, isOwner, isLoading: isUserLoading } = useCurrentUser();
+  const { user, isOwner, isLoading: isUserLoading, error, refetch } = useCurrentUser();
 
+  // Order matters. Each check used to fall through to "Restricted page": an
+  // API that was briefly unreachable, and an account with no organisation in
+  // the database yet, both read as "not an owner", telling a new landlord to
+  // ask an owner who does not exist. Only a real non-owner role sees that.
   if (isUserLoading) return <div className="page-container"><DashboardSkeleton /></div>;
+  if (error) return <DashboardError onRetry={() => void refetch()} />;
+  if (!user?.tenantId) return <RedirectToOnboarding />;
   if (!isOwner) return <InlinePermissionDenied />;
-  if (!user?.tenantId) return <div className="page-container"><DashboardSkeleton /></div>;
 
   return <DashboardContent tenantId={user.tenantId} />;
 }

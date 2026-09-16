@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
 import { type SignupIntent } from "@/lib/auth/clerk-metadata";
+import { BadgeMark } from "@/shared/components/brand/BrandBadge";
 
 /**
  * Sign-up page with persona intent capture.
@@ -31,10 +32,11 @@ function SignUpForm() {
             <SignUp
                 routing="path"
                 path="/public/sign-up"
-                // A brand-new account never has a tenant yet — onboarding is
-                // the only correct destination. Tenants are bounced to the
-                // dashboard by the proxy regardless.
-                forceRedirectUrl="/onboarding"
+                // /continue routes from what the API says the new account is:
+                // a landlord goes on to set up their organisation, a renter to
+                // the portal. Sending everyone to /onboarding put renters in
+                // front of a "create your organisation" form.
+                forceRedirectUrl="/continue"
                 unsafeMetadata={{
                     signupIntent: intent,
                 }}
@@ -54,11 +56,8 @@ export default function SignUpPage() {
 
             <div className="w-full max-w-md px-4 relative z-10">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-brand-50 dark:bg-brand-900/30 mb-4">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-brand dark:text-brand-400">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                    <div className="inline-flex items-center justify-center mb-4">
+                        <BadgeMark size={48} />
                     </div>
                     <h1 className="font-[var(--font-display-face)] text-2xl font-normal tracking-tight text-fg dark:text-fg-dark">
                         Create your account

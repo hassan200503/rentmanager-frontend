@@ -219,11 +219,13 @@ describe("/dashboard/* tree", () => {
         });
     });
 
-    it("keeps onboarded landlords out of onboarding", () => {
-        expect(resolveRoutePolicy(at(landlordUser, "/onboarding"))).toEqual({
-            action: "redirect",
-            to: "/dashboard",
-        });
+    it("lets a claimed landlord reach onboarding; the page decides from the database", () => {
+        // Previously redirected to /dashboard. When Clerk claims "landlord" but
+        // the database has no organisation (fresh database, unprovisioned org),
+        // that produced a dead end and a dashboard <-> onboarding loop. The
+        // onboarding page forwards a genuinely provisioned landlord to
+        // /dashboard itself, from backend truth.
+        expect(resolveRoutePolicy(at(landlordUser, "/onboarding"))).toEqual({ action: "next" });
     });
 });
 
@@ -350,5 +352,30 @@ describe("cross-persona containment", () => {
             action: "redirect",
             to: "/onboarding",
         });
+    });
+});
+
+// ── Post-sign-in router and onboarding: reachable by every signed-in user ──
+
+describe("/continue and /onboarding", () => {
+    it("require sign-in", () => {
+        for (const pathname of ["/continue", "/onboarding"]) {
+            expect(
+                resolveRoutePolicy({ pathname, userId: null, tenantId: undefined, platformRole: undefined })
+            ).toEqual({ action: "sign-in" });
+        }
+    });
+
+    it("admit every signed-in persona, whatever the claims say", () => {
+        const personas: RoutePolicyContext[] = [adminUser, dualOwner, landlordUser, pendingLandlordUser, renterUser];
+        for (const persona of personas) {
+            expect(resolveRoutePolicy(at(persona, "/continue")), persona.userId!).toEqual({ action: "next" });
+            expect(resolveRoutePolicy(at(persona, "/onboarding")), persona.userId!).toEqual({ action: "next" });
+        }
+    });
+
+    it("do not widen anything else: prefixes of those paths are not admitted", () => {
+        expect(resolveRoutePolicy(at(renterUser, "/continue/admin"))).not.toEqual({ action: "next" });
+        expect(resolveRoutePolicy(at(renterUser, "/onboardingx"))).not.toEqual({ action: "next" });
     });
 });

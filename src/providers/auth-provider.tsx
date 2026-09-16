@@ -17,17 +17,14 @@ import { useOrgStore } from "@/stores/org-store";
  *  tenantId === Clerk orgId. See architecture decision log if this changes.
  *
  * ── Post-auth redirect contract ────────────────────────────────────────────
- *   - /public/sign-in may carry `?intent=landlord|renter` (see
- *     lib/auth/signin-links.ts); the page then hands Clerk a
- *     `forceRedirectUrl` pointing at that persona's home tree
- *     (/dashboard | /portal). That value is a hardcoded, same-origin path —
- *     never derived from user input.
- *   - signInFallbackRedirectUrl="/portal" applies ONLY when no redirect was
- *     forced or provided. It is a starting point, not a grant: the proxy
- *     (lib/rbac/route-policy.ts) re-evaluates verified claims on every
- *     navigation and corrects any persona mismatch (landlord → /dashboard,
- *     admin → /admin, pending → /onboarding). Persona intent can never
- *     widen what a session may reach.
+ *   - Everyone signs in the same way; there is no persona choice. After
+ *     sign-in (and after sign-up) Clerk sends the person to /continue, which
+ *     asks the API what the account is authorised for (GET /users/me/access)
+ *     and routes to /admin, /dashboard, /portal or /onboarding.
+ *   - signInFallbackRedirectUrl applies only when no redirect was provided, so
+ *     a return-to-origin flow (a renter signing in mid-reservation) still wins.
+ *   - None of this grants anything: the proxy re-evaluates every navigation and
+ *     the backend authorises every call.
  */
 
 function OrgStoreSync({ children }: { children: ReactNode }) {
@@ -83,7 +80,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         <ClerkProvider
             signInUrl="/public/sign-in"
             signUpUrl="/public/sign-up"
-            signInFallbackRedirectUrl="/portal"
+            signInFallbackRedirectUrl="/continue"
             afterSignOutUrl="/"
         >
             <OrgStoreSync>{children}</OrgStoreSync>

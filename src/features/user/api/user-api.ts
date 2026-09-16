@@ -3,6 +3,7 @@ import {
     InviteUserRequest,
     InviteUserResponse,
     UserResponse,
+    SessionAccess,
     UserListParams,
     UserPageResponse,
 } from "../types/user";
@@ -30,6 +31,11 @@ export const userApi = {
     getCurrentUser: async (token?: string): Promise<UserResponse> => {
         const { token: resolvedToken, tenantId } = await getAuthContext();
         return apiClient.get<UserResponse>(userEndpoints.me, resolvedToken ?? token, tenantId);
+    },
+
+    getSessionAccess: async (): Promise<SessionAccess> => {
+        const { token, tenantId } = await getAuthContext();
+        return apiClient.get<SessionAccess>(userEndpoints.access, token, tenantId);
     },
 
     list: async (params?: UserListParams): Promise<UserPageResponse> => {

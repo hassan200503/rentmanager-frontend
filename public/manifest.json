@@ -2,7 +2,7 @@
   "name": "RentManager",
   "short_name": "RentManager",
   "description": "Multi-tenant property management platform for the Kenyan rental market",
-  "start_url": "/dashboard",
+  "start_url": "/continue",
   "display": "standalone",
   "background_color": "#F8FAFC",
   "theme_color": "#059669",

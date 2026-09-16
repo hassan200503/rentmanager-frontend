@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useClerk, useOrganization } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { tenantApi } from "../api/tenant-api";
 import { OnboardingTenantRequest } from "../types/tenant-types";
@@ -9,6 +9,7 @@ import { currentUserKeys } from "@/features/user/queries/use-current-user-query"
 import { ApiError } from "@/lib/api/errors";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
 import { BACKEND_JWT_TEMPLATE } from "@/lib/auth/token";
+import { decideOnboardingOrganization } from "../lib/onboarding-organization";
 
 /**
  * CRITICAL (spec §3): a 200 from POST /onboarding/tenant does NOT mean the
@@ -31,9 +32,31 @@ export const useOnboardTenantMutation = () => {
     const qc = useQueryClient();
     const router = useRouter();
     const { getToken } = useAuth();
+    const clerk = useClerk();
+    const { organization, membership } = useOrganization();
 
     return useMutation({
-        mutationFn: (payload: OnboardingTenantRequest) => tenantApi.onboard(payload),
+        mutationFn: async (payload: OnboardingTenantRequest) => {
+            // The backend registers the tenant against the organisation in the
+            // verified token and refuses when there is none. Make sure there is
+            // one, that it is active, and that the token carries it, BEFORE the
+            // API call — see features/tenant/lib/onboarding-organization.ts.
+            const decision = decideOnboardingOrganization({
+                organizationId: organization?.id,
+                membershipRole: membership?.role,
+            });
+            const organizationId =
+                decision.action === "reuse"
+                    ? decision.organizationId
+                    : (await clerk.createOrganization({ name: payload.name.trim() })).id;
+
+            await clerk.setActive({ organization: organizationId });
+            // A cached token predates the active organisation; without a fresh
+            // one the API still sees no organisation claim.
+            await getToken({ skipCache: true, template: BACKEND_JWT_TEMPLATE });
+
+            return tenantApi.onboard(payload);
+        },
 
         onSuccess: async () => {
             const fresh = await refreshSessionAndConfirmOnboarded(getToken);

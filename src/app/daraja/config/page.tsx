@@ -6,8 +6,10 @@ import {
     Smartphone,
     ShieldCheck,
     Loader2,
+    AlertTriangle,
 } from "lucide-react";
 import { useCurrentUser } from "@/features/user/hooks/use-current-user";
+import { RedirectToOnboarding } from "@/features/tenant/components/RedirectToOnboarding";
 import { DarajaConfigCard } from "@/features/daraja/components/daraja-config-card";
 import { PayoutDestinationCard } from "@/features/settings/components/payout-destination-card";
 
@@ -48,6 +50,24 @@ function InlineLoading() {
     );
 }
 
+function InlineLoadError({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div className="page-container max-w-xl">
+            <PageHeader />
+            <div className="card text-center py-10" role="alert">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-bg dark:bg-danger-bg-dark">
+                    <AlertTriangle className="h-5 w-5 text-danger" strokeWidth={2} />
+                </div>
+                <p className="text-sm font-medium text-fg dark:text-fg-dark mb-1">Couldn&#39;t load your account</p>
+                <p className="text-xs text-fg-muted dark:text-fg-muted-dark mb-4">Please try again in a moment.</p>
+                <button type="button" onClick={onRetry} className="btn-outline mx-auto">
+                    Retry
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function InlinePermissionDenied() {
     return (
         <div className="page-container max-w-xl">
@@ -66,11 +86,14 @@ function InlinePermissionDenied() {
 }
 
 export default function DarajaConfigPage() {
-    const { user, isOwner, isLoading: isUserLoading } = useCurrentUser();
+    const { user, isOwner, isLoading: isUserLoading, error, refetch } = useCurrentUser();
 
+    // Same order as the dashboard: a load failure and an unfinished setup
+    // are not permission problems, so neither may show "Restricted page".
     if (isUserLoading) return <InlineLoading />;
+    if (error) return <InlineLoadError onRetry={() => void refetch()} />;
+    if (!user?.tenantId) return <RedirectToOnboarding />;
     if (!isOwner) return <InlinePermissionDenied />;
-    if (!user?.tenantId) return <InlineLoading />;
 
     return (
         <div className="page-container max-w-xl">
