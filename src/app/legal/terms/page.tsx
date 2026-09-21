@@ -4,7 +4,7 @@ import { LEGAL_CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE } from "@/lib/legal/legal-met
 import { LegalTitle, LegalLead, LegalSection, LegalList } from "../legal-prose";
 
 export const metadata: Metadata = {
-    title: "Terms of service | RentManager",
+    title: "Terms of service",
     description:
         "The terms on which landlords and renters use RentManager, including how rent payments work and what the platform is and is not responsible for.",
 };

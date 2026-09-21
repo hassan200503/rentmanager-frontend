@@ -4,7 +4,7 @@ import { LEGAL_CONTACT_EMAIL, LEGAL_EFFECTIVE_DATE, PROCESSORS } from "@/lib/leg
 import { LegalTitle, LegalLead, LegalSection, LegalList } from "../legal-prose";
 
 export const metadata: Metadata = {
-    title: "Privacy policy | RentManager",
+    title: "Privacy policy",
     description:
         "What personal data RentManager holds, why, who processes it, and the rights you have over it under Kenya's Data Protection Act 2019.",
 };
