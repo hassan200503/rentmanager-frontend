@@ -72,6 +72,10 @@ const PUBLIC_PATHS = [
     "/public/sign-up(.*)",
     "/tenant-required",
     "/reserve(.*)",
+    // The policy pages must be readable by anyone, signed in or not: they are
+    // linked from the footer, from the sign-up screen, and from app-store
+    // listings, and a privacy policy behind a sign-in wall is no policy at all.
+    "/legal(.*)",
 ];
 
 /**

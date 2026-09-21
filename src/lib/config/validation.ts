@@ -21,6 +21,14 @@ export const clientEnvSchema = z.object({
     .url()
     .optional()
     .or(z.literal("")),
+  // Where data-protection requests and legal notices should be sent. Optional
+  // because the app must boot without it, but the privacy page says so plainly
+  // when it is unset rather than printing an address nobody reads.
+  NEXT_PUBLIC_LEGAL_CONTACT_EMAIL: z
+    .string()
+    .email()
+    .optional()
+    .or(z.literal("")),
 });
 
 export const serverEnvSchema = z.object({

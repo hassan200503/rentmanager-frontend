@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
@@ -71,8 +72,19 @@ export default function SignUpPage() {
                     <SignUpForm />
                 </Suspense>
 
+                {/* Someone creating an account is entitled to read what they
+                    are agreeing to before they do, not after. These two pages
+                    are static and open instantly. */}
                 <p className="text-center text-xs text-fg-subtle dark:text-fg-subtle-dark mt-6">
-                    RentManager — Property Management Platform
+                    By creating an account you accept our{" "}
+                    <Link className="underline hover:text-fg dark:hover:text-fg-dark" href="/legal/terms">
+                        terms of service
+                    </Link>{" "}
+                    and{" "}
+                    <Link className="underline hover:text-fg dark:hover:text-fg-dark" href="/legal/privacy">
+                        privacy policy
+                    </Link>
+                    .
                 </p>
             </div>
         </div>

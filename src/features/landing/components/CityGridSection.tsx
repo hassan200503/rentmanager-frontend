@@ -154,7 +154,7 @@ export function CityGridSection() {
         <SectionHeader
           eyebrow="Coverage"
           title="All across Kenya"
-          description="Featured rentals in major cities, with verified vacancies."
+          description="Featured rentals in major cities, listed only while they are vacant."
         />
         <div className="grid lg:grid-cols-5 gap-10 lg:gap-14 items-center">
           {/* Kenya map with pulsing markers */}
@@ -171,7 +171,12 @@ export function CityGridSection() {
         </div>
         <p className="flex items-center justify-center gap-2 mt-8 text-xs text-white/50">
           <span className="w-1.5 h-1.5 rounded-full bg-jade-400" aria-hidden="true" />
-          Every unit is verified before it&apos;s listed
+          {/* Nothing verifies an individual unit. What is enforced, in the
+              public query itself, is that a listing is an ACTIVE unit with no
+              active lease under an ACTIVE property — and the lease scheduler
+              marks it occupied the day it is let, so it disappears from here
+              on its own. */}
+          A unit is listed only while it is vacant
         </p>
       </div>
     </section>

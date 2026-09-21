@@ -123,6 +123,15 @@ describe("unauthenticated users", () => {
             expect(resolveRoutePolicy(at(anon, path)), path).toEqual({ action: "next" });
         }
     });
+
+    it("can read the privacy policy and terms without signing in", () => {
+        // A policy page behind a sign-in wall is no policy at all, and these
+        // two URLs are quoted in app-store listings and on the sign-up screen,
+        // where the reader has no account yet by definition.
+        for (const path of ["/legal/privacy", "/legal/terms"]) {
+            expect(resolveRoutePolicy(at(anon, path)), path).toEqual({ action: "next" });
+        }
+    });
 });
 
 // ── 2. /admin/* — platform admins only ────────────────────────────────────

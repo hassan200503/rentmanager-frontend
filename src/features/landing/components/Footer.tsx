@@ -20,20 +20,30 @@ const FOOTER_LINKS: Record<string, Array<{ label: string; href: string }>> = {
     { label: "Sign in", href: SIGNIN_HREF },
     { label: "Dashboard", href: "/dashboard" },
   ],
+  Legal: [
+    { label: "Privacy policy", href: "/legal/privacy" },
+    { label: "Terms of service", href: "/legal/terms" },
+  ],
 };
 
 export function Footer() {
   return (
     <footer className="relative border-t border-white/5">
       <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-10">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4" aria-label="RentManager home">
               <PlatformBrand size="md" onDark />
             </Link>
             <p className="text-xs text-white/55 leading-relaxed max-w-xs">
-              The modern way to find and reserve rental properties across Kenya. Verified listings,
-              secure deposits, digital leases.
+              {/* "Verified listings, secure deposits" claimed two things the
+                  system does not do: no per-listing verification exists
+                  (tenants.verified is a dead column), and a deposit is paid
+                  into the landlord's own M-Pesa, never held by us — so we
+                  cannot call it secured. What is left is exactly what the
+                  code enforces. */}
+              Find and reserve rental homes across Kenya. Only vacant units are listed, deposits
+              are paid straight to the landlord by M-Pesa, and every lease is digital.
             </p>
           </div>
           {Object.entries(FOOTER_LINKS).map(([category, links]) => (

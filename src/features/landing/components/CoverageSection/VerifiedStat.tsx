@@ -2,8 +2,8 @@
 
 import { formatUpdatedAt } from "@/features/landing/lib/format-updated-at";
 
-interface VerifiedStatProps {
-  /** Total count of verified listings; `undefined` while loading. */
+interface VacancyStatProps {
+  /** Number of units currently listed publicly; `undefined` while loading. */
   count?: number;
   /** ISO timestamp of the fetch that produced the count. */
   updatedAt?: string;
@@ -12,17 +12,26 @@ interface VerifiedStatProps {
 }
 
 /**
- * Layer 3 — live verified-count readout for the trust line.
+ * Live listing count for the coverage trust line.
  *
- * - error  → original static copy ("Every unit is verified...")
+ * <p>The figure is `totalElements` from the public units query, which the
+ * backend restricts to an ACTIVE unit with no active lease under an ACTIVE
+ * property. So it is a count of units actually available right now — which is
+ * what this line now says. It previously said "verified listings", and nothing
+ * in the system verifies an individual listing: `tenants.verified` is a dead
+ * column written by no code. The number was always real; only the word for it
+ * was wrong, and on a public page that is the kind of claim that costs trust
+ * the first time a renter tests it.
+ *
+ * - error   → static copy about what listing actually means
  * - loading → skeleton reserving the final line height (zero CLS)
- * - ready  → "1,204 verified listings · updated 12 min ago"
+ * - ready   → "1,204 homes available now · updated 12 min ago"
  */
-export function VerifiedStat({ count, updatedAt, isError = false }: VerifiedStatProps) {
+export function VerifiedStat({ count, updatedAt, isError = false }: VacancyStatProps) {
   if (isError) {
     return (
       <p className="text-sm text-white/60 font-medium">
-        Every unit is verified before it&apos;s listed
+        A unit is listed only while it is vacant
       </p>
     );
   }
@@ -44,7 +53,7 @@ export function VerifiedStat({ count, updatedAt, isError = false }: VerifiedStat
       <strong className="text-jade-300 font-semibold">
         {count.toLocaleString()}
       </strong>{" "}
-      verified listings · updated {formatUpdatedAt(updatedAt)}
+      {count === 1 ? "home" : "homes"} available now · updated {formatUpdatedAt(updatedAt)}
     </p>
   );
 }

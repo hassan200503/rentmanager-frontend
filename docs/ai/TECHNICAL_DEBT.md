@@ -1103,15 +1103,34 @@ never used for linking, since nobody verifies it.
 Found while probing the deployed system for gaps — not by a test, which is the
 uncomfortable part: the suite was green throughout.
 
-### TD-151 · OPEN — No privacy policy or terms pages
+### TD-151 · MOSTLY CLOSED 2026-09-21 — Privacy policy and terms now exist
 
-`/privacy` and `/terms` do not exist and nothing links to them. Kenya's Data
-Protection Act 2019 requires a privacy notice to the people whose data is
-collected (renters' names, phones, ID numbers, rent and payment records), and
-registration with the ODPC as a data controller. Google Play and the App Store
-both require a policy URL, as does a published Google OAuth consent screen.
-Drafting these is a legal question, not a code one — but they are a launch
-blocker for real users, not a nicety.
+`/legal/privacy` and `/legal/terms` are written, linked from the footer and the
+sign-up screen, listed in the sitemap, and public in `route-policy.ts` (a policy
+page behind a sign-in wall is no policy at all). Both are static, so they open
+instantly.
+
+They were written from the schema rather than from a template, and the awkward
+parts are stated rather than glossed: financial rows and the audit trail are
+append-only at the database level (`V81`, `V86`) and therefore **cannot** be
+deleted on request, so the privacy page says so and explains why; the terms say
+plainly that rent and deposits settle into the landlord's own M-PESA account and
+that the platform never holds money, so it cannot refund what it never held.
+Named processors (Clerk, Neon, Render, Netlify, Safaricom) and the fact that two
+of them hold data in the EU are disclosed, as the Data Protection Act 2019
+requires.
+
+What remains, and why this is not fully closed:
+
+1. **Review by a Kenyan data-protection practitioner** before any large launch.
+   The pages are an accurate description of the system; that is necessary but
+   not sufficient for a legal document.
+2. **A contact address.** `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` is unset, so both
+   pages currently say the address is being set up and point the reader at their
+   landlord. Setting that variable is the one-line fix, and it is the operator's
+   call which mailbox to publish.
+3. **ODPC registration** as a data controller — an operator task, not a code
+   one.
 
 ### TD-152 · OPEN — Nightly backups are failing for want of two secrets
 
@@ -1121,3 +1140,59 @@ repository's Actions secrets, so **no backup of the live database exists**. The
 workflow fails loudly by design (it refuses to run without them) but nobody is
 watching the emails. Operator action; see `deploy/FREE_NO_CARD.md` §6.
 
+### TD-153 · CLOSED 2026-09-21 — Public copy claimed verification the system never did
+
+Four surfaces told visitors "Every unit is verified before it's listed",
+"verified vacancies" and "Verified listings, secure deposits": the footer, the
+city grid, the 3D map section and the live coverage stat. None of it was true.
+`tenants.verified` is a dead boolean — `V?` set every existing row to `true` and
+no code has written it since — there is no per-listing check anywhere, and a
+deposit is paid into the landlord's own M-PESA account, so calling it "secure"
+implied a custody the platform deliberately does not take (ADR-0026). The hero
+had already been corrected in an earlier pass; these four were missed.
+
+What replaced it is stronger because it is enforced in SQL: a unit appears
+publicly only while it is an ACTIVE unit with no active lease under an ACTIVE
+property (`PublicUnitQueryServiceImpl.findPubliclyVisibleVacantUnits`), and the
+lease scheduler marks it occupied the day it is let. So the copy now says "a
+unit is listed only while it is vacant", and the live counter — which was always
+the real count of publicly listed units — says "N homes available now" instead
+of "N verified listings". The number never changed; only the word for it, which
+was the part a renter would have tested first.
+
+### TD-154 · CLOSED 2026-09-21 — Every page load woke the API for answers that never change
+
+Measured from Nairobi against the live deployment: `/icon` took **4.42 s** to
+first byte against 1.07 s for a static file, because the route was
+`force-dynamic` with `Cache-Control: no-cache` and made two upstream API calls
+(branding, then the image bytes) on every single request — for a favicon. The
+public catalogue and branding endpoints carried Spring Security's default
+`no-store`, so the landing page and the listings page re-derived identical
+results on a 0.1-CPU instance for every visitor.
+
+Closed by:
+
+- `/icon` is now prerendered with `export const revalidate = 300` and serves
+  `public, max-age=300, s-maxage=300, stale-while-revalidate=86400` plus
+  `Netlify-CDN-Cache-Control` (without which a route handler is not held at the
+  edge at all). Upstream fetch timeouts dropped to 2.5 s / 3 s so a sleeping API
+  can never hold up a tab icon. The build now reports `/icon` as `○` rather than
+  `ƒ`. Trade accepted deliberately: a new logo appears within five minutes
+  instead of immediately.
+- `PublicCacheControl.catalogue()` (60 s) and `.branding()` (5 min) on
+  `PublicUnitQueryController`, `PublicPropertyQueryController` and
+  `PlatformBrandingPublicController`.
+
+Two things worth not re-deriving next time:
+
+1. **The header has to be set on the `ResponseEntity`.** Spring Security writes
+   `no-cache, no-store` on every response and only stands aside when a cache
+   header is already present, so a filter added after the chain either fights
+   the header writer or is silently overridden. A first attempt at a
+   `PublicContentCacheFilter` was deleted for this reason.
+2. **Nothing person-specific is cached.** Reservation status is public in the
+   sense of needing no sign-in, but it belongs to one person and changes as they
+   pay, so it is deliberately absent from the policy — as is everything
+   authenticated. `PublicCacheControlTest` asserts the directives so a future
+   edit that adds personal data to a catalogue response has to change the policy
+   visibly.

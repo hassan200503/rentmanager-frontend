@@ -18,13 +18,13 @@ interface Premium3DKenyaMapSectionProps {
   grain?: boolean;
   /** Layer 2 — ambient drifting gradient mesh behind the map. */
   ambientMesh?: boolean;
-  /** Layer 3 — breathing marker beacons + live verified-count readout. */
+  /** Layer 3 — breathing marker beacons + live vacancy-count readout. */
   livePulse?: boolean;
-  /** Verified listings count (`undefined` while loading). */
+  /** Count of units currently listed publicly (`undefined` while loading). */
   verifiedCount?: number;
   /** ISO timestamp of the fetch that produced `verifiedCount`. */
   verifiedCountUpdatedAt?: string;
-  /** Verified-count fetch failed — VerifiedStat falls back to static copy. */
+  /** Listing-count fetch failed — VerifiedStat falls back to static copy. */
   verifiedCountError?: boolean;
 }
 
@@ -68,7 +68,7 @@ export function Premium3DKenyaMapSection({
         <SectionHeader
           eyebrow="Coverage"
           title="All across Kenya"
-          description="Featured rentals in major cities, with verified vacancies."
+          description="Featured rentals in major cities, listed only while they are vacant."
         />
 
         <div
@@ -173,7 +173,7 @@ export function Premium3DKenyaMapSection({
               />
             ) : (
               <p className="text-sm text-white/60 font-medium">
-                Every unit is verified before it&apos;s listed
+                A unit is listed only while it is vacant
               </p>
             )}
           </motion.div>
