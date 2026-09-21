@@ -21,3 +21,9 @@
 [build.environment]
   NODE_VERSION = "24"
   NEXT_TELEMETRY_DISABLED = "1"
+  # Published on /legal/privacy and /legal/terms as the address for
+  # data-protection requests. It lives here rather than in the Netlify
+  # dashboard because it is not a secret -- it is printed on a public page --
+  # and keeping it in the repo means the pages and the address can never
+  # drift apart.
+  NEXT_PUBLIC_LEGAL_CONTACT_EMAIL = "rentmanagerke2026@gmail.com"
