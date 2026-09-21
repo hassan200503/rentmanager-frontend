@@ -15,23 +15,31 @@ const DevPortalSwitcher = dynamic(
     () => import("@/shared/dev/DevPortalSwitcher")
 );
 
+// No `weight` list on purpose: naming weights makes next/font download one
+// static file per weight (four, measured at ~35 KB each), while omitting it
+// serves Inter's variable font as a single file that covers every weight the
+// app uses. Same look, one request instead of four.
 const inter = Inter({
     subsets: ["latin"],
     variable: "--font-body",
-    weight: ["400", "500", "600", "700"],
 });
 
+// Not preloaded: the monospace face is for figures in tables and the dashboard
+// mock, all below the fold. Preloading it made three font files compete with
+// the hero's own text for the first moments of a page load.
 const plexMono = IBM_Plex_Mono({
     subsets: ["latin"],
     variable: "--font-mono",
     weight: ["400", "500", "600"],
+    preload: false,
 });
 
+// Upright only: nothing in the app sets the display face in italic, and the
+// italic file was a second download on every page for no rendering.
 const instrumentSerif = Instrument_Serif({
     subsets: ["latin"],
     variable: "--font-display-face",
     weight: ["400"],
-    style: ["normal", "italic"],
 });
 
 /* Premium brand wordmark face — Fraunces variable with optical sizing:
@@ -40,7 +48,8 @@ const instrumentSerif = Instrument_Serif({
 const fraunces = Fraunces({
     subsets: ["latin"],
     variable: "--font-brand-face",
-    style: ["normal", "italic"],
+    // Upright only, for the same reason as the display face: the wordmark is
+    // never set in italic, so the italic file was pure weight.
     axes: ["opsz"],
 });
 

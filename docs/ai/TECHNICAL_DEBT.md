@@ -1196,3 +1196,59 @@ Two things worth not re-deriving next time:
    authenticated. `PublicCacheControlTest` asserts the directives so a future
    edit that adds personal data to a catalogue response has to change the policy
    visibly.
+
+### TD-155 · CLOSED 2026-09-21 — Four font families, all preloaded, on every page
+
+Measured in a real browser against the live site: the landing page fetched four
+preloaded woff2 files totalling ~194 KB before the hero's own text could
+settle, because every face named explicit weights or styles.
+
+- **Inter** named four weights, which makes `next/font` download one static
+  file per weight. Omitting `weight` serves Inter's variable font as a single
+  file covering every weight the app uses — same look, a quarter of the
+  requests.
+- **Instrument Serif** and **Fraunces** both loaded an italic file; nothing in
+  the app sets either face in italic (checked across every `.tsx` and
+  `globals.css`).
+- **IBM Plex Mono** is `preload: false` now. It renders figures in tables and
+  the dashboard mock, all below the fold, and its three files were competing
+  with above-the-fold text.
+
+Result: three preloaded files, 126 KB, verified in the built HTML's preload
+tags. Nothing about the design changed.
+
+### TD-156 · OPEN — Marketing pages download Clerk's entire UI bundle for nothing
+
+Measured in a browser on the live landing page: after `clerk.browser.js`,
+Clerk fetches `@clerk/ui` and then four more chunks —
+`framework_ui` (43 KB), `ui-common` (127 KB), `vendors` (64 KB) and
+`subscriptionDetails` (5 KB), ~240 KB in total — starting at 5.6 s and still
+arriving at 33 s. Nothing on `/`, `/listings` or `/legal/*` renders a Clerk
+component. It is prefetch for a sign-in form the visitor may never open, and it
+lands while the page is still hydrating.
+
+The cause is `providers/auth-provider.tsx`: `ClerkProvider` sits in the root
+layout and `OrgStoreSync` calls `useAuth()`/`useOrganization()` unconditionally,
+so Clerk bootstraps on every route including the marketing pages.
+
+Two fixes were considered and **one was explicitly rejected**, so it does not
+get retried blind:
+
+1. **`prefetchUI: false` on `ClerkProvider`** — real and typed
+   (`@clerk/shared` `ClerkOptions`), and it does skip the UI chunk. Rejected:
+   Clerk documents it as being "for custom UIs using Control Components", and
+   this app renders Clerk's prebuilt `<SignIn>` and `<SignUp>`. Making it
+   conditional on pathname is worse, not better: `getEntryChunks()` runs once
+   per page load, so a visitor who follows the footer's `<Link>` from `/` to
+   `/public/sign-in` would arrive with Clerk already loaded and the UI chunk
+   permanently skipped — a sign-in page that never renders a form. Not worth
+   risking sign-in for 240 KB of post-interactive JS.
+2. **Route groups (the real fix, not yet done)** — move the routes that need
+   auth under an `(app)/` group whose layout carries `AuthProvider`, leaving
+   `/`, `/listings` and `/legal/*` under a group with no `ClerkProvider` at
+   all. Route groups do not change URLs, so the proxy matcher and every link
+   keep working. It is a mechanical but wide change (every authenticated route
+   directory moves), and the failure mode is a public page calling a Clerk hook
+   with no provider above it — so it wants its own pass with the dev server up,
+   not the tail end of a deploy.
+
