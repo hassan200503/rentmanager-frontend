@@ -10,6 +10,7 @@ import {
   Receipt,
   ClipboardList,
   Users,
+  FileSignature,
   Wrench,
   Megaphone,
   Send,
@@ -42,7 +43,10 @@ const navItems: NavItem[] = [
   { href: "/dashboard/properties", label: "Properties", icon: Building2 },
   { href: "/dashboard/payments", label: "Payments", icon: Receipt },
   { href: "/dashboard/rent-ledger", label: "Rent Ledger", icon: ClipboardList },
-  { href: "/dashboard/leases", label: "Tenants", icon: Users },
+  // "Tenants" was this app's word for leases, which left the people
+  // themselves with no page at all. Renters are now their own entry.
+  { href: "/dashboard/renters", label: "Renters", icon: Users },
+  { href: "/dashboard/leases", label: "Leases", icon: FileSignature },
   { href: "/dashboard/requests", label: "Requests", icon: Wrench },
   { href: "/dashboard/reviews", label: "Reviews", icon: Star },
   { href: "/dashboard/announcements", label: "Announcements", icon: Megaphone },

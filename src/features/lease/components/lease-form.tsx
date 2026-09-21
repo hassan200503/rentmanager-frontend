@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useForm, useController, Controller, Resolver, Control } from "react-hook-form";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,13 +11,13 @@ import {
     Settings2,
     Loader2,
     Building2,
-    KeyRound,
 } from "lucide-react";
 import { useCreateLease } from "../hooks/use-create-lease";
 import type { LeaseType, BillingCycle } from "../types/lease-response";
 import { leaseSchema, LeaseFormValues } from "../validations/lease-schema";
 import { usePropertiesQuery } from "@/features/property/queries/use-properties-query";
 import { useUnitsQuery } from "@/features/unit/queries/use-units-query";
+import { useRentersQuery } from "@/features/renter/hooks/use-renters";
 import { Combobox } from "@/shared/components/ui/Combobox";
 import { toast } from "sonner";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
@@ -128,11 +129,18 @@ export const LeaseForm = ({ onSubmit }: LeaseFormProps) => {
 
     const propertiesQuery = usePropertiesQuery({ page: 0, size: 100 });
     const unitsQuery = useUnitsQuery({ propertyId: selectedPropertyId, page: 0, size: 100 });
+    const rentersQuery = useRentersQuery();
 
     const propertyOptions = (propertiesQuery.data?.content ?? []).map((p) => ({
         value: p.propertyId,
         label: p.name,
         description: p.propertyType?.toLowerCase(),
+    }));
+
+    const renterOptions = (rentersQuery.data?.content ?? []).map((r) => ({
+        value: r.id,
+        label: r.fullName,
+        description: r.phone,
     }));
 
     const unitOptions = (unitsQuery.data?.content ?? []).map((u) => ({
@@ -213,15 +221,35 @@ export const LeaseForm = ({ onSubmit }: LeaseFormProps) => {
                     />
                 </div>
                 <div className="mt-4">
-                    <label className="form-label flex items-center gap-1">
-                        Tenant Profile ID <span className="text-danger">*</span>
-                    </label>
-                    <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark pointer-events-none" strokeWidth={2} />
-                        <input {...register("tenantProfileId")} className="form-input font-mono-nums !pl-9 text-xs" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" />
-                    </div>
-                    {errors.tenantProfileId?.message && <p className="text-xs text-danger mt-1">{errors.tenantProfileId.message}</p>}
-                    <p className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark mt-1.5">Paste the tenant&apos;s profile UUID from their details page.</p>
+                    <Controller
+                        name="tenantProfileId"
+                        control={control}
+                        render={({ field }) => (
+                            <Combobox
+                                label="Renter"
+                                required
+                                options={renterOptions}
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Search your renters…"
+                                searchPlaceholder="Search by name or phone…"
+                                loading={rentersQuery.isLoading}
+                                emptyMessage="No renters yet — add one first"
+                                error={errors.tenantProfileId?.message}
+                            />
+                        )}
+                    />
+                    {/* The field used to be a free-text box asking for a renter
+                        UUID "from their details page" — an id no screen in the
+                        product ever showed, so a lease could not actually be
+                        created. */}
+                    <p className="text-[11px] text-fg-subtle dark:text-fg-subtle-dark mt-1.5">
+                        Not listed?{" "}
+                        <Link href="/dashboard/renters" className="text-brand hover:underline underline-offset-2">
+                            Add a renter
+                        </Link>{" "}
+                        first — you only need their name and phone number.
+                    </p>
                 </div>
             </div>
 

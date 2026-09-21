@@ -1081,3 +1081,43 @@ A Clerk development instance allows 100 users, renters included, so roughly
 three landlords. A production instance is free to 50,000 monthly users but needs
 a domain we control. Options and costs are in `deploy/FREE_NO_CARD.md` §7.
 
+### TD-150 · CLOSED 2026-09-20 — A landlord could not add the tenants they already had
+
+The only production code that created a renter (`tenant_profile`) was
+`ReservationFulfillmentOrchestrator`: a stranger reserving a vacant unit on the
+public site and paying a deposit by M-Pesa. Every other path was a
+`@Profile("dev")` controller. A landlord signing up with tenants already living
+in their units — the normal case in Kenya — could create properties and units
+and then go no further: the lease form asked them to paste a
+"Tenant Profile ID" UUID that no screen in the product ever displayed.
+
+Closed by: `V103` (clerk_user_id and email nullable, partial unique indexes on
+phone and email for unlinked rows), `TenantProfile.createForLandlord` /
+`linkIdentity`, `RenterDirectoryService`, `RenterIdentityLinker`,
+`RenterController` (`POST/GET /api/v1/renters`, `GET /renters/search`), a
+Renters page in the dashboard, and a renter picker replacing the UUID box on the
+lease form. A record with no Clerk identity is claimed the first time that
+person signs in with a **verified** email; a landlord-typed phone number is
+never used for linking, since nobody verifies it.
+
+Found while probing the deployed system for gaps — not by a test, which is the
+uncomfortable part: the suite was green throughout.
+
+### TD-151 · OPEN — No privacy policy or terms pages
+
+`/privacy` and `/terms` do not exist and nothing links to them. Kenya's Data
+Protection Act 2019 requires a privacy notice to the people whose data is
+collected (renters' names, phones, ID numbers, rent and payment records), and
+registration with the ODPC as a data controller. Google Play and the App Store
+both require a policy URL, as does a published Google OAuth consent screen.
+Drafting these is a legal question, not a code one — but they are a launch
+blocker for real users, not a nicety.
+
+### TD-152 · OPEN — Nightly backups are failing for want of two secrets
+
+`.github/workflows/backup.yml` has run and failed every night since the deploy:
+`BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE` were never added to the
+repository's Actions secrets, so **no backup of the live database exists**. The
+workflow fails loudly by design (it refuses to run without them) but nobody is
+watching the emails. Operator action; see `deploy/FREE_NO_CARD.md` §6.
+
