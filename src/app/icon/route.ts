@@ -45,7 +45,16 @@ export async function GET() {
             return iconResponse(fallbackSvg, "image/svg+xml");
         }
 
-        const imageRes = await fetch(logoUrl, {
+        // An icon the owner uploaded is served by our own API and comes back
+        // as a path ("/api/v1/public/platform/branding/logo"); a legacy
+        // Cloudinary asset comes back absolute. Resolve the path against the
+        // API origin, since this runs on the server with no page to be
+        // relative to.
+        const absoluteLogoUrl = logoUrl.startsWith("/")
+            ? new URL(logoUrl, new URL(appConfig.api.baseUrl).origin).toString()
+            : logoUrl;
+
+        const imageRes = await fetch(absoluteLogoUrl, {
             cache: "no-store",
             signal: AbortSignal.timeout(5000),
         });

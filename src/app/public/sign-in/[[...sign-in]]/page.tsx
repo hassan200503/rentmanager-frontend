@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { SignIn } from "@clerk/nextjs";
 import { apiClient } from "@/lib/api/client";
 import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
-import { BadgeMark } from "@/shared/components/brand/BrandBadge";
+import { PlatformLogoMark } from "@/shared/components/brand/PlatformBrand";
 import {
     Check,
     Loader2,
@@ -153,7 +153,7 @@ export default function SignInPage() {
             <div className="w-full max-w-md px-4 relative z-10">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center mb-4">
-                        <BadgeMark size={48} />
+                        <PlatformLogoMark size={48} />
                     </div>
                     <h1 className="font-[var(--font-display-face)] text-2xl font-normal tracking-tight text-fg dark:text-fg-dark">
                         Welcome back

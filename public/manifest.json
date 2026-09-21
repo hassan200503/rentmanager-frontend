@@ -9,9 +9,8 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/icon",
       "sizes": "any",
-      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],

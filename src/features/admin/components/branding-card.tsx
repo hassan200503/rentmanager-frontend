@@ -22,7 +22,9 @@ import {
 } from "../hooks/use-admin-mutations";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_BYTES = 5 * 1024 * 1024;
+// Matches PlatformBrandIconService.MAX_BYTES: the icon is stored in our
+// own database and served on nearly every page load, so it stays small.
+const MAX_BYTES = 512 * 1024;
 
 function validateFile(file: File): string | null {
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -167,7 +169,7 @@ export function BrandingCard({ disabled }: { disabled: boolean }) {
                             <BadgeMark size={40} />
                             <span className="text-[11px] font-medium">Click or drop to upload</span>
                             <span className="text-[10px] text-fg-subtle dark:text-fg-subtle-dark">
-                                PNG · JPG · WebP, ≤ 5 MB
+                                PNG · JPG · WebP, ≤ 512 KB
                             </span>
                         </div>
                     )}

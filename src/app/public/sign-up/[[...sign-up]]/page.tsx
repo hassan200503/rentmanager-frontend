@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
 import { type SignupIntent } from "@/lib/auth/clerk-metadata";
-import { BadgeMark } from "@/shared/components/brand/BrandBadge";
+import { PlatformLogoMark } from "@/shared/components/brand/PlatformBrand";
 
 /**
  * Sign-up page with persona intent capture.
@@ -57,7 +57,7 @@ export default function SignUpPage() {
             <div className="w-full max-w-md px-4 relative z-10">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center mb-4">
-                        <BadgeMark size={48} />
+                        <PlatformLogoMark size={48} />
                     </div>
                     <h1 className="font-[var(--font-display-face)] text-2xl font-normal tracking-tight text-fg dark:text-fg-dark">
                         Create your account
