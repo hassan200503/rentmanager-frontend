@@ -1125,14 +1125,35 @@ What remains, and why this is not fully closed:
 1. **Review by a Kenyan data-protection practitioner** before any large launch.
    The pages are an accurate description of the system; that is necessary but
    not sufficient for a legal document.
-2. **A contact address.** `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` is unset, so both
-   pages currently say the address is being set up and point the reader at their
-   landlord. Setting that variable is the one-line fix, and it is the operator's
-   call which mailbox to publish.
+2. ~~A contact address.~~ **Done 2026-09-21.**
+   `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` is set to `rentmanagerke2026@gmail.com` in
+   `netlify.toml` — chosen by the owner so a personal address stays private. It
+   lives in the repo rather than the Netlify dashboard because it is printed on
+   a public page, so it is not a secret, and keeping it here means the pages and
+   the address cannot drift apart.
 3. **ODPC registration** as a data controller — an operator task, not a code
    one.
 
-### TD-152 · OPEN — Nightly backups are failing for want of two secrets
+Clerk can also require an express-consent checkbox at sign-up and link both
+pages itself (Clerk → Configure → Legal). It is switched off: turning it on
+adds a tick-box users must complete, which is a sign-up flow change for the
+owner to decide. The sign-up page already states the agreement in text and
+links both pages.
+
+### TD-152 · OPEN (operator action) — Nightly backups are failing for want of two secrets
+
+Confirmed again 2026-09-21: `gh secret list` returns nothing, and the workflow
+failed on the 19th, 20th and 21st. The two values are a database password and
+an encryption key, so they have to be entered by the owner:
+
+```bash
+gh secret set BACKUP_DATABASE_URL --repo hassan200503/rentmanager-backend
+gh secret set BACKUP_PASSPHRASE   --repo hassan200503/rentmanager-backend
+```
+
+`gh` prompts for each value, so neither lands in shell history. Generate the
+passphrase with `./deploy/gen-secrets.sh` and **store it before closing the
+window** — without it no backup can ever be restored.
 
 `.github/workflows/backup.yml` has run and failed every night since the deploy:
 `BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE` were never added to the
@@ -1251,4 +1272,33 @@ get retried blind:
    directory moves), and the failure mode is a public page calling a Clerk hook
    with no provider above it — so it wants its own pass with the dev server up,
    not the tail end of a deploy.
+
+### TD-157 · CLOSED 2026-09-21 — The live API was eight commits behind, silently
+
+`Cache-Control` changes pushed to `main` never appeared on the deployed API.
+The cause was not a slow build: Render was watching the
+`non-custodial-rent-collection` branch, which had been merged into `main` and
+abandoned five days earlier. Render records the branch a service was created
+from and never changes it, so `main` moved eight commits ahead — V103 and V104
+included — while the API answered healthily from the old image.
+
+The consequence was worse than stale headers. The web app was deployed from
+`main`, so `/dashboard/renters` and the brand-icon upload were live in the
+browser with no endpoints behind them: `GET /api/v1/public/platform/branding/logo`
+returned 404 because the controller did not exist yet, which is
+indistinguishable from "no logo uploaded". Any feature spanning both repos can
+fail this way, and nothing warns you, because the health check passes.
+
+Fixed by fast-forwarding the watched branch to `main` (it was a strict
+ancestor, so no divergence), which deployed in 570 s and applied both
+migrations. The runbook now makes checking the deploy branch a numbered step
+and gives the command that reveals what is actually deployed:
+
+```bash
+gh api repos/<owner>/<repo>/deployments --jq '.[0:3] | .[] | "\(.created_at)  \(.environment)  \(.sha[0:8])"'
+```
+
+Render writes a GitHub deployment per deploy and the environment name carries
+the branch. **Still worth doing:** set the service's branch to `main` in
+Render's own settings so the fast-forward is not needed again.
 
