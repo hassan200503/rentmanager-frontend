@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Home, MapPin, ArrowUpRight, ShieldCheck } from "lucide-react";
+import { Home, MapPin, ArrowUpRight, CalendarCheck } from "lucide-react";
 import type { PublicPropertyResponse } from "@/features/public-listings/types/public-property";
 import { useTilt } from "@/shared/hooks/use-tilt";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
@@ -51,8 +51,11 @@ export function PropertyCard({ property }: { property: PublicPropertyResponse })
           {property.propertyType?.toLowerCase()}
         </span>
         <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#030712]/75 backdrop-blur-md text-jade-300 border border-jade-400/40 shadow-lg shadow-black/30">
-          <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" />
-          Verified
+          {/* Was "Verified", shown on every card with nothing behind it.
+              A property reaches this grid only while it has a unit with no
+              active lease, which is what the word now says. */}
+          <CalendarCheck className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" />
+          Vacant
         </span>
       </div>
 

@@ -37,8 +37,9 @@ export function Footer() {
             </Link>
             <p className="text-xs text-white/55 leading-relaxed max-w-xs">
               {/* "Verified listings, secure deposits" claimed two things the
-                  system does not do: no per-listing verification exists
-                  (tenants.verified is a dead column), and a deposit is paid
+                  system does not do: no per-listing verification exists (the
+                  column that once implied it, tenants.verified, was dropped in
+                  V87), and a deposit is paid
                   into the landlord's own M-Pesa, never held by us — so we
                   cannot call it secured. What is left is exactly what the
                   code enforces. */}

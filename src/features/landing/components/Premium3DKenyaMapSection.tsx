@@ -8,7 +8,7 @@ import { SectionHeader } from "./SectionHeader";
 import { Kenya3DMapScene, KENYA_CITIES, type CityDef } from "./Kenya3DMap/Kenya3DMapScene";
 import { GrainOverlay } from "./CoverageSection/GrainOverlay";
 import { AmbientMesh } from "./CoverageSection/AmbientMesh";
-import { VerifiedStat } from "./CoverageSection/VerifiedStat";
+import { VacancyStat } from "./CoverageSection/VacancyStat";
 import { useScrollReveal } from "@/shared/hooks/useScrollReveal";
 import { useShouldAnimate } from "@/features/landing/hooks/useShouldAnimate";
 import { AnimatedGradient } from "@/shared/components/premium-3d";
@@ -24,7 +24,7 @@ interface Premium3DKenyaMapSectionProps {
   verifiedCount?: number;
   /** ISO timestamp of the fetch that produced `verifiedCount`. */
   verifiedCountUpdatedAt?: string;
-  /** Listing-count fetch failed — VerifiedStat falls back to static copy. */
+  /** Listing-count fetch failed — VacancyStat falls back to static copy. */
   verifiedCountError?: boolean;
 }
 
@@ -166,7 +166,7 @@ export function Premium3DKenyaMapSection({
           >
             <span className="w-2 h-2 rounded-full bg-jade-400 animate-pulse" aria-hidden="true" />
             {livePulse ? (
-              <VerifiedStat
+              <VacancyStat
                 count={verifiedCount}
                 updatedAt={verifiedCountUpdatedAt}
                 isError={verifiedCountError}

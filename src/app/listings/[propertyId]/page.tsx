@@ -14,7 +14,7 @@ import {
     MapPin,
     RefreshCw,
     Share2,
-    ShieldCheck,
+    CalendarCheck,
 } from "lucide-react";
 import { MotionConfig } from "framer-motion";
 import { toast } from "sonner";
@@ -222,17 +222,23 @@ export default function PropertyDetailPage() {
 
                         {/* Premium trust badges - refined visual design */}
                         <div className="mt-10 flex flex-wrap items-center gap-4 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-                            {/* Secure listing badge */}
+                            {/* Was "Verified Listing / Secure & Trusted", with no data
+                                behind it at all -- rendered unconditionally on every
+                                property. Nothing verifies a listing and nothing secures
+                                the transaction; the deposit goes to the landlord's own
+                                M-PESA. What IS enforced, in the public query, is that a
+                                property only appears here while it is ACTIVE with units
+                                that have no active lease. */}
                             <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-emerald-50 via-emerald-50 to-brand-50 dark:from-emerald-900/25 dark:to-brand-900/25 backdrop-blur-sm px-5 py-3 border-2 border-emerald-200/60 dark:border-emerald-700/60 shadow-[0_2px_12px_rgba(16,185,129,0.12)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
                                 <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-[0_4px_12px_-2px_rgba(16,185,129,0.4)] group-hover/badge:shadow-[0_6px_16px_-2px_rgba(16,185,129,0.5)] transition-shadow">
-                                    <ShieldCheck className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+                                    <CalendarCheck className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-sm font-extrabold text-emerald-900 dark:text-emerald-200 leading-tight">
-                                        Verified Listing
+                                        Available now
                                     </span>
                                     <span className="text-[10px] font-bold text-emerald-700/70 dark:text-emerald-400/70 uppercase tracking-wider leading-tight">
-                                        Secure & Trusted
+                                        No active lease
                                     </span>
                                 </div>
                             </div>

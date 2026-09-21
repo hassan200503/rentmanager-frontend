@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Banknote, Layers } from "lucide-react";
 import { PublicUnitResponse } from "../types/public-unit";
-import { VerifiedBadge } from "./verified-badge";
+import { LandlordStatusBadge } from "./landlord-status-badge";
 
 interface UnitCardProps {
     propertyId: string;
@@ -43,10 +43,10 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-90" />
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-600/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-                    {/* Premium verified badge */}
+                    {/* Landlord account is active -- not an identity check. */}
                     {unit.landlordVerified && (
                         <div className="absolute top-4 left-4 transition-all duration-500 group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                            <VerifiedBadge size="sm" />
+                            <LandlordStatusBadge size="sm" />
                         </div>
                     )}
 
@@ -80,7 +80,7 @@ export function UnitCard({ propertyId, unit }: UnitCardProps) {
                     
                     {unit.landlordVerified && (
                         <div className="absolute top-4 left-4">
-                            <VerifiedBadge size="sm" />
+                            <LandlordStatusBadge size="sm" />
                         </div>
                     )}
                     

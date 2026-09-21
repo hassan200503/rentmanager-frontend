@@ -1166,11 +1166,12 @@ watching the emails. Operator action; see `deploy/FREE_NO_CARD.md` §6.
 Four surfaces told visitors "Every unit is verified before it's listed",
 "verified vacancies" and "Verified listings, secure deposits": the footer, the
 city grid, the 3D map section and the live coverage stat. None of it was true.
-`tenants.verified` is a dead boolean — `V?` set every existing row to `true` and
-no code has written it since — there is no per-listing check anywhere, and a
-deposit is paid into the landlord's own M-PESA account, so calling it "secure"
-implied a custody the platform deliberately does not take (ADR-0026). The hero
-had already been corrected in an earlier pass; these four were missed.
+The column that once implied it, `tenants.verified`, was backfilled to `true`
+for every row by `V42` and then dropped outright by `V87`; there is no
+per-listing check anywhere, and a deposit is paid into the landlord's own
+M-PESA account, so calling it "secure" implied a custody the platform
+deliberately does not take (ADR-0026). The hero had already been corrected in
+an earlier pass; these four were missed.
 
 What replaced it is stronger because it is enforced in SQL: a unit appears
 publicly only while it is an ACTIVE unit with no active lease under an ACTIVE
@@ -1238,7 +1239,7 @@ settle, because every face named explicit weights or styles.
 Result: three preloaded files, 126 KB, verified in the built HTML's preload
 tags. Nothing about the design changed.
 
-### TD-156 · OPEN — Marketing pages download Clerk's entire UI bundle for nothing
+### TD-156 · CLOSED 2026-09-22 — Marketing pages downloaded Clerk's entire UI bundle for nothing
 
 Measured in a browser on the live landing page: after `clerk.browser.js`,
 Clerk fetches `@clerk/ui` and then four more chunks —
@@ -1264,14 +1265,33 @@ get retried blind:
    `/public/sign-in` would arrive with Clerk already loaded and the UI chunk
    permanently skipped — a sign-in page that never renders a form. Not worth
    risking sign-in for 240 KB of post-interactive JS.
-2. **Route groups (the real fix, not yet done)** — move the routes that need
-   auth under an `(app)/` group whose layout carries `AuthProvider`, leaving
-   `/`, `/listings` and `/legal/*` under a group with no `ClerkProvider` at
-   all. Route groups do not change URLs, so the proxy matcher and every link
-   keep working. It is a mechanical but wide change (every authenticated route
-   directory moves), and the failure mode is a public page calling a Clerk hook
-   with no provider above it — so it wants its own pass with the dev server up,
-   not the tail end of a deploy.
+2. **Route groups — done 2026-09-22.** `admin`, `continue`, `daraja`,
+   `dashboard`, `onboarding`, `portal` and `public` moved under `src/app/(app)/`,
+   whose layout carries `AuthProvider`. The root layout now holds only
+   session-agnostic providers. Route groups change no URL, so the proxy matcher,
+   every link and every redirect target were untouched — the build's route table
+   still reads `/admin`, `/dashboard`, `/continue`.
+
+   Two things made it safe rather than hopeful. Every tree that moved was
+   checked for relative imports first: there were none, all of them use the `@/`
+   alias, so nothing needed rewriting. And every route left at the root was
+   traced for Clerk use, directly or through a feature module — the public
+   listings go through `use-public-properties`, and `lib/auth/token` is reached
+   only from authenticated queries.
+
+   Verified on the dev server rather than assumed:
+
+   | Page | Clerk requests | Renders |
+   |---|---|---|
+   | `/` | **0** | nav, hero, full page |
+   | `/legal/privacy` | **0** | correct title and content |
+   | `/listings` | **0** | empty state (no local API) |
+   | `/public/sign-in` | loads | Clerk form, Google button, email field |
+   | `/public/sign-up` | loads | Clerk form **with the consent checkbox** |
+   | `/dashboard` signed out | loads | redirects to sign-in, form renders, no console errors |
+
+   That last pair is the point: the failure mode this refactor risked was a
+   sign-in page with no form, and it does not happen.
 
 ### TD-157 · CLOSED 2026-09-21 — The live API was eight commits behind, silently
 
@@ -1301,4 +1321,39 @@ gh api repos/<owner>/<repo>/deployments --jq '.[0:3] | .[] | "\(.created_at)  \(
 Render writes a GitHub deployment per deploy and the environment name carries
 the branch. **Still worth doing:** set the service's branch to `main` in
 Render's own settings so the fast-forward is not needed again.
+
+### TD-158 · CLOSED 2026-09-22 — Three more "verified" claims, two with no data at all
+
+TD-153 fixed the landing page's verification copy but scoped the sweep to
+`src/features/landing/` and `src/app/page.tsx`. A repo-wide pass found three
+more, and two of them were worse than the originals because they were rendered
+**unconditionally**, with nothing behind them:
+
+- `listings/[propertyId]/page.tsx` — a badge reading "Verified Listing" over
+  "Secure & Trusted", on every property page, gated on nothing. Now "Available
+  now" over "No active lease", which is what the public query enforces.
+- `features/landing/components/PropertyCard.tsx` — a "Verified" pill on every
+  card, gated on nothing. Now "Vacant".
+- `/listings` page — "Browse verified rental properties across Kenya". Now
+  states the vacancy rule instead.
+
+The fourth was the interesting one. `VerifiedBadge` read "Verified Landlord"
+and *is* gated on real data — but `landlordVerified` means
+`tenants.status == ACTIVE`, i.e. the landlord's account is live and not
+suspended. That is worth showing and is not identity verification: nobody
+checks an ID, a title deed or a company registration. Renamed to
+`LandlordStatusBadge`, relabelled "Active landlord", with a title attribute
+saying plainly that RentManager does not verify a landlord's identity. The flag
+behind it had already been half-fixed once — `V87` dropped `tenants.verified`
+after `V42` had backfilled it to true for every row, which had the badge lit
+for everybody — and this is the other half.
+
+Also corrected two of this project's own notes that had gone stale: the footer
+comment and TD-153 both described `tenants.verified` as a live dead column when
+`V87` had dropped it outright.
+
+**The lesson for next time:** when correcting a claim in user-facing copy,
+sweep `src/app`, `src/features` and `src/shared` for the word, not the feature
+folder where it was noticed. `VerifiedStat` was also renamed to `VacancyStat`
+so the component's name stops asserting what its copy no longer does.
 

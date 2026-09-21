@@ -5,7 +5,6 @@ import { Inter, IBM_Plex_Mono, Instrument_Serif, Fraunces } from "next/font/goog
 import dynamic from "next/dynamic";
 
 import QueryProvider from "@/providers/query-provider";
-import AuthProvider from "@/providers/auth-provider";
 import ThemeProvider from "@/providers/theme-provider";
 import { Toaster } from "sonner";
 import { appConfig } from "@/lib/config/app-config";
@@ -122,18 +121,25 @@ export default function RootLayout({
         <html lang="en-KE" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
         <body className="antialiased">
         <SkipLink />
+        {/* No ClerkProvider here on purpose. It lives in (app)/layout.tsx, so
+            the landing page, the listings and the policy pages no longer fetch
+            Clerk's runtime and UI bundles -- about 240 KB from Clerk's domain,
+            measured -- for pages that render no Clerk component. See
+            (app)/layout.tsx for what is inside that boundary and what is not.
+
+            Everything left in this layout is session-agnostic: none of
+            QueryProvider, ThemeProvider, LenisProvider, ToastProvider, Toaster,
+            SkipLink or DevPortalSwitcher reads a Clerk hook. */}
         <QueryProvider>
-            <AuthProvider>
-                <ThemeProvider>
-                    <LenisProvider>
-                        <ToastProvider>
-                            <Toaster position="top-right" richColors />
-                            {children}
-                            <DevPortalSwitcher />
-                        </ToastProvider>
-                    </LenisProvider>
-                </ThemeProvider>
-            </AuthProvider>
+            <ThemeProvider>
+                <LenisProvider>
+                    <ToastProvider>
+                        <Toaster position="top-right" richColors />
+                        {children}
+                        <DevPortalSwitcher />
+                    </ToastProvider>
+                </LenisProvider>
+            </ThemeProvider>
         </QueryProvider>
         </body>
         </html>

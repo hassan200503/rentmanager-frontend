@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
@@ -72,20 +71,15 @@ export default function SignUpPage() {
                     <SignUpForm />
                 </Suspense>
 
-                {/* Someone creating an account is entitled to read what they
-                    are agreeing to before they do, not after. These two pages
-                    are static and open instantly. */}
-                <p className="text-center text-xs text-fg-subtle dark:text-fg-subtle-dark mt-6">
-                    By creating an account you accept our{" "}
-                    <Link className="underline hover:text-fg dark:hover:text-fg-dark" href="/legal/terms">
-                        terms of service
-                    </Link>{" "}
-                    and{" "}
-                    <Link className="underline hover:text-fg dark:hover:text-fg-dark" href="/legal/privacy">
-                        privacy policy
-                    </Link>
-                    .
-                </p>
+                {/* No consent line here any more. Clerk now renders a required
+                    "I agree to the Terms of Service and Privacy Policy"
+                    checkbox inside the form itself, linking these same two
+                    pages (Clerk -> Configure -> Legal). That is the stronger
+                    version: it records the consent against the user rather
+                    than merely stating it, and two statements of the same
+                    thing on one small card read as carelessness. Verified
+                    rendering against the dev instance before this was
+                    removed. */}
             </div>
         </div>
     );

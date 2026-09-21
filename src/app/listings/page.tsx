@@ -198,7 +198,7 @@ function ListingsPageContent() {
                         <p className="mt-6 text-base md:text-lg text-ink-muted dark:text-white/70 max-w-2xl leading-relaxed font-medium animate-fade-in-up"
                             style={{ animationDelay: '200ms' }}
                         >
-                            Browse verified rental properties across Kenya and find your next home — with real vacancies, not stale listings.
+                            Browse rental homes across Kenya. A unit is listed only while it has no active lease, so the vacancies here are real.
                         </p>
                     </div>
 

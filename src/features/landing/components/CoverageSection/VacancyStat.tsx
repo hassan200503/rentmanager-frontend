@@ -18,8 +18,9 @@ interface VacancyStatProps {
  * backend restricts to an ACTIVE unit with no active lease under an ACTIVE
  * property. So it is a count of units actually available right now — which is
  * what this line now says. It previously said "verified listings", and nothing
- * in the system verifies an individual listing: `tenants.verified` is a dead
- * column written by no code. The number was always real; only the word for it
+ * in the system verifies an individual listing: the column that once implied
+ * it, `tenants.verified`, was backfilled to true for every row and then
+ * dropped outright in V87. The number was always real; only the word for it
  * was wrong, and on a public page that is the kind of claim that costs trust
  * the first time a renter tests it.
  *
@@ -27,7 +28,7 @@ interface VacancyStatProps {
  * - loading → skeleton reserving the final line height (zero CLS)
  * - ready   → "1,204 homes available now · updated 12 min ago"
  */
-export function VerifiedStat({ count, updatedAt, isError = false }: VacancyStatProps) {
+export function VacancyStat({ count, updatedAt, isError = false }: VacancyStatProps) {
   if (isError) {
     return (
       <p className="text-sm text-white/60 font-medium">

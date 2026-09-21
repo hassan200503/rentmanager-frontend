@@ -9,7 +9,7 @@ import { ChevronRight, ChevronLeft, X, ImageOff, ShieldCheck, MapPin, Building2,
 import { usePublicUnitQuery } from "@/features/public-listings/queries/use-public-unit-query";
 import { usePublicPropertyQuery } from "@/features/public-listings/queries/use-public-property-query";
 import { ReviewsSection } from "@/features/public-listings/components/reviews-section";
-import { VerifiedBadge } from "@/features/public-listings/components/verified-badge";
+import { LandlordStatusBadge } from "@/features/public-listings/components/landlord-status-badge";
 import { LoadingState } from "@/features/public-listings/components/loading-state";
 import { EmptyState } from "@/features/public-listings/components/empty-state";
 import { toMoneyNumber } from "@/shared/utils/money";
@@ -236,7 +236,7 @@ export default function UnitDetailPage() {
                                         Landlord
                                     </p>
                                     <div className="mt-1.5">
-                                        <VerifiedBadge size="sm" />
+                                        <LandlordStatusBadge size="sm" />
                                     </div>
                                 </div>
                             )}
@@ -260,7 +260,7 @@ export default function UnitDetailPage() {
                         </div>
 
                         <div className="flex flex-wrap gap-y-1.5 items-center gap-x-3 text-xs text-ink-muted">
-                            {unit.landlordVerified && <VerifiedBadge size="sm" />}
+                            {unit.landlordVerified && <LandlordStatusBadge size="sm" />}
                             {unit.depositAmount ? (
                                 <span>
                                     {toMoneyNumber(unit.depositAmount).toLocaleString()} KES deposit
