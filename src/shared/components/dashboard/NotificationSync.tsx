@@ -42,7 +42,9 @@ function sendBrowserNotification(title: string, body: string) {
   try {
     new Notification(title, {
       body,
-      icon: "/favicon.svg",
+      // /icon so a notification carries the owner's uploaded brand mark,
+      // not the built-in one.
+      icon: "/icon",
       tag: `rentmanager-${Date.now()}`,
     });
   } catch {}

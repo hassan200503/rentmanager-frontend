@@ -65,7 +65,10 @@ const jsonLd = {
       "@type": "Organization",
       name: "RentManager",
       url: SITE_URL,
-      logo: `${SITE_URL}/favicon.svg`,
+      // /icon, not the static favicon.svg: this is the logo search engines
+      // show for the organisation, and it should follow the icon the owner
+      // uploaded like every other surface does.
+      logo: `${SITE_URL}/icon`,
       description:
         "Homes from approved landlords, M-Pesa rent payments with receipts, and digital leases for the Kenyan rental market.",
     },
