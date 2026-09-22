@@ -1519,3 +1519,63 @@ found today (the first was a 1-in-64 tamper test in the credential-encryption
 path, TD-noted in its commit). Intermittent red builds train people to re-run CI
 instead of reading it, and that is precisely how a real regression ships.
 
+### TD-162 · 2026-09-23 — Walking reserve → pay → lease before a real renter did
+
+The flow has never completed once in production (0 renters, 0 active leases), so
+it was traced in code instead. The saga itself is well built — six steps,
+per-step compensation tracking, Step 0 committed independently so compensation
+always sees `FULFILLING`, `MANUAL CLEANUP REQUIRED` logged for anything it
+cannot undo. Three real gaps sat around it.
+
+**Fixed — the renter was told a lie about money.** On `FULFILLMENT_FAILED` the
+confirmation page said *"Deposit refunded — your deposit has been refunded to
+your M-Pesa account."* The platform is non-custodial: the deposit goes by STK
+push into the landlord's own M-Pesa and nothing in the reservation module
+initiates a refund. The compensation service's own log says *"PAYMENT WAS
+RECEIVED, manual follow-up required (refund or retry)"*. The reassuring wording
+was the harmful part — it tells someone their money is coming back, so they
+wait instead of chasing it.
+
+**Fixed — nobody was told it happened.** `FULFILLMENT_FAILED` was written and
+read by nothing: no sweep, no query, no admin screen. The orchestrator's
+exception is swallowed by Spring's transaction synchronisation by design. The
+admin overview now counts it and the console leads its attention panel with it.
+
+**Fixed — a public endpoint leaked the landlord's org id.** Refusing a
+reservation because the landlord has no M-Pesa credentials is correct and
+happens before any state change, but the message embedded `tenantId=<uuid>` and
+`GlobalExceptionHandler` returns `ex.getMessage()` verbatim on an
+unauthenticated route.
+
+**Checked and sound, worth not re-deriving:** SMS cannot break fulfilment
+(`AfricasTalkingSmsService.send()` catches `Exception` and returns `false`;
+unconfigured falls back to `LoggingSmsService`, which only logs). The
+"no M-Pesa credentials" precondition is enforced before any state change. The
+lease `TODO`s are policy questions, not defects — `RentOverdueScheduler`
+null-guards `gracePeriodDays` and `lateFeeAmount` is never used in a
+calculation.
+
+### TD-163 · OPEN (decided, not deferred by accident) — Clerk is unguarded in saga steps 1–2
+
+`clerkService.createTenantUser` and `createSignInToken` have no retry and no
+catch. A Clerk outage, a rate limit, or — the foreseeable one — the development
+instance's hard **100-user cap** makes fulfilment fail *after* the renter has
+paid.
+
+**Retrying inside the saga was considered and rejected.** The listener is
+`@Transactional(REQUIRES_NEW)`, so a retry with backoff holds a database
+connection open for the whole wait. `DB_POOL_MAX` is 5 on the free Neon plan.
+Three concurrent fulfilments retrying with a couple of seconds of backoff would
+hold three of five connections and start starving every other request — trading
+a rare failure for a site-wide one.
+
+The right shape is the one this codebase already uses elsewhere and CLAUDE.md
+endorses: an out-of-band sweep that picks up `FULFILLMENT_FAILED` reservations
+and re-drives fulfilment, bounded and idempotent. It was not written blind —
+Docker is down on this machine, so the integration tests that cover the money
+path cannot run locally, and this is the one path where "CI will tell me" is not
+a good enough loop. Do it with Docker up.
+
+Until then the failure is at least visible (TD-162) and the renter is told the
+truth.
+
