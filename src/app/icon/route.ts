@@ -12,12 +12,19 @@ export const runtime = "nodejs";
  * measured from Nairobi, because each request made two upstream calls to a
  * 0.1-CPU instance before a single byte of the tab icon was sent.
  */
-const ICON_TTL_SECONDS = 300;
+const ICON_TTL_SECONDS = 60;
 
 // Next parses this segment config statically, so it has to be a literal —
 // a reference to the constant above is rejected at build time as an
 // "invalid segment configuration export". Keep the two in step.
-export const revalidate = 300;
+//
+// Sixty seconds rather than five minutes: this is the window an owner waits
+// after uploading a new brand icon before the tab shows it, and five minutes
+// of staring at the old icon reads as a failed upload. The cost of the
+// shorter window is near zero — the response is a couple of kilobytes, it is
+// still prerendered rather than computed per request, and stale-while-
+// revalidate means nobody ever waits for the regeneration.
+export const revalidate = 60;
 
 /**
  * Dynamic favicon: serves the owner-configured platform logo (public branding

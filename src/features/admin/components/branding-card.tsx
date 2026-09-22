@@ -91,7 +91,13 @@ export function BrandingCard({ disabled }: { disabled: boolean }) {
         if (!selected) return;
         upload.mutate(selected, {
             onSuccess: () => {
-                toast.success("Platform logo updated — applied everywhere instantly.");
+                // Not "instantly". The app's own chrome updates now, because
+                // this mutation invalidates the branding query it reads. Tab
+                // icons and installed-app icons are served through a cached
+                // route and follow within about a minute. Promising instant
+                // and delivering a minute makes the owner think it failed and
+                // upload again.
+                toast.success("Platform logo updated. Tabs and installed apps follow within a minute.");
                 setSelected(null);
                 setPreviewUrl(null);
             },
