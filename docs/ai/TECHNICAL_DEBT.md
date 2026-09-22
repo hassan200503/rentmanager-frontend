@@ -1396,9 +1396,37 @@ so Safari and Firefox behave exactly as before. Guessing wrong costs a desktop
 Safari visitor on fibre nothing, because the video is deferred until after load
 regardless.
 
-**Still open, and needs a tool this environment does not have:** the three MP4s
-should be re-encoded. `ffmpeg` is not installed here. A 1080p 8–10 second loop
-at a sensible bitrate is 1–2 MB, roughly a tenth of `hero.mp4`, and a WebM/AV1
-alternate source would cut it again. Until then the gate is what protects
-visitors, not the file size.
+**Re-encoded 2026-09-22: 93.2 MB → 3.5 MB**, using `ffmpeg-static` from npm as
+a throwaway dev dependency (`--no-save`, removed afterwards, `package.json`
+untouched).
+
+| File | Before | After | What changed |
+|---|---|---|---|
+| `hero.mp4` | 18.90 MB | **2.68 MB** | 27.8 s → 12 s, 1080p kept, 24 fps, CRF 30, **audio track stripped** |
+| `apartment.mp4` | 35.74 MB | **0.39 MB** | 30.6 s → 8 s, 1080p → 960×540, 60 fps → 24 fps |
+| `sunset.mp4` | 38.52 MB | **0.40 MB** | 57.9 s → 8 s, 1080p → 960×540 |
+
+Three things the inspection turned up that made this easy to win:
+
+1. **`hero.mp4` carried a 253 kb/s AAC audio track** — roughly 870 KB — on a
+   `<video muted>`. Nobody could ever hear it.
+2. **`apartment.mp4` was 59.94 fps.** For an ambient loop behind a card,
+   half the frames were half the file for no perceptible gain.
+3. **The city clips render in cards about 240 px tall** and shipped at
+   1920×1080, an eight-fold linear oversupply.
+
+A frame from the re-encoded hero was compared against the original before the
+files were replaced: sharp, no visible artefacts, and it sits behind a heavy
+dark gradient in any case. The originals remain in git history if the loss ever
+looks wrong.
+
+The connection gate above still stands and still matters — it is what protects
+a metered visitor — but it is no longer carrying the whole burden alone.
+
+**Unrelated observation worth the owner's attention:** the hero footage is an
+aerial of a North American city (US-style crosswalks, a "larson" hoarding),
+running under the words "Kenya's trusted rental platform". Nothing breaks, but
+it is the same category of claim as the "verified" copy: a visitor who notices
+trusts the rest of the page less. Replacing it needs a sourcing decision, so it
+is flagged rather than changed.
 
