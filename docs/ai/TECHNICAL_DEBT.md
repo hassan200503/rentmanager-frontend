@@ -1480,3 +1480,42 @@ in `TenantCommandServiceImpl` for a finding nobody can reach. Recorded rather
 than risked. Do it as part of the next deliberate pass over that class, not as
 a drive-by.
 
+### TD-161 · PARTLY CLOSED 2026-09-22 — CI went red depending on test execution order
+
+A CI run failed with five failures while the very next commit passed with
+substantially the same code. That difference was the diagnosis: the failures
+depended on which test class ran first.
+
+The suite shares **one reusable Postgres container**. `UnitConcurrencyTest` and
+`UnitIntegrationTest` cannot be `@Transactional` — their worker threads each
+need an independently committing transaction, which is the whole point of them
+— so the fixtures they seed, pinned to `11111111-…` and `22222222-…`, are
+committed and outlive the test. Two other classes then failed or not depending
+on ordering:
+
+- **`LeaseApiTest`** pins its landlords to those same UUIDs and inserted them
+  unconditionally → `duplicate key value violates unique constraint
+  "tenants_pkey"`, three errors.
+- **`PropertyJpaRepositoryIntegrationTest`** asserted *absolute global counts*
+  ("exactly one ACTIVE property exists") against queries that span every tenant
+  → `expected: <1> but was: <2>`.
+
+**Fixed:** `seedTenant` returns early when the row exists (it only needs the FK
+target to be there), and the property assertions now check what the filter
+promises — this test's ACTIVE row is returned, its four non-ACTIVE rows are not,
+and nothing non-ACTIVE ever comes back — with a page size large enough that its
+own rows are on the page. Both tests assert *more* than before; what they lost
+is a dependence on the database being empty, which was never true.
+
+**Still open:** the two non-transactional tests still leak their fixtures. The
+right fix is an `@AfterEach` that deletes what they committed (units → property
+→ tenant, in FK order). It was not done in this pass because Docker is down on
+this machine, so a cleanup that gets the delete order wrong would turn an
+intermittent failure into a permanent one, and CI is a slow way to iterate on
+that. Worth doing with Docker up.
+
+**Why this mattered more than five red tests:** this is the second flaky failure
+found today (the first was a 1-in-64 tamper test in the credential-encryption
+path, TD-noted in its commit). Intermittent red builds train people to re-run CI
+instead of reading it, and that is precisely how a real regression ships.
+
