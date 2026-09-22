@@ -22,8 +22,7 @@ import {
     UserPlus,
     ArrowUpRight,
     Plug,
-    RotateCw,
-} from "lucide-react";import {
+    RotateCw, RefreshCw,} from "lucide-react";import {
     BarChart,
     Bar,
     XAxis,
@@ -448,12 +447,12 @@ function OverviewContent() {
 }
 
 function AdminConsolePage() {
-    const { isPlatformAdmin, isLoading, isDenied, isLoadError, refetch } = usePlatformRole();
+    const { isPlatformAdmin, isResolving, isDenied, isLoadError, refetch } = usePlatformRole();
 
     return (
         <AdminErrorBoundary>
             <div className="min-h-screen bg-surface dark:bg-surface-dark">
-                {isLoading ? (
+                {isResolving ? (
                     <div className="flex items-center justify-center gap-2 py-24 text-sm text-fg-muted dark:text-fg-muted-dark">
                         <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                         Checking credentials…
@@ -502,6 +501,18 @@ function AdminConsolePage() {
                                 Go to landlord dashboard
                             </Link>
                         </div>
+                        {/* A denial must never be a dead end. This screen is shown on a
+                            confirmed 403, but a stale or half-issued token can produce one,
+                            and the person seeing it has no way to tell the difference. One
+                            click to re-ask is cheap; being wrongly locked out of your own
+                            platform with no way forward is not. */}
+                        <button
+                            onClick={() => void refetch()}
+                            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-sm font-medium text-fg transition-colors hover:bg-surface-2 dark:border-border-dark dark:text-fg-dark dark:hover:bg-surface-dark"
+                        >
+                            <RefreshCw className="h-4 w-4" strokeWidth={2} />
+                            Try again
+                        </button>
                         <div className="mt-8 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                             <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
                                 Platform administrator?
