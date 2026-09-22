@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
+import { useAfterPageLoad, useHeavyMediaAllowed } from "@/features/landing/hooks/use-heavy-media-allowed";
 
 interface VideoBackgroundProps {
   videoSrc?: string;
@@ -15,8 +16,10 @@ interface VideoBackgroundProps {
   /** Static poster frame: shown as the video's poster and (for
       prefers-reduced-motion users) as a fixed backdrop in place of video. */
   poster?: string;
-  /** How eagerly the browser fetches the video. Defaults to "metadata";
-      pass "auto" when the hero is the LCP element. */
+  /** How eagerly the browser fetches the video once it is mounted at all.
+      Defaults to "metadata". "auto" is no longer worth passing: the video is
+      already withheld until after page load, so an eager hint only lets it
+      compete with nothing. */
   preload?: "none" | "metadata" | "auto";
 }
 
@@ -41,6 +44,21 @@ export default function VideoBackground({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
+  /* Three separate reasons not to spend a visitor's data on decoration:
+     they asked for less of it, their connection cannot carry it, or the
+     page has not finished loading the parts that actually do something.
+     See use-heavy-media-allowed.ts for the measurements behind this. */
+  const heavyMediaAllowed = useHeavyMediaAllowed();
+  const afterPageLoad = useAfterPageLoad();
+
+  /* Declared before the effects below, which list showVideo as a dependency:
+     a `const` referenced above its declaration is a temporal-dead-zone
+     throw, not a warning. */
+  const showVideo = Boolean(videoSrc) && !reducedMotion && heavyMediaAllowed && afterPageLoad;
+  /* The poster now stands in whenever the video does not play, not only for
+     reduced-motion visitors. Previously a data-saver or slow-connection
+     visitor would have seen the animated gradient alone. */
+  const hideGradient = (showVideo && loaded) || Boolean(poster && !showVideo);
 
   /* Pause the video when it scrolls out of view — keeps the network and
      the GPU idle off-screen. Reduced-motion users get the gradient only. */
@@ -65,7 +83,7 @@ export default function VideoBackground({
       observer.disconnect();
       vid.pause();
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, showVideo]);
 
   useEffect(() => {
     const vid = videoRef.current;
@@ -74,10 +92,10 @@ export default function VideoBackground({
     const onCanPlay = () => setLoaded(true);
     vid.addEventListener("canplay", onCanPlay);
     return () => vid.removeEventListener("canplay", onCanPlay);
-  }, []);
-
-  const showVideo = videoSrc && !reducedMotion;
-  const hideGradient = (showVideo && loaded) || (reducedMotion && Boolean(poster));
+    // showVideo is a dependency because the <video> element does not exist on
+    // first render any more: without it, the ref is null when this runs and
+    // the fade-in never fires, leaving the video permanently transparent.
+  }, [showVideo]);
 
   return (
     <div className={`relative overflow-hidden ${className}`} aria-hidden="true">
@@ -98,7 +116,7 @@ export default function VideoBackground({
         </video>
       )}
 
-      {reducedMotion && poster && (
+      {!showVideo && poster && (
         <Image
           src={poster}
           alt=""

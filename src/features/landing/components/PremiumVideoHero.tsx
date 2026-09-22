@@ -92,13 +92,17 @@ export function PremiumVideoHero({
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
+      {/* preload was "auto". The video is now withheld until after page load
+          (see VideoBackground and use-heavy-media-allowed), so an eager hint
+          would only have it race the JavaScript that makes the page work --
+          which is exactly what it used to win. */}
       <VideoBackground
         videoSrc={videoSrc}
         poster={posterSrc}
         overlay="dark"
         zoom
         environmental
-        preload="auto"
+        preload="metadata"
         className="absolute inset-0"
       >
         <SkylineBackground />

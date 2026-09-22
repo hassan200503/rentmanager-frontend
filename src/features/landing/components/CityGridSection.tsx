@@ -6,6 +6,7 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import { CITIES } from "@/features/landing/data/content";
 import { SectionHeader } from "./SectionHeader";
 import { usePrefersReducedMotion } from "@/features/landing/hooks/use-prefers-reduced-motion";
+import { useHeavyMediaAllowed } from "@/features/landing/hooks/use-heavy-media-allowed";
 
 const CITY_VIDEO: Record<string, string> = {
   Nairobi: "/videos/hero.mp4",
@@ -78,6 +79,12 @@ function CityCard({
 }) {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
+  /* These clips are 19-39 MB each. They already load only on hover
+     (preload="none"), but a visitor who runs the cursor across all five cards
+     would have pulled about 93 MB of decoration. On a metered or slow
+     connection the card keeps its gradient instead. */
+  const heavyMediaAllowed = useHeavyMediaAllowed();
+  const playVideo = videoPlaying && !reducedMotion && heavyMediaAllowed;
 
   return (
     <Link
@@ -103,7 +110,7 @@ function CityCard({
       }}
       aria-label={`${city.name} — ${city.desc}`}
     >
-      {videoPlaying && !reducedMotion && (
+      {playVideo && (
         <video
           autoPlay
           loop
@@ -117,7 +124,7 @@ function CityCard({
         </video>
       )}
 
-      <div className={`absolute inset-0 bg-gradient-to-t ${city.gradient} transition-opacity duration-500 ${videoPlaying && !reducedMotion ? "opacity-60" : "opacity-100"}`} aria-hidden="true" />
+      <div className={`absolute inset-0 bg-gradient-to-t ${city.gradient} transition-opacity duration-500 ${playVideo ? "opacity-60" : "opacity-100"}`} aria-hidden="true" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40 pointer-events-none" aria-hidden="true" />
 
       <div className="relative h-full min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-5 md:p-7 z-10">

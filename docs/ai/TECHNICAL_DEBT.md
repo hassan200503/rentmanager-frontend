@@ -1357,3 +1357,48 @@ sweep `src/app`, `src/features` and `src/shared` for the word, not the feature
 folder where it was noticed. `VerifiedStat` was also renamed to `VacancyStat`
 so the component's name stops asserting what its copy no longer does.
 
+### TD-159 · CLOSED 2026-09-22 — An 18.9 MB background video was starving the page
+
+Measured in a browser against the live landing page, after the Clerk bundle was
+removed: `load` still took **31.5 s**. The cause was `hero.mp4` — **18.9 MB**,
+`preload="auto"`, autoplaying behind the headline. It took 36 s to arrive and,
+because it saturated the connection, dragged the page's own JavaScript chunks
+out to 24–30 s each although they are small. The slow JS was a symptom; the
+video was the disease.
+
+In Kenya most visitors arrive on mobile data they pay for by the megabyte.
+Spending 18.9 MB of someone's bundle on decoration — and making the page slower
+while doing it — loses a user before they have read a sentence. `public/videos`
+holds 93 MB in total (`hero.mp4` 18.9, `apartment.mp4` 35.7, `sunset.mp4` 38.5).
+
+`useHeavyMediaAllowed()` and `useAfterPageLoad()` now gate it on three separate
+grounds: the visitor asked for less data (`saveData`), the browser reports a
+connection that cannot carry it (`effectiveType` of 3g or below), or the page
+has not finished loading the parts that actually do something. The poster frame
+stands in whenever the video does not play — previously it appeared only for
+`prefers-reduced-motion` visitors, so a data-saver visitor got a bare animated
+gradient. The city-grid clips got the same gate: they already loaded on hover
+with `preload="none"`, but running a cursor across all five cards would have
+pulled about 93 MB.
+
+Verified on the dev server, both directions:
+
+| Reported connection | `<video>` in DOM | hero.mp4 fetched | `load` |
+|---|---|---|---|
+| 3g (what this machine reported) | **no** | **never** | **1.06 s** |
+| 4g (forced, `change` event fired) | yes, correct `src` | on demand | — |
+
+So on a 3g-class connection the page is interactive in about a second and the
+visitor keeps 18.9 MB of their data.
+
+The API defaults to permissive: the Network Information API is Chromium-only,
+so Safari and Firefox behave exactly as before. Guessing wrong costs a desktop
+Safari visitor on fibre nothing, because the video is deferred until after load
+regardless.
+
+**Still open, and needs a tool this environment does not have:** the three MP4s
+should be re-encoded. `ffmpeg` is not installed here. A 1080p 8–10 second loop
+at a sensible bitrate is 1–2 MB, roughly a tenth of `hero.mp4`, and a WebM/AV1
+alternate source would cut it again. Until then the gate is what protects
+visitors, not the file size.
+
