@@ -38,11 +38,30 @@ function depositLabel(status: ReservationStatus): { title: string; description: 
                 description: "Your tenancy is now active and your deposit is recorded against your lease. Welcome to your new home!",
                 icon: "released",
             };
-        case "CANCELLED":
+        // These two used to read "Deposit refunded — your deposit has been
+        // refunded to your M-Pesa account". That was false, and falsely
+        // reassuring, which is worse: it told someone their money was on its
+        // way back and discouraged them from chasing it.
+        //
+        // RentManager is non-custodial. The deposit is paid by STK push
+        // straight into the landlord's own M-Pesa account and the platform
+        // never holds it, so the platform cannot return it. Nothing in the
+        // reservation module initiates a refund -- the compensation service's
+        // own log says "PAYMENT WAS RECEIVED, manual follow-up required
+        // (refund or retry)". A refund exists only as something the LANDLORD
+        // initiates from the deposit screen.
         case "FULFILLMENT_FAILED":
             return {
-                title: "Deposit refunded",
-                description: "Your deposit has been refunded to your M-Pesa account. If you haven't received it, contact support.",
+                title: "We could not complete your tenancy",
+                description:
+                    "Your M-Pesa payment went through, but setting up your lease did not. Your deposit was paid directly to the landlord — RentManager never holds it — so it has not been sent back automatically. Contact the landlord to either complete your move-in or arrange a refund, and keep your M-Pesa confirmation SMS as proof of payment.",
+                icon: "refunded",
+            };
+        case "CANCELLED":
+            return {
+                title: "Reservation cancelled",
+                description:
+                    "This reservation was cancelled. If you had already paid a deposit, it went directly to the landlord's M-Pesa account rather than to RentManager, so any refund has to come from them. Keep your M-Pesa confirmation SMS as proof of payment.",
                 icon: "refunded",
             };
         default:

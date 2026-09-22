@@ -59,6 +59,13 @@ export interface AdminOverviewDisbursementStats {
   success: number;
   failed: number;
   requiresManualAttention: number;
+  /**
+   * Reservations where the renter paid but the tenancy could not be created.
+   * Not a disbursement, but it shares the panel because it means the same
+   * thing: money moved and a human has to finish the job. The deposit went
+   * straight to the landlord's M-Pesa, so nothing refunds it automatically.
+   */
+  reservationsWithFailedFulfilment: number;
 }
 
 export interface AdminOverviewEnvironment {

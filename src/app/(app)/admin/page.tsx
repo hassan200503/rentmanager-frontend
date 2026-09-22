@@ -247,6 +247,13 @@ function OverviewContent() {
     ].filter((d) => d.value > 0);
 
     const attention = [
+        // First, deliberately. A renter paid a deposit and ended up with no
+        // tenancy; the money is already in the landlord's M-Pesa and nothing
+        // refunds it automatically. Until this row existed the condition was
+        // recorded in the database and read by nobody.
+        ...((disbursements.reservationsWithFailedFulfilment ?? 0) > 0
+            ? [{ key: "failed-fulfilment", icon: AlertTriangle, label: "paid reservations with no tenancy", count: disbursements.reservationsWithFailedFulfilment, detail: "Renter paid, lease setup failed — contact them and the landlord", href: "/admin/payments", tone: "rose" as const }]
+            : []),
         ...(payments.paymentRequestsFailed > 0
             ? [{ key: "failed-payments", icon: XCircle, label: "failed payments", count: payments.paymentRequestsFailed, detail: "M-Pesa payments that never settled", href: "/admin/payments", tone: "rose" as const }]
             : []),
