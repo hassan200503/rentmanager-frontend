@@ -1430,3 +1430,53 @@ it is the same category of claim as the "verified" copy: a visitor who notices
 trusts the rest of the page less. Replacing it needs a sourcing decision, so it
 is flagged rather than changed.
 
+### TD-160 · AUDIT 2026-09-22 — Every controller handler checked for authorization; no gaps
+
+Mechanical sweep of all `*Controller.java` for `@PreAuthorize`, then manual
+triage of everything it flagged. Recorded so the next person does not redo it,
+and so a genuine regression is not lost in a list of known-benign hits.
+
+Twenty controllers have handlers with no method-level `@PreAuthorize`. Every one
+is correct, for four distinct reasons:
+
+- **Public by design** — `/api/v1/public/**` (listings, units, branding, brand
+  icon, testimonials, subscription plans, reservations) plus the M-PESA and
+  Clerk callbacks, which authenticate by HMAC signature rather than by token.
+  `ReservationController` is the one to notice: its class name carries no
+  "Public" marker but it is mapped at `/api/v1/public/reservations`, and it is
+  the flow where a stranger reserves a vacant unit. Rate-limited per phone and
+  per IP.
+- **`@Profile("dev")`** — `DevReservationTestController` and
+  `DevTenantPortalSetupController` are not mapped at all under the default
+  `prod` profile.
+- **Self-scoped to the caller** — `PlatformReviewController` reads and writes
+  only `user.getUserId()` from the authenticated principal. "Any signed-in user
+  may rate the platform" is the intent, and there is no tenant dimension to
+  scope.
+- **Platform price catalogue** — `SubscriptionPlanController`'s three read
+  methods return the same plans already served publicly at
+  `/api/v1/public/subscription-plans`. No tenant data.
+
+`TenantController` deserves its own note because it looks wrong and is not.
+`createTenant` carries no role guard *deliberately*: tenants are not
+auto-provisioned, so the caller is a signed-in user with `tenantId == null` and
+`ROLE_PENDING_ONBOARDING`, and any authority requirement would break onboarding
+outright. `getTenant("/{tenantId}")` takes a tenant id in the path, which
+CLAUDE.md rightly forbids as an *authority* — but it is not used as one. The
+handler resolves the caller's own tenant and passes both ids down, and
+`validateTenantAccess` compares `tenant.getId()` against the actor's and throws
+`SecurityException`, which `GlobalExceptionHandler` maps to **403 with a generic
+"Access denied"**. Verified by reading all three layers.
+
+**One real finding, deliberately not fixed.** In `getTenant` and its siblings,
+`findTenant(targetTenantId)` runs *before* `validateTenantAccess`, so a
+non-existent tenant answers differently (400, "Tenant not found") from an
+existing tenant belonging to somebody else (403). That is a tenant-existence
+oracle. It is reachable only by an authenticated caller who can also guess a
+tenant UUID — 122 bits of entropy — so it is unexploitable in practice. The fix
+is to compare the two ids before touching the database, which would also save a
+query on the denial path, but it means editing about ten money-adjacent methods
+in `TenantCommandServiceImpl` for a finding nobody can reach. Recorded rather
+than risked. Do it as part of the next deliberate pass over that class, not as
+a drive-by.
+
