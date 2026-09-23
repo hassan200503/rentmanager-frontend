@@ -518,11 +518,16 @@ export default function ReservationPage() {
                                 <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2.5} />
                             </div>
                             <div className="flex-1 min-w-0">
+                                {/* Was "protected with bank-level encryption", which is
+                                    unverifiable marketing. What IS true and actually
+                                    reassuring is more specific: the PIN is typed into
+                                    Safaricom's own prompt on the handset, so this site
+                                    never sees it. */}
                                 <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300 mb-1">
-                                    Secure Payment Processing
+                                    You pay on your own phone
                                 </p>
                                 <p className="text-xs font-medium text-emerald-700/80 dark:text-emerald-400/80 leading-relaxed">
-                                    Payments are processed securely via M-Pesa STK Push. Your financial information is protected with bank-level encryption.
+                                    M-Pesa sends the prompt to your handset and you enter your PIN there, in Safaricom&apos;s own screen. RentManager never sees your PIN.
                                 </p>
                             </div>
                         </div>
@@ -564,8 +569,16 @@ export default function ReservationPage() {
                                 </p>
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50/50 dark:bg-brand-900/20 border border-brand-200/40 dark:border-brand-800/40">
                                     <ShieldCheck className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" strokeWidth={2.5} />
+                                    {/* This promised an automatic refund. There is no such
+                                        thing: the deposit is paid straight into the
+                                        landlord's own M-Pesa account, RentManager never
+                                        holds it, and no code path in the reservation module
+                                        refunds anything -- a refund is something the
+                                        landlord initiates. Promising it here, on the button
+                                        that takes the money, was the worst placement of the
+                                        claim in the whole product. */}
                                     <p className="text-[11px] font-bold text-brand-700 dark:text-brand-400">
-                                        Your deposit is protected and will be refunded if the unit is not available
+                                        Your deposit goes directly to the landlord and is recorded against this unit
                                     </p>
                                 </div>
                             </div>
