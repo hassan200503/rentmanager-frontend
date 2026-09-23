@@ -1507,12 +1507,28 @@ and nothing non-ACTIVE ever comes back — with a page size large enough that it
 own rows are on the page. Both tests assert *more* than before; what they lost
 is a dependence on the database being empty, which was never true.
 
-**Still open:** the two non-transactional tests still leak their fixtures. The
-right fix is an `@AfterEach` that deletes what they committed (units → property
-→ tenant, in FK order). It was not done in this pass because Docker is down on
-this machine, so a cleanup that gets the delete order wrong would turn an
-intermittent failure into a permanent one, and CI is a slow way to iterate on
-that. Worth doing with Docker up.
+**Closed 2026-09-23.** Both tests now clean up in `@AfterEach`, and the cause
+is gone rather than the symptoms patched.
+
+The reason it was safe to do without Docker in the end: the delete order was
+**derived from the foreign keys instead of guessed**, which was the actual
+objection. `units` is referenced by leases, rent ledger entries, deposits and
+unmatched payments, so units go before the property that owns them — and
+neither test creates any of those children, so scoping the delete to the
+fixture property touches nothing another test owns.
+
+Two deliberate choices worth keeping:
+
+- **The tenant row is left in place.** Removing it would mean chasing every
+  table referencing `tenants` for no gain: `LeaseApiTest` already tolerates a
+  pre-existing tenant, and a tenant with no properties changes no other test's
+  result.
+- **Cleanup is in `@AfterEach`, not at the end of the test body**, so it still
+  runs when an assertion fails partway through — exactly the case that would
+  otherwise leave the mess behind.
+
+Verified across two independent CI runs (a push and a `workflow_dispatch`), both
+green on the full suite.
 
 **Why this mattered more than five red tests:** this is the second flaky failure
 found today (the first was a 1-in-64 tamper test in the credential-encryption
