@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, AlertTriangle } from "lucide-react";
+import { usePlatformBrandingQuery } from "@/features/admin/hooks/use-platform-branding";
 import { apiClient } from "@/lib/api/client";
 import { publicEndpoints } from "@/features/public-listings/api/public-endpoints";
 import { getProcessErrorMessage } from "@/shared/utils/error-handler";
@@ -84,6 +85,11 @@ const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email
 export default function ReservationPage() {
     const { unitId } = useParams<{ unitId: string }>();
     const router = useRouter();
+
+    // Reads the same public branding endpoint the rest of the app uses, so this
+    // costs no extra request on a page that is already fetching the unit.
+    const { data: branding } = usePlatformBrandingQuery();
+    const isSandbox = branding?.environment === "SANDBOX";
 
     const [unit, setUnit] = useState<UnitDetails | null>(null);
     const [unitLoading, setUnitLoading] = useState(true);
@@ -393,10 +399,40 @@ export default function ReservationPage() {
                     <h1 className="font-display text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-ink via-ink to-ink/70 dark:from-white dark:via-white dark:to-white/80 leading-[1.1] tracking-[-0.02em] mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
                         Reserve Your Unit
                     </h1>
+                    {/* "Your reservation is protected" claimed a guarantee that does
+                        not exist. The deposit is paid straight into the landlord's own
+                        M-Pesa account -- RentManager never holds it and cannot return
+                        it -- so the honest version says where the money goes. */}
                     <p className="text-base text-ink-muted dark:text-white/70 max-w-xl mx-auto leading-relaxed font-medium">
-                        Fill in your details and pay the deposit via M-Pesa to secure the unit. Your reservation is protected.
+                        Fill in your details and pay the deposit via M-Pesa to secure the unit. The
+                        deposit goes directly to the landlord, and your payment is recorded against
+                        this unit.
                     </p>
                 </div>
+
+                {/* A renter must never be asked to pay into a test environment believing
+                    it is real. The platform reports its own Daraja environment on the
+                    public branding endpoint; while it is SANDBOX no money can actually
+                    move, and saying so here is the difference between a confused renter
+                    and a defrauded-feeling one. */}
+                {isSandbox && (
+                    <div
+                        role="alert"
+                        className="mb-10 flex items-start gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/30"
+                    >
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
+                        <div>
+                            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                                Test environment — do not pay
+                            </p>
+                            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
+                                This site is connected to Safaricom&apos;s sandbox, so no real M-Pesa
+                                payment can be taken and no tenancy will be created. Please do not
+                                enter your details or attempt a payment yet.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {renderUnitHeader()}
 
