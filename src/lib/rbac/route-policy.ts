@@ -186,7 +186,26 @@ export function resolveRoutePolicy(ctx: RoutePolicyContext): RouteDecision {
 
     // ── Platform admin console (super admin) ──────────────────────────
     if (startsWithTree(pathname, ADMIN_TREE)) {
-        if (persona === "admin") {
+        // platformRole is checked in its OWN right here, not merely as the
+        // fallback effectivePersona() treats it as.
+        //
+        // effectivePersona returns userType whenever userType is set, so a
+        // platform owner whose userType says "landlord" resolves to landlord
+        // and loses this console entirely. That is not hypothetical: the Clerk
+        // webhook seeds userType for anyone who joins an organisation, and it
+        // seeds only when the field is ABSENT -- which is precisely the state a
+        // platform admin is in when they have always been identified by
+        // platformRole. So the act of creating a landlord organisation gave the
+        // platform owner a userType, and that userType then permanently shadowed
+        // their platformRole. They locked themselves out of their own platform
+        // by using it.
+        //
+        // The dual role is legitimate and this file already says so further
+        // down ("If they ALSO run a landlord org"). It just could not be
+        // expressed, because effectivePersona has to collapse to one value.
+        // platformRole comes from the verified JWT, so honouring it here grants
+        // nothing that was not already true.
+        if (persona === "admin" || isPlatformRoleAdmin(platformRole)) {
             return { action: "next" };
         }
         // Not an admin — push back to their own space, never render a

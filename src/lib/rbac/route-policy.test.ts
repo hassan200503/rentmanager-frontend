@@ -147,6 +147,43 @@ describe("/admin/* tree", () => {
         expect(resolveRoutePolicy(at(dualOwner, "/admin"))).toEqual({ action: "next" });
     });
 
+    it("allows a platform owner whose userType was seeded as landlord", () => {
+        // The real-world case the fixtures above all missed: every one of them
+        // has userType and platformRole agreeing. This is what a platform owner
+        // actually looks like after they create a landlord organisation --
+        // the Clerk webhook seeds userType (it seeds only when the field is
+        // absent, which is exactly a platformRole-identified admin's state) and
+        // userType then shadows platformRole in effectivePersona.
+        //
+        // Without this, using your own product costs you the admin console.
+        const ownerSeededAsLandlord: RoutePolicyContext = {
+            pathname: "/admin",
+            userId: "u-owner-seeded",
+            tenantId: "org-landlord",
+            platformRole: "OWNER",
+            userType: "landlord",
+        };
+        expect(resolveRoutePolicy(at(ownerSeededAsLandlord, "/admin"))).toEqual({ action: "next" });
+        expect(resolveRoutePolicy(at(ownerSeededAsLandlord, "/admin/properties"))).toEqual({ action: "next" });
+
+        // And the landlord half of the dual role still works.
+        expect(resolveRoutePolicy(at(ownerSeededAsLandlord, "/dashboard"))).toEqual({ action: "next" });
+    });
+
+    it("still refuses the console to a landlord with no platform role", () => {
+        const plainLandlord: RoutePolicyContext = {
+            pathname: "/admin",
+            userId: "u-landlord",
+            tenantId: "org-landlord",
+            platformRole: undefined,
+            userType: "landlord",
+        };
+        expect(resolveRoutePolicy(at(plainLandlord, "/admin"))).toEqual({
+            action: "redirect",
+            to: "/dashboard",
+        });
+    });
+
     it("allows legacy OWNER / ADMIN platform roles (migration window)", () => {
         expect(resolveRoutePolicy(at(legacyOwner, "/admin"))).toEqual({ action: "next" });
         expect(resolveRoutePolicy(at(legacyAdmin, "/admin/settings"))).toEqual({ action: "next" });

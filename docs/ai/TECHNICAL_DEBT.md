@@ -801,7 +801,7 @@ detail panel shows those fields but cannot set them), and the landlord `list`
 endpoint returns an unbounded `List` — fine at 10 requests, not at 500.
 
 
-### TD-126 · RESOLVED 2026-09-07 — integration test suite wired up and fixed
+### TD-126 · CODE FIXED 2026-09-07, NEVER YET RUN GREEN — integration test suite wired up
 
 `src/test/java/com/rentmanager/crossmodule/` holds a complete cross-module
 integration harness — `CrossModuleBaseIT`, `TestDataFactory`, `EventCapture`,
@@ -809,10 +809,11 @@ integration harness — `CrossModuleBaseIT`, `TestDataFactory`, `EventCapture`,
 classes covering tenant isolation, cross-module rollback, property/lease
 restrictions and unit cascades.
 
-**None of them executes.** `pom.xml` configures `maven-surefire-plugin` and
+**None of them executed** *(state as originally found; failsafe was added
+2026-09-07, see below)*. `pom.xml` configured `maven-surefire-plugin` and
 nothing else; surefire's default includes are `*Test.java`, `Test*.java`,
-`*Tests.java` and `*TestCase.java`, none of which match `*IT.java`. There is no
-`maven-failsafe-plugin`, so `mvn test` and `mvn verify` both skip the lot.
+`*Tests.java` and `*TestCase.java`, none of which match `*IT.java`. There was no
+`maven-failsafe-plugin`, so `mvn test` and `mvn verify` both skipped the lot.
 
 **How it surfaced.** Writing a new end-to-end test on that harness failed
 immediately with `IllegalArgumentException: propertyType is required` —
@@ -838,6 +839,30 @@ are fixed. The tests now compile and should all pass. Run with `mvn verify -pl
 
 Files changed: `LeaseActivationFlowIT.java`, `OccupancySyncIT.java`,
 `UnitLeaseFlowIT.java`, `PropertyLeaseRestrictionIT.java`.
+
+**Status corrected 2026-09-26 — do not read the above as "green".** The entry
+said "the tests now compile and should all pass". *Should* is a prediction, and
+this entry's own opening warns against exactly that: something that looks like
+coverage and is trusted because it exists. Compiling is not passing.
+
+Confirmed on 2026-09-26: failsafe is correctly bound to `integration-test` and
+`verify` (pom, version 3.1.2), `mvn clean test-compile` is clean, and the nine
+`*IT.java` classes are therefore *runnable*. No completed `mvn verify` run
+exists. The one attempt ended after ~1,629 tests with 285 errors, every one of
+them `ApplicationContext failure threshold (1) exceeded` — Docker Desktop died
+mid-run, so the result says nothing about the tests. Docker on this machine was
+still down afterwards (no WSL distributions), which is why it was not retried.
+
+Two things still needed, in order:
+
+1. Run `mvn clean verify -pl .` with Docker healthy and record the actual
+   result here. Expect failures — these ran for the first time in months.
+2. Only then mark this RESOLVED.
+
+Note also that `mvn clean test`, which every other doc and habit in this repo
+treats as "the full suite", does **not** run them — fixed in `AGENTS.md` and
+backend `CLAUDE.md` on 2026-09-26. Wiring a suite nobody is told to run leaves
+it as dead as it was before.
 
 ---
 
@@ -890,7 +915,9 @@ latent bug visible, and the loop is what made the crash expensive.
 
 - The adapter takes one `Instant`, converts for the `LocalDateTime` column,
   and the repository signature now types the two parameters differently so
-  the mistake cannot recur silently.
+  the mistake cannot recur silently. **Superseded the same day — see the note
+  below; the current code is better and this paragraph no longer describes
+  it.**
 - The effect depends on the destructured `mutate`, which is stable, never on
   the mutation object.
 - `MaintenanceUnviewedBadgeTest` (3 tests, real Postgres via
@@ -903,12 +930,31 @@ to anything that mocks the repository — the mock happily accepts two
 is the third instance of the same lesson in this file (ADR-0022, TD-122,
 TD-126): code that satisfies its interface and does nothing.
 
-**Left alone deliberately.** `landlord_viewed_at`, `completed_at` and
-`first_landlord_response_at` are all `LocalDateTime` written with an unzoned
-`LocalDateTime.now()`, so on a UTC server a Nairobi landlord reads them three
-hours early. That is real, but it spans the domain model and two writers to
-the same columns, and half-changing one writer would make the column
-internally inconsistent. It wants its own pass — see TD-128.
+**Left alone deliberately at the time.** `landlord_viewed_at`, `completed_at`
+and `first_landlord_response_at` were all `LocalDateTime` written with an
+unzoned `LocalDateTime.now()`, so on a UTC server a Nairobi landlord read them
+three hours early. That was real, but it spanned the domain model and two
+writers to the same columns, and half-changing one writer would have made the
+column internally inconsistent. It was filed as its own pass — TD-128.
+
+**Superseded by TD-128, and for the better.** TD-128 did the clean fix this
+entry only sketched: all three columns became `TIMESTAMPTZ` (`V91`) and the
+domain moved to `Instant`. That *deleted the root cause* rather than working
+around it — with both columns the same type, the bulk update takes a single
+`Instant` for both, and the two-types-one-value mistake is no longer
+expressible:
+
+```java
+SET m.landlordViewedAt = :now, m.updatedAt = :now
+```
+
+So the fix described above no longer exists in the tree, and that is the right
+outcome: a type mismatch you cannot write beats a type mismatch you remembered
+to get right. What did survive the refactor, and is why this entry still earns
+its place, is `MaintenanceUnviewedBadgeTest` — it asserts *behaviour* (count in,
+count out) rather than parameter types, so it kept guarding the endpoint across
+a rewrite that changed every signature it touches. Verified still present and
+compiling on 2026-09-26.
 
 ---
 

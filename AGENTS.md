@@ -136,6 +136,26 @@ suite is running, and never diagnose one of those walls as a real break — read
 one of the errors first, and if it names classes your change never touched,
 it is this.
 
+### `mvn test` is not the whole suite
+
+`mvn clean test` runs surefire only — 1,464 tests. The nine `*IT.java` test
+classes (eight under `crossmodule`, plus `TenantApiIT`, on top of the
+`CrossModuleBaseIT` harness) are bound to **failsafe**, which runs in the
+`integration-test`/`verify` phases, so `mvn verify` is the command that runs
+everything. The generated "Backend test command" block above still calls
+`mvn test` the full suite; that block is regenerated, so this is the copy to
+trust.
+
+**Whether those nine pass is still unverified.** They were wired up in
+`d7acc46` and no completed `mvn verify` run exists — the one attempt died on
+Docker. Do not treat "failsafe is configured" as "the ITs are green".
+
+`mvn verify` needs Docker up for the whole run, and Docker Desktop on this
+machine has died mid-run at least once under that load. If a verify run ends
+in a wall of `ApplicationContext failure threshold (1) exceeded`, check
+`docker info` before reading a single stack trace — a dead daemon produces
+hundreds of those and none of them means anything about the code.
+
 ## Rules
 
 - Prices come from the backend catalogue. Never hard-code a price except in
