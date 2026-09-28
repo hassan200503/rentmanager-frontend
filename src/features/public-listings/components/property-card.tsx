@@ -12,7 +12,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
     return (
         <article className="group relative">
             {/* Premium outer glow effect */}
-            <div className="absolute -inset-[1px] rounded-[1.6rem] bg-gradient-to-br from-brand-200/40 via-brand-100/20 to-transparent dark:from-brand-600/20 dark:to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-all duration-700 -z-10" aria-hidden="true" />
+            <div className="absolute -inset-[1px] rounded-[1.6rem] bg-gradient-to-br from-brand-200/40 via-brand-100/20 to-transparent dark:from-brand-600/20 dark:via-brand-600/15 dark:to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-all duration-700 -z-10" aria-hidden="true" />
             
             <Link
                 href={`/listings/${property.propertyId}`}

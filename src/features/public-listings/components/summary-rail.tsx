@@ -59,7 +59,7 @@ export function SummaryRail({ propertyName, available, unitCount, priceRange, lo
                                 </div>
                             ) : available && priceRange ? (
                                 <>
-                                    <p className="font-data text-3xl font-bold text-ink dark:text-white leading-none tracking-tight bg-gradient-to-br from-ink via-ink to-ink/80 dark:from-white dark:to-white/90 bg-clip-text">
+                                    <p className="font-data text-3xl font-bold text-ink dark:text-white leading-none tracking-tight bg-gradient-to-br from-ink via-ink to-ink/80 dark:from-white dark:via-white dark:to-white/90 bg-clip-text">
                                         {ksh(priceRange.min)}
                                         {priceRange.max !== priceRange.min && (
                                             <span className="text-2xl text-ink-muted dark:text-white/70"> – {ksh(priceRange.max)}</span>

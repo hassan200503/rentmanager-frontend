@@ -167,7 +167,7 @@ function ListingsPageContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-canvas via-canvas to-brand-50/10 dark:to-brand-900/5">
+        <div className="min-h-screen bg-gradient-to-b from-canvas via-canvas to-brand-50/10 dark:from-canvas-dark dark:via-canvas-dark dark:to-brand-900/5">
             {/* ═══════════ PREMIUM HERO SECTION ═══════════ */}
             <div className="relative bg-gradient-to-b from-white via-brand-50/20 to-white dark:from-surface-dark dark:via-brand-900/10 dark:to-surface-dark border-b-2 border-border/40 overflow-hidden">
                 {/* Luxury background effects */}
@@ -180,7 +180,7 @@ function ListingsPageContent() {
                 <div className="relative container mx-auto px-6 pt-16 pb-20 max-w-6xl">
                     <div className="max-w-3xl">
                         {/* Premium category badge */}
-                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-br from-brand-100 via-brand-50 to-emerald-50 dark:from-brand-900/40 dark:to-emerald-900/20 border-2 border-brand-200/60 dark:border-brand-700/60 shadow-[0_2px_12px_rgba(5,150,105,0.15)] mb-8 backdrop-blur-sm animate-fade-in-up">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-br from-brand-100 via-brand-50 to-emerald-50 dark:from-brand-900/40 dark:via-brand-900/30 dark:to-emerald-900/20 border-2 border-brand-200/60 dark:border-brand-700/60 shadow-[0_2px_12px_rgba(5,150,105,0.15)] mb-8 backdrop-blur-sm animate-fade-in-up">
                             <div className="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(5,150,105,0.6)] animate-pulse" />
                             <span className="text-xs font-extrabold text-brand-900 dark:text-brand-300 uppercase tracking-widest">
                                 Rental Listings

@@ -227,6 +227,32 @@ body {
   --color-ink: var(--color-fg-dark);
   --color-ink-muted: var(--color-fg-muted-dark);
 
+  /* The surface, border and fg tokens follow the same rule as ink above, and
+     for a while they did not — which is the bug these lines close. `ink`
+     flipped in dark mode but `--color-bg`, `--color-surface` and
+     `--color-border` did not, so a `bg-surface` card and a `bg-canvas` page
+     kept their light backgrounds while the `text-ink` on top turned light as
+     well. The result was white on white: the listings hero was reported as
+     "a dark appearance that makes the words invisible".
+
+     Fixing it per usage was not an option and would not have stayed fixed —
+     `bg-canvas`, `bg-surface` and `border-border` appear 481 times across 104
+     files, and each new one is another chance to forget the `dark:` twin. A
+     token that means "the page background" should mean that in both themes.
+
+     `--color-canvas` is an alias of `--color-bg`, so it follows along.
+     Nothing under `.dark` reads the light values (checked), and a component
+     that genuinely wants a light surface in dark mode asks for it by name —
+     `bg-white`, `dark:bg-white/[0.08]` — not through these tokens. */
+  --color-bg: var(--color-bg-dark);
+  --color-surface: var(--color-surface-dark);
+  --color-surface-raised: var(--color-surface-raised-dark);
+  --color-border: var(--color-border-dark);
+  --color-border-subtle: var(--color-border-subtle-dark);
+  --color-fg: var(--color-fg-dark);
+  --color-fg-muted: var(--color-fg-muted-dark);
+  --color-fg-subtle: var(--color-fg-subtle-dark);
+
   /* Console sidebar — deep navy surface */
   --color-sidebar: #0B1221;
   --color-sidebar-muted: rgba(148, 163, 184, 0.08);

@@ -221,7 +221,7 @@ export default function ReservationPage() {
     const renderUnitHeader = () => {
         if (unitLoading) {
             return (
-                <div className="mb-10 rounded-3xl border-2 border-border/40 dark:border-border-dark/40 bg-gradient-to-br from-white via-white to-brand-50/20 dark:from-surface-dark dark:to-brand-900/10 p-8 space-y-4 shadow-[0_4px_16px_rgba(0,0,0,0.06)] animate-fade-in-up"
+                <div className="mb-10 rounded-3xl border-2 border-border/40 dark:border-border-dark/40 bg-gradient-to-br from-white via-white to-brand-50/20 dark:from-surface-dark dark:via-surface-dark dark:to-brand-900/10 p-8 space-y-4 shadow-[0_4px_16px_rgba(0,0,0,0.06)] animate-fade-in-up"
                     style={{ animationDelay: '100ms' }}
                 >
                     <div className="skeleton h-4 w-1/3 rounded-lg" />
@@ -253,7 +253,7 @@ export default function ReservationPage() {
         return (
             <div className="mb-10 relative animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                 {/* Premium outer glow */}
-                <div className="absolute -inset-[1px] rounded-[1.6rem] bg-gradient-to-br from-brand-200/30 via-emerald-100/20 to-transparent dark:from-brand-600/20 dark:to-transparent opacity-60 blur-xl -z-10" aria-hidden="true" />
+                <div className="absolute -inset-[1px] rounded-[1.6rem] bg-gradient-to-br from-brand-200/30 via-emerald-100/20 to-transparent dark:from-brand-600/20 dark:via-emerald-600/15 dark:to-transparent opacity-60 blur-xl -z-10" aria-hidden="true" />
                 
                 <div className="relative rounded-3xl border-2 border-brand-200/50 dark:border-brand-700/50 bg-gradient-to-br from-white via-brand-50/30 to-white dark:from-surface-dark dark:via-brand-900/10 dark:to-surface-dark shadow-[0_8px_32px_-4px_rgba(5,150,105,0.15),0_2px_8px_-2px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[0_8px_32px_-4px_rgba(5,150,105,0.25)] overflow-hidden">
                     {/* Decorative gradient overlay */}
@@ -384,12 +384,12 @@ export default function ReservationPage() {
     );
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-canvas via-canvas to-brand-50/10 dark:to-brand-900/5 py-16 px-4 sm:px-6">
+        <main className="min-h-screen bg-gradient-to-b from-canvas via-canvas to-brand-50/10 dark:from-canvas-dark dark:via-canvas-dark dark:to-brand-900/5 py-16 px-4 sm:px-6">
             <div className="mx-auto max-w-2xl">
                 {/* ═══════════ PREMIUM HERO HEADER ═══════════ */}
                 <div className="mb-12 text-center animate-fade-in-up">
                     {/* Premium badge */}
-                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-br from-emerald-100 via-brand-50 to-brand-100 dark:from-emerald-900/40 dark:to-brand-900/30 border-2 border-emerald-200/60 dark:border-emerald-700/60 shadow-[0_2px_12px_rgba(16,185,129,0.15)] mb-6 backdrop-blur-sm">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-gradient-to-br from-emerald-100 via-brand-50 to-brand-100 dark:from-emerald-900/40 dark:via-brand-900/35 dark:to-brand-900/30 border-2 border-emerald-200/60 dark:border-emerald-700/60 shadow-[0_2px_12px_rgba(16,185,129,0.15)] mb-6 backdrop-blur-sm">
                         <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
                         <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-300 uppercase tracking-widest">
                             Secure Reservation

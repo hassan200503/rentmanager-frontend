@@ -229,7 +229,7 @@ export default function PropertyDetailPage() {
                                 M-PESA. What IS enforced, in the public query, is that a
                                 property only appears here while it is ACTIVE with units
                                 that have no active lease. */}
-                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-emerald-50 via-emerald-50 to-brand-50 dark:from-emerald-900/25 dark:to-brand-900/25 backdrop-blur-sm px-5 py-3 border-2 border-emerald-200/60 dark:border-emerald-700/60 shadow-[0_2px_12px_rgba(16,185,129,0.12)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
+                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-emerald-50 via-emerald-50 to-brand-50 dark:from-emerald-900/25 dark:via-emerald-900/25 dark:to-brand-900/25 backdrop-blur-sm px-5 py-3 border-2 border-emerald-200/60 dark:border-emerald-700/60 shadow-[0_2px_12px_rgba(16,185,129,0.12)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
                                 <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-[0_4px_12px_-2px_rgba(16,185,129,0.4)] group-hover/badge:shadow-[0_6px_16px_-2px_rgba(16,185,129,0.5)] transition-shadow">
                                     <CalendarCheck className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
                                 </div>
@@ -244,7 +244,7 @@ export default function PropertyDetailPage() {
                             </div>
                             
                             {/* No fees badge */}
-                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 via-brand-50 to-accent/20 dark:from-brand-900/25 dark:to-accent/25 backdrop-blur-sm px-5 py-3 border-2 border-brand-200/60 dark:border-brand-700/60 shadow-[0_2px_12px_rgba(5,150,105,0.12)] hover:shadow-[0_8px_24px_rgba(5,150,105,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
+                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 via-brand-50 to-accent/20 dark:from-brand-900/25 dark:via-brand-900/25 dark:to-accent/25 backdrop-blur-sm px-5 py-3 border-2 border-brand-200/60 dark:border-brand-700/60 shadow-[0_2px_12px_rgba(5,150,105,0.12)] hover:shadow-[0_8px_24px_rgba(5,150,105,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
                                 <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 shadow-[0_4px_12px_-2px_rgba(5,150,105,0.4)] group-hover/badge:shadow-[0_6px_16px_-2px_rgba(5,150,105,0.5)] transition-shadow">
                                     <Check className="w-4.5 h-4.5 text-white" strokeWidth={3} />
                                 </div>
@@ -259,7 +259,7 @@ export default function PropertyDetailPage() {
                             </div>
                             
                             {/* Real-time updates badge */}
-                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 dark:from-blue-900/25 dark:to-indigo-900/25 backdrop-blur-sm px-5 py-3 border-2 border-blue-200/60 dark:border-blue-700/60 shadow-[0_2px_12px_rgba(59,130,246,0.12)] hover:shadow-[0_8px_24px_rgba(59,130,246,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
+                            <div className="group/badge inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 dark:from-blue-900/25 dark:via-blue-900/25 dark:to-indigo-900/25 backdrop-blur-sm px-5 py-3 border-2 border-blue-200/60 dark:border-blue-700/60 shadow-[0_2px_12px_rgba(59,130,246,0.12)] hover:shadow-[0_8px_24px_rgba(59,130,246,0.2)] transition-all duration-300 hover:scale-105 cursor-default">
                                 <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-[0_4px_12px_-2px_rgba(59,130,246,0.4)] group-hover/badge:shadow-[0_6px_16px_-2px_rgba(59,130,246,0.5)] transition-shadow">
                                     <RefreshCw className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
                                 </div>
