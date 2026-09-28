@@ -59,3 +59,8 @@ session-ses_*.md
 
 # Local docs — not tracked
 docs/
+
+# Cloudflare / OpenNext build output (never commit build artifacts)
+.open-next/
+.wrangler/
+.wrangler-probe/

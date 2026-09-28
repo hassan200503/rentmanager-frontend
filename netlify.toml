@@ -15,6 +15,24 @@
 [build]
   command = "npm run build"
 
+  # Skip the build entirely when a commit touches nothing the site serves.
+  #
+  # Netlify's free plan is metered in credits, not build minutes: 300 a month,
+  # 15 per production deploy. That is about twenty deploys, and running out
+  # SUSPENDS the site — which is exactly what happened on 28 September, taking
+  # the site offline until the cycle reset. Several of those deploys rebuilt
+  # the whole app to publish a Markdown file.
+  #
+  # `ignore` inverts the usual convention: exit 0 means "nothing to do, skip",
+  # exit 1 means "build". `git diff --quiet` exits 0 when the given paths did
+  # NOT change, so this reads as: if the only thing that changed was docs or
+  # Markdown, skip. Verified against real commits in this repository before
+  # being committed — a docs-only commit exits 0, a code commit exits 1.
+  #
+  # `[skip netlify]` in a commit message also works and is the right tool for
+  # a one-off; this handles the routine case without anyone remembering.
+  ignore = "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)*.md'"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
