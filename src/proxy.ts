@@ -1,8 +1,9 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
 import { resolveRoutePolicy } from "@/lib/rbac/route-policy";
 import { extractRouteClaims, type RouteClaims } from "@/lib/auth/session-claims";
 import { auditRouteDecision, auditUnclassified } from "@/lib/auth/audit";
+import { httpsPublicOrigin, resolveProtoRewrite } from "@/lib/auth/forwarded-proto";
 
 /**
  * Route-level RBAC proxy (Next.js 16 — formerly "middleware").
@@ -29,7 +30,7 @@ import { auditRouteDecision, auditUnclassified } from "@/lib/auth/audit";
  * JWT org_id verification against X-Tenant-Id on every tenant-scoped call.
  * AMBIGUOUS claims never grant access (fail closed).
  */
-export default clerkMiddleware(
+const withClerk = clerkMiddleware(
     async (auth, req) => {
         const { userId, sessionClaims, redirectToSignIn, getToken } = await auth();
 
@@ -140,6 +141,40 @@ export default clerkMiddleware(
         signUpUrl: "/public/sign-up",
     }
 );
+
+const HTTPS_ORIGIN = httpsPublicOrigin(process.env.NEXT_PUBLIC_APP_URL);
+
+/**
+ * Restores the browser's scheme before Clerk reads it.
+ *
+ * Deno Deploy forwards to the Next.js server over HTTP and sends no
+ * `x-forwarded-proto`, so without this every absolute URL the server builds —
+ * the sign-in Location, its `redirect_url`, the persona redirects and Clerk's
+ * handshake — comes out as `http://`. The reasoning, the measurement and the
+ * conditions under which this does nothing are in
+ * `lib/auth/forwarded-proto.ts`.
+ */
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+    const rewrite = resolveProtoRewrite({
+        method: req.method,
+        forwardedProto: req.headers.get("x-forwarded-proto"),
+        protocol: req.nextUrl.protocol,
+        pathname: req.nextUrl.pathname,
+        search: req.nextUrl.search,
+        httpsOrigin: HTTPS_ORIGIN,
+    });
+
+    if (!rewrite) {
+        return withClerk(req, event);
+    }
+
+    const headers = new Headers(req.headers);
+    headers.set("x-forwarded-proto", rewrite.proto);
+    return withClerk(
+        new NextRequest(rewrite.url, { method: req.method, headers }),
+        event
+    );
+}
 
 export const config = {
     // Run the RBAC proxy on app routes only. Static assets served from
