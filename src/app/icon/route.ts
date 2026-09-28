@@ -1,9 +1,54 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
 import { NextResponse } from "next/server";
 import { appConfig } from "@/lib/config/app-config";
 
 export const runtime = "nodejs";
+
+/**
+ * The fallback mark, inlined rather than read from public/favicon.svg.
+ *
+ * It used to be `readFile(join(process.cwd(), "public", "favicon.svg"))`, on
+ * the first line of GET and outside the try/catch. That works on a Node
+ * server and fails on Cloudflare Workers, which have no filesystem: the
+ * import threw before any error handling could run, so this route answered
+ * 500 on the live site while every other page served fine. The fallback whose
+ * whole job is to survive the backend being unreachable was itself the thing
+ * that could not survive.
+ *
+ * Two kilobytes inlined removes the I/O, the failure mode and a runtime
+ * dependency in one go. It is the same drawing as BadgeMark in
+ * shared/components/brand/BrandBadge.tsx and public/favicon.svg — keep all
+ * three in step.
+ */
+const FALLBACK_SVG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- The RentManager brand mark: the same drawing as BadgeMark in
+       src/shared/components/brand/BrandBadge.tsx, which every header uses.
+       Keep the two in step. -->
+  <defs>
+    <linearGradient id="rm-fav-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="55%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="rm-fav-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="rm-fav-glow" cx="0.5" cy="0.32" r="0.75">
+      <stop offset="0%" stop-color="#6EE7B7" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#6EE7B7" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="url(#rm-fav-grad)" />
+  <rect x="4" y="2" width="16" height="10" rx="4" fill="url(#rm-fav-glow)" />
+  <rect x="0.5" y="0.5" width="23" height="23" rx="6" stroke="rgba(255,255,255,0.22)" stroke-width="0.75" />
+  <rect x="1.5" y="1.5" width="21" height="9" rx="4.5" fill="url(#rm-fav-sheen)" />
+  <path d="M5.5 11.2L9.4 8l3.9 3.2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M13.3 8l2.6-2.1 2.6 2.1M15.9 5.9v2.4" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" />
+  <rect x="12.6" y="10.8" width="7" height="7.6" rx="1.6" fill="white" opacity="0.92" />
+  <rect x="14.3" y="13.1" width="2.2" height="4.1" rx="0.9" fill="#047857" opacity="0.85" />
+  <rect x="4.6" y="13.6" width="6" height="5" rx="1.2" stroke="white" stroke-width="1.1" opacity="0.85" />
+  <path d="M6 15.4h3.2M6 17.3h2" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.6" />
+</svg>`;
 
 /**
  * How long a browser, the CDN and Next's own cache may keep the icon before
@@ -45,7 +90,7 @@ export const revalidate = 60;
  * never hold up the tab icon, and the fallback mark is always ready.
  */
 export async function GET() {
-    const fallbackSvg = await readFile(join(process.cwd(), "public", "favicon.svg"), "utf8");
+    const fallbackSvg = FALLBACK_SVG;
 
     try {
         // appConfig.api.baseUrl already ends in /api/v1 (it's read straight
