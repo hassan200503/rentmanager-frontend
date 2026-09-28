@@ -1,0 +1,59 @@
+# Temporary probe: can this app run on Cloudflare Workers' FREE plan?
+#
+# Netlify suspended the site when its credit allowance ran out, so the question
+# is whether Cloudflare is a viable free home. Two hard numbers decide it, and
+# neither can be measured on Windows (the OpenNext bundler needs symlinks, which
+# Windows refuses without Developer Mode):
+#
+#   1. The built Worker must be under 3 MiB compressed on the free plan.
+#   2. It has to build at all against this app's dependency tree.
+#
+# Delete this workflow once the decision is made either way.
+name: Cloudflare size probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["cloudflare-migration"]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the Cloudflare Worker
+        env:
+          NEXT_PUBLIC_APP_NAME: RentManager
+          NEXT_PUBLIC_APP_ENV: production
+          NEXT_PUBLIC_API_URL: https://rentmanager-api-2reb.onrender.com/api/v1
+          NEXT_PUBLIC_APP_URL: https://rentmanager-ke.pages.dev
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        run: npx opennextjs-cloudflare build
+
+      - name: Measure against the 3 MiB free-plan ceiling
+        run: |
+          set -euo pipefail
+          echo "── worker bundle ──"
+          ls -lh .open-next/worker.js || true
+          raw=$(stat -c%s .open-next/worker.js)
+          gz=$(gzip -c .open-next/worker.js | wc -c)
+          limit=$((3 * 1024 * 1024))
+          echo "raw:        $((raw/1024)) KiB"
+          echo "compressed: $((gz/1024)) KiB"
+          echo "free limit: $((limit/1024)) KiB"
+          if [ "$gz" -lt "$limit" ]; then
+            echo "::notice::FITS the Cloudflare free plan ($((gz/1024)) KiB of $((limit/1024)) KiB)"
+          else
+            echo "::warning::EXCEEDS the free plan ($((gz/1024)) KiB of $((limit/1024)) KiB) — paid Workers or a static build needed"
+          fi
+          echo "── total assets ──"
+          du -sh .open-next/assets || true
