@@ -155,6 +155,21 @@ const HTTPS_ORIGIN = httpsPublicOrigin(process.env.NEXT_PUBLIC_APP_URL);
  * `lib/auth/forwarded-proto.ts`.
  */
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
+    // TEMPORARY probe — remove once the scheme question is settled. Reports
+    // only what this deployment already tells anyone who looks at a redirect.
+    if (req.nextUrl.searchParams.get("__proto_probe") === "1") {
+        return NextResponse.json({
+            method: req.method,
+            nextUrlProtocol: req.nextUrl.protocol,
+            reqUrl: req.url,
+            xForwardedProto: req.headers.get("x-forwarded-proto"),
+            xForwardedHost: req.headers.get("x-forwarded-host"),
+            forwarded: req.headers.get("forwarded"),
+            host: req.headers.get("host"),
+            httpsOrigin: HTTPS_ORIGIN,
+        });
+    }
+
     const rewrite = resolveProtoRewrite({
         method: req.method,
         forwardedProto: req.headers.get("x-forwarded-proto"),
