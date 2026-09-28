@@ -35,8 +35,14 @@ jobs:
           NEXT_PUBLIC_APP_ENV: production
           NEXT_PUBLIC_API_URL: https://rentmanager-api-2reb.onrender.com/api/v1
           NEXT_PUBLIC_APP_URL: https://rentmanager-ke.pages.dev
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          # Deliberately fake, and safe to be: this job only measures how big
+          # the built Worker is, and never talks to Clerk. The publishable key
+          # still has to be SHAPED correctly (pk_test_ + base64 host) because
+          # next.config.ts decodes it to derive the Clerk origin for the CSP,
+          # and the env schema rejects an empty one. Real keys would add risk
+          # and buy nothing.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+          CLERK_SECRET_KEY: sk_test_probe_not_a_real_key
         run: npx opennextjs-cloudflare build
 
       - name: Measure against the 3 MiB free-plan ceiling
