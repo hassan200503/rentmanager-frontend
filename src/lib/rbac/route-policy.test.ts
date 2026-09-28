@@ -17,7 +17,7 @@
 //   4. Ambiguous claims are NEVER granted access (fail closed).
 
 import { describe, it, expect } from "vitest";
-import { resolveRoutePolicy, type RoutePolicyContext } from "./route-policy";
+import { isPublicPath, resolveRoutePolicy, type RoutePolicyContext } from "./route-policy";
 
 // ── Personas (userType-claim era) ──────────────────────────────────────────
 
@@ -423,5 +423,63 @@ describe("/continue and /onboarding", () => {
     it("do not widen anything else: prefixes of those paths are not admitted", () => {
         expect(resolveRoutePolicy(at(renterUser, "/continue/admin"))).not.toEqual({ action: "next" });
         expect(resolveRoutePolicy(at(renterUser, "/onboardingx"))).not.toEqual({ action: "next" });
+    });
+});
+
+describe("isPublicPath — the surface that must not need Clerk", () => {
+    // These are the pages that returned 500 on the first Cloudflare deploy
+    // because Clerk's middleware threw on a missing secret key. The proxy now
+    // answers them without consulting Clerk at all, so this list is load-bearing.
+    it.each([
+        "/",
+        "/listings",
+        "/listings/abc",
+        "/listings/abc/def",
+        "/legal/privacy",
+        "/legal/terms",
+        "/reserve/some-unit-id",
+        "/reserve/confirmation",
+        "/tenant-required",
+        "/public/forgot-password",
+    ])("treats %s as public", (pathname) => {
+        expect(isPublicPath(pathname)).toBe(true);
+    });
+
+    it.each([
+        "/dashboard",
+        "/dashboard/properties",
+        "/portal",
+        "/portal/payments",
+        "/admin",
+        "/admin/integrations",
+        "/onboarding",
+        "/continue",
+        "/daraja/config",
+        "/some-route-nobody-has-written-yet",
+    ])("does not treat %s as public, so it still goes through Clerk", (pathname) => {
+        expect(isPublicPath(pathname)).toBe(false);
+    });
+
+    // The guarantee that keeps this fail-closed: skipping Clerk must never
+    // change what the policy engine would have decided.
+    it("matches what resolveRoutePolicy already decided for public paths", () => {
+        for (const pathname of ["/", "/listings", "/legal/privacy", "/reserve/x"]) {
+            expect(
+                resolveRoutePolicy({
+                    pathname,
+                    userId: null,
+                    tenantId: null,
+                    platformRole: null,
+                }).action
+            ).toBe("next");
+            expect(
+                resolveRoutePolicy({
+                    pathname,
+                    userId: "user_1",
+                    tenantId: "org_1",
+                    platformRole: null,
+                }).action
+            ).toBe("next");
+        }
     });
 });

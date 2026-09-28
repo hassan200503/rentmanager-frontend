@@ -1,6 +1,6 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
-import { resolveRoutePolicy } from "@/lib/rbac/route-policy";
+import { isPublicPath, resolveRoutePolicy } from "@/lib/rbac/route-policy";
 import { extractRouteClaims, type RouteClaims } from "@/lib/auth/session-claims";
 import { auditRouteDecision, auditUnclassified } from "@/lib/auth/audit";
 import { httpsPublicOrigin, resolveProtoRewrite } from "@/lib/auth/forwarded-proto";
@@ -155,6 +155,16 @@ const HTTPS_ORIGIN = httpsPublicOrigin(process.env.NEXT_PUBLIC_APP_URL);
  * `lib/auth/forwarded-proto.ts`.
  */
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
+    // Public pages never reach Clerk. resolveRoutePolicy already returned
+    // "next" for them unconditionally, so this decides nothing new — it only
+    // stops a missing or wrong Clerk key from taking the public site down
+    // with it. See isPublicPath in lib/rbac/route-policy.ts for the incident
+    // this came from. Anything not on that list still goes through Clerk, so
+    // a new route is gated by default.
+    if (isPublicPath(req.nextUrl.pathname)) {
+        return NextResponse.next();
+    }
+
     const rewrite = resolveProtoRewrite({
         method: req.method,
         forwardedProto: req.headers.get("x-forwarded-proto"),

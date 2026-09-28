@@ -115,7 +115,27 @@ const pathMatches = (pathname: string, pattern: string) => {
     return pathname === pattern;
 };
 
-const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((p) => pathMatches(pathname, p));
+/**
+ * A path anyone may see, signed in or not.
+ *
+ * Exported because `proxy.ts` needs to answer this *before* handing the
+ * request to Clerk, not after. `resolveRoutePolicy` returns `next` for these
+ * paths unconditionally — above the `userId` check — so Clerk's verdict was
+ * never consulted for them anyway, and skipping it changes no behaviour.
+ *
+ * What it does change is the blast radius of a Clerk misconfiguration. On the
+ * first Cloudflare deployment `CLERK_SECRET_KEY` was absent at runtime and
+ * Clerk's middleware threw `throwMissingSecretKeyError` on every request it
+ * handled, so the landing page, the listings and the policy pages all returned
+ * 500 — none of which have anything to do with authentication. Paths outside
+ * the proxy matcher (`/robots.txt`, `/sitemap.xml`, `/og.png`) served fine
+ * throughout, which is what identified the middleware as the cause.
+ *
+ * A marketing page that cannot render because an auth secret is missing is a
+ * bad trade, so the public surface no longer depends on Clerk being
+ * configured at all.
+ */
+export const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((p) => pathMatches(pathname, p));
 
 const isPendingPath = (pathname: string) => PENDING_PATHS.some((p) => pathMatches(pathname, p));
 
