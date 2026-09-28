@@ -50,21 +50,18 @@ jobs:
           CLERK_SECRET_KEY: sk_test_probe_not_a_real_key
         run: npx opennextjs-cloudflare build
 
-      - name: Measure against the 3 MiB free-plan ceiling
+      - name: Measure the real bundle against the 3 MiB free-plan ceiling
         run: |
           set -euo pipefail
-          echo "── worker bundle ──"
-          ls -lh .open-next/worker.js || true
-          raw=$(stat -c%s .open-next/worker.js)
-          gz=$(gzip -c .open-next/worker.js | wc -c)
-          limit=$((3 * 1024 * 1024))
-          echo "raw:        $((raw/1024)) KiB"
-          echo "compressed: $((gz/1024)) KiB"
-          echo "free limit: $((limit/1024)) KiB"
-          if [ "$gz" -lt "$limit" ]; then
-            echo "::notice::FITS the Cloudflare free plan ($((gz/1024)) KiB of $((limit/1024)) KiB)"
-          else
-            echo "::warning::EXCEEDS the free plan ($((gz/1024)) KiB of $((limit/1024)) KiB) — paid Workers or a static build needed"
+          # .open-next/worker.js is a ~2 KiB entry shim -- measuring it tells
+          # you nothing. wrangler assembles the actual Worker at deploy time
+          # and reports the size Cloudflare enforces, so a dry run (no
+          # credentials needed) is the only honest measurement.
+          npx wrangler deploy --dry-run --outdir .wrangler-probe 2>&1 | tee wrangler-out.txt
+          echo "── assembled bundle ──"
+          du -sh .wrangler-probe 2>/dev/null || true
+          if [ -f .wrangler-probe/index.js ]; then
+            gz=$(gzip -c .wrangler-probe/index.js | wc -c)
+            echo "assembled compressed: $((gz/1024)) KiB of 3072 KiB free limit"
           fi
-          echo "── total assets ──"
-          du -sh .open-next/assets || true
+          grep -iE "Total Upload|gzip" wrangler-out.txt || true
