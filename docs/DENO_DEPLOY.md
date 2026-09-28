@@ -28,7 +28,7 @@ does not.
 ## Steps
 
 **Done on 28 September 2026.** The site is live at
-`https://rentmanager-frontend.hassan200503.deno.net`. Free-tier build figures
+`https://rentmanagerke.hassan200503.deno.net`. Free-tier build figures
 from that first deploy, for comparison against the 5-minute build cap: install
 19.7 s, `next build` 53.4 s, deploy 20.7 s.
 
@@ -51,8 +51,8 @@ they are lost, or from your local `.env.local`.
 | Variable | Value |
 |---|---|
 | `BACKEND_URL` | `https://rentmanager-api-2reb.onrender.com` |
-| `NEXT_PUBLIC_API_URL` | `https://rentmanager-frontend.hassan200503.deno.net/api/v1` |
-| `NEXT_PUBLIC_APP_URL` | `https://rentmanager-frontend.hassan200503.deno.net` |
+| `NEXT_PUBLIC_API_URL` | `https://rentmanagerke.hassan200503.deno.net/api/v1` |
+| `NEXT_PUBLIC_APP_URL` | `https://rentmanagerke.hassan200503.deno.net` |
 | `NEXT_PUBLIC_APP_ENV` | `production` |
 | `NEXT_PUBLIC_APP_NAME` | `RentManager` |
 | `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` | `rentmanagerke2026@gmail.com` |
@@ -73,21 +73,26 @@ it as a secret in Deno's UI is fine, secrets reach the build step too.
 `NEXT_PUBLIC_APP_URL` does more than metadata here: `src/proxy.ts` uses it to
 work out that the deployment is served over HTTPS. See the next section.
 
-## Deno Deploy does not send `x-forwarded-proto`
+## Deno Deploy reports `x-forwarded-proto: http`
 
-It terminates TLS at the edge and forwards to the Next.js server over plain
-HTTP with no `x-forwarded-proto` header, so Next and Clerk both fall back to
-the socket's scheme and every absolute URL the server generates comes out as
-`http://`. Measured on the live site, signed out:
+It terminates TLS at the edge, forwards to the Next.js server over plain HTTP,
+and reports that inner hop as the truth. A temporary probe in the proxy on the
+live site returned:
+
+```json
+{ "nextUrlProtocol": "http:",
+  "reqUrl":          "http://0.0.0.0:3000/",
+  "xForwardedProto": "http",
+  "xForwardedHost":  "rentmanagerke.hassan200503.deno.net" }
+```
+
+Next and Clerk both believe that header, so every absolute URL the server
+generates comes out as `http://`:
 
 ```
 GET /dashboard
 → 307 Location: http://<host>/public/sign-in?redirect_url=http%3A%2F%2F<host>%2Fdashboard
 ```
-
-The same request sent with `X-Forwarded-Proto: https` produced the correct
-`https://`, which is what identifies the missing header as the cause rather
-than Next or Clerk.
 
 The edge upgrades `http://` with a 301, so a signed-out visitor only takes an
 extra hop. The flow that does **not** survive it is Clerk's handshake: the
@@ -96,10 +101,30 @@ response that sets the session cookie ends up being an http response, a
 counter gives up. No anonymous smoke test reaches that state, which is why it
 is worth knowing about rather than discovering at launch.
 
-`src/proxy.ts` puts the header back before Clerk reads the request, guarded so
-that it does nothing on a host that sets the header itself and nothing in a
-local `http://localhost:3000` build. The rules and the reasoning are in
-`src/lib/auth/forwarded-proto.ts`, and `forwarded-proto.test.ts` pins them.
+`src/proxy.ts` corrects the origin before Clerk reads the request. The rule is
+worth stating carefully, because the first version got it wrong: it deferred
+to `x-forwarded-proto` whenever the header was present, on the reasoning that
+a host which sets it is telling the truth — which is exactly this host, so the
+fix did nothing and had to be measured before it could be corrected. The
+scheme now comes from `NEXT_PUBLIC_APP_URL` instead, which is a fact about the
+deployment rather than a claim by an edge. Note `reqUrl` above: the host has
+to come from configuration too, or Clerk builds URLs pointing at `0.0.0.0`.
+
+Local `http://localhost:3000` builds are untouched. `src/lib/auth/forwarded-proto.ts`
+carries the reasoning and `forwarded-proto.test.ts` pins the rules.
+
+## Renaming the app moves the URL
+
+The production subdomain follows the **application name**, not the repository:
+renaming the app to `rentmanagerke` moved the site to
+`https://rentmanagerke.hassan200503.deno.net` and left the old hostname
+answering 404 within about a minute. The settings page kept showing the old
+domain until a reload, so check with `curl`, not the dashboard.
+
+Two environment variables name the site and are **inlined at build time**, so
+a rename is not complete until they are changed and a new build has run:
+`NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_API_URL`. Until then the browser keeps
+calling the old host and every API request 404s.
 
 ## After deploying, verify
 

@@ -33,22 +33,45 @@ describe("resolveProtoRewrite", () => {
         });
     });
 
+    // The case this module exists for. An earlier version deferred to the
+    // header whenever it was present, which made the fix a no-op here.
+    it("overrides an x-forwarded-proto of http, which is what Deno Deploy sends", () => {
+        expect(resolveProtoRewrite({ ...base, forwardedProto: "http" })).toEqual({
+            url: "https://app.example.com/dashboard",
+            proto: "https",
+        });
+    });
+
+    it("replaces the internal socket origin, not merely the scheme", () => {
+        // req.url on Deno Deploy is http://0.0.0.0:3000, so the host has to
+        // come from configuration too or Clerk builds URLs nobody can reach.
+        expect(resolveProtoRewrite(base)?.url).toBe("https://app.example.com/dashboard");
+    });
+
     it("keeps the query string, which carries the sign-in return target", () => {
         expect(resolveProtoRewrite({ ...base, search: "?a=1&b=2" })?.url).toBe(
             "https://app.example.com/dashboard?a=1&b=2"
         );
     });
 
-    it("believes a host that sets x-forwarded-proto itself", () => {
-        expect(resolveProtoRewrite({ ...base, forwardedProto: "http" })).toBeNull();
+    it("does nothing when the request is already https end to end", () => {
+        expect(
+            resolveProtoRewrite({ ...base, protocol: "https:", forwardedProto: "https" })
+        ).toBeNull();
+        expect(resolveProtoRewrite({ ...base, protocol: "https:" })).toBeNull();
     });
 
-    it("does nothing when the request already arrived over https", () => {
-        expect(resolveProtoRewrite({ ...base, protocol: "https:" })).toBeNull();
+    it("still corrects a request served over https but reported as http", () => {
+        expect(
+            resolveProtoRewrite({ ...base, protocol: "https:", forwardedProto: "http" })
+        ).not.toBeNull();
     });
 
     it("does nothing in a development build with no https origin", () => {
         expect(resolveProtoRewrite({ ...base, httpsOrigin: null })).toBeNull();
+        expect(
+            resolveProtoRewrite({ ...base, httpsOrigin: null, forwardedProto: "http" })
+        ).toBeNull();
     });
 
     it("leaves requests with a body alone rather than cloning their stream", () => {
@@ -57,5 +80,11 @@ describe("resolveProtoRewrite", () => {
 
     it("covers HEAD as well as GET", () => {
         expect(resolveProtoRewrite({ ...base, method: "HEAD" })).not.toBeNull();
+    });
+
+    it("is not fooled by casing or padding in the header", () => {
+        expect(
+            resolveProtoRewrite({ ...base, protocol: "https:", forwardedProto: " HTTPS " })
+        ).toBeNull();
     });
 });

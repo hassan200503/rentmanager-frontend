@@ -147,29 +147,14 @@ const HTTPS_ORIGIN = httpsPublicOrigin(process.env.NEXT_PUBLIC_APP_URL);
 /**
  * Restores the browser's scheme before Clerk reads it.
  *
- * Deno Deploy forwards to the Next.js server over HTTP and sends no
- * `x-forwarded-proto`, so without this every absolute URL the server builds —
- * the sign-in Location, its `redirect_url`, the persona redirects and Clerk's
- * handshake — comes out as `http://`. The reasoning, the measurement and the
- * conditions under which this does nothing are in
+ * Deno Deploy forwards to the Next.js server over HTTP and reports that
+ * inner hop as `x-forwarded-proto: http`, so without this every absolute URL
+ * the server builds — the sign-in Location, its `redirect_url`, the persona
+ * redirects and Clerk's handshake — comes out as `http://`. The measurement,
+ * the reasoning and the conditions under which this does nothing are in
  * `lib/auth/forwarded-proto.ts`.
  */
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
-    // TEMPORARY probe — remove once the scheme question is settled. Reports
-    // only what this deployment already tells anyone who looks at a redirect.
-    if (req.nextUrl.searchParams.get("__proto_probe") === "1") {
-        return NextResponse.json({
-            method: req.method,
-            nextUrlProtocol: req.nextUrl.protocol,
-            reqUrl: req.url,
-            xForwardedProto: req.headers.get("x-forwarded-proto"),
-            xForwardedHost: req.headers.get("x-forwarded-host"),
-            forwarded: req.headers.get("forwarded"),
-            host: req.headers.get("host"),
-            httpsOrigin: HTTPS_ORIGIN,
-        });
-    }
-
     const rewrite = resolveProtoRewrite({
         method: req.method,
         forwardedProto: req.headers.get("x-forwarded-proto"),
