@@ -31,6 +31,11 @@ jobs:
 
       - name: Build the Cloudflare Worker
         env:
+          # next.config.ts refuses a production build without this rather
+          # than silently proxying /api/v1 to localhost -- a good guard, and a
+          # reminder that the same-origin rewrite has to be configured on
+          # Cloudflare too, not just on Netlify.
+          BACKEND_URL: https://rentmanager-api-2reb.onrender.com
           NEXT_PUBLIC_APP_NAME: RentManager
           NEXT_PUBLIC_APP_ENV: production
           NEXT_PUBLIC_API_URL: https://rentmanager-api-2reb.onrender.com/api/v1
