@@ -25,17 +25,17 @@ const FALLBACK_SVG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none
        Keep the two in step. -->
   <defs>
     <linearGradient id="rm-fav-grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#10B981" />
-      <stop offset="55%" stop-color="#059669" />
-      <stop offset="100%" stop-color="#047857" />
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="55%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1E40AF" />
     </linearGradient>
     <linearGradient id="rm-fav-sheen" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
     </linearGradient>
     <radialGradient id="rm-fav-glow" cx="0.5" cy="0.32" r="0.75">
-      <stop offset="0%" stop-color="#6EE7B7" stop-opacity="0.55" />
-      <stop offset="100%" stop-color="#6EE7B7" stop-opacity="0" />
+      <stop offset="0%" stop-color="#93C5FD" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#93C5FD" stop-opacity="0" />
     </radialGradient>
   </defs>
   <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="url(#rm-fav-grad)" />
@@ -45,7 +45,7 @@ const FALLBACK_SVG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none
   <path d="M5.5 11.2L9.4 8l3.9 3.2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
   <path d="M13.3 8l2.6-2.1 2.6 2.1M15.9 5.9v2.4" stroke="white" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" />
   <rect x="12.6" y="10.8" width="7" height="7.6" rx="1.6" fill="white" opacity="0.92" />
-  <rect x="14.3" y="13.1" width="2.2" height="4.1" rx="0.9" fill="#047857" opacity="0.85" />
+  <rect x="14.3" y="13.1" width="2.2" height="4.1" rx="0.9" fill="#1E40AF" opacity="0.85" />
   <rect x="4.6" y="13.6" width="6" height="5" rx="1.2" stroke="white" stroke-width="1.1" opacity="0.85" />
   <path d="M6 15.4h3.2M6 17.3h2" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.6" />
 </svg>`;
