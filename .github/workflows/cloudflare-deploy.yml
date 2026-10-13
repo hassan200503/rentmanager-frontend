@@ -92,7 +92,36 @@ jobs:
                       echo "::error::Missing repository secret(s):$missing"
                       exit 1
                   fi
-                  echo "All required secrets are present."
+
+                  # The account ID is the secret most often stored wrong: a pasted
+                  # dashboard URL, leftover quotes, or a trailing newline/CR. Each
+                  # makes wrangler abort ~3 min into the deploy with only the
+                  # unusable "Invalid account ID" message, so validate the shape
+                  # here, up front, and say exactly what is wrong.
+                  if [ "${#CLOUDFLARE_ACCOUNT_ID}" -ne 32 ] || ! printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -Eq '^[0-9a-fA-F]{32}$'; then
+                      case "$CLOUDFLARE_ACCOUNT_ID" in
+                          *://*|*cloudflare.com*)
+                              reason="looks like a URL -- paste only the 32-character hex ID, not the address bar" ;;
+                          *)
+                              reason="must be exactly 32 hex characters [0-9a-f], but is ${#CLOUDFLARE_ACCOUNT_ID} chars -- check for quotes, spaces, or a trailing newline" ;;
+                      esac
+                      echo "::error::CLOUDFLARE_ACCOUNT_ID $reason. Get it from https://dash.cloudflare.com/ (Account ID in the right sidebar) and update the repo secret."
+                      exit 1
+                  fi
+
+                  # The API token carries the same corruption risk, but it fails
+                  # differently: wrangler rejects a stray byte (commonly a BOM,
+                  # U+FEFF, added by `echo | gh secret set`) with "contains a
+                  # character that cannot be used in an HTTP Authorization
+                  # header". A valid token uses only letters, digits, '-' and
+                  # '_'; a BOM, space, or trailing newline is outside that set,
+                  # so reject it here with a fix-it hint instead of 3 minutes in.
+                  if ! printf '%s' "$CLOUDFLARE_API_TOKEN" | grep -Eq '^[A-Za-z0-9_-]+$'; then
+                      echo "::error::CLOUDFLARE_API_TOKEN contains a character that is not allowed (only letters, digits, '-' and '_' are valid). This is usually a stray byte such as a BOM or a trailing newline baked in by 'echo ... | gh secret set'. Re-set it cleanly with: gh secret set CLOUDFLARE_API_TOKEN --repo <repo> --body \"<token>\""
+                      exit 1
+                  fi
+
+                  echo "All required secrets are present and well-formed."
 
             - name: Build the Worker with OpenNext
               env:
