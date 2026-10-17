@@ -1,252 +1,254 @@
 # RentManager Frontend
 
-RentManager Frontend is the web application for RentManager, a property-management platform built for the Kenyan rental market. It powers landlord dashboards, renter portals, public listing pages, reservations, and admin workflows for managing rent, maintenance, deposits, disbursements, and compliance-related operations.
+[![License](https://img.shields.io/github/license/hassan200503/rentmanager-frontend)](https://github.com/hassan200503/rentmanager-frontend/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/hassan200503/rentmanager-frontend)](https://github.com/hassan200503/rentmanager-frontend/commits/main)
+[![Issues](https://img.shields.io/github/issues/hassan200503/rentmanager-frontend)](https://github.com/hassan200503/rentmanager-frontend/issues)
+[![Stars](https://img.shields.io/github/stars/hassan200503/rentmanager-frontend)](https://github.com/hassan200503/rentmanager-frontend/stargazers)
 
-This repository is a Next.js 16 App Router application with TypeScript, Clerk authentication, a route-level RBAC proxy, OpenAPI-style API integration, and a production-oriented deployment configuration for Cloudflare, Netlify, Docker, and standard Node hosting.
+RentManager Frontend is the web client for a production-grade property-management platform focused on the Kenyan rental market. It provides landlord dashboards, renter portals, public listings, reservation flows, and admin tooling for rent, maintenance, receipts, and compliance tasks.
+
+This repository uses Next.js (App Router) with TypeScript, Clerk for authentication, a route-level RBAC proxy, and OpenAPI-driven typing for API contracts. It is structured for performance (public pages avoid loading auth bundles), security (environment validation and defense-in-depth RBAC), and deployability across Cloudflare/OpenNext, Netlify, Docker, and standard Node hosts.
+
+---
+
+## Table of contents
+
+- Overview
+- Tech stack
+- Architecture at a glance
+- Repo layout
+- Quick start (developer)
+- Getting a test Clerk account
+- Environment variables (high level)
+- Running locally
+- Building for production
+- Testing & CI
+- Deployment options
+- Security notes
+- Contributing & recruiting guidance
+- Troubleshooting
+- Key files
+- License
+
+---
 
 ## Overview
 
-The frontend is designed around role-based access:
+The frontend serves four personas:
 
-- Landlords use dashboards to manage rent, leases, units, maintenance, and accounting flows.
-- Renters access a tenant portal for payments, issues, announcements, and lease information.
-- Admins access an administrative console for platform-level oversight and management tasks.
-- Public visitors can browse listings, view legal pages, and reserve vacant units without signing in.
+- Landlords — rent collection, occupancy, leases, maintenance triage, accounting and disbursements
+- Renters — payment flows (M-Pesa), maintenance reporting, announcements, lease access
+- Admins — platform management, tenant and org oversight
+- Public visitors — marketing, property listings, reservations
 
-The app is split between public pages and authenticated route groups, with the routing boundary enforced by a custom RBAC proxy and Clerk session claims.
+Public pages are intentionally isolated from the authenticated shell so that Clerk and other heavy bundles are not loaded on landing and listing pages.
 
-## Stack
+---
+
+## Tech stack
 
 - Language: TypeScript
 - Framework: Next.js 16 (App Router)
-- Styling: Tailwind CSS v4
-- Auth: Clerk (`@clerk/nextjs`)
-- Data fetching: TanStack React Query
-- Forms/validation: React Hook Form + Zod
-- UI/animation: Framer Motion, GSAP, Lenis, Recharts, Lucide
-- 3D visuals: `three` + `@react-three/*`
-- Testing: Vitest
-- Optional e2e: Playwright
-- Deployment: Docker, Netlify, OpenNext/Cloudflare, standard Next.js hosting
+- Styling: Tailwind CSS v4, PostCSS
+- Authentication: Clerk (@clerk/nextjs)
+- Data & caching: @tanstack/react-query
+- Forms & validation: react-hook-form + zod
+- State: zustand
+- Charts/visuals: recharts, three.js + @react-three/*
+- Motion/UX: framer-motion, gsap, lenis
+- Notifications: sonner
+- Testing: vitest (unit), Playwright available for e2e
+- Deployment helpers: OpenNext (Cloudflare), netlify.toml, Dockerfile
 
-## Key architecture decisions
+---
 
-- App Router route organization is under `src/app/`.
-- Public routes are separated from authenticated route groups under `src/app/(app)` to avoid loading Clerk everywhere.
-- Route protection is enforced by `src/proxy.ts`, which reads Clerk claims and applies route policies from `src/lib/rbac/route-policy.ts`.
-- Runtime environment validation is enforced via `src/lib/config/validation.ts` to fail fast on missing or invalid required values.
-- Server and client environment values are separated intentionally: public variables are prefixed `NEXT_PUBLIC_*`, while secret values remain server-side only.
+## Architecture at a glance
 
-## Repository structure
+- Provider & metadata composition lives in `src/app/layout.tsx`.
+- Authenticated pages live in `src/app/(app)/` and are wrapped with Clerk providers in `src/app/(app)/layout.tsx`.
+- Route-level RBAC and early blocking are implemented in `src/proxy.ts`, which translates Clerk session claims into policy decisions from `src/lib/rbac/route-policy.ts`.
+- Environment validation uses `src/lib/config/validation.ts` (zod) and fails fast on invalid or missing runtime configuration.
+- Features are organized under `src/features/*` (renter, landlord, maintenance, lease, property, tenant, admin, etc.).
+
+This design enforces performance (public pages stay small), security (guard before rendering), and type safety (OpenAPI-driven client types).
+
+---
+
+## Repository layout
 
 ```text
 .
 ├── src/
-│   ├── app/                  # Next.js App Router pages and route trees
-│   │   ├── (app)/            # Authenticated route group (dashboard, admin, portal, onboarding)
-│   │   ├── api/              # API routes and server endpoints
-│   │   ├── legal/            # Legal / privacy / terms pages
-│   │   ├── listings/         # Public listings pages
-│   │   ├── reserve/          # Reservation flow
-│   │   ├── tenant-required/  # Tenant gating flow
-│   │   ├── page.tsx          # Homepage
-│   │   ├── layout.tsx        # Root app layout
-│   │   ├── globals.css       # Global styles
-│   │   └── ...
-│   ├── features/             # Domain modules: admin, maintenance, lease, property, renter, tenant, etc.
-│   ├── lib/                  # Auth, API, RBAC, config, utilities
-│   ├── providers/            # Query provider, theme provider, app-wide providers
-│   ├── shared/               # Shared components and UI blocks
-│   ├── stores/               # Zustand stores
-│   ├── types/                # Type definitions
-│   ├── proxy.ts              # Route-level RBAC proxy / middleware equivalent
-│   └── ...
-├── public/                   # Static assets, icons, OG assets, favicons
-├── scripts/                  # Dev/deployment utilities
-├── .env.example              # Frontend environment template
-├── src/lib/config/.env.example # Additional config template for app-specific runtime values
-├── Dockerfile                # Container build config
-├── netlify.toml              # Netlify deployment config
-├── next.config.ts            # Next.js config
-├── open-next.config.ts       # OpenNext config for Cloudflare/Workers deployments
-├── wrangler.jsonc            # Cloudflare deployment config
-├── tailwind.config.js        # Tailwind config
-├── vitest.config.ts          # Vitest config
-├── eslint.config.mjs         # ESLint config
-├── package.json              # Scripts and dependency manifest
-├── tsconfig.json             # TypeScript config
-├── postcss.config.js         # PostCSS config
-├── LICENSE                   # Repository license
-├── README.md                 # Project documentation
-└── ...
+│   ├── app/                # Next.js App Router (pages, layouts, api routes)
+│   ├── features/           # Domain feature modules
+│   ├── providers/          # Query, theme and other providers
+│   ├── lib/                # Auth, RBAC, api clients, config, utilities
+│   ├── shared/             # Shared UI components
+│   ├── stores/             # zustand stores
+│   └── types/              # TS types
+├── public/                 # Static assets (og images, icons, screenshots)
+├── .env.example            # Env template validated at startup
+├── Dockerfile
+├── netlify.toml
+├── open-next.config.ts
+├── wrangler.jsonc
+├── package.json
+├── tsconfig.json
+├── README.md
+├── CONTRIBUTING.md
+└── docs/ or companion MD files
 ```
 
-## Core application flows
+---
 
-- Public marketing and listings: rendered outside the authenticated route group.
-- Authenticated shell: `src/app/(app)/layout.tsx` wraps the app with Clerk authentication providers.
-- Route access: `src/proxy.ts` handles requests before rendering, applying route policies and signed-out redirect behavior.
-- API communication: the frontend expects a backend API base URL with `/api/v1` suffix and builds typed request paths from that base.
-- Monitoring: Sentry can be enabled for client-side error monitoring via `NEXT_PUBLIC_SENTRY_DSN`.
+## Quick start (developer)
 
-## Prerequisites
-
-Before running locally, make sure you have:
-
+Prerequisites
 - Node.js 18+ (LTS recommended)
 - npm
-- A running backend API instance that exposes the expected endpoints
-- A valid Clerk account and project with a publishable key and secret
-- Optional: Stripe keys if you are testing billing-related flows
-- Optional: Sentry DSN if you want monitoring enabled
+- Running backend API (or a dev mock)
+- Clerk test project (publishable & secret keys)
 
-## Environment variables
-
-Copy the sample environment file before starting development:
+Steps
 
 ```bash
-cp .env.example .env.local
-```
-
-The project enforces validation on startup. Required and optional values are defined in `.env.example` and `src/lib/config/validation.ts`.
-
-### Required values
-
-- `NEXT_PUBLIC_APP_NAME` — app display name, e.g. `RentManager`
-- `NEXT_PUBLIC_APP_ENV` — one of `development`, `test`, `production`
-- `NEXT_PUBLIC_API_URL` — base API URL, must include `/api/v1`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk public key
-- `CLERK_SECRET_KEY` — Clerk server secret
-
-### Common optional values
-
-- `NEXT_PUBLIC_APP_URL` — canonical app URL used for metadata and canonical links
-- `NEXT_PUBLIC_APP_VERSION` — app version string
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key
-- `STRIPE_SECRET_KEY` — Stripe secret for server-side billing flows
-- `STRIPE_WEBHOOK_SECRET` — Stripe webhook secret
-- `NEXT_PUBLIC_SENTRY_DSN` — Sentry client DSN
-- `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` — privacy/legal contact email
-- `CLERK_WEBHOOK_SIGNING_SECRET` — required if webhooks are used
-- `ENABLE_PREMIUM_FEATURES` — set to `true` to enable premium functionality
-
-Important: `NEXT_PUBLIC_API_URL` must include the `/api/v1` suffix. This is required by the client structure and is validated at startup.
-
-## Local development
-
-Install dependencies:
-
-```bash
+git clone https://github.com/hassan200503/rentmanager-frontend.git
+cd rentmanager-frontend
 npm ci
+cp .env.example .env.local
+# edit .env.local to point to your local backend and Clerk test keys
+npm run dev
 ```
 
-Start the development server:
+Open http://localhost:3000
+
+The app performs env validation on startup — missing or invalid required values produce descriptive errors.
+
+---
+
+## Getting a test Clerk account (short guide)
+
+1. Sign up at https://clerk.com and create a new project (development).
+2. From the Clerk dashboard, copy the Publishable key (pk_...) and the Secret key (sk_...).
+3. (Optional) Configure a JWT template (commonly named `backend`) that contains platform claims like `platformRole` and `tenant_id` if your backend validates them.
+4. (Optional) Configure a webhook and copy the signing secret for `CLERK_WEBHOOK_SIGNING_SECRET` if you plan to test webhook flows.
+5. Add the keys to `.env.local`:
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
+```
+
+6. Start the app and sign in via `/public/sign-in` (the app uses branded sign-in routes).
+
+Notes: For admin/landlord flows you may need test users with specific claims; coordinate with the backend to mint test tokens or seed users.
+
+---
+
+## Environment variables (high level)
+
+See `.env.example` and `src/lib/config/.env.example` for full lists. The most critical values:
+
+- `NEXT_PUBLIC_API_URL` (required) — base API origin and MUST include the `/api/v1` suffix. The app validates and normalizes this value.
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (required)
+- `CLERK_SECRET_KEY` (required for server routes)
+- `NEXT_PUBLIC_APP_URL` (recommended)
+- `NEXT_PUBLIC_SENTRY_DSN` (optional — enable Sentry)
+
+Remember: `NEXT_PUBLIC_*` variables are public at build-time. Keep sensitive keys server-side.
+
+---
+
+## Running locally
 
 ```bash
 npm run dev
 ```
 
-Open the app in your browser:
+If you need to run only parts of the app (e.g., public pages) ensure the environment is set accordingly. Auth pages live under the `(app)` route group and require Clerk.
 
-```text
-http://localhost:3000
-```
+---
 
-## Production build
-
-Build the app:
+## Building for production
 
 ```bash
 npm run build
-```
-
-Run the production server:
-
-```bash
 npm start
 ```
 
-This repository contains multiple deployment targets, including OpenNext/Cloudflare, Docker, and Netlify configs. Choose the hosting model that matches your deployment environment and populate the required secrets in the host or CI provider.
+Provide production environment variables via your host (Netlify/Cloudflare Secrets/Container envs). Ensure `NEXT_PUBLIC_API_URL` points to the production API and includes `/api/v1`.
 
-## Scripts
+---
 
-The project scripts are defined in `package.json`:
+## Testing & CI
 
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-npm test
-```
+Unit tests: `npm test` (Vitest)
+Lint: `npm run lint`
 
-## Testing
+Playwright is included in devDependencies for e2e; add CI jobs to run it if you include e2e tests.
 
-The repository includes Vitest and a lint configuration.
+---
 
-Run tests:
+## Deployment options
 
-```bash
-npm test
-```
+Supported in-repo configs:
+- Docker (Dockerfile)
+- Netlify (netlify.toml)
+- Cloudflare/OpenNext (open-next.config.ts, wrangler.jsonc)
+- Standard Node hosting (next build / next start)
 
-Run lint:
+Pick the target and ensure required secrets are populated in the provider.
 
-```bash
-npm run lint
-```
-
-Playwright is present in the `devDependencies`, suggesting e2e coverage may be used in the project as it evolves.
-
-## API and backend integration
-
-This frontend expects an API backend with the shape used by the RentManager platform. A few important notes:
-
-- The API base is configured through `NEXT_PUBLIC_API_URL`.
-- The frontend uses OpenAPI-driven patterns and typed API generation tooling.
-- Route decisions rely on backend-backed JWT claims and session metadata, especially for admin and tenant-specific paths.
-- For protected routes, client-side restrictions are not sufficient by themselves; server-side auth remains the source of truth.
-
-If the backend contract changes, regenerate the API client and re-run validation before merging.
+---
 
 ## Security notes
 
-- Never commit secrets to the repository.
-- Keep `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, webhook secrets, and backend tokens in your secret manager or hosting environment.
-- Only public values should be placed in `NEXT_PUBLIC_*` variables.
-- The route RBAC proxy is a defense-in-depth layer; important authorization checks must still exist in backend endpoints.
+- Do not commit secrets. Keep server-only keys (`CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, webhook secrets) in your hosting or CI secret manager.
+- `src/proxy.ts` enforces RBAC as a defense-in-depth measure; critical authorization must still be verified by the backend API.
+- The frontend validates environment variables at startup to reduce misconfiguration risk.
 
-## Contributing
+See `SECURITY.md` for responsible disclosure guidance.
 
-Please keep changes focused and reviewable. Before opening a PR:
+---
 
-- keep branches small and descriptive
-- run tests and lint locally
-- verify environment variables and deployment assumptions
-- document any contract changes with the backend team
-- include screenshots or a brief demo when altering UI flows
+## Contributing & recruiter guidance
+
+This repo is arranged to be recruiter-friendly: clear architecture, typed API contracts, environment validation, and multiple deployment configs.
+
+Before opening a PR:
+- run `npx tsc --noEmit`
+- run `npm test` and `npm run lint`
+- include a short description, testing steps, and screenshots/GIFs for UI changes
+
+See `CONTRIBUTING.md` for the full workflow.
+
+---
 
 ## Troubleshooting
 
-If you hit issues during local development, check the following:
+- 404s: ensure `NEXT_PUBLIC_API_URL` ends with `/api/v1`.
+- Clerk issues: validate Clerk keys and the `NEXT_PUBLIC_APP_URL` configuration in the Clerk dashboard.
+- Redirects using `http` instead of `https`: verify hosting forwarded-proto headers and `NEXT_PUBLIC_APP_URL`.
+- Env validation errors: read the zod validation messages in `src/lib/config/validation.ts`.
 
-- API requests fail with 404s: confirm `NEXT_PUBLIC_API_URL` ends with `/api/v1`.
-- Clerk redirect issues: verify your publishable key and session settings; ensure sign-in pages are configured correctly.
-- Redirects show `http://` instead of `https://`: confirm the public origin and hosting forward-proto settings.
-- Missing env values: every required value is validated at startup, so the app will fail early with a clear message when configuration is incomplete.
+---
+
+## Key files
+
+- `src/proxy.ts` — route-level RBAC proxy
+- `src/app/(app)/layout.tsx` — authenticated route boundary
+- `src/app/layout.tsx` — global providers & metadata
+- `src/lib/config/validation.ts` — env validation logic
+- `src/lib/rbac/route-policy.ts` — access policy
+- `src/features/*` — domain modules
+
+---
 
 ## License
 
-This project includes a LICENSE file at the repository root. Please review it before redistribution or commercial use.
+MIT — see `LICENSE` in the repository root.
 
-## Recommended next reads
+---
 
-- `src/proxy.ts` — route-level RBAC enforcement
-- `src/app/(app)/layout.tsx` — authenticated route boundary
-- `src/lib/config/validation.ts` — environment validation rules
-- `src/app/layout.tsx` — top-level providers and metadata
-- `src/lib/rbac/route-policy.ts` — central access policy logic
-
-## Summary
-
-RentManager Frontend is a production-oriented, authenticated web application for property management. It combines a strong Next.js app architecture, Clerk RBAC, tenant/landlord/admin personas, and a deployment-ready configuration for real hosting environments. The project is structured for maintainability and is designed to work alongside a backend API rather than as a standalone application.
+If you'd like, I will also commit companion docs (ARCHITECTURE.md, DEVELOPMENT.md, API.md, SECURITY.md) and add polished screenshot/GIF placeholders under `public/screenshots/`. Would you like me to add those companion files now?
