@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <text x="20" y="40" fill="#0f172a" font-size="20" font-family="Arial" font-weight="700">Product flow</text>
+  <rect x="40" y="70" width="180" height="150" rx="12" fill="#f3f4f6" stroke="#d1d5db"/>
+  <text x="70" y="110" fill="#111827" font-size="16">1. Sign in</text>
+  <rect x="260" y="70" width="560" height="150" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="290" y="110" fill="#111827" font-size="16">2. Dashboard shows rent, maintenance, and recent activity</text>
+  <text x="290" y="140" fill="#475569" font-size="14">Tenant, landlord, and admin views adapt to access rules</text>
+</svg>
