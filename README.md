@@ -250,5 +250,3 @@ See `CONTRIBUTING.md` for the full workflow.
 MIT — see `LICENSE` in the repository root.
 
 ---
-
-If you'd like, I will also commit companion docs (ARCHITECTURE.md, DEVELOPMENT.md, API.md, SECURITY.md) and add polished screenshot/GIF placeholders under `public/screenshots/`. Would you like me to add those companion files now?
