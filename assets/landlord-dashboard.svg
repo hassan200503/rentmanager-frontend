@@ -1,0 +1,45 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#lg1)" rx="12"/>
+  
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="220" height="500" fill="#ffffff" rx="12"/>
+  <text x="40" y="60" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="#1e293b">RentManager</text>
+  <rect x="30" y="100" width="160" height="40" fill="#e2e8f0" rx="6"/>
+  <text x="50" y="128" font-family="Inter, sans-serif" font-size="14" fill="#475569">Dashboard</text>
+  <rect x="30" y="155" width="160" height="40" fill="#dbeafe" rx="6"/>
+  <text x="50" y="183" font-family="Inter, sans-serif" font-size="14" fill="#2563eb">Collections</text>
+  <rect x="30" y="210" width="160" height="40" fill="#e2e8f0" rx="6"/>
+  <text x="50" y="238" font-family="Inter, sans-serif" font-size="14" fill="#475569">Properties</text>
+  
+  <!-- Main content -->
+  <rect x="240" y="30" width="530" height="60" fill="#ffffff" rx="8"/>
+  <text x="260" y="65" font-family="Inter, sans-serif" font-size="18" font-weight="600" fill="#1e293b">Rent Collections</text>
+  <text x="260" y="85" font-family="Inter, sans-serif" font-size="14" fill="#64748b">KES 2,450,000 collected this month</text>
+  
+  <!-- Stat cards -->
+  <rect x="240" y="110" width="165" height="100" fill="#ffffff" rx="8"/>
+  <text x="260" y="140" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#475569">Total Rent</text>
+  <text x="260" y="170" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#1e293b">KES 2.4M</text>
+  
+  <rect x="415" y="110" width="165" height="100" fill="#ffffff" rx="8"/>
+  <text x="435" y="140" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#475569">Pending</text>
+  <text x="435" y="170" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#f59e0b">KES 450K</text>
+  
+  <rect x="240" y="230" width="165" height="100" fill="#ffffff" rx="8"/>
+  <text x="260" y="260" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#475569">Properties</text>
+  <text x="260" y="290" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#2563eb">12</text>
+  
+  <rect x="415" y="230" width="165" height="100" fill="#ffffff" rx="8"/>
+  <text x="435" y="260" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#475569">Tenants</text>
+  <text x="435" y="290" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#10b981">48</text>
+  
+  <!-- M-Pesa badge -->
+  <rect x="620" y="410" width="150" height="50" fill="#2563eb" rx="8"/>
+  <text x="645" y="438" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#ffffff">M-Pesa Integrated</text>
+</svg>

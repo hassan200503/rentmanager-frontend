@@ -1,0 +1,25 @@
+<svg width="1200" height="400" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#grad1)" rx="16"/>
+  <circle cx="900" cy="320" r="200" fill="url(#grad2)" opacity="0.15"/>
+  <circle cx="1100" cy="100" r="150" fill="#10b981" opacity="0.1"/>
+  <circle cx="100" cy="300" r="120" fill="#f59e0b" opacity="0.1"/>
+  
+  <text x="60" y="140" font-family="Inter, sans-serif" font-size="34" font-weight="800" fill="#ffffff">RentManager</text>
+  <text x="60" y="180" font-family="Inter, sans-serif" font-size="18" fill="#cbd5e1">Property Management for the Kenyan Rental Market</text>
+  
+  <rect x="60" y="240" width="200" height="44" fill="url(#grad2)" rx="8"/>
+  <text x="85" y="274" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#ffffff">Live Demo →</text>
+  
+  <text x="600" y="180" font-family="Inter, sans-serif" font-size="16" fill="#94a3b8">• Next.js 16 • TypeScript • Clerk • M-Pesa • Tailwind CSS</text>
+  <text x="600" y="210" font-family="Inter, sans-serif" font-size="16" fill="#94a3b8">• TanStack Query • Zod • Recharts • Framer Motion</text>
+</svg>

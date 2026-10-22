@@ -1,0 +1,43 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#lg1)" rx="12"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="80" fill="#ffffff" rx="12"/>
+  <text x="40" y="55" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="#1e293b">RentManager • Tenant Portal</text>
+  <text x="40" y="75" font-family="Inter, sans-serif" font-size="14" fill="#64748b">Welcome back, John</text>
+  
+  <!-- M-Pesa Payment Card -->
+  <rect x="40" y="120" width="340" height="200" fill="#ffffff" rx="12"/>
+  <rect x="60" y="145" width="300" height="6" fill="#e2e8f0" rx="3"/>
+  <rect x="60" y="165" width="200" height="6" fill="#e2e8f0" rx="3"/>
+  <text x="60" y="220" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#1e293b">Monthly Rent</text>
+  <text x="60" y="250" font-family="Inter, sans-serif" font-size="32" font-weight="700" fill="#1e293b">KES 45,000</text>
+  <text x="60" y="280" font-family="Inter, sans-serif" font-size="14" fill="#64748b">Due: 1st October 2026</text>
+  
+  <rect x="60" y="310" width="280" height="44" fill="#10b981" rx="8"/>
+  <text x="95" y="338" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#ffffff">Pay via M-Pesa</text>
+  
+  <!-- Maintenance Request -->
+  <rect x="400" y="120" width="360" height="200" fill="#ffffff" rx="12"/>
+  <text x="420" y="150" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#1e293b">Report Maintenance</text>
+  <rect x="420" y="175" width="320" height="44" fill="#e2e8f0" rx="6"/>
+  <text x="440" y="203" font-family="Inter, sans-serif" font-size="14" fill="#475569">Leaking kitchen tap</text>
+  <rect x="420" y="230" width="320" height="44" fill="#e2e8f0" rx="6"/>
+  <text x="440" y="258" font-family="Inter, sans-serif" font-size="14" fill="#475569">Upload photo...</text>
+  <rect x="420" y="285" width="320" height="44" fill="#3b82f6" rx="8"/>
+  <text x="455" y="313" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Submit Request</text>
+  
+  <!-- Receipts -->
+  <rect x="40" y="340" width="720" height="120" fill="#ffffff" rx="12"/>
+  <text x="60" y="370" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#1e293b">Payment Receipts</text>
+  <rect x="60" y="395" width="200" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="270" y="395" width="120" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="400" y="395" width="200" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="610" y="395" width="120" height="4" fill="#e2e8f0" rx="2"/>
+</svg>
