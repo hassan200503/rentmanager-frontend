@@ -43,7 +43,7 @@ const CLERK_CONNECT = ["https://*.clerk.com", "https://*.clerk.accounts.dev", CL
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactCompiler: true,
+  reactCompiler: false, // Disabled to fix __name is not defined error with OpenNext
 
   // Self-contained server bundle (node server.js) for the container image only.
   // Netlify's Next runtime packages the app itself and does not want it.
