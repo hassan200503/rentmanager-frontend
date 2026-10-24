@@ -120,10 +120,8 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en-KE" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
-        <head>
-            <NamePolyfillScript />
-        </head>
         <body className="antialiased">
+        <NamePolyfillScript />
         <SkipLink />
         {/* No ClerkProvider here on purpose. It lives in (app)/layout.tsx, so
             the landing page, the listings and the policy pages no longer fetch

@@ -1,3 +1,5 @@
+import Script from 'next/script';
+
 /**
  * Critical inline script that MUST run before ANY Next.js code.
  * 
@@ -7,7 +9,9 @@
 
 export function NamePolyfillScript() {
   return (
-    <script
+    <Script
+      id="name-polyfill"
+      strategy="beforeInteractive"
       dangerouslySetInnerHTML={{
         __html: `
           // Define __name before any Next.js code runs
