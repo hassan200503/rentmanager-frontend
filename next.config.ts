@@ -43,7 +43,10 @@ const CLERK_CONNECT = ["https://*.clerk.com", "https://*.clerk.accounts.dev", CL
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactCompiler: false, // Disabled to fix __name is not defined error with OpenNext
+  // React Compiler (experimental) is disabled because it generates __name() helper
+  // calls that OpenNext doesn't properly bundle for Cloudflare Workers deployment.
+  // See NamePolyfillScript.tsx for the runtime polyfill that handles remaining cases.
+  reactCompiler: false,
 
   // Self-contained server bundle (node server.js) for the container image only.
   // Netlify's Next runtime packages the app itself and does not want it.
