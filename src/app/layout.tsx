@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, IBM_Plex_Mono, Instrument_Serif, Fraunces } from "next/font/google";
 import dynamic from "next/dynamic";
+import { NamePolyfillScript } from "./NamePolyfillScript";
 
 import QueryProvider from "@/providers/query-provider";
 import ThemeProvider from "@/providers/theme-provider";
@@ -119,6 +120,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en-KE" className={`${inter.variable} ${plexMono.variable} ${instrumentSerif.variable} ${fraunces.variable}`} suppressHydrationWarning>
+        <head>
+            <NamePolyfillScript />
+        </head>
         <body className="antialiased">
         <SkipLink />
         {/* No ClerkProvider here on purpose. It lives in (app)/layout.tsx, so
