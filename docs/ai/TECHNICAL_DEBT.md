@@ -1,0 +1,1643 @@
+# Technical Debt Register
+
+Every item below was verified against the source on the date shown, not
+inferred from documentation. Items are removed when fixed, not when they
+stop being mentioned.
+
+Status key: OPEN · IN PROGRESS · RESOLVED
+
+---
+
+## RESOLVED — 2026-09-01/02
+
+| ID | Description | Evidence it is fixed |
+|----|-------------|----------------------|
+| TD-001 | `FinancialOverview` was a hard-coded array rendering a green "+12%" beside "KES 0" | Now reads `GET /rent-ledger/summary`; 9 integration tests |
+| TD-002 | Dashboard invented `portfolioHealthScore`; `healthBreakdown.collections` held no collections data; `revenue` was `occupancyRate + 10` | Deleted. `HealthScore.tsx` removed |
+| TD-003 | Occupancy counted *properties* not units, and read one page | Now `GET /units/summary`, counted in SQL |
+| TD-004 | `PropertyRanking` derived a percentage from the property name's character codes and ranked by it | Replaced with status-based "Needs attention" |
+| TD-005 | `InsightsEngine` claimed "Occupancy dropped to X%" with no time series | Now "Occupancy is X%" |
+| TD-006 | `lib/mpesa/matching-engine.ts` — Levenshtein unit matching, float money, wrong timezone | Deleted with its tests |
+| TD-007 | Audit module persisted nothing (`// JPA implementation later`) | V86 + real repository; 7 integration tests |
+| TD-008 | `SimpleRateLimiter` had no time window, non-atomic counter, no eviction | Replaced by `SlidingWindowRateLimiter` |
+| TD-009 | `/actuator/health` permitted in SecurityConfig with no actuator dependency | Actuator added; probes verified returning 200 |
+| TD-010 | `MDC traceId` read by `ErrorTrackingService`, set by nothing | `TraceIdFilter`; 10 tests |
+| TD-012 | Disbursement retry replayed a stored recipient with no re-validation, and was unaudited | Guard + audit; 8 tests in `DisbursementRetryGuardTest` |
+| TD-014 | Admin overview linked "failed payments" / "payments pending" to `/admin/payments`, a route that never existed | Endpoint + page + 10 RBAC tests; all admin dashboard hrefs now resolve |
+| TD-013 | `payout_phone_number` was unsettable — no endpoint, no UI — while three paths required it | `PayoutDestinationController`; 10 RBAC tests |
+| TD-011 | Relative `canonical` / `og:url` shipped because `metadataBase` was undefined | `appConfig.siteUrl` always absolute |
+
+---
+
+## Detail — resolved and open, by id
+
+Most entries below are RESOLVED and kept for their reasoning; the genuinely
+open items are listed together at the end of this file.
+
+### TD-101 · RESOLVED 2026-09-02 — per-property unit counts
+`GET /units/occupancy-by-property` counts occupied-over-total per property in
+one grouped query. The dashboard's "Needs attention" panel now shows
+"39 of 40 units occupied" from real data, falling back to the categorical
+label when the counts have not loaded or a property has no units.
+
+ARCHIVED units are excluded from both figures, matching
+`PropertyOccupancyRollupListener` — otherwise a property could read "fully
+occupied" beside counts that disagreed. Six integration tests against real
+PostgreSQL, including cross-tenant isolation and the archived exclusion.
+
+**Cost a context-load failure on the way.** The first version used a JPQL
+constructor expression (`new PropertyUnitCounts(...)`); `COUNT`/`SUM` yield
+`Long` while the record takes primitive `long`, and Hibernate validates that
+at **startup**, not at the call site. It would have broken application boot,
+not just this query. Replaced with raw grouped rows mapped in the adapter —
+less elegant in the repository, but a read query should not be able to cost
+you the whole application.
+
+<details><summary>Original entry</summary>
+
+**ORIGINAL — HIGH VALUE, LOW RISK**
+**Verified:** `PropertyOccupancyRollupListener` computes `totalUnits` and
+`occupiedUnits` per property and **discards both**, persisting only the
+derived `OccupancyStatus` enum. `Property.unitCount` is a user-entered
+*dimension*, not a live count.
+
+**Impact:** No truthful per-property occupancy percentage is possible, which
+is why the "Needs attention" panel is categorical rather than quantified.
+"Sunset Apartments — 39/40 occupied" is what a landlord actually wants.
+
+**Fix:** Read-side aggregate grouping units by property. No schema change, no
+sync risk. **Trigger:** next time the dashboard analytics are touched.
+</details>
+
+### TD-102 · RESOLVED 2026-09-02 — renter money types declared `number`
+**What was actually wrong.** The backend was already correct: `JacksonConfig`
+serialises *every* `BigDecimal` as a JSON string, globally. The defect was on
+the client — eight renter-facing response fields were declared `number` while
+receiving `"15000.00"`.
+
+**Why that mattered more than a type inaccuracy.** TypeScript would have
+accepted `totalPaid + totalDue`, which at runtime concatenates: `"100"` plus
+`"200"` is `"100200"`, silently, on a screen showing a renter what they owe.
+
+**What was already right.** Every current use site coerces through
+`toMoneyNumber()` before arithmetic, so nothing was broken at runtime —
+`tsc` found zero breakages after the retype. The fix removes the trap rather
+than a live bug.
+
+**Fixed:** `monthlyRent`, `depositAmount`, `totalPaid`, `totalDue`,
+`overdueAmount`, `nextDueAmount`, `amount`, `balanceAfter` and
+`RentPaymentRequestResponse.amount` are now `MoneyValue`.
+
+**Deliberately unchanged:** *request* types still use `number`
+(`SetCommissionRateRequest`, `InitiateDisbursementRequest`, lease and unit
+requests). Jackson deserialises a JSON number into `BigDecimal` correctly, and
+Kenyan rent figures are exact in a double. The precision risk is one-way.
+
+**Also verified already correct:** `DisbursementResponse.amount`,
+`CommissionPolicy.ratePercent` and `LandlordCommission.ratePercent` were
+typed `string` with the right comment.
+
+### TD-103 · RESOLVED 2026-09-02 — `tenantScoped` builder removed
+Produced `/tenants/{tenantId}/properties` under a comment claiming it
+"ensures strict multi-tenant isolation" — the opposite of what a tenant id in
+a URL path does. Imported by nothing. Deleted rather than deprecated so
+autocomplete cannot revive it; only an explanatory comment remains in
+`lib/api/endpoints.ts`.
+
+### TD-104 · RESOLVED 2026-09-02 — `react-redux` removed
+Declared, imported by nothing. Two state libraries remain, both used
+(React Query, Zustand).
+
+### TD-105 · RESOLVED 2026-09-07 — gsap deferred from the initial bundle
+
+`HowItWorksSection` called `gsap.registerPlugin(ScrollTrigger)` at module
+scope, so the static import pulled ~107 KB of gsap into the initial chunk
+regardless of scroll position.
+
+**Fixed:** `HowItWorksSection` is now a `next/dynamic` import (ssr: false)
+wrapped in `DeferUntilNearViewport` (rootMargin: "400px 0px"), matching the
+pattern already applied to the three.js map. The chunk is not fetched until
+the section is near the viewport; the 400 px pre-load buffer means it arrives
+before the user scrolls that far, so the animation is unaffected. A
+`save-data` visitor skips it entirely.
+
+### TD-106 · RESOLVED 2026-09-02 — phantom `tenant_settings` cluster removed
+It was four dead classes, not one: the `@Entity` mapped to a table no
+migration creates, its never-implemented `TenantSettingsRepository` port, and
+`TenantProvisioningDomainService` / `TenantOnboardingDomainService` — both
+with zero callers. Live onboarding goes through `CreateTenantCommandHandler`
+and was unaffected.
+
+Also removed the three notification booleans from both sides of the wire.
+`TenantSettingsResponse.from()` never set them, so they serialised as `false`
+on every response regardless of any setting, and the request accepted them and
+discarded them — which is worse than rejecting them, because the caller
+believes the setting saved.
+
+<details><summary>Original entry</summary>
+
+**ORIGINAL**
+**Verified:** `domain.model.TenantSettings` is an `@Entity` mapped to a table
+no migration creates, with `ddl-auto: none`. `emailNotificationsEnabled` /
+`smsNotificationsEnabled` are exposed in the settings API and read by nothing.
+**Fix:** either add the columns to `tenants` (where the other settings live)
+or delete the entity. Do not leave it half-wired.
+</details>
+
+### TD-107 · RESOLVED 2026-09-07 — thin frontend test coverage
+Money utilities (`formatCurrency`, `formatCurrencyPrecise`, `formatRate`,
+`toMoneyNumber`) and access-control logic (`hasRole`, `WRITE_ROLES`) now have
+dedicated test files. Suite is at 103 tests; the files added are
+`src/shared/utils/money.test.ts` and `src/features/user/lib/roles.test.ts`.
+
+The `useHasRole` hook and `<RequireRole>` component cannot be tested in the
+`node` vitest environment (no DOM); the pure `hasRole` predicate those
+components delegate to is what needed protection, and it is now covered.
+
+
+### TD-108 · RESOLVED 2026-09-02 — two audit actions declared and never wired
+**Fix:** `COMMISSION_POLICY_CHANGED` is now written by all three
+`CommissionPolicyService` mutations (default rate, landlord override, and
+clearing an override — the last recorded as a change to "cleared", because
+reverting to the platform default is still a rate change). Previous and new
+rates are captured *before* deactivation, since afterwards the old rate is
+only recoverable by reading deactivated rows in the right order.
+
+`PAYMENT_CREDENTIALS_CHANGED` is written by
+`TenantCommandServiceImpl.configureDarajaCredentials` — the per-landlord V28
+path, which had no audit at all. The platform-level integrations path was
+found to have its own trail already (`integration_audit_log`, V68) and was
+deliberately **not** duplicated.
+
+No credential material is recorded: only that a rotation happened, for whom,
+and by whom. Recording more at a rotation would create the leak the row exists
+to detect.
+
+<details><summary>Original entry</summary>
+
+`COMMISSION_POLICY_CHANGED` and `PAYMENT_CREDENTIALS_CHANGED` exist on
+`AuditAction` with **zero call sites**. `CommissionPolicyService.setDefaultRate`
+/ `setLandlordRate` / `clearLandlordRate` and the Daraja credential save path
+are unaudited.
+
+**Why it matters:** both change how much money moves and where. A platform
+owner altering a landlord's commission rate, or rotating payment credentials,
+currently leaves no attributable record.
+
+**Verified:** grep for each constant outside `AuditAction.java` returns
+nothing. **Note:** this is the same phantom pattern the register exists to
+catch, introduced by me — the enum values were added ahead of their call sites.
+
+**Trigger:** next time either service is touched. Low effort; the
+`FinancialAuditService` entry points already exist alongside the wired ones.
+
+</details>
+
+
+### TD-109 · RESOLVED 2026-09-02 — unbacked claims in the pricing fallback
+**Found while auditing the tax surface.** `PricingSection`'s `genericFeatures`
+— the fallback for any plan code without `LANDLORD_PLAN_META` — claimed
+"Unlimited property listings", "Priority support" and "eTIMS-ready digital
+receipts".
+
+**Correction to the first read:** the three self-service plans are *not*
+affected. `LANDLORD_PLAN_META` carries accurate, cap-aware features for
+STARTER/GROWTH/PORTFOLIO ("Up to 10 units", "Everything in Starter, up to 30
+units"). The fallback only renders for ENTERPRISE today.
+
+**Why it still mattered:** it is a trap, not a live lie. Every self-service
+plan is unit-capped in V50 (10/30/75), so any plan code added later without
+metadata would have inherited a false "unlimited". The unit allowance is now
+read off `plan.maxUnits` and can never contradict the catalogue.
+
+"Priority support" had no backing at all: there is no support tier, ticketing
+or SLA for RentManager's own customers. The SLA code in the repo is the
+maintenance module — a landlord's response time to a tenant's repair request.
+
+### TD-110 · RESOLVED 2026-09-02 — "eTIMS Compliant" badge was a dormant trap
+The renter payment receipt rendered a badge reading **"eTIMS Compliant"**,
+gated on `receipt.eTimsInvoiceNumber`.
+
+It never displayed: `TenantPortalService` hardcodes that field to `null`
+because the eRITS and eTIMS transmission adapters are honest stubs returning
+`NOT_AVAILABLE`. But the moment anything populated it with a locally generated
+number, a renter would have been shown a **statutory compliance claim** with
+no KRA involvement. Relabelled "eTIMS invoice" — the platform can display a
+number KRA issued; it cannot certify compliance.
+
+**Positive finding from the same audit:** the tax module is the best-behaved
+stub in the codebase. `ManualSubmissionErisTransmissionAdapter` is named for
+what it is, documents itself as a Phase 1 stub, returns `NOT_AVAILABLE` with a
+reason, and leaves filings `COMPUTED` for landlord preview. The receipt PDF
+prints "Pending KRA Integration" rather than implying a filing happened. This
+is the model the rest of the codebase should have followed.
+
+### TD-111 · RESOLVED 2026-09-02 — `UnitQueryController` had no role gate
+**Found while adding the occupancy aggregate to it.** None of its seven read
+methods carried a `@PreAuthorize`, while the sibling `UnitCommandController`
+gates all of its own. The backend rule is both halves — the annotation *and*
+`TenantContext` scoping — and only one was present.
+
+**Not exploitable, and worth fixing anyway.**
+`TenantContext.getTenantId()` throws `TenantContextNotBoundException` when
+nothing is bound, so a renter or onboarding user hit a failure rather than
+another landlord's units. But they got an error where a 403 belonged, and the
+protection rested entirely on that throw — one refactor to
+`getTenantIdOrNull()` from returning data.
+
+Class-level gate added for OWNER/MANAGER/**STAFF**: a caretaker needs to see
+the units they look after, while creating and editing them stops at MANAGER on
+the command side. Seven RBAC tests.
+
+### TD-112 · RESOLVED 2026-09-03 — `UnitMediaController` had no role gate, and neither did its two property-media siblings
+Fixed. The sweep that found `UnitMediaController` had **no** `@PreAuthorize`
+turned out to be one of three: `PropertyMediaController` and
+`PropertyMediaQueryController` had exactly the same gap, undiscovered until
+this fix went looking for precedent. This was not a theoretical hole — a
+renter's JWT carries the landlord's `tenantId`
+(`ClerkJwtAuthenticationConverter` sets `TenantContext` from the JWT
+regardless of role), and the tenant-scoped service layer underneath these
+controllers would accept that tenantId without checking who the caller was.
+A renter could upload arbitrary files, delete the landlord's real photos, or
+reorder/rename captions on units and properties belonging to the landlord
+they rent from.
+
+Reads gated OWNER/MANAGER/STAFF (`UnitQueryController`'s existing pattern);
+writes gated OWNER/MANAGER only (`PropertyCommandController`'s existing
+pattern for property mutations). Regression-guarded by three new security
+test classes — `UnitMediaControllerSecurityTest` (15 tests, explicitly
+proving a renter is forbidden on every method), `PropertyMediaControllerSecurityTest`
+(10), `PropertyMediaQueryControllerSecurityTest` (5) — none of which existed
+before, since these controllers had zero test coverage of any kind.
+
+**Deliberately not decided here:** whether STAFF should also be able to
+*write* media (a caretaker adding photos), as opposed to only view it. See
+TD-114.
+
+### TD-114 · RESOLVED 2026-09-03 — no frontend precedent for hiding a write action a role can't perform
+Fixed for the media managers, which is what TD-112's backend fix sat behind.
+Asked directly, the product answer is that STAFF is read-only on property and
+unit media — matching the `@PreAuthorize` restriction TD-112 already shipped
+(writes OWNER/MANAGER only), not a request to loosen it. See ADR-0013 for the
+full reasoning and the options that were rejected.
+
+Built the reusable pattern this item called for, rather than a one-off patch:
+`features/user/lib/roles.ts` (`WRITE_ROLES` constant + `hasRole()` predicate),
+`features/user/hooks/use-has-role.ts` (`useHasRole(roles)`), and
+`features/user/components/require-role.tsx` (`<RequireRole roles={...}>` for
+wrapping a whole block). `UnitMediaManager` and `PropertyMediaManager` both
+call `useHasRole(WRITE_ROLES)` once and use the result to hide the upload
+dropzone, the per-item "Make primary"/"Delete" buttons, and to adjust the
+empty-state copy for a read-only viewer.
+
+**Still open:** `PropertyCommandController`'s frontend gap (noted in the same
+search that found this one) is unfixed — its create/update/delete/archive
+buttons are still shown unconditionally to STAFF, who gets a 403 on submit.
+`WRITE_ROLES` is exported specifically so that fix can reuse it rather than
+redefine "OWNER or MANAGER" again.
+
+
+---
+
+## STILL OPEN — the whole list
+
+| ID | Item | Why it is still open |
+|----|------|----------------------|
+| TD-120 | `PLATFORM_CUSTODY` mode requires CBK authorisation + Safaricom consent | Licensing decision. UI is now accurate: reads `collectionMode` from the API; payout card shows neutral info (not amber warning) for DIRECT landlords; daraja config subtitle is mode-neutral. |
+| TD-121 | No residency dimension — non-resident landlords filed at wrong WHT rate | Product/legal decision: residency field on landlord + rate-schedule dimension needed. UI now states the resident-only scope and directs non-residents to a tax advisor. |
+
+Previously open items now resolved as of 2026-09-07:
+- ~~TD-107~~ — frontend coverage: 103 tests; money and access-control paths covered
+- ~~TD-115~~ — `@PreAuthorize` on all 3 ungated landlord controllers
+- ~~TD-118~~ — `ClerkWebhookController` at `POST /api/v1/webhooks/clerk` (Svix-verified)
+- ~~TD-126~~ — IT suite wired (Maven Failsafe); `markAwaitingDeposit()` inserted in all 11 broken paths
+- ~~TD-128~~ — V91 + domain/DTO change to `Instant` (2026-09-06)
+- ~~TD-105~~ — `HowItWorksSection` (gsap + ScrollTrigger, ~107 KB) now deferred behind `DeferUntilNearViewport` + `next/dynamic`, same pattern as the three.js map
+- ~~TD-117~~ — deposit path drains `RentDuePosted` before `save()` and publishes it; `RentPaymentApplied` deliberately suppressed (deposits are not rental income — firing it would generate a tax invoice)
+- ~~PropertyCommandController STAFF gap~~ — `properties/create`, `properties/[id]/units/create`, and `properties/[id]/units/[id]/edit` redirect STAFF to the read-only view via `useHasRole(WRITE_ROLES)`
+
+Resolved 2026-09-15:
+- `ReservationFulfillmentOrchestrator` — `TenantProfileCreatedEvent` and `ReservationCompletedEvent` were silently lost. Both services call `repository.save()` which reconstructs via `toDomain()` / `rehydrate()` — a fresh aggregate with an empty transient `domainEvents` list. The fix: pull events from the original in-memory aggregate **before** `save()`, then publish from the captured list. Pattern: `List<DomainEvent> events = x.pullDomainEvents(); x = repo.save(x); publisher.publishAll(events);`
+- `AfricasTalkingSmsService` — lacked `@ConditionalOnProperty`, so it was always registered as a Spring bean. When `LoggingSmsService` (conditional on `africastalking.enabled=false/missing`) was added, both were present in the test context simultaneously, causing `NoUniqueBeanDefinitionException` and breaking every `@SpringBootTest` that loaded `NotificationDispatchService`. Fixed by adding `@ConditionalOnProperty(prefix = "africastalking", name = "enabled", havingValue = "true")` to `AfricasTalkingSmsService`.
+
+
+### TD-113 · RESOLVED 2026-09-02 — no CI existed in either repository
+Neither repo had GitHub Actions, a Jenkinsfile, or any other pipeline. 1,355
+backend tests and 82 frontend tests ran only when someone remembered.
+
+Every money guard built over the last two sessions was protected by tests that
+nothing obliged anyone to run. One workflow per repo now runs on every push
+and pull request. See ADR-0011 for the details that make them actually work —
+Docker for Testcontainers, reuse disabled, and the build-time env vars
+`next.config.ts` requires.
+
+**Not covered, deliberately:** deployment, and branch protection (a repository
+setting rather than a file — turning it on is a call for the repo owner).
+
+
+### TD-115 · RESOLVED 2026-09-07 — tenant-scoped controllers now carry @PreAuthorize
+
+`CLAUDE.md` requires every controller method touching tenant data to carry
+`@PreAuthorize` **and** scope its repository call by `TenantContext` — both,
+because either alone is one mistake away from a leak. A sweep of the landlord
+surface found these carrying only the scoping half:
+
+| Controller | Was ungated | Fixed |
+|---|---|---|
+| `PropertyQueryController` | all 6 | Per-method `@PreAuthorize(LANDLORD_ROLES)` + `isAuthenticated()` for `/types` |
+| `ActivityLogController` | all 3 (incl. SSE stream) | Class-level `@PreAuthorize(LANDLORD_ROLES)` |
+| `UserQueryController` | both | `isAuthenticated()` for `/me`; `LANDLORD_ROLES` for user list |
+| `MaintenanceRequestController` | create, list, get-by-id | Fixed in TD-125 pass |
+
+**Resolved 2026-09-07.** All four controllers now carry `@PreAuthorize` on
+every mapping. The `PropertyQueryController`, `ActivityLogController`, and
+`UserQueryController` fixes were applied in this pass.
+
+**Not reachable by a renter through the normal flow, which is why it is debt
+and not a defect.** `resolveTenantId` returns null unless the JWT carries a
+`tenant_id` org claim, and `ClerkService`/`ClerkServiceImpl` contain no
+organization-membership calls at all — the backend never puts a renter in a
+landlord's Clerk org. With a null tenant these endpoints either throw
+(`requireTenantId`) or query a null tenant. Nothing fails open either: a
+sweep for `:tenantId IS NULL OR`-style optional filters found none in
+`src/main/java`, and the activity SSE map is a `ConcurrentHashMap` keyed by
+tenant, which rejects a null key rather than broadcasting.
+
+**Correcting a claim in `CHANGE_HISTORY.md`.** The TD-112 entry states "a
+renter's JWT carries the landlord's `tenantId`". That does not hold for the
+normal flow, per the above. It most likely came from the test fixture —
+`MockTenantAuthentication.asTenant(TENANT_ID, "ROLE_TENANT")` *constructs*
+that pairing, which proves a controller accepts it, not that production
+issues it. This does not weaken the TD-112 fix, which was right on its own
+terms: those controllers were open to anyone holding a tenant id.
+
+**The case where it does hold, and it is worse than this entry.** The
+`resolveTenantId` comment describes a user "added to the Clerk Org directly
+via Clerk's own dashboard, bypassing our invite flow". Someone added that way
+gets a non-null tenant, and that same code path then assigns them
+`UserRole.STAFF` and grants `ROLE_LANDLORD` — so a renter added to an org out
+of band does not merely reach the tables above, they become landlord staff.
+That is an operational constraint on how Clerk orgs are administered, not
+something these annotations would fix; worth stating explicitly before
+handing Clerk admin to anyone.
+
+**What it actually costs today.** Inside a landlord org there is no role
+distinction on these routes, so STAFF can read the full user directory and
+the live activity stream. Whether that is intended has never been decided —
+`TD-114` established the pattern (`WRITE_ROLES`, `useHasRole`, `RequireRole`)
+for the frontend half once it is.
+
+**Why it was not fixed in the same pass as ADR-0019.** That one restored a
+convention the author had already written down and applied to a sibling
+endpoint, so the correct authority was not in question. Here it is: deciding
+whether STAFF may enumerate colleagues or watch the activity feed is a product
+call, and guessing it would either break a working screen or quietly grant
+something nobody chose.
+
+**Ruled out while looking, and worth not re-checking:** `ReservationController`
+(public prospect flow), `AuthController`, the `*Callback` controllers and the
+`Public*` controllers are all deliberately open. `TenantController.getTenant`
+takes `{tenantId}` in the path but resolves the acting tenant from
+`TenantContext` and passes both to `validateTenantAccess` — that is the known
+`CLAUDE.md` defect #6, not a new finding.
+
+
+### TD-116 · OPEN — the automatic payout path is a second, weaker disbursement implementation
+
+`RentPaymentCallbackService.initiateB2CIfNeeded` disburses net rent when an
+M-Pesa payment lands. It does not share code with the manual endpoint
+(`B2CDisbursementService.initiateDisbursement`) and differs from it in two
+ways that matter, both found during the ADR-0018 audit:
+
+**1. Money moves before the record is written.** It calls
+`darajaB2CService.initiateB2C(...)` first and `txService.createDisbursement(...)`
+second. The manual path deliberately does the opposite, and says why: "Persists
+the Disbursement record BEFORE calling Daraja, so a crash after the API call
+but before the result is recorded still leaves a traceable row in INITIATED
+state." Here, a crash in that gap sends real money and leaves nothing behind
+to reconcile against.
+
+**2. No entitlement ceiling.** It never consults
+`DisbursementEntitlementService`; it disburses whatever `netAmount` the
+callback computed. The duplicate-callback guard in `processSuccessfulCallback`
+(which returns null the second time) is what stands in for the cap, so this is
+not currently a double-payout, but it means the two paths enforce different
+invariants against the same table.
+
+**Not fixed in the ADR-0018 pass, deliberately.** That change made the manual
+path safe using a pattern already established in this codebase. Making the
+automatic path match means reordering a live M-Pesa callback — deciding what
+happens when the record write fails but the money is already gone — and that
+is a design call with real operational consequences, not a mechanical fix.
+Doing it half-considered inside an audit pass would be worse than leaving it
+documented.
+
+**Fixed in passing:** both paths logged the payout phone number in full,
+against the explicit `CLAUDE.md` rule and with `PhoneMasker` already imported
+next door. `RentPaymentCallbackService` (two statements) and
+`DarajaB2CService` (one) now mask it. A sweep of every `log.*` call touching
+a phone or msisdn found no others.
+
+
+### TD-117 · RESOLVED 2026-09-07 — deposit path now publishes RentDuePosted
+
+`RentLedgerApplicationService.postDeposit` (the isEmpty branch) created a new
+`RentLedgerEntry` via `RentLedgerEntry.create()`, which registers
+`RentDuePosted` on the aggregate. `save()` returns a rehydrated instance with
+an empty event list, so the event was silently lost. The existing `postCharge`
+method already had the correct drain-before-save pattern.
+
+**Fixed:** `pending = entry.pullDomainEvents()` is called BEFORE `save()`,
+and `publish(entry, pending)` is called after all work. `RentPaymentApplied`
+is deliberately NOT published for deposits — it is downstream of
+`RentPaymentAppliedTaxInvoiceListener`, which generates an MRI tax invoice.
+Deposits are refundable and are not rental income; filing them would
+mis-state the landlord's tax position. `RentDuePosted` carries no tax
+consequence and is safe to emit.
+
+
+### TD-118 · RESOLVED 2026-09-07 — ClerkWebhookController backfills email on user.updated
+
+`ClerkJwtAuthenticationConverter.resolveOrProvisionUser` stamps
+`"unknown@clerk.user"` when the JWT carries no `email` claim, and returns an
+existing user **unchanged** — so the placeholder is never backfilled, even
+once a later token does carry the address.
+
+Observed on the live dev database: all 3 `users` rows hold
+`unknown@clerk.user`, which means the tokens this app receives do not include
+the claim at all. That is a Clerk JWT-template setting, not a code bug — but
+the missing backfill is what makes it permanent.
+
+**Corrected 2026-09-04 — this entry's original harm claim was wrong.** It
+said `MaintenanceRequestNotificationListener` would email the placeholder. It
+does not: its `landlord` is a `Tenant` (the landlord organisation), so it
+reads `tenants.email` — a real business address set at tenant creation, a
+different column entirely. `AnnouncementDispatchSweepService` likewise reads
+the renter's address off `tenant_profile`.
+
+**What `users.email` is actually used for is attribution, never delivery:**
+`createdBy` on a maintenance request, and the audit-actor fallback in the
+platform-admin and integrations controllers
+(`user.getUserId() != null ? ... : user.getEmail()`). Nothing sends mail to it.
+
+**So the real cost is a degraded audit trail,** not misdelivered email:
+audit rows can record `unknown@clerk.user` as the actor instead of a person.
+Worth fixing — an audit log that cannot name who acted is most of the way to
+no audit log — but not the delivery bug first described here.
+
+**Fixed (backfill half).** `resolveOrProvisionUser` now calls
+`User.updateEmailIfChanged(...)` on the existing-user path and saves only when
+the value actually changed, so the common path stays a pure read — this runs
+on every authenticated request and an unconditional save would be a write per
+request. The sentinel is now `ClerkJwtAuthenticationConverter.PLACEHOLDER_EMAIL`,
+named so a grep finds every place that must not treat it as real.
+
+**Still open:** add `email` to the Clerk JWT template. Until then the backfill
+has nothing to backfill from and existing rows keep the placeholder. Verify
+with `SELECT count(*) FROM users WHERE email = 'unknown@clerk.user';` — it
+should fall to zero as users sign in again.
+
+**Do not** treat the placeholder as a valid address if delivery is ever added
+here: skip the send and say so, rather than posting to `unknown@clerk.user`.
+
+**Fixed (webhook half) — 2026-09-07.** `ClerkWebhookController` at
+`POST /api/v1/webhooks/clerk` receives Clerk's `user.updated` (and
+`user.created`) events, verifies the Svix HMAC-SHA256 signature (secret in
+`clerk.webhook-secret`, stripped of the `whsec_` prefix), looks up the user by
+`data.id` (Clerk user ID), and calls `user.updateEmailIfChanged(email)`. The
+endpoint is added to SecurityConfig's public list (no JWT; Clerk signs with the
+webhook secret instead). The `PLACEHOLDER_EMAIL` check on the JWT path, added
+2026-09-04, means backfill happens on every request that already carries the
+claim, while the webhook picks up changes that arrive later.
+
+**Remaining operational step:** subscribe this endpoint in the Clerk dashboard
+(`clerk.webhook-secret = CLERK_WEBHOOK_SECRET` env var) and add `email` to the
+JWT template. Once both are done, `users.email` will converge to real addresses
+within one login cycle.
+
+
+### TD-119 · RESOLVED 2026-09-04 — the M-Pesa config page was unreachable for everyone
+
+`/daraja/config` — the only place a landlord can enter the Daraja credentials
+rent is collected with — returned the app's 404 page for every user, including
+owners, for as long as the guard existed.
+
+`src/app/daraja/config/layout.tsx` verified ownership by calling
+`GET ${BACKEND_URL}/api/v1/me`. **That route has never existed.** The real one
+is `GET /api/v1/users/me` (`UserQueryController`, `@RequestMapping("/api/v1/users")`
++ `@GetMapping("/me")`). The fetch 404'd on every request, `res.ok` was false,
+`isOwner` stayed false, and the guard called `notFound()`.
+
+**Why it stayed hidden.** The guard is correctly fail-closed, and its failure
+mode is a 404 — which is indistinguishable from "this page does not exist".
+Nobody looking at the symptom would suspect a working page behind a broken
+check. Nothing logged, and no test covers a server component's outbound fetch
+path: `next build` type-checks the file but never calls the URL, and the
+route-path diff between frontend and backend (run this session) only covered
+`features/*/api` clients, not `fetch()` calls inside server components.
+
+**Fixed:** path corrected, plus a `console.error` when the check fails for any
+reason other than a genuine 401/403 refusal — so "you are not the owner" and
+"the check is broken" stop looking identical from the outside.
+
+**Only one such call exists.** A sweep for `fetch(\`${BACKEND_URL}...\`)` across
+`src` returns this single site, so no sibling has the same bug. Worth
+re-running that grep if server-side fetches are added — they are the one class
+of backend call with no client, no type-safety against the route list, and no
+test.
+
+
+### TD-116 · RESOLVED 2026-09-04 — see ADR-0025
+
+The automatic payout path sent money before writing its record and applied no
+entitlement cap. It now delegates to `B2CDisbursementService.initiateDisbursement`,
+the same method the manual payout uses: entitlement reserved under a
+`PESSIMISTIC_WRITE` lock, row persisted INITIATED before Daraja is called,
+recipient resolved server-side, audit written either way.
+
+
+### TD-120 · OPEN — rent collection is platform-custody, and the UI used to say otherwise
+
+Two payment models run side by side:
+
+| Flow | Credentials | Money lands |
+|---|---|---|
+| Reservation deposit | The landlord's own (`UnitReservationTransactionService`) | The landlord's Till/Paybill |
+| **Rent** | **The platform's** (`RentPaymentInitiationService`, variable literally named `platformCredentials`) | **The platform's Paybill** |
+
+Rent is then reduced by commission and disbursed by B2C to
+`tenants.payout_phone_number`. `billing_mode` defaults to `COMMISSION` (`V50`).
+
+**Copy fixed 2026-09-04.** Three claims asserted the opposite and are now
+accurate: the dashboard tile said "Collect rent payments straight to your
+M-Pesa", the config card said the credentials were "for accepting rent
+payments", and the page subtitle (written the same day, before this was
+traced) said the credentials "collect" rent. All now describe reservation
+deposits, which is what those credentials actually do.
+
+**The model itself is unresolved and is not an engineering decision.**
+Collect → deduct commission → disburse is payment aggregation. Backend
+`CLAUDE.md` records the constraint: Safaricom M-PESA terms cl. 15.2(l)
+prohibit it without written consent, and it requires CBK authorisation under
+the NPS Act 2011 (Electronic Retail PSP: KSh 5m core capital, 4–9 months), with
+a pre-funded trust account for B2C (cl. 6.1(a)). That file also says commission
+mode must not be the default until a licence path is decided — and `V50` makes
+it the default.
+
+**Two ways out**, both requiring a decision:
+1. Obtain Safaricom consent and CBK authorisation, and keep the current model.
+2. Move rent onto the per-landlord credentials the deposit flow already uses,
+   and change the default `billing_mode`. The mechanism exists and works —
+   `DarajaService.initiateSTKPush` already signs with a landlord's shortcode
+   and passkey — so this is smaller than it sounds. Commission would then need
+   collecting some other way.
+
+**Additional UI fixes 2026-09-07.** The unconfigured payout-number state is
+now shown as a neutral info banner (Info icon, muted border) rather than an
+amber warning (AlertTriangle), because a missing payout number is expected and
+correct for DIRECT landlords — the amber implied it was a problem to solve.
+The `/daraja/config` page subtitle was changed from hardcoded DIRECT-only copy
+to mode-neutral copy that does not imply a specific model.
+
+See `PRODUCTION_CHECKLIST.md` §1.
+
+
+### TD-121 · OPEN — no residency dimension, so non-resident landlords are filed at the wrong rate
+
+ITA section 6B (Finance Act 2026, effective 2026-07-01) imposes a **10% final
+tax on non-resident landlords' gross rental income**. Residents remain at 7.5%
+(Finance Act 2023). This system cannot tell them apart:
+
+- `mri_rate_schedule` has no residency column, and `findActiveAsOf(date)`
+  selects purely on date.
+- `MonthlyRentalIncomeFiling` records `mriRateApplied` but no residency.
+- `tenants` has no residency field at all — the fact is never collected.
+
+Every filing is therefore computed at the resident rate. For a non-resident
+landlord that under-states the tax by a quarter, on a liability that is
+theirs personally and final (no deductions, no annual true-up).
+
+**Do not fix this by activating a 10% rate** — see `V88` and OQ-06 for why
+that is worse. The work is:
+
+1. A residency field on the landlord, captured during onboarding. This is
+   also a KYC-adjacent question, so it needs a considered prompt, not a
+   checkbox bolted onto a settings page.
+2. A residency dimension on `mri_rate_schedule`, and a matching predicate in
+   `findActiveAsOf`.
+3. `MonthlyRentalFilingComputationService` selecting the rate by the
+   landlord's residency, and snapshotting which regime it used onto the
+   filing — the existing `mriRateApplied` snapshot is what makes past filings
+   auditable, and residency belongs beside it.
+4. The s.6B filing deadline is the 20th of the following month. The current
+   sweep runs at 04:00 on the 1st, which satisfies both, but a non-resident
+   filing that is *late* is a different failure from one that is *wrong* —
+   worth surfacing separately.
+
+**Until this exists, the honest position is that RentManager computes the
+resident MRI regime only**, and that should be stated to landlords rather than
+left implied.
+
+**UI disclosure added 2026-09-07.** `tax-compliance-card.tsx` and
+`tax-compliance-banner.tsx` now qualify every MRI rate mention with "resident
+landlords — Finance Act 2023" and add a sentence directing non-resident
+landlords to ITA section 6B and a tax advisor. No rate is asserted for the
+non-resident regime (the rate conflict between 10%, 30% and 15% in the
+official commentary means asserting one would likely be wrong). The system
+change (items 1–4 above) remains open and requires a product decision.
+
+
+### TD-122 · RESOLVED 2026-09-04 — no JPA load of a Tenant could succeed
+
+`Tenant.brandingSettings` is an `@Embedded BrandingSettings` with four
+explicit `@AttributeOverride` column names — `branding_logo_url`,
+`branding_favicon_url`, `branding_primary_color`, `branding_secondary_color`.
+**None of them existed in the database, and no migration ever created them.**
+With `spring.jpa.hibernate.ddl-auto: none`, Hibernate did not create them
+either, so any query that selected a Tenant failed:
+
+```
+ERROR: column t1_0.branding_favicon_url does not exist
+```
+
+Every path that reads a landlord from the database was broken by this:
+
+- `PayoutDestinationController` — the payout number page, both GET and PUT
+- `B2CDisbursementService` — resolving the payout recipient
+- `UnitReservationTransactionService` — loading the landlord's Daraja
+  credentials to take a reservation deposit
+- `RentPaymentInitiationService` — since ADR-0026, resolving whose
+  credentials sign the rent prompt
+
+**Why 1,441 tests missed it.** Almost every test mocks `TenantRepository`, so
+the mapping was never exercised against a real schema. It surfaced only when
+an integration test started loading a Tenant through the `EntityManager` —
+which happened because ADR-0026 made rent depend on the landlord row.
+
+**Fixed by `V90`.** Nullable, no default; widths match what
+`BrandingSettings` validates.
+
+**The lesson is the same one ADR-0022 recorded**: a mock that stands in for a
+real adapter proves the code compiles against an interface, not that it works
+against the database. Entity-to-schema agreement is exactly the property a
+mock cannot check, and nothing else was checking it either.
+
+
+### TD-123 · RESOLVED 2026-09-05 — a flaky backoff assertion could redden any build
+
+`AnnouncementDomainTest.delivery_recordFailure_backsOffThenGivesUpAfterThreeAttempts`
+asserted an exact duration between two separate wall-clock reads:
+
+```java
+delivery.recordFailure("smtp down");            // nextAttemptAt = its OWN Instant.now() + 1m
+assertEquals(Duration.ofMinutes(1), Duration.between(Instant.now(), firstRetry));
+```
+
+The test's `Instant.now()` runs a fraction of a millisecond after the one
+inside `recordFailure`, so the measured duration is one minute *minus* that
+gap. It passed only while both calls landed in the same clock tick, and failed
+the moment they did not — seen as `expected: <PT1M> but was: <PT59.9994773S>`.
+
+This is worse than a wrong test: an intermittently red suite trains people to
+re-run rather than read, which is exactly how a real failure gets waved
+through.
+
+**Fixed** with an `assertBackoffIsAbout(expected, nextAttemptAt)` helper using
+ten seconds of slack — wide enough that a loaded CI machine never trips it,
+far too narrow to let a wrong backoff tier (1m vs 15m) pass. The property
+under test is "the backoff is a minute, then fifteen", not "two clock reads
+are identical". Verified by running the class five times consecutively.
+
+**Worth a sweep if it recurs:** any `assertEquals` over a `Duration.between`
+or an `Instant` derived from `Instant.now()` has this shape.
+
+
+### TD-124 · RESOLVED 2026-09-05 — a rent payment could be taken and recorded nowhere
+
+Found by running a real payment, not by reading code.
+
+**What happened.** An STK push was prompted against rent ledger entry
+`46bcb4a9` — already `PAID`, `amount_due 1.00`, `amount_paid 1.00`. Safaricom
+took the renter's money and returned `ResultCode=0`. Applying it threw
+`cannot modify a PAID entry`, the exception escaped
+`RentPaymentCallbackService.handle`, and the controller never reached its
+`return ResponseEntity.ok()`.
+
+Three failures at once, each making the next worse:
+
+1. The payment was recorded nowhere — `unmatched_payments` held 0 rows and the
+   `rent_payment_requests` row stayed `PENDING` with no receipt.
+2. Safaricom received an error, so it retried a callback that could never
+   succeed.
+3. The only evidence a renter had paid was a stack trace.
+
+**Cause: an asymmetry between two methods that look equally careful.**
+`initiate()` derives its amount from `getBalanceOwed()` and throws
+`RENT_LEDGER_ENTRY_ALREADY_SETTLED` at zero. `initiateWithAmount()` takes a
+caller-supplied amount and validated only that it was positive, the entry
+existed and the lease existed — never that the entry could still accept money.
+
+**Fixed in two places, because one is the cause and the other is the net:**
+
+- `initiateWithAmount` now refuses when `!entry.getStatus().isOutstanding()`,
+  before the push. This is the only point at which refusing costs nobody
+  anything — after the prompt, the money has moved.
+- `RentPaymentCallbackService.handle` catches an application failure and calls
+  `parkUnappliedPayment`, which writes an `UnmatchedPayment` in its OWN
+  transaction (`REQUIRES_NEW` — the failed one has rolled back) and returns
+  normally so the controller answers 200. The money becomes visible under
+  `GET /rent-ledger/unmatched-payments` and resolvable by an owner, with the
+  resolution audited. The subscription C2B path already worked this way; rent
+  did not.
+
+`parkUnappliedPayment` swallows its own failures deliberately: if parking
+breaks, the callback must still return 200, because a retry would replay a
+payment the ledger already rejected. Its log line is then the last record, and
+it says so in as many words.
+
+**Still open, and deliberately not guessed:** the `rent_payment_requests` row
+stays `PENDING` after parking. Marking it `FAILED` would be false — the money
+did arrive — and no status in `RentPaymentRequestStatus` currently means
+"paid but unapplied". That needs a new state, which is a schema decision, not
+something to infer inside a bug fix.
+
+
+### TD-125 · RESOLVED 2026-09-05 — the Requests SLA flattered the landlord
+
+`getSlaSummary` computed every figure over ANSWERED requests only:
+
+```java
+responseRatePct = respondedWithin24h / responded
+```
+
+On real data — ten requests, six answered within minutes, four never answered
+including an Urgent one 34 days old — the hub reported **"Response Rate 100%"**
+and **"Avg Response 6 min"**, and offered no figure at all for how many renters
+were waiting. Both numbers were arithmetically correct and told the opposite of
+the truth. A landlord who answers two requests quickly and ignores eight scores
+100%.
+
+**Fixed** by adding `awaitingFirstResponse` and `oldestAwaitingHours` — chosen
+because neither can be improved by ignoring work — and by relabelling the
+existing tiles to name the population they cover ("Of 6 answered, not of all
+requests"). The hub now leads with a banner naming who is waiting and for how
+long, shown only when someone actually is.
+
+**A second bug, introduced by the fix and caught on screen:** the frontend read
+`sla?.awaitingFirstResponse ?? 0`, so a server predating the field rendered
+"Awaiting first reply: 0 — Everyone has been answered" while the table below
+showed four people waiting 22, 32 and 34 days. Absent must never render as
+zero. It now shows "—" and "Not reported by this server", and the banner stays
+hidden because there is nothing honest to claim either way.
+
+**Also in this pass:** `submit`, `list` and `get` on
+`MaintenanceRequestController` had no `@PreAuthorize` (9 mappings, 6 guards).
+`submit` takes `tenantProfileId` and `createdBy` from the request body, so any
+authenticated org user could fabricate a request attributed to any renter —
+and the landlord UI never calls it. Now 9 of 9 guarded.
+
+**Still open:** `schedule` and `assign` remain unreachable from the UI (the
+detail panel shows those fields but cannot set them), and the landlord `list`
+endpoint returns an unbounded `List` — fine at 10 requests, not at 500.
+
+
+### TD-126 · CODE FIXED 2026-09-07, NEVER YET RUN GREEN — integration test suite wired up
+
+`src/test/java/com/rentmanager/crossmodule/` holds a complete cross-module
+integration harness — `CrossModuleBaseIT`, `TestDataFactory`, `EventCapture`,
+`DatabaseCleaner`, a Testcontainers Postgres bridge — and ten `*IT.java`
+classes covering tenant isolation, cross-module rollback, property/lease
+restrictions and unit cascades.
+
+**None of them executed** *(state as originally found; failsafe was added
+2026-09-07, see below)*. `pom.xml` configured `maven-surefire-plugin` and
+nothing else; surefire's default includes are `*Test.java`, `Test*.java`,
+`*Tests.java` and `*TestCase.java`, none of which match `*IT.java`. There was no
+`maven-failsafe-plugin`, so `mvn test` and `mvn verify` both skipped the lot.
+
+**How it surfaced.** Writing a new end-to-end test on that harness failed
+immediately with `IllegalArgumentException: propertyType is required` —
+`TestDataFactory.createProperty` passes `null` for a field
+`Property.create` has since made mandatory. Every IT that builds a property has
+been broken at the first line of its fixture, for as long as that validation
+has existed, and the build stayed green throughout.
+
+This is the same shape as ADR-0022 and TD-122: something that looks like
+coverage, reports nothing, and is trusted precisely because it exists.
+
+**Fixed here (original pass):** `TestDataFactory.createProperty` now passes a
+real `PropertyType`, and the new maintenance end-to-end test is named
+`MaintenanceConversationTest` so surefire actually runs it.
+
+**Fully resolved 2026-09-07.** Maven Failsafe plugin added to `pom.xml`
+(`integration-test` + `verify` goals, version 3.1.2 matching Surefire). The
+eleven locations across four IT files where `lease.approve()` was followed
+directly by `lease.activate()` — which threw `LeaseStateException` because
+V34 tightened the state machine to require `AWAITING_DEPOSIT` between them —
+are fixed. The tests now compile and should all pass. Run with `mvn verify -pl
+.`; CI already has Docker enabled for Testcontainers.
+
+Files changed: `LeaseActivationFlowIT.java`, `OccupancySyncIT.java`,
+`UnitLeaseFlowIT.java`, `PropertyLeaseRestrictionIT.java`.
+
+**Status corrected 2026-09-26 — do not read the above as "green".** The entry
+said "the tests now compile and should all pass". *Should* is a prediction, and
+this entry's own opening warns against exactly that: something that looks like
+coverage and is trusted because it exists. Compiling is not passing.
+
+Confirmed on 2026-09-26: failsafe is correctly bound to `integration-test` and
+`verify` (pom, version 3.1.2), `mvn clean test-compile` is clean, and the nine
+`*IT.java` classes are therefore *runnable*. No completed `mvn verify` run
+exists. The one attempt ended after ~1,629 tests with 285 errors, every one of
+them `ApplicationContext failure threshold (1) exceeded` — Docker Desktop died
+mid-run, so the result says nothing about the tests. Docker on this machine was
+still down afterwards (no WSL distributions), which is why it was not retried.
+
+Two things still needed, in order:
+
+1. Run `mvn clean verify -pl .` with Docker healthy and record the actual
+   result here. Expect failures — these ran for the first time in months.
+2. Only then mark this RESOLVED.
+
+Note also that `mvn clean test`, which every other doc and habit in this repo
+treats as "the full suite", does **not** run them — fixed in `AGENTS.md` and
+backend `CLAUDE.md` on 2026-09-26. Wiring a suite nobody is told to run leaves
+it as dead as it was before.
+
+---
+
+### TD-127 · RESOLVED 2026-09-06 — the Requests hub DDoSed its own backend
+
+Two defects, one on each side of the wire. Either alone is a bug; together
+they turned opening one page into a sustained flood of failing requests.
+
+**The 500.** `MaintenanceRequestJpaRepository.markAllViewed` is a bulk UPDATE
+setting two timestamps:
+
+```
+SET m.landlordViewedAt = :viewedAt, m.updatedAt = :updatedAt
+```
+
+`landlordViewedAt` is mapped `LocalDateTime` on the entity; `updatedAt` is
+inherited from `BaseEntity` and is an `Instant`. The adapter took one
+`LocalDateTime.now()` and passed it for both, so Hibernate rejected the
+statement at bind time:
+
+```
+QueryArgumentException: Argument [2026-09-05T16:30:06.455] of type
+[java.time.LocalDateTime] did not match parameter type [java.time.Instant]
+```
+
+Every `POST /api/v1/maintenance/read` returned 500 having touched no rows.
+The sidebar badge could therefore never be cleared by anyone, ever.
+
+**The loop.** `requests-hub.tsx` cleared the badge from an effect:
+
+```tsx
+useEffect(() => {
+    if (unviewedCount === 0) return;
+    markAllViewed.mutate();
+}, [unviewedCount, markAllViewed]);
+```
+
+`markAllViewed` is the React Query mutation *object*, whose identity changes
+on every state transition. So the effect re-ran on its own side effect —
+mutate → `isPending` → re-render → new object → mutate. The only thing that
+would have stopped it is `unviewedCount` reaching 0, which requires the
+request to succeed. It didn't, so the page issued the call tens of times per
+second for as long as it stayed open. Production logs show ~40 in one second.
+
+Note the asymmetry: had the endpoint worked, the loop would have terminated
+after a round trip and nobody would have found it. The crash is what made the
+latent bug visible, and the loop is what made the crash expensive.
+
+**Fixed here.**
+
+- The adapter takes one `Instant`, converts for the `LocalDateTime` column,
+  and the repository signature now types the two parameters differently so
+  the mistake cannot recur silently. **Superseded the same day — see the note
+  below; the current code is better and this paragraph no longer describes
+  it.**
+- The effect depends on the destructured `mutate`, which is stable, never on
+  the mutation object.
+- `MaintenanceUnviewedBadgeTest` (3 tests, real Postgres via
+  `CrossModuleBaseIT`) exercises the query. Reverted against the old code it
+  reproduces the production exception exactly; that was verified, not assumed.
+
+**Why no existing test caught it.** A parameter-binding failure is invisible
+to anything that mocks the repository — the mock happily accepts two
+`LocalDateTime`s. Only running the statement against a database fails. This
+is the third instance of the same lesson in this file (ADR-0022, TD-122,
+TD-126): code that satisfies its interface and does nothing.
+
+**Left alone deliberately at the time.** `landlord_viewed_at`, `completed_at`
+and `first_landlord_response_at` were all `LocalDateTime` written with an
+unzoned `LocalDateTime.now()`, so on a UTC server a Nairobi landlord read them
+three hours early. That was real, but it spanned the domain model and two
+writers to the same columns, and half-changing one writer would have made the
+column internally inconsistent. It was filed as its own pass — TD-128.
+
+**Superseded by TD-128, and for the better.** TD-128 did the clean fix this
+entry only sketched: all three columns became `TIMESTAMPTZ` (`V91`) and the
+domain moved to `Instant`. That *deleted the root cause* rather than working
+around it — with both columns the same type, the bulk update takes a single
+`Instant` for both, and the two-types-one-value mistake is no longer
+expressible:
+
+```java
+SET m.landlordViewedAt = :now, m.updatedAt = :now
+```
+
+So the fix described above no longer exists in the tree, and that is the right
+outcome: a type mismatch you cannot write beats a type mismatch you remembered
+to get right. What did survive the refactor, and is why this entry still earns
+its place, is `MaintenanceUnviewedBadgeTest` — it asserts *behaviour* (count in,
+count out) rather than parameter types, so it kept guarding the endpoint across
+a rewrite that changed every signature it touches. Verified still present and
+compiling on 2026-09-26.
+
+---
+
+### TD-128 · RESOLVED 2026-09-06 — maintenance timestamps were unzoned wall-clock time
+
+`completedAt`, `firstLandlordResponseAt` and `landlordViewedAt` were
+`LocalDateTime` stamped with `LocalDateTime.now()` on a UTC JVM. On a
+deployed server a Nairobi landlord read timestamps three hours early.
+
+**Fixed:** all three fields changed to `Instant` in the domain model, JPA
+entity and DTO. V91 alters the three columns from `TIMESTAMP` to
+`TIMESTAMPTZ`, re-casting existing UTC-written values `AT TIME ZONE 'UTC'`
+so no data is lost. The `toInstant()` shim in `MaintenanceRequestQueryService`
+is deleted; the adapter's `markAllViewedByTenantId` now passes one `Instant`
+for both columns.
+
+26 tests pass (3 integration against real Postgres, 13 unit against the query
+service, 10 domain-model).
+
+---
+
+## Mobile app — backend and web changes (2026-09-15)
+
+Made while building `C:\JavaProjects\rentmanager-mobile` (Expo). Full reasoning
+in that repo's `docs/mobile/decision-log.md`. All uncommitted at time of writing.
+
+### TD-129 · RESOLVED 2026-09-15 — renters on 01XX numbers could not pay rent
+
+Backend `@Pattern`s and three renter-portal helpers accepted only `07…`
+numbers. Safaricom's `0110–0115` lines are M-Pesa capable, so those renters
+were rejected before Safaricom was ever called — rent, reservations and payout.
+
+**Fixed:** one rule, `shared/phone/KenyanMsisdn` (21 tests), used by
+`InitiatePortalPaymentRequest`, `InitiateRentPaymentRequest`,
+`InitiateReservationRequest`, `UpdatePayoutDestinationRequest` and
+`TenantPortalService`. Web: `lib/mpesa/phone.ts` (10 tests) replaces the three
+duplicated helpers. `payout-destination-card.tsx` and `app/dashboard/billing`
+still carry their own regexes — not changed, check before reusing.
+
+### TD-130 · RESOLVED 2026-09-15 — OpenAPI said money was a number
+
+`JacksonConfig` sends every `BigDecimal` as a string; springdoc published
+`type: number`. **Fixed:** `shared/config/OpenApiMoneySchemaConfig`. Any client
+generated from `/v3/api-docs` now gets `string/decimal`.
+
+### TD-131 · RESOLVED 2026-09-15 — no push channel; clients inferred persona from claims
+
+- `GET /api/v1/users/me/access` — authorities for routing (`SessionAccessResolverTest`).
+- Push: V97 `push_devices`, `/api/v1/devices/push` (+`/unregister`),
+  `NotificationChannel.PUSH` in the existing outbox, `PushNotificationListener`
+  on `RentPaymentApplied`, `MaintenanceRequestStatusChanged`,
+  `MaintenanceRequestSubmitted`. Ownership re-checked at send time. 16 tests.
+- `NotificationDispatchService` gained a constructor argument.
+
+### TD-132 · RESOLVED 2026-09-15 — maintenance status has no state machine
+
+`MaintenanceRequest.changeStatus` accepts any transition (Completed → Submitted,
+Cancelled → In progress), each texting the renter. Web dropdown exposed all of
+them. **Fixed:** transitions on `MaintenanceRequestStatus` (nothing back to
+SUBMITTED, CANCELLED terminal, COMPLETED reopens only to IN_PROGRESS), 409 on
+refusal, `allowedNextStatuses` on the response; web dropdown and mobile render
+from it. `MaintenanceStatusTransitionTest` (16).
+
+### TD-133 · RESOLVED 2026-09-15 — Expo push receipts not polled
+
+**Fixed:** V99 `push_tickets` + `PushReceiptService` (15-minute sweep, 24h
+retention, revokes dead devices). `PushReceiptServiceTest`.
+
+### TD-134 · RESOLVED 2026-09-15 — cash payments could be recorded twice
+
+No external reference meant no duplicate guard; retries/double taps recorded
+cash twice in the append-only ledger. V98 `Idempotency-Key` + unique partial
+index + trigger. The web has no manual-recording UI today (it only reads
+transactions); any future one must send one key per submission, as mobile does.
+
+### TD-135 · RESOLVED 2026-09-15 — renter portal crashed after moving landlords; renewed leases couldn't pay
+
+`findByClerkUserId` (Optional) threw for two profiles; ACTIVE-only checks
+refused RENEWED leases that are still billed. `TenantPortalCurrentTenancyTest`.
+
+### TD-136 · RESOLVED 2026-09-15 — cross-organisation ids on POST /maintenance
+
+`LandlordMaintenanceSubmissionGuard`; `createdBy` from token.
+
+### TD-137 · RESOLVED 2026-09-15 — lease cancel/actor/performedBy
+
+Cancel limited to not-yet-live leases (RENEWED could be cancelled);
+terminate/renew actor from token; `allowedActions` + `LeaseActionPolicyTest`.
+
+### TD-138 · RESOLVED 2026-09-15 — multipart limit and repair photos
+
+Spring's 1 MB default blocked 5 MB media uploads (now 5 MB + 413). V102 private
+maintenance attachments with magic-byte validation.
+
+### TD-139 · OPEN — account deletion: legal review and web URL
+
+V101 in-app deletion exists (owners → PENDING_REVIEW). Needs: legal review of
+what renter data landlords must erase on request (Kenya DPA 2019); a web
+deletion page for store listings; an ops process for PENDING_REVIEW rows.
+
+### TD-140 · CLOSED 2026-09-15 — `/v3/api-docs` and Swagger UI were public in production
+
+`API_DOCS_ENABLED` (default true for local client generation) is false in the
+production image; `DeploymentSafetyGuard` refuses to start a strict deployment
+with it on, and Caddy returns 404 for the paths. Verified against a strict boot:
+disabled docs return 404 (previously 500 — see TD-143).
+
+### TD-141 · CLOSED 2026-09-15 — Backend refused to boot without provider credentials
+
+`application.yml` gave Cloudinary and Daraja callback settings no default, so
+startup failed although the code already degrades gracefully. Now optional;
+blank callback secrets are rejected by every callback (deposit refund and B2C
+previously accepted a blank-vs-blank match). `UnconfiguredCallbackSecretTest`.
+
+### TD-142 · CLOSED 2026-09-15 — Public reservation rate limit keyed on a spoofable header
+
+`ReservationController.clientIp` took the left-most X-Forwarded-For entry,
+which the caller writes: a fresh per-IP bucket per request. Now
+`getRemoteAddr()` with `server.forward-headers-strategy=native` (Tomcat trusts
+only private-network proxy hops). The deploy stack publishes only Caddy.
+
+### TD-143 · CLOSED 2026-09-15 — Caller mistakes answered 500 and wrote error_events rows
+
+Unknown paths under permitted prefixes (`/api/v1/public/<anything>`), wrong
+methods, malformed UUIDs and missing parameters fell into the generic handler:
+500 plus a tracked error per request, from unauthenticated callers. Now 4xx
+and untracked. `ClientRequestMistakeHandlingTest`.
+
+### TD-144 · CLOSED 2026-09-15 — Web CSP would block a production Clerk instance
+
+The production CSP allowed only `*.clerk.accounts.dev`; `pk_live_` instances
+serve from `clerk.<domain>`, so sign-in would fail at launch. `next.config.ts`
+derives the Frontend API origin from the publishable key and allows Turnstile.
+
+### TD-145 · CLOSED 2026-09-15 — Two integration tests stale; CI `mvn verify` red
+
+`TenantApiIT` used `/api/tenants` (controller is `/api/v1/tenants`);
+`CrossModuleRollbackIT` queried JPQL entity `Property`, which is a domain class.
+Fixed without changing assertions.
+
+### TD-146 · OPEN — Off-server backups and a tested restore
+
+`deploy/backup.sh` keeps 14 days of dumps on the same host. Copying them off
+the machine and rehearsing a restore are operator steps in `deploy/README.md`;
+not automated because the storage target is not chosen.
+
+### TD-147 · OPEN — Free-tier hosting: 9-minute cold start, single instance
+
+Measured 2026-09-16 in a container limited to Render's free resources (512 MB,
+0.1 CPU): the API starts in 528 s and uses 336 MB; warm responses are 13–100 ms.
+So the free tier works, but only while the service never sleeps — a cron ping
+every 10 minutes is structural, not a nicety, because a sleeping instance drops
+M-Pesa callbacks and stalls the `@Scheduled` outbox sweeps. Every deploy or
+platform restart is a ~9-minute outage. Fixed by paying for a CPU (Render
+Starter ~US$7/month) or a free student-credit VM; until then, deploy at night.
+
+### TD-148 · OPEN — Client IP behind a managed proxy
+
+`server.tomcat.remoteip.internal-proxies` defaults to private ranges, which is
+correct for the self-hosted Caddy stack. On Render the proxy has a public
+address, so until `TRUSTED_PROXIES` is set to its range every request appears to
+come from one address and the per-IP limit on the public reservation endpoint
+becomes a single shared bucket. The per-phone limit still applies. Never widen
+it to `.*`: a caller could then forge `X-Forwarded-For` and mint a fresh bucket
+per request.
+
+### TD-149 · OPEN — Sign-in caps growth at 100 users
+
+A Clerk development instance allows 100 users, renters included, so roughly
+three landlords. A production instance is free to 50,000 monthly users but needs
+a domain we control. Options and costs are in `deploy/FREE_NO_CARD.md` §7.
+
+### TD-150 · CLOSED 2026-09-20 — A landlord could not add the tenants they already had
+
+The only production code that created a renter (`tenant_profile`) was
+`ReservationFulfillmentOrchestrator`: a stranger reserving a vacant unit on the
+public site and paying a deposit by M-Pesa. Every other path was a
+`@Profile("dev")` controller. A landlord signing up with tenants already living
+in their units — the normal case in Kenya — could create properties and units
+and then go no further: the lease form asked them to paste a
+"Tenant Profile ID" UUID that no screen in the product ever displayed.
+
+Closed by: `V103` (clerk_user_id and email nullable, partial unique indexes on
+phone and email for unlinked rows), `TenantProfile.createForLandlord` /
+`linkIdentity`, `RenterDirectoryService`, `RenterIdentityLinker`,
+`RenterController` (`POST/GET /api/v1/renters`, `GET /renters/search`), a
+Renters page in the dashboard, and a renter picker replacing the UUID box on the
+lease form. A record with no Clerk identity is claimed the first time that
+person signs in with a **verified** email; a landlord-typed phone number is
+never used for linking, since nobody verifies it.
+
+Found while probing the deployed system for gaps — not by a test, which is the
+uncomfortable part: the suite was green throughout.
+
+### TD-151 · MOSTLY CLOSED 2026-09-21 — Privacy policy and terms now exist
+
+`/legal/privacy` and `/legal/terms` are written, linked from the footer and the
+sign-up screen, listed in the sitemap, and public in `route-policy.ts` (a policy
+page behind a sign-in wall is no policy at all). Both are static, so they open
+instantly.
+
+They were written from the schema rather than from a template, and the awkward
+parts are stated rather than glossed: financial rows and the audit trail are
+append-only at the database level (`V81`, `V86`) and therefore **cannot** be
+deleted on request, so the privacy page says so and explains why; the terms say
+plainly that rent and deposits settle into the landlord's own M-PESA account and
+that the platform never holds money, so it cannot refund what it never held.
+Named processors (Clerk, Neon, Render, Netlify, Safaricom) and the fact that two
+of them hold data in the EU are disclosed, as the Data Protection Act 2019
+requires.
+
+What remains, and why this is not fully closed:
+
+1. **Review by a Kenyan data-protection practitioner** before any large launch.
+   The pages are an accurate description of the system; that is necessary but
+   not sufficient for a legal document.
+2. ~~A contact address.~~ **Done 2026-09-21.**
+   `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` is set to `rentmanagerke2026@gmail.com` in
+   `netlify.toml` — chosen by the owner so a personal address stays private. It
+   lives in the repo rather than the Netlify dashboard because it is printed on
+   a public page, so it is not a secret, and keeping it here means the pages and
+   the address cannot drift apart.
+3. **ODPC registration** as a data controller — an operator task, not a code
+   one.
+
+Clerk can also require an express-consent checkbox at sign-up and link both
+pages itself (Clerk → Configure → Legal). It is switched off: turning it on
+adds a tick-box users must complete, which is a sign-up flow change for the
+owner to decide. The sign-up page already states the agreement in text and
+links both pages.
+
+### TD-152 · OPEN (operator action) — Nightly backups are failing for want of two secrets
+
+Confirmed again 2026-09-21: `gh secret list` returns nothing, and the workflow
+failed on the 19th, 20th and 21st. The two values are a database password and
+an encryption key, so they have to be entered by the owner:
+
+```bash
+gh secret set BACKUP_DATABASE_URL --repo hassan200503/rentmanager-backend
+gh secret set BACKUP_PASSPHRASE   --repo hassan200503/rentmanager-backend
+```
+
+`gh` prompts for each value, so neither lands in shell history. Generate the
+passphrase with `./deploy/gen-secrets.sh` and **store it before closing the
+window** — without it no backup can ever be restored.
+
+`.github/workflows/backup.yml` has run and failed every night since the deploy:
+`BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE` were never added to the
+repository's Actions secrets, so **no backup of the live database exists**. The
+workflow fails loudly by design (it refuses to run without them) but nobody is
+watching the emails. Operator action; see `deploy/FREE_NO_CARD.md` §6.
+
+### TD-153 · CLOSED 2026-09-21 — Public copy claimed verification the system never did
+
+Four surfaces told visitors "Every unit is verified before it's listed",
+"verified vacancies" and "Verified listings, secure deposits": the footer, the
+city grid, the 3D map section and the live coverage stat. None of it was true.
+The column that once implied it, `tenants.verified`, was backfilled to `true`
+for every row by `V42` and then dropped outright by `V87`; there is no
+per-listing check anywhere, and a deposit is paid into the landlord's own
+M-PESA account, so calling it "secure" implied a custody the platform
+deliberately does not take (ADR-0026). The hero had already been corrected in
+an earlier pass; these four were missed.
+
+What replaced it is stronger because it is enforced in SQL: a unit appears
+publicly only while it is an ACTIVE unit with no active lease under an ACTIVE
+property (`PublicUnitQueryServiceImpl.findPubliclyVisibleVacantUnits`), and the
+lease scheduler marks it occupied the day it is let. So the copy now says "a
+unit is listed only while it is vacant", and the live counter — which was always
+the real count of publicly listed units — says "N homes available now" instead
+of "N verified listings". The number never changed; only the word for it, which
+was the part a renter would have tested first.
+
+### TD-154 · CLOSED 2026-09-21 — Every page load woke the API for answers that never change
+
+Measured from Nairobi against the live deployment: `/icon` took **4.42 s** to
+first byte against 1.07 s for a static file, because the route was
+`force-dynamic` with `Cache-Control: no-cache` and made two upstream API calls
+(branding, then the image bytes) on every single request — for a favicon. The
+public catalogue and branding endpoints carried Spring Security's default
+`no-store`, so the landing page and the listings page re-derived identical
+results on a 0.1-CPU instance for every visitor.
+
+Closed by:
+
+- `/icon` is now prerendered with `export const revalidate = 300` and serves
+  `public, max-age=300, s-maxage=300, stale-while-revalidate=86400` plus
+  `Netlify-CDN-Cache-Control` (without which a route handler is not held at the
+  edge at all). Upstream fetch timeouts dropped to 2.5 s / 3 s so a sleeping API
+  can never hold up a tab icon. The build now reports `/icon` as `○` rather than
+  `ƒ`. Trade accepted deliberately: a new logo appears within five minutes
+  instead of immediately.
+- `PublicCacheControl.catalogue()` (60 s) and `.branding()` (5 min) on
+  `PublicUnitQueryController`, `PublicPropertyQueryController` and
+  `PlatformBrandingPublicController`.
+
+Two things worth not re-deriving next time:
+
+1. **The header has to be set on the `ResponseEntity`.** Spring Security writes
+   `no-cache, no-store` on every response and only stands aside when a cache
+   header is already present, so a filter added after the chain either fights
+   the header writer or is silently overridden. A first attempt at a
+   `PublicContentCacheFilter` was deleted for this reason.
+2. **Nothing person-specific is cached.** Reservation status is public in the
+   sense of needing no sign-in, but it belongs to one person and changes as they
+   pay, so it is deliberately absent from the policy — as is everything
+   authenticated. `PublicCacheControlTest` asserts the directives so a future
+   edit that adds personal data to a catalogue response has to change the policy
+   visibly.
+
+### TD-155 · CLOSED 2026-09-21 — Four font families, all preloaded, on every page
+
+Measured in a real browser against the live site: the landing page fetched four
+preloaded woff2 files totalling ~194 KB before the hero's own text could
+settle, because every face named explicit weights or styles.
+
+- **Inter** named four weights, which makes `next/font` download one static
+  file per weight. Omitting `weight` serves Inter's variable font as a single
+  file covering every weight the app uses — same look, a quarter of the
+  requests.
+- **Instrument Serif** and **Fraunces** both loaded an italic file; nothing in
+  the app sets either face in italic (checked across every `.tsx` and
+  `globals.css`).
+- **IBM Plex Mono** is `preload: false` now. It renders figures in tables and
+  the dashboard mock, all below the fold, and its three files were competing
+  with above-the-fold text.
+
+Result: three preloaded files, 126 KB, verified in the built HTML's preload
+tags. Nothing about the design changed.
+
+### TD-156 · CLOSED 2026-09-22 — Marketing pages downloaded Clerk's entire UI bundle for nothing
+
+Measured in a browser on the live landing page: after `clerk.browser.js`,
+Clerk fetches `@clerk/ui` and then four more chunks —
+`framework_ui` (43 KB), `ui-common` (127 KB), `vendors` (64 KB) and
+`subscriptionDetails` (5 KB), ~240 KB in total — starting at 5.6 s and still
+arriving at 33 s. Nothing on `/`, `/listings` or `/legal/*` renders a Clerk
+component. It is prefetch for a sign-in form the visitor may never open, and it
+lands while the page is still hydrating.
+
+The cause is `providers/auth-provider.tsx`: `ClerkProvider` sits in the root
+layout and `OrgStoreSync` calls `useAuth()`/`useOrganization()` unconditionally,
+so Clerk bootstraps on every route including the marketing pages.
+
+Two fixes were considered and **one was explicitly rejected**, so it does not
+get retried blind:
+
+1. **`prefetchUI: false` on `ClerkProvider`** — real and typed
+   (`@clerk/shared` `ClerkOptions`), and it does skip the UI chunk. Rejected:
+   Clerk documents it as being "for custom UIs using Control Components", and
+   this app renders Clerk's prebuilt `<SignIn>` and `<SignUp>`. Making it
+   conditional on pathname is worse, not better: `getEntryChunks()` runs once
+   per page load, so a visitor who follows the footer's `<Link>` from `/` to
+   `/public/sign-in` would arrive with Clerk already loaded and the UI chunk
+   permanently skipped — a sign-in page that never renders a form. Not worth
+   risking sign-in for 240 KB of post-interactive JS.
+2. **Route groups — done 2026-09-22.** `admin`, `continue`, `daraja`,
+   `dashboard`, `onboarding`, `portal` and `public` moved under `src/app/(app)/`,
+   whose layout carries `AuthProvider`. The root layout now holds only
+   session-agnostic providers. Route groups change no URL, so the proxy matcher,
+   every link and every redirect target were untouched — the build's route table
+   still reads `/admin`, `/dashboard`, `/continue`.
+
+   Two things made it safe rather than hopeful. Every tree that moved was
+   checked for relative imports first: there were none, all of them use the `@/`
+   alias, so nothing needed rewriting. And every route left at the root was
+   traced for Clerk use, directly or through a feature module — the public
+   listings go through `use-public-properties`, and `lib/auth/token` is reached
+   only from authenticated queries.
+
+   Verified on the dev server rather than assumed:
+
+   | Page | Clerk requests | Renders |
+   |---|---|---|
+   | `/` | **0** | nav, hero, full page |
+   | `/legal/privacy` | **0** | correct title and content |
+   | `/listings` | **0** | empty state (no local API) |
+   | `/public/sign-in` | loads | Clerk form, Google button, email field |
+   | `/public/sign-up` | loads | Clerk form **with the consent checkbox** |
+   | `/dashboard` signed out | loads | redirects to sign-in, form renders, no console errors |
+
+   That last pair is the point: the failure mode this refactor risked was a
+   sign-in page with no form, and it does not happen.
+
+### TD-157 · CLOSED 2026-09-21 — The live API was eight commits behind, silently
+
+`Cache-Control` changes pushed to `main` never appeared on the deployed API.
+The cause was not a slow build: Render was watching the
+`non-custodial-rent-collection` branch, which had been merged into `main` and
+abandoned five days earlier. Render records the branch a service was created
+from and never changes it, so `main` moved eight commits ahead — V103 and V104
+included — while the API answered healthily from the old image.
+
+The consequence was worse than stale headers. The web app was deployed from
+`main`, so `/dashboard/renters` and the brand-icon upload were live in the
+browser with no endpoints behind them: `GET /api/v1/public/platform/branding/logo`
+returned 404 because the controller did not exist yet, which is
+indistinguishable from "no logo uploaded". Any feature spanning both repos can
+fail this way, and nothing warns you, because the health check passes.
+
+Fixed by fast-forwarding the watched branch to `main` (it was a strict
+ancestor, so no divergence), which deployed in 570 s and applied both
+migrations. The runbook now makes checking the deploy branch a numbered step
+and gives the command that reveals what is actually deployed:
+
+```bash
+gh api repos/<owner>/<repo>/deployments --jq '.[0:3] | .[] | "\(.created_at)  \(.environment)  \(.sha[0:8])"'
+```
+
+Render writes a GitHub deployment per deploy and the environment name carries
+the branch. **Still worth doing:** set the service's branch to `main` in
+Render's own settings so the fast-forward is not needed again.
+
+### TD-158 · CLOSED 2026-09-22 — Three more "verified" claims, two with no data at all
+
+TD-153 fixed the landing page's verification copy but scoped the sweep to
+`src/features/landing/` and `src/app/page.tsx`. A repo-wide pass found three
+more, and two of them were worse than the originals because they were rendered
+**unconditionally**, with nothing behind them:
+
+- `listings/[propertyId]/page.tsx` — a badge reading "Verified Listing" over
+  "Secure & Trusted", on every property page, gated on nothing. Now "Available
+  now" over "No active lease", which is what the public query enforces.
+- `features/landing/components/PropertyCard.tsx` — a "Verified" pill on every
+  card, gated on nothing. Now "Vacant".
+- `/listings` page — "Browse verified rental properties across Kenya". Now
+  states the vacancy rule instead.
+
+The fourth was the interesting one. `VerifiedBadge` read "Verified Landlord"
+and *is* gated on real data — but `landlordVerified` means
+`tenants.status == ACTIVE`, i.e. the landlord's account is live and not
+suspended. That is worth showing and is not identity verification: nobody
+checks an ID, a title deed or a company registration. Renamed to
+`LandlordStatusBadge`, relabelled "Active landlord", with a title attribute
+saying plainly that RentManager does not verify a landlord's identity. The flag
+behind it had already been half-fixed once — `V87` dropped `tenants.verified`
+after `V42` had backfilled it to true for every row, which had the badge lit
+for everybody — and this is the other half.
+
+Also corrected two of this project's own notes that had gone stale: the footer
+comment and TD-153 both described `tenants.verified` as a live dead column when
+`V87` had dropped it outright.
+
+**The lesson for next time:** when correcting a claim in user-facing copy,
+sweep `src/app`, `src/features` and `src/shared` for the word, not the feature
+folder where it was noticed. `VerifiedStat` was also renamed to `VacancyStat`
+so the component's name stops asserting what its copy no longer does.
+
+### TD-159 · CLOSED 2026-09-22 — An 18.9 MB background video was starving the page
+
+Measured in a browser against the live landing page, after the Clerk bundle was
+removed: `load` still took **31.5 s**. The cause was `hero.mp4` — **18.9 MB**,
+`preload="auto"`, autoplaying behind the headline. It took 36 s to arrive and,
+because it saturated the connection, dragged the page's own JavaScript chunks
+out to 24–30 s each although they are small. The slow JS was a symptom; the
+video was the disease.
+
+In Kenya most visitors arrive on mobile data they pay for by the megabyte.
+Spending 18.9 MB of someone's bundle on decoration — and making the page slower
+while doing it — loses a user before they have read a sentence. `public/videos`
+holds 93 MB in total (`hero.mp4` 18.9, `apartment.mp4` 35.7, `sunset.mp4` 38.5).
+
+`useHeavyMediaAllowed()` and `useAfterPageLoad()` now gate it on three separate
+grounds: the visitor asked for less data (`saveData`), the browser reports a
+connection that cannot carry it (`effectiveType` of 3g or below), or the page
+has not finished loading the parts that actually do something. The poster frame
+stands in whenever the video does not play — previously it appeared only for
+`prefers-reduced-motion` visitors, so a data-saver visitor got a bare animated
+gradient. The city-grid clips got the same gate: they already loaded on hover
+with `preload="none"`, but running a cursor across all five cards would have
+pulled about 93 MB.
+
+Verified on the dev server, both directions:
+
+| Reported connection | `<video>` in DOM | hero.mp4 fetched | `load` |
+|---|---|---|---|
+| 3g (what this machine reported) | **no** | **never** | **1.06 s** |
+| 4g (forced, `change` event fired) | yes, correct `src` | on demand | — |
+
+So on a 3g-class connection the page is interactive in about a second and the
+visitor keeps 18.9 MB of their data.
+
+The API defaults to permissive: the Network Information API is Chromium-only,
+so Safari and Firefox behave exactly as before. Guessing wrong costs a desktop
+Safari visitor on fibre nothing, because the video is deferred until after load
+regardless.
+
+**Re-encoded 2026-09-22: 93.2 MB → 3.5 MB**, using `ffmpeg-static` from npm as
+a throwaway dev dependency (`--no-save`, removed afterwards, `package.json`
+untouched).
+
+| File | Before | After | What changed |
+|---|---|---|---|
+| `hero.mp4` | 18.90 MB | **2.68 MB** | 27.8 s → 12 s, 1080p kept, 24 fps, CRF 30, **audio track stripped** |
+| `apartment.mp4` | 35.74 MB | **0.39 MB** | 30.6 s → 8 s, 1080p → 960×540, 60 fps → 24 fps |
+| `sunset.mp4` | 38.52 MB | **0.40 MB** | 57.9 s → 8 s, 1080p → 960×540 |
+
+Three things the inspection turned up that made this easy to win:
+
+1. **`hero.mp4` carried a 253 kb/s AAC audio track** — roughly 870 KB — on a
+   `<video muted>`. Nobody could ever hear it.
+2. **`apartment.mp4` was 59.94 fps.** For an ambient loop behind a card,
+   half the frames were half the file for no perceptible gain.
+3. **The city clips render in cards about 240 px tall** and shipped at
+   1920×1080, an eight-fold linear oversupply.
+
+A frame from the re-encoded hero was compared against the original before the
+files were replaced: sharp, no visible artefacts, and it sits behind a heavy
+dark gradient in any case. The originals remain in git history if the loss ever
+looks wrong.
+
+The connection gate above still stands and still matters — it is what protects
+a metered visitor — but it is no longer carrying the whole burden alone.
+
+**Unrelated observation worth the owner's attention:** the hero footage is an
+aerial of a North American city (US-style crosswalks, a "larson" hoarding),
+running under the words "Kenya's trusted rental platform". Nothing breaks, but
+it is the same category of claim as the "verified" copy: a visitor who notices
+trusts the rest of the page less. Replacing it needs a sourcing decision, so it
+is flagged rather than changed.
+
+### TD-160 · AUDIT 2026-09-22 — Every controller handler checked for authorization; no gaps
+
+Mechanical sweep of all `*Controller.java` for `@PreAuthorize`, then manual
+triage of everything it flagged. Recorded so the next person does not redo it,
+and so a genuine regression is not lost in a list of known-benign hits.
+
+Twenty controllers have handlers with no method-level `@PreAuthorize`. Every one
+is correct, for four distinct reasons:
+
+- **Public by design** — `/api/v1/public/**` (listings, units, branding, brand
+  icon, testimonials, subscription plans, reservations) plus the M-PESA and
+  Clerk callbacks, which authenticate by HMAC signature rather than by token.
+  `ReservationController` is the one to notice: its class name carries no
+  "Public" marker but it is mapped at `/api/v1/public/reservations`, and it is
+  the flow where a stranger reserves a vacant unit. Rate-limited per phone and
+  per IP.
+- **`@Profile("dev")`** — `DevReservationTestController` and
+  `DevTenantPortalSetupController` are not mapped at all under the default
+  `prod` profile.
+- **Self-scoped to the caller** — `PlatformReviewController` reads and writes
+  only `user.getUserId()` from the authenticated principal. "Any signed-in user
+  may rate the platform" is the intent, and there is no tenant dimension to
+  scope.
+- **Platform price catalogue** — `SubscriptionPlanController`'s three read
+  methods return the same plans already served publicly at
+  `/api/v1/public/subscription-plans`. No tenant data.
+
+`TenantController` deserves its own note because it looks wrong and is not.
+`createTenant` carries no role guard *deliberately*: tenants are not
+auto-provisioned, so the caller is a signed-in user with `tenantId == null` and
+`ROLE_PENDING_ONBOARDING`, and any authority requirement would break onboarding
+outright. `getTenant("/{tenantId}")` takes a tenant id in the path, which
+CLAUDE.md rightly forbids as an *authority* — but it is not used as one. The
+handler resolves the caller's own tenant and passes both ids down, and
+`validateTenantAccess` compares `tenant.getId()` against the actor's and throws
+`SecurityException`, which `GlobalExceptionHandler` maps to **403 with a generic
+"Access denied"**. Verified by reading all three layers.
+
+**One real finding, deliberately not fixed.** In `getTenant` and its siblings,
+`findTenant(targetTenantId)` runs *before* `validateTenantAccess`, so a
+non-existent tenant answers differently (400, "Tenant not found") from an
+existing tenant belonging to somebody else (403). That is a tenant-existence
+oracle. It is reachable only by an authenticated caller who can also guess a
+tenant UUID — 122 bits of entropy — so it is unexploitable in practice. The fix
+is to compare the two ids before touching the database, which would also save a
+query on the denial path, but it means editing about ten money-adjacent methods
+in `TenantCommandServiceImpl` for a finding nobody can reach. Recorded rather
+than risked. Do it as part of the next deliberate pass over that class, not as
+a drive-by.
+
+### TD-161 · PARTLY CLOSED 2026-09-22 — CI went red depending on test execution order
+
+A CI run failed with five failures while the very next commit passed with
+substantially the same code. That difference was the diagnosis: the failures
+depended on which test class ran first.
+
+The suite shares **one reusable Postgres container**. `UnitConcurrencyTest` and
+`UnitIntegrationTest` cannot be `@Transactional` — their worker threads each
+need an independently committing transaction, which is the whole point of them
+— so the fixtures they seed, pinned to `11111111-…` and `22222222-…`, are
+committed and outlive the test. Two other classes then failed or not depending
+on ordering:
+
+- **`LeaseApiTest`** pins its landlords to those same UUIDs and inserted them
+  unconditionally → `duplicate key value violates unique constraint
+  "tenants_pkey"`, three errors.
+- **`PropertyJpaRepositoryIntegrationTest`** asserted *absolute global counts*
+  ("exactly one ACTIVE property exists") against queries that span every tenant
+  → `expected: <1> but was: <2>`.
+
+**Fixed:** `seedTenant` returns early when the row exists (it only needs the FK
+target to be there), and the property assertions now check what the filter
+promises — this test's ACTIVE row is returned, its four non-ACTIVE rows are not,
+and nothing non-ACTIVE ever comes back — with a page size large enough that its
+own rows are on the page. Both tests assert *more* than before; what they lost
+is a dependence on the database being empty, which was never true.
+
+**Closed 2026-09-23.** Both tests now clean up in `@AfterEach`, and the cause
+is gone rather than the symptoms patched.
+
+The reason it was safe to do without Docker in the end: the delete order was
+**derived from the foreign keys instead of guessed**, which was the actual
+objection. `units` is referenced by leases, rent ledger entries, deposits and
+unmatched payments, so units go before the property that owns them — and
+neither test creates any of those children, so scoping the delete to the
+fixture property touches nothing another test owns.
+
+Two deliberate choices worth keeping:
+
+- **The tenant row is left in place.** Removing it would mean chasing every
+  table referencing `tenants` for no gain: `LeaseApiTest` already tolerates a
+  pre-existing tenant, and a tenant with no properties changes no other test's
+  result.
+- **Cleanup is in `@AfterEach`, not at the end of the test body**, so it still
+  runs when an assertion fails partway through — exactly the case that would
+  otherwise leave the mess behind.
+
+Verified across two independent CI runs (a push and a `workflow_dispatch`), both
+green on the full suite.
+
+**Why this mattered more than five red tests:** this is the second flaky failure
+found today (the first was a 1-in-64 tamper test in the credential-encryption
+path, TD-noted in its commit). Intermittent red builds train people to re-run CI
+instead of reading it, and that is precisely how a real regression ships.
+
+### TD-162 · 2026-09-23 — Walking reserve → pay → lease before a real renter did
+
+The flow has never completed once in production (0 renters, 0 active leases), so
+it was traced in code instead. The saga itself is well built — six steps,
+per-step compensation tracking, Step 0 committed independently so compensation
+always sees `FULFILLING`, `MANUAL CLEANUP REQUIRED` logged for anything it
+cannot undo. Three real gaps sat around it.
+
+**Fixed — the renter was told a lie about money.** On `FULFILLMENT_FAILED` the
+confirmation page said *"Deposit refunded — your deposit has been refunded to
+your M-Pesa account."* The platform is non-custodial: the deposit goes by STK
+push into the landlord's own M-Pesa and nothing in the reservation module
+initiates a refund. The compensation service's own log says *"PAYMENT WAS
+RECEIVED, manual follow-up required (refund or retry)"*. The reassuring wording
+was the harmful part — it tells someone their money is coming back, so they
+wait instead of chasing it.
+
+**Fixed — nobody was told it happened.** `FULFILLMENT_FAILED` was written and
+read by nothing: no sweep, no query, no admin screen. The orchestrator's
+exception is swallowed by Spring's transaction synchronisation by design. The
+admin overview now counts it and the console leads its attention panel with it.
+
+**Fixed — a public endpoint leaked the landlord's org id.** Refusing a
+reservation because the landlord has no M-Pesa credentials is correct and
+happens before any state change, but the message embedded `tenantId=<uuid>` and
+`GlobalExceptionHandler` returns `ex.getMessage()` verbatim on an
+unauthenticated route.
+
+**Checked and sound, worth not re-deriving:** SMS cannot break fulfilment
+(`AfricasTalkingSmsService.send()` catches `Exception` and returns `false`;
+unconfigured falls back to `LoggingSmsService`, which only logs). The
+"no M-Pesa credentials" precondition is enforced before any state change. The
+lease `TODO`s are policy questions, not defects — `RentOverdueScheduler`
+null-guards `gracePeriodDays` and `lateFeeAmount` is never used in a
+calculation.
+
+### TD-163 · OPEN (decided, not deferred by accident) — Clerk is unguarded in saga steps 1–2
+
+`clerkService.createTenantUser` and `createSignInToken` have no retry and no
+catch. A Clerk outage, a rate limit, or — the foreseeable one — the development
+instance's hard **100-user cap** makes fulfilment fail *after* the renter has
+paid.
+
+**Retrying inside the saga was considered and rejected.** The listener is
+`@Transactional(REQUIRES_NEW)`, so a retry with backoff holds a database
+connection open for the whole wait. `DB_POOL_MAX` is 5 on the free Neon plan.
+Three concurrent fulfilments retrying with a couple of seconds of backoff would
+hold three of five connections and start starving every other request — trading
+a rare failure for a site-wide one.
+
+The right shape is the one this codebase already uses elsewhere and CLAUDE.md
+endorses: an out-of-band sweep that picks up `FULFILLMENT_FAILED` reservations
+and re-drives fulfilment, bounded and idempotent. It was not written blind —
+Docker is down on this machine, so the integration tests that cover the money
+path cannot run locally, and this is the one path where "CI will tell me" is not
+a good enough loop. Do it with Docker up.
+
+Until then the failure is at least visible (TD-162) and the renter is told the
+truth.
+

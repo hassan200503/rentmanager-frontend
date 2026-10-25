@@ -1,0 +1,46 @@
+import { z } from "zod";
+
+export const clientEnvSchema = z.object({
+  NEXT_PUBLIC_APP_NAME: z.string().min(1),
+  NEXT_PUBLIC_APP_ENV: z.enum(["development", "test", "production"]),
+  NEXT_PUBLIC_API_URL: z
+    .string()
+    .min(1)
+    .url()
+    .transform((val) => val.replace(/\/$/, "")),
+  NEXT_PUBLIC_APP_VERSION: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal("")),
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal("")),
+  // Where data-protection requests and legal notices should be sent. Optional
+  // because the app must boot without it, but the privacy page says so plainly
+  // when it is unset rather than printing an address nobody reads.
+  NEXT_PUBLIC_LEGAL_CONTACT_EMAIL: z
+    .string()
+    .email()
+    .optional()
+    .or(z.literal("")),
+});
+
+export const serverEnvSchema = z.object({
+  CLERK_SECRET_KEY: z.string().min(1),
+  CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  ENABLE_PREMIUM_FEATURES: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((val) => val === "true"),
+});
+
+export type ClientEnvironment = z.infer<typeof clientEnvSchema>;
+export type ServerEnvironment = z.infer<typeof serverEnvSchema>;

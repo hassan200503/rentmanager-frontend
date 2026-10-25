@@ -1,0 +1,67 @@
+# Temporary probe: can this app run on Cloudflare Workers' FREE plan?
+#
+# Netlify suspended the site when its credit allowance ran out, so the question
+# is whether Cloudflare is a viable free home. Two hard numbers decide it, and
+# neither can be measured on Windows (the OpenNext bundler needs symlinks, which
+# Windows refuses without Developer Mode):
+#
+#   1. The built Worker must be under 3 MiB compressed on the free plan.
+#   2. It has to build at all against this app's dependency tree.
+#
+# Delete this workflow once the decision is made either way.
+name: Cloudflare size probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["cloudflare-migration"]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the Cloudflare Worker
+        env:
+          # next.config.ts refuses a production build without this rather
+          # than silently proxying /api/v1 to localhost -- a good guard, and a
+          # reminder that the same-origin rewrite has to be configured on
+          # Cloudflare too, not just on Netlify.
+          BACKEND_URL: https://rentmanager-api-2reb.onrender.com
+          NEXT_PUBLIC_APP_NAME: RentManager
+          NEXT_PUBLIC_APP_ENV: production
+          NEXT_PUBLIC_API_URL: https://rentmanager-api-2reb.onrender.com/api/v1
+          NEXT_PUBLIC_APP_URL: https://rentmanager-ke.pages.dev
+          # Deliberately fake, and safe to be: this job only measures how big
+          # the built Worker is, and never talks to Clerk. The publishable key
+          # still has to be SHAPED correctly (pk_test_ + base64 host) because
+          # next.config.ts decodes it to derive the Clerk origin for the CSP,
+          # and the env schema rejects an empty one. Real keys would add risk
+          # and buy nothing.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+          CLERK_SECRET_KEY: sk_test_probe_not_a_real_key
+        run: npx opennextjs-cloudflare build
+
+      - name: Measure the real bundle against the 3 MiB free-plan ceiling
+        run: |
+          set -euo pipefail
+          # .open-next/worker.js is a ~2 KiB entry shim -- measuring it tells
+          # you nothing. wrangler assembles the actual Worker at deploy time
+          # and reports the size Cloudflare enforces, so a dry run (no
+          # credentials needed) is the only honest measurement.
+          npx wrangler deploy --dry-run --outdir .wrangler-probe 2>&1 | tee wrangler-out.txt
+          echo "── assembled bundle ──"
+          du -sh .wrangler-probe 2>/dev/null || true
+          if [ -f .wrangler-probe/index.js ]; then
+            gz=$(gzip -c .wrangler-probe/index.js | wc -c)
+            echo "assembled compressed: $((gz/1024)) KiB of 3072 KiB free limit"
+          fi
+          grep -iE "Total Upload|gzip" wrangler-out.txt || true

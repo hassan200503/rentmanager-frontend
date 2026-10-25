@@ -1,0 +1,47 @@
+# Netlify hosts the web app on the free plan (no card, commercial use allowed).
+#
+# API calls stay same-origin: next.config.ts rewrites /api/v1/* to BACKEND_URL,
+# which Netlify supplies at build time (Site settings → Environment):
+#   BACKEND_URL = https://<your-api>.onrender.com
+# Same origin is what keeps the Content-Security-Policy at connect-src 'self'
+# and avoids CORS entirely. netlify.toml cannot expand variables, so the
+# forwarding lives in next.config.ts rather than in a redirect rule here.
+#
+# Also set, as in .env.example: NEXT_PUBLIC_API_URL (https://<site>/api/v1),
+# NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_APP_ENV=production, NEXT_PUBLIC_APP_NAME,
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
+# CLERK_WEBHOOK_SIGNING_SECRET.
+
+[build]
+  command = "npm run build"
+
+  # Skip the build entirely when a commit touches nothing the site serves.
+  #
+  # Netlify's free plan is metered in credits, not build minutes: 300 a month,
+  # 15 per production deploy. That is about twenty deploys, and running out
+  # SUSPENDS the site — which is exactly what happened on 28 September, taking
+  # the site offline until the cycle reset. Several of those deploys rebuilt
+  # the whole app to publish a Markdown file.
+  #
+  # `ignore` inverts the usual convention: exit 0 means "nothing to do, skip",
+  # exit 1 means "build". `git diff --quiet` exits 0 when the given paths did
+  # NOT change, so this reads as: if the only thing that changed was docs or
+  # Markdown, skip. Verified against real commits in this repository before
+  # being committed — a docs-only commit exits 0, a code commit exits 1.
+  #
+  # `[skip netlify]` in a commit message also works and is the right tool for
+  # a one-off; this handles the routine case without anyone remembering.
+  ignore = "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/**' ':(exclude)*.md'"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Published on /legal/privacy and /legal/terms as the address for
+  # data-protection requests. It lives here rather than in the Netlify
+  # dashboard because it is not a secret -- it is printed on a public page --
+  # and keeping it in the repo means the pages and the address can never
+  # drift apart.
+  NEXT_PUBLIC_LEGAL_CONTACT_EMAIL = "rentmanagerke2026@gmail.com"

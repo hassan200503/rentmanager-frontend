@@ -1,0 +1,122 @@
+"use client";
+
+import { Search, Bell, HelpCircle, Settings, Command } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useOrgStore } from "@/stores/org-store";
+import { useEffect, useState } from "react";
+import NotificationPanel from "@/shared/components/dashboard/NotificationPanel";
+import { useNotificationStore } from "@/stores/notification-store";
+
+export default function Topbar() {
+  const tenantName = useOrgStore((state) => state.tenantName);
+  const router = useRouter();
+
+  const { unreadCount, toggleOpen } = useNotificationStore();
+
+  // A clock is not an external store. getSnapshot must return a cached value
+  // and be equal across consecutive calls; this one recomputed the time on
+  // every call, so whenever a render and React's change-check straddled a
+  // minute boundary the two reads disagreed and React reported
+  // "The result of getSnapshot should be cached to avoid an infinite loop".
+  // State updated on an interval is the right shape for a value that changes
+  // on its own. Starting empty also keeps the server and first client render
+  // identical, which is what the old getServerSnapshot was doing.
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const tick = () =>
+      setCurrentTime(
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    tick();
+    const interval = setInterval(tick, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  function handleSearchClick() {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+  }
+
+  return (
+    <header className="h-14 toolbar-glass backdrop-blur-xl border-b flex items-center justify-between px-6 sticky top-0 z-30">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <button
+          type="button"
+          onClick={handleSearchClick}
+          className="relative flex-1 max-w-md text-left group"
+        >
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle dark:text-fg-subtle-dark pointer-events-none transition-colors group-hover:text-brand dark:group-hover:text-brand-300" strokeWidth={2} />
+          <div className="flex items-center w-full h-9 pl-10 pr-10 rounded-xl bg-surface/70 dark:bg-surface-dark/70 border border-border/70 dark:border-border-dark/70 text-xs text-fg-subtle dark:text-fg-subtle-dark cursor-pointer shadow-sm transition-all group-hover:bg-surface dark:group-hover:bg-surface-dark group-hover:border-brand/25 dark:group-hover:border-brand/25 group-hover:shadow-card">
+            <span>Search anything...</span>
+          </div>
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-surface dark:bg-surface-dark border border-border dark:border-border-dark text-[10px] font-medium text-fg-subtle dark:text-fg-subtle-dark shadow-sm pointer-events-none">
+            <Command className="h-2.5 w-2.5" strokeWidth={2} />
+            K
+          </kbd>
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <div className="hidden sm:flex items-center gap-2 text-xs text-fg-muted dark:text-fg-muted-dark mr-2">
+          <span className="executive-chip px-2.5 py-1 text-xs">
+            <span className="status-dot-success status-dot-live" />
+            <span className="font-medium text-fg dark:text-fg-dark">{tenantName ?? "RentManager"}</span>
+          </span>
+          <span className="text-fg-subtle dark:text-fg-subtle-dark text-[11px] tabular-nums font-mono rounded-md border border-border/60 dark:border-border-dark/60 px-2 py-1 bg-surface/60 dark:bg-surface-dark/60">{currentTime}</span>
+        </div>
+
+        <div className="h-4 w-px bg-border/60 dark:bg-border-dark/60 hidden sm:block" />
+
+        {/* Notification Bell */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={toggleOpen}
+            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted dark:text-fg-muted-dark hover:bg-brand-50 hover:text-brand dark:hover:bg-brand-900/25 dark:hover:text-brand-300 transition-all duration-150"
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+          >
+            <Bell className="h-4 w-4" strokeWidth={1.75} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-danger text-[9px] font-bold text-white ring-2 ring-surface dark:ring-surface-dark animate-scale-in">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+          <NotificationPanel />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/activity")}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted dark:text-fg-muted-dark hover:bg-brand-50 hover:text-brand dark:hover:bg-brand-900/25 dark:hover:text-brand-300 transition-all duration-150"
+          aria-label="Help and activity"
+          title="Activity log"
+        >
+          <HelpCircle className="h-4 w-4" strokeWidth={1.75} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/settings")}
+          className="hidden sm:flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted dark:text-fg-muted-dark hover:bg-brand-50 hover:text-brand dark:hover:bg-brand-900/25 dark:hover:text-brand-300 transition-all duration-150"
+          aria-label="Settings"
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" strokeWidth={1.75} />
+        </button>
+
+        <div className="h-4 w-px bg-border/60 dark:bg-border-dark/60" />
+
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "w-7 h-7 ring-2 ring-border/50 dark:ring-border-dark/50 hover:ring-brand/40 hover:shadow-sm transition-all duration-200",
+              userButtonPopoverCard: "shadow-dropdown border border-border dark:border-border-dark rounded-xl",
+            },
+          }}
+        />
+      </div>
+    </header>
+  );
+}
