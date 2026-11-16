@@ -428,12 +428,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Developer
 
-**Hassan Abdikarim**
+**Hassan Tsuma**
 
 - GitHub: [@hassan200503](https://github.com/hassan200503)
-- Email: hassan.abdikarim@example.com
-- LinkedIn: [Connect with me](https://linkedin.com/in/hassan-abdikarim)
-- Portfolio: [hassanabdikarim.dev](https://hassanabdikarim.dev)
+- Email: karungwahassan03@gmail.com
+- LinkedIn: [Connect with me](https://www.linkedin.com/in/hassan-karungwa)
+- Portfolio: [https://hassan200503.github.io/])
 
 ---
 
@@ -448,7 +448,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@rentmanagerke.com or open an issue on GitHub.
+For support, email karungwahassan03@gmail.com or open an issue on GitHub.
 
 ---
 
